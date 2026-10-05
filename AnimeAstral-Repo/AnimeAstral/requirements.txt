@@ -1,9 +1,0 @@
-PySide6>=6.6
-opencv-python-headless>=4.8
-numpy>=1.24
-Pillow>=10.0
-requests>=2.31
-pytesseract>=0.3.10
-psutil>=5.9
-pypresence>=4.3
-windows-capture; sys_platform == "win32"
