@@ -77,6 +77,19 @@ class MainWindow(QMainWindow):
         top.addWidget(self.afk_info)
         top.addWidget(afk_label)
         top.addWidget(self.afk_switch)
+        top.addSpacing(theme.px(12))
+        rejoin_label = label(tr("Auto-Rejoin"), "muted")
+        rejoin_label.setToolTip(tr("Tritt nach Verbindungsabbruch, Kick oder Absturz automatisch wieder deinem privaten "
+                                   "Server bei (Link unter Einstellungen → Privater Server). Wer Roblox selbst schließt "
+                                   "oder das Spiel verlässt, wird nicht zurückgeholt."))
+        self.rejoin_info = label("", "small")
+        self.rejoin_switch = ToggleSwitch()
+        self.rejoin_switch.setToolTip(rejoin_label.toolTip())
+        self.rejoin_switch.setChecked(engine.settings.auto_rejoin_enabled)
+        self.rejoin_switch.toggled.connect(self.set_auto_rejoin)
+        top.addWidget(self.rejoin_info)
+        top.addWidget(rejoin_label)
+        top.addWidget(self.rejoin_switch)
         outer.addWidget(topbar)
 
         body = QWidget()
@@ -169,6 +182,9 @@ class MainWindow(QMainWindow):
         self.tray_afk = menu.addAction(tr("Anti-AFK"))
         self.tray_afk.setCheckable(True)
         self.tray_afk.toggled.connect(lambda on: self.afk_switch.setChecked(on))
+        self.tray_rejoin = menu.addAction(tr("Auto-Rejoin"))
+        self.tray_rejoin.setCheckable(True)
+        self.tray_rejoin.toggled.connect(lambda on: self.rejoin_switch.setChecked(on))
         menu.addSeparator()
         menu.addAction(tr("Beenden"), self.quit_app)
         menu.aboutToShow.connect(self._update_tray_menu)
@@ -188,6 +204,9 @@ class MainWindow(QMainWindow):
         self.tray_afk.blockSignals(True)
         self.tray_afk.setChecked(self.afk_switch.isChecked())
         self.tray_afk.blockSignals(False)
+        self.tray_rejoin.blockSignals(True)
+        self.tray_rejoin.setChecked(self.rejoin_switch.isChecked())
+        self.tray_rejoin.blockSignals(False)
 
     # --------------------------------------------------------------- Privater Server
     def join_private_server(self, link: Optional[str] = None) -> None:
@@ -233,6 +252,31 @@ class MainWindow(QMainWindow):
         text = "" if left is None else tr("nächster Sprung in {time}", time=messages.fmt_duration(left))
         if self.afk_info.text() != text:
             self.afk_info.setText(text)
+        text = self.engine.rejoin.info()
+        if self.rejoin_info.text() != text:
+            self.rejoin_info.setText(text)
+
+    # --------------------------------------------------------------- Auto-Rejoin
+    def set_auto_rejoin(self, on: bool) -> None:
+        """Schalter oben / im Tray-Menü: sofort wirksam und gespeichert."""
+        s = self.engine.settings
+        if s.auto_rejoin_enabled == on:
+            return
+        s.auto_rejoin_enabled = on
+        try:
+            s.save()
+        except OSError:
+            pass
+        if self.rejoin_switch.isChecked() != on:
+            self.rejoin_switch.setChecked(on)
+        if not on:
+            self.show_toast(tr("Auto-Rejoin aus"))
+        elif roblox_join.deep_link(s.private_server_link):
+            self.show_toast(tr("Auto-Rejoin an – nach Verbindungsabbruch, Kick oder Absturz geht es zurück in deinen "
+                               "privaten Server."))
+        else:
+            self.show_toast(tr("Auto-Rejoin an – ohne Private-Server-Link geht es in einen öffentlichen Server "
+                               "(Link unter Einstellungen → Privater Server)."))
 
     def show_from_tray(self) -> None:
         self.showNormal()

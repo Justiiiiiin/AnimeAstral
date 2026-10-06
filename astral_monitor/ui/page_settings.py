@@ -149,6 +149,12 @@ class SettingsPage(QWidget):
                                    "(„roblox.com/share?code=…“) und klassischen Links („…?privateServerLinkCode=…“). "
                                    "Der Link bleibt nur auf diesem PC und ist im Diagnose-Paket nicht enthalten."),
                                 "small", wrap=True))
+        ps.body.addWidget(label(tr("Auto-Rejoin (Schalter oben in der Kopfzeile oder im Tray-Menü): Bei "
+                                   "Verbindungsabbruch, Kick oder Absturz beendet das Programm den hängenden Client und "
+                                   "tritt nach 15 s erneut bei – bis zu 5 Versuche mit wachsender Pause. Erkannt wird das "
+                                   "über das Roblox-Protokoll (kaum Rechenzeit, auch ohne laufende Überwachung). Wer Roblox "
+                                   "selbst schließt oder das Spiel verlässt, wird nicht zurückgeholt. Ohne Link geht es in "
+                                   "einen öffentlichen Server desselben Spiels."), "small", wrap=True))
         root.addWidget(ps)
 
         keys = Card(tr("Hotkeys (global, auch während des Spiels)"))

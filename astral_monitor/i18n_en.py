@@ -682,4 +682,46 @@ EN: dict[str, str] = {
     "🏆 Neuer Rekord: Welle {wave}": "🏆 New record: wave {wave}",
     "🔔 Test-Nachricht": "🔔 Test message",
     "🟢 Lebenszeichen": "🟢 Heartbeat",
+    # Auto-Rejoin
+    "Auto-Rejoin": "Auto-rejoin",
+    "Auto-Rejoin aus": "Auto-rejoin off",
+    "Auto-Rejoin aufgegeben": "Auto-rejoin gave up",
+    "Auto-Rejoin aufgegeben: {why}": "Auto-rejoin gave up: {why}",
+    "Rejoin in {time}": "Rejoin in {time}",
+    "trete bei … ({n}/{max})": "joining … ({n}/{max})",
+    "Rejoin aufgegeben": "Rejoin gave up",
+    "Roblox ist abgestürzt": "Roblox crashed",
+    "Auto-Rejoin: {reason} – trete gleich neu bei": "Auto-rejoin: {reason} – rejoining shortly",
+    "Auto-Rejoin: Versuch {n}/{max} ({where})": "Auto-rejoin: attempt {n}/{max} ({where})",
+    "Auto-Rejoin: Versuch {n} ohne Erfolg ({why})": "Auto-rejoin: attempt {n} failed ({why})",
+    "Verbindung verloren (Fehler {code})": "Connection lost (error {code})",
+    "Verbindung verloren": "Connection lost",
+    "privater Server": "private server",
+    "öffentlicher Server": "public server",
+    "Kein Private-Server-Link eingetragen und Spiel unbekannt.": "No private server link set and the game is unknown.",
+    "Verbindung verloren – Auto-Rejoin": "Connection lost – auto-rejoin",
+    "kein Beitritt innerhalb von {seconds} s": "no join within {seconds} s",
+    "Auto-Rejoin: wieder im Spiel": "Auto-rejoin: back in the game",
+    "Wieder im Spiel": "Back in the game",
+    "Trete erneut bei ({where}).": "Rejoining ({where}).",
+    "Auto-Rejoin hat geklappt (Versuch {n}).": "Auto-rejoin worked (attempt {n}).",
+    "Tritt nach Verbindungsabbruch, Kick oder Absturz automatisch wieder deinem privaten Server bei (Link unter "
+    "Einstellungen → Privater Server). Wer Roblox selbst schließt oder das Spiel verlässt, wird nicht zurückgeholt.":
+        "Automatically rejoins your private server after a disconnect, kick or crash (link under Settings → Private "
+        "server). If you close Roblox or leave the game yourself, it does not bring you back.",
+    "Auto-Rejoin an – nach Verbindungsabbruch, Kick oder Absturz geht es zurück in deinen privaten Server.":
+        "Auto-rejoin on – after a disconnect, kick or crash you go back to your private server.",
+    "Auto-Rejoin an – ohne Private-Server-Link geht es in einen öffentlichen Server (Link unter Einstellungen → "
+    "Privater Server).":
+        "Auto-rejoin on – without a private server link you go to a public server (link under Settings → Private "
+        "server).",
+    "Auto-Rejoin (Schalter oben in der Kopfzeile oder im Tray-Menü): Bei Verbindungsabbruch, Kick oder Absturz "
+    "beendet das Programm den hängenden Client und tritt nach 15 s erneut bei – bis zu 5 Versuche mit wachsender "
+    "Pause. Erkannt wird das über das Roblox-Protokoll (kaum Rechenzeit, auch ohne laufende Überwachung). Wer Roblox "
+    "selbst schließt oder das Spiel verlässt, wird nicht zurückgeholt. Ohne Link geht es in einen öffentlichen Server "
+    "desselben Spiels.":
+        "Auto-rejoin (switch in the header or the tray menu): after a disconnect, kick or crash the program closes the "
+        "stuck client and rejoins after 15 s – up to 5 attempts with growing pauses. Detection uses the Roblox log "
+        "(hardly any CPU, works without monitoring running). If you close Roblox or leave the game yourself, it does "
+        "not bring you back. Without a link you go to a public server of the same game.",
 }

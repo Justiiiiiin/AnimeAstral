@@ -58,6 +58,7 @@ EVENT_DEFS: list[tuple[str, str, bool, bool]] = [
     ("quest_update", N_("Quest-Fortschritt nach Raid"), True, False),
     ("quest_done", N_("Quest abgeschlossen"), True, False),
     ("roblox_down", N_("Roblox beendet / Disconnect"), True, True),
+    ("rejoin", N_("Auto-Rejoin"), True, False),
     ("stall", N_("Stillstand-Alarm"), True, True),
     ("health", N_("Speicher-Warnung"), True, False),
     ("record", N_("Neuer Rekord (Welle)"), True, False),
@@ -138,7 +139,8 @@ class Settings:
     close_to_tray: bool = True          # Fenster schließen = im Infobereich weiterlaufen
     anti_afk_enabled: bool = False      # alle N Minuten kurz zu Roblox, Leertaste, zurück (antiafk.py)
     anti_afk_minutes: int = 10
-    private_server_link: str = ""       # roblox.com/games/…?privateServerLinkCode=… (nur lokal, roblox_join.py)
+    auto_rejoin_enabled: bool = False   # nach Disconnect/Kick/Absturz neu beitreten (rejoin.py)
+    private_server_link: str = ""    # roblox.com/games/…?privateServerLinkCode=… (nur lokal, roblox_join.py)
     # Sonstiges
     settings_version: int = 6
     uptime_minutes: int = 10

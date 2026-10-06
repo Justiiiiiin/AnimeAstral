@@ -14,6 +14,7 @@ import numpy as np
 
 from . import app_paths, messages
 from .antiafk import AntiAfk
+from .rejoin import AutoRejoin
 from .i18n import N_, dec, tr
 from .capture import CaptureError, FrameSource, GrabResult, create_source
 from .discord_client import DiscordSender
@@ -118,6 +119,8 @@ class Engine:
         self._last_event_text = ""
         self.anti_afk = AntiAfk(lambda: self.settings, self._event)    # läuft auch ohne Überwachung (Standard aus)
         self.anti_afk.start()
+        self.rejoin = AutoRejoin(lambda: self.settings, self._event, self._notify)    # ebenso (Standard aus)
+        self.rejoin.start()
 
         self._thread: Optional[threading.Thread] = None
         self._halt = threading.Event()
@@ -227,6 +230,7 @@ class Engine:
     def shutdown(self) -> None:
         self.stop()
         self.anti_afk.stop()
+        self.rejoin.stop()
         self.presence.stop()
         self.publisher.finish()
         self.publisher.join(timeout=10)
@@ -516,7 +520,8 @@ class Engine:
             if "scene" in crops:
                 self._process_scene(crops["scene"], now)
             if "center" in crops:
-                guard.check_disconnect(crops["center"], now)
+                if guard.check_disconnect(crops["center"], now):
+                    self.rejoin.external_lost()        # Disconnect-Dialog per Texterkennung: zusätzlicher Auslöser
 
         guard.poll_process(now)
         guard.check_stall(now, self.tracker.run is not None)

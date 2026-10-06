@@ -15,6 +15,15 @@ Eingaben an Roblox – einzige Ausnahme ist das optionale Anti-AFK** (`antiafk.p
 Kopfzeile, auf ausdrücklichen Wunsch des Eigentümers 06.10.2026): alle N Minuten Roblox kurz nach vorne, einmal
 Leertaste, zurück. Roblox nimmt Tasten nur im Vordergrund an (getestet: `PostMessage` an das Hintergrundfenster wirkt
 nicht). Darüber hinaus keine Automatisierung (kein Klicken, kein Farmen) – diese Grenze bitte beibehalten.
+**Privater Server** (`roblox_join.py`): Teilen-Link oder klassischer Link -> `roblox://`-Protokoll-Link, `os.startfile`
+(kein Browser, kein Cookie/Passwort). Der Link bleibt lokal (Diagnose schwärzt ihn) – nie ins Repo.
+**Auto-Rejoin** (`rejoin.py`, Standard aus, Schalter in der Kopfzeile, Wunsch des Eigentümers 06.10.2026): liest alle
+3 s nur neue Zeilen der Client-Protokolle (`%LOCALAPPDATA%\Roblox\logs\*_Player_*.log`): „! Joining game … place N“ =
+im Spiel; „Disconnection Notification. Reason: N“ u. ä. = verloren, außer 264/273/276/285 (selbst verlassen / anderes
+Gerät) – dann nie zurückholen; Prozess weg ohne „verlassen“ = Absturz. Nach 15 s (Teleports treten selbst neu bei)
+Client beenden und neu beitreten (Link, sonst öffentlich dieselbe Place), 5 Versuche mit Pausen. Die OCR-Disconnect-
+Erkennung der Überwachung ist zusätzlicher Auslöser (`external_lost`). Hinweis: Startet man einen Beitritt, während
+ein Client läuft, übernimmt der laufende Client den Beitritt (getestet).
 
 Benutzer ist der Eigentümer (Deutsch, Windows 11); Freunde sollen es später ebenfalls nutzen („full release 1.0.0“).
 **Oberfläche und Meldungen gibt es auf Deutsch und Englisch** (Einstellungen → Oberfläche, gilt nach Neustart):
