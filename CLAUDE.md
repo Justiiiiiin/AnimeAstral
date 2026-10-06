@@ -69,7 +69,7 @@ Wichtige Entwurfsentscheidungen:
   Einzelprofile**, nur je gespieltem Raid einen Eintrag mit Referenzbildern.
 - **Zeitangaben:** Die Engine nutzt `time.monotonic()` für Takt/Dauer; in Tests wird die Uhr teils künstlich gesetzt.
 
-## Release-Ablauf (GitHub, Repository `Justiiiiiin/AnimeAstral`)
+## Release-Ablauf (GitHub, dieses Repository – der Build liest den Namen selbst aus `github.repository`)
 
 1. Änderungen committen und pushen (Standard-Branch `main`).
 2. Version veröffentlichen: Release mit Tag `vX.Y.Z` anlegen **oder** Actions → „Release“ → *Run workflow* mit `X.Y.Z`.
