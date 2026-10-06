@@ -143,11 +143,14 @@ class SettingsPage(QWidget):
         irow = QHBoxLayout()
         irow.addWidget(label("Anwendungs-ID"))
         self.rpc_id = QLineEdit()
-        self.rpc_id.setPlaceholderText("leer lassen – ist im Programm hinterlegt")
+        self.rpc_id.setPlaceholderText("eigene Application ID aus dem Discord-Entwicklerportal")
         irow.addWidget(self.rpc_id, 1)
         rpc.body.addLayout(irow)
-        rpc.body.addWidget(label("Als Bild erscheint das Thumbnail des Spiels (von Roblox geladen). Die Discord-Desktop-App "
-                                 "muss auf dem PC laufen; der Status wird höchstens alle 15 Sekunden aktualisiert.",
+        rpc.body.addWidget(label("Anwendungs-ID: discord.com/developers/applications → New Application (der Name erscheint "
+                                 "im Profil als „Spielt …“) → Application ID kopieren. Kein Bot und keine Server-Einladung "
+                                 "nötig. Die Discord-Desktop-App muss auf dem PC laufen, und unter Discord → Einstellungen → "
+                                 "Aktivitäts-Privatsphäre muss das Teilen der Aktivität an sein. Als Bild erscheint das "
+                                 "Thumbnail des Spiels; der Status wird höchstens alle 15 Sekunden aktualisiert.",
                                  "small", wrap=True))
         root.addWidget(rpc)
 

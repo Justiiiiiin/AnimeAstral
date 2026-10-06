@@ -188,7 +188,7 @@ class PresenceUpdater(threading.Thread):
             return
         if not cid:
             self._drop()
-            self.status_text, self.status_ok = "Es ist noch keine Discord-Anwendungs-ID hinterlegt (siehe Anleitung).", False
+            self.status_text, self.status_ok = "Bitte unten deine eigene Discord-Anwendungs-ID eintragen.", False
             return
         snap = self._snapshot()
         activity = build_activity(s, snap, self._icon_url(s, now) if snap.get("status") != "stopped" else None)

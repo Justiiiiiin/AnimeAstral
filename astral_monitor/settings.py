@@ -47,6 +47,9 @@ DEFAULT_QUEST_ROI = Roi(0.905, 0.100, 1.000, 0.300)
 # Kulisse zur Raid-Erkennung: nur die Mitte, ohne Menüs/Leisten/Quest-Liste
 DEFAULT_SCENE_ROI = Roi(0.14, 0.10, 0.86, 0.68)
 
+# Spielseite für das Thumbnail im Discord-Profilstatus (Place-Nummer aus dem laufenden Roblox-Client, geprüft 06.10.2026)
+RPC_GAME_LINK = "https://www.roblox.com/games/102072869879193/CYBER-Anime-Astral-Simulator"
+
 # (Schlüssel, Anzeigename, Standard: senden, Standard: Ping)
 EVENT_DEFS: list[tuple[str, str, bool, bool]] = [
     ("raid_done", "Raid beendet", True, False),
@@ -127,9 +130,9 @@ class Settings:
     update_skip: str = ""
     rpc_enabled: bool = False
     rpc_client_id: str = ""
-    rpc_game_link: str = "https://www.roblox.com/games/9797806474/Anime-Astral-Simulator"
+    rpc_game_link: str = RPC_GAME_LINK
     # Sonstiges
-    settings_version: int = 5
+    settings_version: int = 6
     uptime_minutes: int = 10
     total_offset: int = 0               # Startwert für "Raids gesamt"
     tesseract_path: str = ""
@@ -220,6 +223,10 @@ class Settings:
                 setattr(s, f.name, value)
             except (TypeError, ValueError):
                 log.warning("Einstellung %s ungültig, Standard bleibt.", f.name)
+        if int(data.get("settings_version", 1) or 1) < 6:
+            # Der frühere Standardlink zeigte auf eine falsche Spielnummer; eigene Links bleiben unverändert.
+            if "9797806474" in s.rpc_game_link:
+                s.rpc_game_link = RPC_GAME_LINK
         if int(data.get("settings_version", 1) or 1) < 5:
             s.settings_version = 5
             s.wizard_done = True              # bestehende Nutzer brauchen den Assistenten nicht
@@ -232,6 +239,7 @@ class Settings:
             # Ab Version 0.3 zählen Fehlversuche in der Statistik; eine Meldung pro Neustart ist standardmäßig aus.
             s.events["raid_aborted"]["send"] = False
             s.settings_version = 3
+        s.settings_version = max(s.settings_version, cls.settings_version)    # nach allen Schritten: aktueller Stand
         return s
 
     @classmethod

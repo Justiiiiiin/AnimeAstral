@@ -105,16 +105,16 @@ Stand 06.10.2026 (Claude Code unter Windows): Punkte 1, 3 und 5 erledigt, 2 und 
 4. **Installer:** Kompiliert und installiert (v0.5.0 läuft). Noch offen: echtes Update über die App auf eine neuere
    Version inkl. `/relaunch=1`.
 5. ~~**Mitgeliefertes Tesseract**~~ – findet `tessdata` neben sich ohne `TESSDATA_PREFIX`, TSV-Ausgabe funktioniert.
-6. **Discord-Profilstatus (`presence.py`):** Nur gegen Attrappen getestet. Nötig ist eine **Discord-Anwendungs-ID** (Entwicklerportal
-   → Anwendung → „Application ID“, nicht geheim). Sie fehlt noch: bitte als Repository-Variable `RPC_CLIENT_ID` oder fest in
-   `build_info.py` eintragen. Als Bild dient das Roblox-Spiel-Thumbnail (öffentliche Roblox-Schnittstellen `universes/v1/places/…/universe`
-   und `thumbnails.roblox.com/v1/games/icons`); Standardlink `rpc_game_link` zeigt auf Place `9797806474`, **die richtige
-   Spielnummer ist unbestätigt** (das Spiel hat mehrere Seiten, u. a. `10502841145`).
-7. **Formatierung der Statusnachricht:** Die Beschreibung nutzt Discord-Markdown (`## Überschrift`, `-# kleine Zeile`). Ob Discord das
-   in Embeds so darstellt, ist nicht bestätigt.
-8. **Hotkeys (`RegisterHotKey`)** und das Tray-/Autostart-Verhalten (Tray gibt es noch nicht).
-9. **Disconnect-Erkennung:** nur mit einem selbst gezeichneten Dialog getestet; echte Roblox-Dialoge prüfen
-   (Fehlercodes u. a. 277, 278 = 20 Min. inaktiv, 279, 288, 273, 267, 268).
+6. **Discord-Profilstatus (`presence.py`):** Jeder Nutzer trägt seine **eigene** Anwendungs-ID in den Einstellungen ein.
+   **Keine persönlichen IDs/Nummern ins Repository oder in den Build** (Wunsch des Eigentümers; das Repo ist öffentlich und
+   wird an Freunde weitergegeben) – die Repository-Variable `RPC_CLIENT_ID` bleibt leer. Spiel: Place `102072869879193` = Universe `10502841145`
+   „[CYBER] Anime Astral Simulator“ (aus dem laufenden Roblox-Client gelesen); der alte Standard `9797806474` war ungültig und
+   wird per Migration (settings_version 6) ersetzt. Verbindung zur Discord-App und Thumbnail-Abruf funktionieren, im
+   Profil des Eigentümers war die Aktivität beim ersten Test aber **nicht sichtbar** – Ursache noch offen.
+7. ~~**Formatierung der Statusnachricht**~~ – `##` und `-#` werden in Embeds korrekt dargestellt (Screenshot des Eigentümers).
+8. ~~**Hotkeys**~~ – funktionieren laut Eigentümer. Tray/Autostart gibt es weiterhin nicht.
+9. **Disconnect-Erkennung:** Alarm bei unlesbarem Zähler kommt an. Echte Roblox-Fehlerdialoge (277, 278 = 20 Min. inaktiv,
+   279, 288, 273, 267, 268) weiterhin nicht gezielt geprüft.
 
 ## Bekannte Schwächen / Ideen
 

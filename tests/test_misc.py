@@ -6,7 +6,7 @@ import _env
 from astral_monitor import app_paths, messages
 from astral_monitor.hotkeys import parse_hotkey
 from astral_monitor.report_card import render_card
-from astral_monitor.settings import Settings
+from astral_monitor.settings import RPC_GAME_LINK, Settings
 from astral_monitor.stats import RunRecord, StatsStore
 
 
@@ -24,7 +24,17 @@ class SettingsTests(unittest.TestCase):
         app_paths.settings_file().write_text(json.dumps(d), encoding="utf-8")
         loaded = Settings.load()
         self.assertTrue(loaded.wizard_done)
-        self.assertEqual(loaded.settings_version, 5)
+        self.assertEqual(loaded.settings_version, Settings.settings_version)
+
+    def test_migration_fixes_old_game_link_only(self):
+        d = Settings().to_dict()
+        d["settings_version"] = 5
+        d["rpc_game_link"] = "https://www.roblox.com/games/9797806474/Anime-Astral-Simulator"
+        self.assertEqual(Settings.from_dict(d).rpc_game_link, RPC_GAME_LINK)
+        d["rpc_game_link"] = "https://www.roblox.com/games/123456789/Eigenes"
+        self.assertEqual(Settings.from_dict(d).rpc_game_link, d["rpc_game_link"])
+        d["settings_version"] = 1                       # sehr alte Einstellungen landen ebenfalls auf dem neuesten Stand
+        self.assertEqual(Settings.from_dict(d).settings_version, Settings.settings_version)
 
     def test_validation(self):
         s = Settings()

@@ -61,11 +61,10 @@ Schick ihnen den Link `https://github.com/<DEIN-NAME>/AnimeAstral/releases/lates
 
 1. <https://discord.com/developers/applications> → **New Application** → Name z. B. „Anime Astral Monitor“.
 2. **Application ID** kopieren (General Information).
-3. GitHub: **Settings → Secrets and variables → Actions → Variables → New repository variable**: Name `RPC_CLIENT_ID`, Wert = die ID.
-   Ab dem nächsten Build ist sie im Programm hinterlegt (oder jeder trägt sie in den Einstellungen selbst ein).
-4. Bilder: Entwicklerportal → **Rich Presence → Art Assets**: Bild `logo` und je Raid ein Bild mit dem Raid-Namen in Kleinbuchstaben
-   und Unterstrich (z. B. `militech_convoy`).
-5. Im Programm: **Einstellungen → Discord-Profilstatus** aktivieren. Die Discord-App muss auf dem PC laufen.
+3. Im Programm: **Einstellungen → Discord-Profilstatus** die ID eintragen und aktivieren. Jeder Nutzer trägt seine **eigene**
+   ID ein – im Repository und im Build ist absichtlich keine hinterlegt. Kein Bot, keine Server-Einladung nötig.
+4. Die Discord-Desktop-App muss auf dem PC laufen; unter Discord → **Einstellungen → Aktivitäts-Privatsphäre** muss das
+   Teilen der Aktivität eingeschaltet sein. Als Bild wird automatisch das Spiel-Thumbnail von Roblox verwendet.
 
 ## 8. Wenn etwas rot wird
 

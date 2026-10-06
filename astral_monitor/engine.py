@@ -186,7 +186,7 @@ class Engine:
         self._event("Überwachung gestartet", "info")
         self.publisher.request_update()
         self._notify("start_stop", "Monitor gestartet", messages.COLOR_INFO,
-                     [("Raids gesamt", messages.fmt_int(self.stats.snapshot().total_ok), True),
+                     [("Versuche gesamt", messages.fmt_int(self.stats.snapshot().total_attempts), True),
                       ("Aufnahme", source.name, True)])
 
     def stop(self) -> None:
@@ -209,8 +209,9 @@ class Engine:
             self.send_report(self.stats.session_start, None, "Session-Bericht")
         self._notify("start_stop", "Monitor beendet", messages.COLOR_GRAY,
                      [("Laufzeit", messages.fmt_duration(uptime), True),
-                      ("Raids Session", str(snap.session_ok), True),
-                      ("Raids gesamt", messages.fmt_int(snap.total_ok), True)])
+                      ("Versuche Session", str(snap.session_attempts), True),
+                      ("Wellen Session", messages.fmt_int(snap.session_waves), True),
+                      ("Versuche gesamt", messages.fmt_int(snap.total_attempts), True)])
 
     def toggle_pause(self) -> bool:
         if self._pause.is_set():
@@ -741,9 +742,9 @@ class Engine:
         snap = self.stats.snapshot()
         uptime = now - (self.state.started_at or now)
         fields = [("Uptime", messages.fmt_duration(uptime), True),
-                  ("Raids Session", str(snap.session_ok), True),
-                  ("Fehlversuche Session", str(snap.session_failed), True),
-                  ("Raids gesamt", messages.fmt_int(snap.total_ok), True)]
+                  ("Versuche Session", str(snap.session_attempts), True),
+                  ("Wellen Session", messages.fmt_int(snap.session_waves), True),
+                  ("Versuche gesamt", messages.fmt_int(snap.total_attempts), True)]
         quests = self.quest_tracker.snapshot()
         if self.settings.attach_quests and quests:
             fields.append(("Quests", messages.quest_text(quests), False))
