@@ -68,7 +68,7 @@ def build_report(engine, dest_dir: Path) -> Path:
               f"Lauf: {None if run is None else (run.first_wave, run.max_wave, run.total, run.completed)}",
               f"gewählter Raid: {state.profile or '-'}",
               f"Roblox-Prozess: alive={state.roblox_alive} RAM={state.roblox_ram_mb} CPU={state.roblox_cpu}",
-              f"Datensätze: gesamt {len(engine.stats.records)}, Fehlversuche {engine.stats.failed_count()}"]
+              f"Datensätze: gesamt {len(engine.stats.records)}"]
 
     settings = s.to_dict()
     for secret in SECRET_FIELDS:                                   # persönliche Zugänge/IDs

@@ -22,13 +22,16 @@ class StatsTests(unittest.TestCase):
         self.st.add(RunRecord(now, 230.0, 300.0, 99, 100, "ok", raid="Militech Convoy"))
         self.st.add(RunRecord(now, 80.0, None, 40, 100, "abgebrochen", "geschätzt", raid="Defense"))
 
-    def test_summary_per_raid_and_estimates(self):
+    def test_every_run_counts_the_same(self):
+        """Alte Zeilen mit „abgebrochen“ zählen genauso wie „ok“ – es gibt keine Fehlversuche."""
         s = self.st.summary(None, "Militech Convoy")
-        self.assertEqual((s.ok, s.failed), (1, 10))
-        self.assertAlmostEqual(s.avg_fail_duration, 100.0)
-        all_ = self.st.summary(None, None)
-        self.assertEqual(all_.failed, 11)
-        self.assertAlmostEqual(all_.avg_fail_duration, 100.0)       # geschätzte Dauer zählt nicht mit
+        self.assertEqual(s.attempts, 11)
+        self.assertEqual(s.waves_total, sum(25 + i % 3 for i in range(10)) + 99)
+        self.assertAlmostEqual(s.avg_duration_all, (10 * 100.0 + 230.0) / 11)
+        self.assertAlmostEqual(self.st.summary(None, None).avg_duration_all, (10 * 100.0 + 230.0) / 11)  # ~ zählt nicht
+        snap = self.st.snapshot()
+        self.assertEqual(snap.total_attempts, 12)
+        self.assertFalse(hasattr(s, "failed"))
 
     def test_histogram_trend_and_best(self):
         hist = dict(self.st.wave_histogram(None, "Militech Convoy"))
@@ -48,13 +51,6 @@ class StatsTests(unittest.TestCase):
         rec = self.st.records[0]
         self.assertTrue(self.st.delete_record(rec))
         self.assertEqual(len(StatsStore(self.st._path).records), 11)
-
-    def test_fails_since_last_ok(self):
-        st = store("fails.csv")
-        st.add(RunRecord(1.0, 10.0, None, 99, 100, "ok"))
-        st.add(RunRecord(2.0, 50.0, None, 20, 100, "abgebrochen"))
-        st.add(RunRecord(3.0, 70.0, None, 25, 100, "abgebrochen"))
-        self.assertEqual(st.fails_since_last_ok(), (2, 60.0))
 
     def test_old_csv_without_raid_column_is_migrated(self):
         path = Path(_env.DATA) / "old.csv"

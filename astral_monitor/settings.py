@@ -53,7 +53,6 @@ RPC_GAME_LINK = "https://www.roblox.com/games/102072869879193/CYBER-Anime-Astral
 # (Schlüssel, Anzeigename, Standard: senden, Standard: Ping)
 EVENT_DEFS: list[tuple[str, str, bool, bool]] = [
     ("raid_done", N_("Raid beendet"), True, False),
-    ("raid_aborted", N_("Fehlversuch / Neustart"), False, False),
     ("quest_update", N_("Quest-Fortschritt nach Raid"), True, False),
     ("quest_done", N_("Quest abgeschlossen"), True, False),
     ("roblox_down", N_("Roblox beendet / Disconnect"), True, True),
@@ -282,8 +281,7 @@ class Settings:
                 s.wave_roi = Roi(**vars(DEFAULT_WAVE_ROI))   # eigene Bereiche bleiben unverändert
             s.settings_version = 4
         if int(data.get("settings_version", 1) or 1) < 3:
-            # Ab Version 0.3 zählen Fehlversuche in der Statistik; eine Meldung pro Neustart ist standardmäßig aus.
-            s.events["raid_aborted"]["send"] = False
+            # (früher: Meldung „Fehlversuch“ aus – seit 0.7.1 gibt es keine Fehlversuche mehr)
             s.settings_version = 3
         s.server_favorites = clean_favorites(s.server_favorites)
         try:

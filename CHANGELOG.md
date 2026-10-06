@@ -4,6 +4,12 @@ Neueste Version oben. Kurze Stichpunkte, keine Erklärungen (die stehen im Progr
 Der Abschnitt einer Version wird beim Veröffentlichen automatisch als Versionshinweis übernommen
 (`tools/release_notes.py`) und ist im Programm unter Einstellungen → Updates → „Alle Versionen“ lesbar.
 
+## 0.7.1
+
+### 🔧 Verbessert
+- Kein „Fehlversuch“ mehr: jeder Raid zählt normal
+- Raid-Meldung zeigt die erreichte Welle
+
 ## 0.7.0
 
 ### ✨ Neu

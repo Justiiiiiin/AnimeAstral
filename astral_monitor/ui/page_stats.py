@@ -109,7 +109,7 @@ class StatsPage(QWidget):
         self.table = make_table([tr("Beendet um"), tr("Raid"), tr("Endwelle"), tr("Dauer")],
                                 rights=(2, 3), widths=(140, 150, 90, 80), selectable=True)
         self.table.setToolTip(tr("Überschrift anklicken sortiert, Spaltenränder ziehen ändert die Breite. "
-                                 "✓ = bis zum Ende geschafft, ~ = geschätzte Dauer."))
+                                 "~ = geschätzte Dauer."))
         theme.track_min_height(self.table, 320)
         restore_header(self.table, "stats_runs2")
         runs.body.addWidget(self.table, 1)
@@ -259,11 +259,11 @@ class StatsPage(QWidget):
         self.k_wph.set_value(_num(s.waves_per_hour, 0))
         self.k_avg_wave.set_value(_num(s.avg_wave_all))
         self.k_best_wave.set_value(str(stats.best_wave(raid) or "–"))
-        self.details.setText(tr("Ø {dur} pro Versuch  ·  {spw} pro Welle  ·  {aph} Versuche/Std.  ·  {done}× bis zum "
-                                "Ende  ·  {all} Versuche insgesamt",
+        self.details.setText(tr("Ø {dur} pro Versuch  ·  {spw} pro Welle  ·  {aph} Versuche/Std.  ·  {all} Versuche "
+                                "insgesamt",
                                 dur=_dur(s.avg_duration_all),
                                 spw="–" if s.sec_per_wave is None else dec(f"{s.sec_per_wave:.1f} s"),
-                                aph=_num(s.attempts_per_hour), done=messages.fmt_int(s.ok),
+                                aph=_num(s.attempts_per_hour),
                                 all=messages.fmt_int(stats.snapshot().total_attempts)))
         wall = stats.wall(raid)
         self.wall_label.setVisible(wall is not None)
@@ -278,10 +278,9 @@ class StatsPage(QWidget):
         for i, rec in enumerate(self._rows):
             first = SortItem(datetime.fromtimestamp(rec.ts_end).strftime("%d.%m. %H:%M:%S"), rec.ts_end)
             first.setData(Qt.ItemDataRole.UserRole, i)                      # Verweis auf den Datensatz (für „Löschen“)
-            done = "  ✓" if rec.result == "ok" else ""
             rows.append([
                 first, SortItem(rec.raid or "–", (rec.raid or "~").lower()),
-                SortItem(f"{rec.max_wave}/{rec.total_waves}{done}", rec.max_wave, right=True),
+                SortItem(f"{rec.max_wave}/{rec.total_waves}", rec.max_wave, right=True),
                 SortItem(messages.fmt_duration_est(rec.duration_s, rec.estimated), rec.duration_s or -1, right=True)])
         self._fill(self.table, rows)
 

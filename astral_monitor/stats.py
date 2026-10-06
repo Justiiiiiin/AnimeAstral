@@ -1,4 +1,6 @@
-"""Raid-Verlauf (CSV) und Kennzahlen – erfolgreiche Raids UND Fehlversuche/Neustarts."""
+"""Raid-Verlauf (CSV) und Kennzahlen. Jeder Versuch ist ein beendeter Raid – in Anime Astral scheitert ein Raid
+nicht, man kommt nur unterschiedlich weit (jede Welle gibt Belohnungen). Alte Zeilen mit Ergebnis „abgebrochen“
+(bis 0.7.0) zählen genauso."""
 from __future__ import annotations
 
 import csv
@@ -16,7 +18,6 @@ log = logging.getLogger("stats")
 
 CSV_FIELDS = ["ts_end", "duration_s", "cycle_s", "max_wave", "total_waves", "result", "note", "raid"]
 _TS_FORMAT = "%Y-%m-%d %H:%M:%S"
-FAILED = "abgebrochen"          # Ergebnis-Wert in der CSV für Fehlversuche/Neustarts (Abwärtskompatibilität)
 
 
 @dataclass
@@ -26,7 +27,7 @@ class RunRecord:
     cycle_s: Optional[float]
     max_wave: int
     total_waves: int
-    result: str                      # "ok" | "abgebrochen" (= Fehlversuch/Neustart)
+    result: str                      # immer "ok"; ältere Dateien: "abgebrochen" – wird nicht mehr unterschieden
     note: str = ""
     raid: str = ""                   # Raid-Name aus der Profil-Erkennung
 
@@ -37,17 +38,7 @@ class RunRecord:
 
 @dataclass
 class Summary:
-    """Kennzahlen für einen Zeitraum."""
-    ok: int = 0
-    failed: int = 0
-    avg_duration: Optional[float] = None        # erfolgreiche Raids
-    best_duration: Optional[float] = None
-    avg_fail_duration: Optional[float] = None   # Fehlversuche/Neustarts
-    avg_fail_wave: Optional[float] = None       # im Schnitt erreichte Welle bei Fehlversuchen
-    avg_cycle: Optional[float] = None           # Ø Zeit pro Erfolg inkl. Fehlversuche
-    success_rate: Optional[float] = None
-    per_hour: Optional[float] = None
-    # Alle Versuche gleich behandelt (jede Welle gibt Belohnungen)
+    """Kennzahlen für einen Zeitraum – alle Versuche gleich behandelt."""
     attempts: int = 0
     waves_total: int = 0
     best_wave: int = 0
@@ -61,19 +52,13 @@ class Summary:
 @dataclass
 class StatsSnapshot:
     """Schnelle Kennzahlen für die Hauptseite und Discord."""
-    total_ok: int
-    today_ok: int
-    session_ok: int
-    session_failed: int
-    avg_duration: Optional[float]
-    best_duration: Optional[float]
-    per_hour: Optional[float]
-    success_rate: Optional[float]
-    total_attempts: int = 0
+    total_attempts: int = 0                       # inkl. Startwert (total_offset) – zugleich die Raid-Nummer
     session_attempts: int = 0
     session_waves: int = 0
     waves_per_hour: Optional[float] = None
     avg_wave: Optional[float] = None
+    avg_duration: Optional[float] = None          # letzte 50 gemessene Versuche
+    per_hour: Optional[float] = None              # Versuche pro Stunde in dieser Session
 
 
 @dataclass
@@ -182,31 +167,6 @@ class StatsStore:
     def set_offset(self, offset: int) -> None:
         self.offset = max(0, int(offset))
 
-    def failed_count(self) -> int:
-        with self._lock:
-            return sum(1 for r in self.records if r.result != "ok")
-
-    def purge_failed(self) -> int:
-        """Entfernt alle Fehlversuche dauerhaft (z. B. Testdaten)."""
-        with self._lock:
-            before = len(self.records)
-            self.records = [r for r in self.records if r.result == "ok"]
-            removed = before - len(self.records)
-            if removed:
-                self._rewrite()
-            return removed
-
-    def fails_since_last_ok(self) -> tuple[int, Optional[float]]:
-        """(Anzahl Fehlversuche seit dem letzten Erfolg, deren Ø Dauer) – vor dem Eintragen eines Erfolgs aufrufen."""
-        with self._lock:
-            durations, count = [], 0
-            for rec in reversed(self.records):
-                if rec.result == "ok":
-                    break
-                count += 1
-                durations.append(rec.duration_s)
-            return count, _mean(durations)
-
     # ------------------------------------------------------------- Kennzahlen
     def _in_range(self, since: Optional[float], raid: Optional[str] = None) -> list[RunRecord]:
         return [r for r in self.records
@@ -298,21 +258,7 @@ class StatsStore:
     def summary(self, since: Optional[float] = None, raid: Optional[str] = None) -> Summary:
         with self._lock:
             recs = self._in_range(since, raid)
-            ok = [r for r in recs if r.result == "ok"]
-            bad = [r for r in recs if r.result != "ok"]
-            s = Summary(ok=len(ok), failed=len(bad))
-            exact_ok = [r for r in ok if not r.estimated]
-            s.avg_duration = _mean(r.duration_s for r in exact_ok)
-            s.best_duration = min((r.duration_s for r in exact_ok if r.duration_s), default=None)
-            s.avg_fail_duration = _mean(r.duration_s for r in bad if not r.estimated)
-            s.avg_fail_wave = _mean(r.max_wave for r in bad) if bad else None
-            s.avg_cycle = _mean(r.cycle_s for r in ok)
-            if ok or bad:
-                s.success_rate = len(ok) / (len(ok) + len(bad))
-            if ok:                      # Rate über die tatsächlich aktive Zeit im Zeitraum
-                start = recs[0].ts_end - (recs[0].duration_s or 0)
-                hours = (recs[-1].ts_end - start) / 3600
-                s.per_hour = len(ok) / hours if hours >= 0.1 else None
+            s = Summary()
             if recs:
                 s.attempts = len(recs)
                 s.waves_total = sum(r.max_wave for r in recs)
@@ -330,39 +276,20 @@ class StatsStore:
 
     def snapshot(self) -> StatsSnapshot:
         with self._lock:
-            ok_all = [r for r in self.records if r.result == "ok"]
-            midnight = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
             session = [r for r in self.records if r.ts_end >= self.session_start]
-            session_ok = [r for r in session if r.result == "ok"]
             elapsed_h = (time.time() - self.session_start) / 3600
-            durations = [r.duration_s for r in ok_all if r.duration_s][-50:]
-            failed_all = len(self.records) - len(ok_all)
+            durations = [r.duration_s for r in self.records if r.duration_s and not r.estimated][-50:]
             span = _span_hours(session)
+            waves = sum(r.max_wave for r in session)
             return StatsSnapshot(
-                total_attempts=len(self.records),
+                total_attempts=self.offset + len(self.records),
                 session_attempts=len(session),
-                session_waves=sum(r.max_wave for r in session),
-                waves_per_hour=(sum(r.max_wave for r in session) / span) if span >= 0.1 else None,
-                avg_wave=(sum(r.max_wave for r in session) / len(session)) if session else None,
-                total_ok=self.offset + len(ok_all),
-                today_ok=sum(1 for r in ok_all if r.ts_end >= midnight),
-                session_ok=len(session_ok),
-                session_failed=len(session) - len(session_ok),
+                session_waves=waves,
+                waves_per_hour=(waves / span) if span >= 0.1 else None,
+                avg_wave=(waves / len(session)) if session else None,
                 avg_duration=sum(durations) / len(durations) if durations else None,
-                best_duration=min((r.duration_s for r in ok_all if r.duration_s), default=None),
-                per_hour=len(session_ok) / elapsed_h if elapsed_h >= 5 / 60 else None,
-                success_rate=len(ok_all) / (len(ok_all) + failed_all) if self.records else None,
+                per_hour=len(session) / elapsed_h if elapsed_h >= 5 / 60 else None,
             )
-
-    def hourly(self, hours: int = 10, raid: Optional[str] = None) -> list[tuple[int, int]]:
-        """[(Stunde 0-23, erfolgreiche Raids)] für die letzten `hours` Stunden."""
-        now = datetime.now().replace(minute=0, second=0, microsecond=0)
-        starts = [(now.timestamp() - i * 3600) for i in range(hours - 1, -1, -1)]
-        with self._lock:
-            return [(datetime.fromtimestamp(st).hour,
-                     sum(1 for r in self.records if r.result == "ok" and st <= r.ts_end < st + 3600
-                         and (raid is None or (r.raid or "Unbekannt") == raid)))
-                    for st in starts]
 
     def hourly_waves(self, hours: int = 10, raid: Optional[str] = None) -> list[tuple[int, int]]:
         """[(Stunde 0-23, geschaffte Wellen)] für die letzten `hours` Stunden."""
@@ -382,18 +309,13 @@ class StatsStore:
                 groups.setdefault(rec.raid or "Unbekannt", []).append(rec)
             out = []
             for name, recs in groups.items():
-                ok = [r for r in recs if r.result == "ok"]
-                bad = [r for r in recs if r.result != "ok"]
                 waves = [r.max_wave for r in recs]
                 exact_all = [r for r in recs if r.duration_s and not r.estimated]
                 hours = _span_hours(recs)
-                out.append({"raid": name, "ok": len(ok), "failed": len(bad), "attempts": len(recs),
-                            "waves_total": sum(waves), "avg_duration_all": _mean(r.duration_s for r in exact_all),
+                avg = _mean(r.duration_s for r in exact_all)
+                out.append({"raid": name, "attempts": len(recs), "waves_total": sum(waves),
+                            "avg_duration_all": avg, "avg": avg,
                             "waves_per_hour": (sum(waves) / hours) if hours >= 0.1 else None,
-                            "avg": _mean(r.duration_s for r in ok if not r.estimated),
-                            "avg_fail": _mean(r.duration_s for r in bad if not r.estimated),
-                            "best": min((r.duration_s for r in ok if r.duration_s and not r.estimated),
-                                        default=None),
                             "best_wave": max(waves), "avg_wave": sum(waves) / len(waves)})
             out.sort(key=lambda d: (-d["attempts"], d["raid"]))
             return out

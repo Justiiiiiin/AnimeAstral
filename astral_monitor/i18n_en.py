@@ -178,9 +178,6 @@ EN: dict[str, str] = {
     "Erstellt mit Anime Astral Monitor": "Created with Anime Astral Monitor",
     "Fehler: {error}": "Error: {error}",
     "Fehlgeschlagen: {error}": "Failed: {error}",
-    "Fehlversuch / Neustart": "Failed attempt / restart",
-    "Fehlversuch bei Welle {wave}/{total} · {time}": "Failed attempt at wave {wave}/{total} · {time}",
-    "Fehlversuche davor": "Failed attempts before",
     "Fenster „{title}“ gefunden": "Window “{title}” found",
     "Fenster „{title}“ nicht gefunden": "Window “{title}” not found",
     "Fenster „{title}“ nicht gefunden. Ist Roblox gestartet?": "Window “{title}” not found. Is Roblox running?",
@@ -205,7 +202,6 @@ EN: dict[str, str] = {
     "Grenze": "Limit",
     "Hoher Speicherverbrauch": "High memory usage",
     "Hotkey {name}: {error}": "Hotkey {name}: {error}",
-    "Höchste Welle": "Highest wave",
     "Im Update-Paket fehlt {file}.": "{file} is missing in the update package.",
     "In dieser Version ist keine Update-Quelle hinterlegt. Die automatische Prüfung gibt es in der installierten Version "
     "(Download von GitHub).":
@@ -298,13 +294,9 @@ EN: dict[str, str] = {
     "Quests testen": "Test quests",
     "Raid": "Raid",
     "Raid beendet": "Raid finished",
-    "Raid beendet (spät erkannt) · #{count}": "Raid finished (detected late) · #{count}",
-    "Raid beendet · #{count}": "Raid finished · #{count}",
-    "Raid erfolgreich beendet!": "Raid completed!",
     "Raid: {name}": "Raid: {name}",
     "Raids": "Raids",
     "Raids laufen wieder": "Raids are running again",
-    "Raids pro Stunde": "Raids per hour",
     "Roblox": "Roblox",
     "Roblox RAM": "Roblox RAM",
     "Roblox beendet / Disconnect": "Roblox closed / disconnect",
@@ -435,7 +427,6 @@ EN: dict[str, str] = {
         "Drag a rectangle around the whole quest list (titles and progress bars).",
     "Zuletzt: {event}": "Last: {event}",
     "Zurück": "Back",
-    "Zykluszeit": "Cycle time",
     "Zähler": "Counter",
     "Zähler gefunden: {value}/{total} ✓": "Counter found: {value}/{total} ✓",
     "Zähler läuft wieder": "Counter is moving again",
@@ -616,14 +607,6 @@ EN: dict[str, str] = {
     # Statistik vereinfacht (0.6.5)
     "Dauer-Werte nutzen nur gemessene Zeiten; geschätzte (mit ~) fließen nicht ein.":
         "Durations only use measured times; estimates (marked ~) are not included.",
-    "Überschrift anklicken sortiert, Spaltenränder ziehen ändert die Breite. ✓ = bis zum Ende geschafft, ~ = "
-    "geschätzte Dauer.":
-        "Click a header to sort, drag column borders to change the width. ✓ = reached the end, ~ = estimated "
-        "duration.",
-    "Ø {dur} pro Versuch  ·  {spw} pro Welle  ·  {aph} Versuche/Std.  ·  {done}× bis zum Ende  ·  {all} Versuche "
-    "insgesamt":
-        "Avg. {dur} per attempt  ·  {spw} per wave  ·  {aph} attempts/h  ·  {done}× to the end  ·  {all} attempts "
-        "in total",
     # Design „Astral“, Darstellung (0.6.5)
     "Darstellung": "Appearance",
     "Eigener Wert von {min} bis {max} %": "Custom value from {min} to {max} %",
@@ -678,14 +661,6 @@ EN: dict[str, str] = {
     "nach einem Neustart der Überwachung. Wechselst du zwischen Vollbild und Fenstermodus, die Bereiche neu auswählen.":
         "“Automatic” uses window capture (Roblox may be covered), otherwise the screen. Changes apply after "
         "restarting monitoring. If you switch between fullscreen and windowed mode, select the areas again.",
-    "Bereich großzügig wählen (z. B. die ganze obere Mitte) – das Programm findet „Wave x/100“ darin selbst, auch im "
-    "Fenstermodus.\n\nAuslöser 1 = Raid zählt ab 99/100 (auch 100/100). Bestätigungen = so oft wird der Wert frisch "
-    "gelesen, bevor der Raid zählt (2 empfohlen). Sperrzeit = Mindestabstand zwischen zwei gezählten Raids.\n\n"
-    "Fehlversuche und Neustarts landen automatisch in der Statistik.":
-        "Choose the area generously (e.g. the whole upper middle) – the program finds “Wave x/100” in it itself, "
-        "also in windowed mode.\n\nTrigger 1 = the raid counts from 99/100 (100/100 too). Confirmations = how often "
-        "the value is read fresh before the raid counts (2 recommended). Cooldown = minimum time between two counted "
-        "raids.\n\nFailed attempts and restarts go into the statistics automatically.",
     "Wähle als Bereich die ganze Quest-Liste mit Titeln und Fortschrittsbalken. Der Fortschritt erscheint auf der "
     "Startseite und in den Discord-Meldungen.":
         "Select the whole quest list with titles and progress bars. The progress appears on the start page and in "
@@ -801,4 +776,20 @@ EN: dict[str, str] = {
     "neu": "new",
     # Design Nebula (0.7.0)
     "Nebula": "Nebula",
+    # Keine Fehlversuche mehr (0.7.1)
+    "Raid beendet · Welle {wave}/{total}": "Raid finished · wave {wave}/{total}",
+    "Versuche pro Stunde": "Attempts per hour",
+    "Raid beendet · #{count} · Welle {wave}/{total}": "Raid finished · #{count} · wave {wave}/{total}",
+    "Bereich großzügig wählen (z. B. die ganze obere Mitte) – das Programm findet „Wave x/100“ darin selbst, auch im "
+    "Fenstermodus.\n\nAuslöser 1 = Raid zählt ab 99/100 (auch 100/100). Bestätigungen = so oft wird der Wert frisch "
+    "gelesen, bevor der Raid zählt (2 empfohlen). Sperrzeit = Mindestabstand zwischen zwei gezählten Raids.\n\n"
+    "Endet ein Raid vor Welle 100, zählt er ganz normal mit der erreichten Welle.":
+        "Choose the area generously (e.g. the whole upper middle) – the program finds “Wave x/100” in it itself, "
+        "also in windowed mode.\n\nTrigger 1 = the raid counts from 99/100 (100/100 too). Confirmations = how often "
+        "the value is read fresh before the raid counts (2 recommended). Cooldown = minimum time between two counted "
+        "raids.\n\nIf a raid ends before wave 100, it counts normally with the wave reached.",
+    "Überschrift anklicken sortiert, Spaltenränder ziehen ändert die Breite. ~ = geschätzte Dauer.":
+        "Click a header to sort, drag column borders to change the width. ~ = estimated duration.",
+    "Ø {dur} pro Versuch  ·  {spw} pro Welle  ·  {aph} Versuche/Std.  ·  {all} Versuche insgesamt":
+        "Avg. {dur} per attempt  ·  {spw} per wave  ·  {aph} attempts/h  ·  {all} attempts in total",
 }

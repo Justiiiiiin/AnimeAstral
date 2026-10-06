@@ -3,7 +3,7 @@
 Texte stehen im Code auf Deutsch und werden mit tr() übersetzt; die englischen Fassungen liegen in i18n_en.py
 (Schlüssel = deutscher Text). Platzhalter wie {wave} werden nach dem Übersetzen eingesetzt:
 
-    tr("Fehlversuch bei Welle {wave}", wave=29)
+    tr("Raid beendet · Welle {wave}", wave=29)
 
 tests/test_i18n.py prüft, dass jeder tr()-Text eine englische Übersetzung hat. Die Sprache wird beim Start gesetzt;
 ein Wechsel gilt nach einem Neustart. Protokoll (monitor.log) bleibt Deutsch.

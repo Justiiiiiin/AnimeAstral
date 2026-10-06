@@ -70,8 +70,8 @@ class DetectPage(QWidget):
                     tr("Bereich großzügig wählen (z. B. die ganze obere Mitte) – das Programm findet „Wave "
                        "x/100“ darin selbst, auch im Fenstermodus.\n\nAuslöser 1 = Raid zählt ab 99/100 (auch "
                        "100/100). Bestätigungen = so oft wird der Wert frisch gelesen, bevor der Raid zählt (2 "
-                       "empfohlen). Sperrzeit = Mindestabstand zwischen zwei gezählten Raids.\n\nFehlversuche "
-                       "und Neustarts landen automatisch in der Statistik."))
+                       "empfohlen). Sperrzeit = Mindestabstand zwischen zwei gezählten Raids.\n\nEndet ein Raid "
+                       "vor Welle 100, zählt er ganz normal mit der erreichten Welle."))
         row = QHBoxLayout()
         self.lbl_wave_roi = label("")
         row.addWidget(self.lbl_wave_roi, 1)

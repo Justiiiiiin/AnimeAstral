@@ -110,7 +110,7 @@ class RaidsPage(QWidget):
             return
         self.sel_title.setText(name)
         summary = self.engine.stats.summary(None, name)
-        attempts = summary.ok + summary.failed
+        attempts = summary.attempts
         best = self.engine.stats.best_wave(name)
         self.sel_stats.setText(tr("{attempts} Versuche · Bestwelle {best} · Ø Endwelle {avg}",
                                   attempts=messages.fmt_int(attempts), best=best or "–",
