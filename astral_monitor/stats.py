@@ -76,6 +76,19 @@ class StatsSnapshot:
     avg_wave: Optional[float] = None
 
 
+@dataclass
+class Wall:
+    """„Wand“: die Welle, an der die meisten der letzten Versuche eines Raids enden (z. B. eine Boss-Welle)."""
+    wave: int
+    streak: int          # so viele Versuche in Folge sind nicht darüber hinausgekommen
+    share: float         # Anteil der letzten Versuche, die genau dort enden
+
+
+WALL_RECENT = 20         # betrachtete letzte Versuche
+WALL_MIN_RUNS = 8        # erst ab so vielen Versuchen von einer Wand sprechen
+WALL_SHARE = 0.6         # so viele davon müssen an derselben Welle enden
+
+
 def _span_hours(recs: list) -> float:
     """Aktive Zeit vom Start des ersten bis zum Ende des letzten Versuchs (in Stunden)."""
     if not recs:
@@ -210,6 +223,28 @@ class StatsStore:
     def best_wave(self, raid: Optional[str] = None) -> int:
         with self._lock:
             return max((r.max_wave for r in self._in_range(None, raid)), default=0)
+
+    def wall(self, raid: Optional[str]) -> Optional[Wall]:
+        """Wand eines Raids (nur je Raid sinnvoll, nicht über alle Raids gemischt)."""
+        if not raid or raid == "Unbekannt":            # nicht erkannte Läufe sind verschiedene Raids gemischt
+            return None
+        with self._lock:
+            recs = self._in_range(None, raid)
+        recent = recs[-WALL_RECENT:]
+        if len(recent) < WALL_MIN_RUNS:
+            return None
+        counts: dict[int, int] = {}
+        for r in recent:
+            counts[r.max_wave] = counts.get(r.max_wave, 0) + 1
+        wave, n = max(counts.items(), key=lambda kv: (kv[1], kv[0]))
+        if n / len(recent) < WALL_SHARE or any(r.max_wave >= r.total_waves for r in recent[-3:] if r.total_waves):
+            return None
+        streak = 0
+        for r in reversed(recs):
+            if r.max_wave > wave:
+                break
+            streak += 1
+        return Wall(wave, streak, n / len(recent)) if streak else None   # gerade durchbrochen: keine Wand
 
     def attempts(self, raid: Optional[str] = None) -> int:
         with self._lock:

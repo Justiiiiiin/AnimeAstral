@@ -11,6 +11,7 @@ from typing import Callable, Optional
 import requests
 
 from . import app_paths, build_info
+from .i18n import tr
 from .settings import Settings
 
 log = logging.getLogger("presence")
@@ -84,12 +85,13 @@ def build_activity(settings: Settings, snap: dict, icon_url: Optional[str] = Non
         return None
     profile = snap.get("profile") or ""
     if snap.get("wave") is not None and snap.get("total_waves"):
-        details = f"Welle {snap['wave']}/{snap['total_waves']}" + (f" · {profile}" if profile else "")
+        details = tr("Welle {wave}/{total}", wave=snap["wave"], total=snap["total_waves"]) + (f" · {profile}" if profile else "")
     else:
-        details = "Wartet auf den nächsten Raid" + (" (pausiert)" if snap.get("status") == "paused" else "")
-    state = f"Versuche {snap.get('session_attempts', 0)} · Wellen {snap.get('session_waves', 0)}"
+        details = tr("Wartet auf den nächsten Raid") + (tr(" (pausiert)") if snap.get("status") == "paused" else "")
+    state = tr("Versuche {attempts} · Wellen {waves}", attempts=snap.get("session_attempts", 0),
+                   waves=snap.get("session_waves", 0))
     if snap.get("best_wave"):
-        state += f" · Bestwelle {snap['best_wave']}"
+        state += " · " + tr("Bestwelle {wave}", wave=snap["best_wave"])
     activity = {"details": details[:128], "state": state[:128]}
     if icon_url:
         activity["large_image"] = icon_url
@@ -102,12 +104,12 @@ def build_activity(settings: Settings, snap: dict, icon_url: Optional[str] = Non
 def explain_error(exc: BaseException) -> str:
     name = exc.__class__.__name__
     if isinstance(exc, ImportError):
-        return "Das Paket „pypresence“ fehlt in dieser Programmversion."
+        return tr("Das Paket „pypresence“ fehlt in dieser Programmversion.")
     if name == "DiscordNotFound":
-        return "Die Discord-Desktop-App wurde nicht gefunden – bitte Discord am PC starten (nicht im Browser)."
+        return tr("Die Discord-Desktop-App wurde nicht gefunden – bitte Discord am PC starten (nicht im Browser).")
     if name in ("InvalidID", "InvalidPipe"):
-        return "Discord akzeptiert die Anwendungs-ID nicht."
-    return f"Verbindung zu Discord nicht möglich ({name})."
+        return tr("Discord akzeptiert die Anwendungs-ID nicht.")
+    return tr("Verbindung zu Discord nicht möglich ({error}).", error=name)
 
 
 class PresenceUpdater(threading.Thread):
@@ -123,7 +125,7 @@ class PresenceUpdater(threading.Thread):
         self._last_update_at = -1e9
         self._next_try = 0.0
         self._icon: tuple[Optional[int], Optional[str], float] = (None, None, -1e9)
-        self.status_text = "Aus"
+        self.status_text = tr("Aus")
         self.status_ok = False
 
     def stop(self) -> None:
@@ -184,17 +186,17 @@ class PresenceUpdater(threading.Thread):
         cid = client_id(s)
         if not s.rpc_enabled:
             self._drop()
-            self.status_text, self.status_ok = "Aus", False
+            self.status_text, self.status_ok = tr("Aus"), False
             return
         if not cid:
             self._drop()
-            self.status_text, self.status_ok = "Bitte unten deine eigene Discord-Anwendungs-ID eintragen.", False
+            self.status_text, self.status_ok = tr("Bitte unten deine eigene Discord-Anwendungs-ID eintragen."), False
             return
         snap = self._snapshot()
         activity = build_activity(s, snap, self._icon_url(s, now) if snap.get("status") != "stopped" else None)
         if activity is None:
             self._drop()
-            self.status_text, self.status_ok = "Bereit – wird angezeigt, sobald die Überwachung läuft.", True
+            self.status_text, self.status_ok = tr("Bereit – wird angezeigt, sobald die Überwachung läuft."), True
             return
         if self._rpc is None:
             if now < self._next_try:
@@ -216,4 +218,4 @@ class PresenceUpdater(threading.Thread):
                 log.info("Discord-Profilstatus getrennt: %s", exc.__class__.__name__)
                 self._drop()
                 return
-        self.status_text, self.status_ok = "Verbunden ✓ – wird in deinem Discord-Profil angezeigt.", True
+        self.status_text, self.status_ok = tr("Verbunden ✓ – wird in deinem Discord-Profil angezeigt."), True

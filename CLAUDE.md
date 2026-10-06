@@ -14,15 +14,19 @@ aktualisierende Statusnachricht, Statistik-Karten). Sie **sendet nie Eingaben** 
 greift nicht in den Roblox-Prozess ein – das ist eine bewusste Grenze, bitte beibehalten.
 
 Benutzer ist der Eigentümer (Deutsch, Windows 11); Freunde sollen es später ebenfalls nutzen („full release 1.0.0“).
-**Alle Texte in der Oberfläche, in Meldungen und in der Dokumentation sind Deutsch.** Code, Kommentare und Docstrings
-ebenfalls Deutsch (so ist der Bestand), Bezeichner englisch.
+**Oberfläche und Meldungen gibt es auf Deutsch und Englisch** (Einstellungen → Oberfläche, gilt nach Neustart):
+Texte stehen im Code auf Deutsch und laufen durch `tr()` aus `i18n.py` (Platzhalter: `tr("Welle {wave}", wave=3)`);
+Texte in Listen/Konstanten mit `N_()` markieren und bei der Anzeige `tr()` anwenden; Zahlen mit `i18n.dec()`/
+`thousands()`. Englisch in `i18n_en.py`. **`tests/test_i18n.py` schlägt fehl, wenn ein Text keine Übersetzung hat**
+– neue Texte also immer mit `tr()` schreiben und übersetzen. Protokoll (monitor.log), Code, Kommentare und Doku
+bleiben Deutsch, Bezeichner englisch.
 
 ## Befehle
 
 ```
 pip install -r requirements.txt           # Windows; windows-capture nur dort
 python run.py                             # Programm starten (Oberfläche)
-python -m unittest discover -s tests -v   # 43 Tests, ohne Qt/Tesseract/Netz lauffähig
+.venv\Scripts\python.exe -m unittest discover -s tests -v   # 63 Tests, ohne Qt/Tesseract/Netz lauffähig
 python -m astral_monitor.selftest bild.png   # Erkennung an einem Screenshot prüfen (braucht Tesseract)
 python build_exe.py [--no-zip] [--no-bundle-tesseract]   # EXE (PyInstaller, Ordner-Variante) + Tesseract bündeln
 ```
@@ -50,11 +54,22 @@ nutzen das). Dort: `settings.json`, `raid_history.csv`, `monitor.log`, `profiles
 | `updater.py` | Update-Prüfung über GitHub-Releases, Download mit SHA256-Prüfung, leiser Installer-Start |
 | `ocr.py` | Tesseract-Anbindung; **mitgeliefertes** Tesseract (`tesseract/` neben der EXE) hat Vorrang |
 | `settings.py` | `Settings`-Dataclass (JSON), `Roi`, Ereignis-Definitionen, Migration über `settings_version` |
+| `i18n.py`, `i18n_en.py` | Sprache: `tr()`, `N_()`, Zahlenformat; englische Texte |
 | `hotkeys.py`, `winapi.py`, `imaging.py`, `diagnostics.py`, `app_paths.py` | Hilfen (globale Hotkeys per `RegisterHotKey`, Fenstersuche per ctypes, Bildverarbeitung, Diagnose-ZIP, Pfade) |
 | `ui/` | PySide6-Oberfläche: `main_window.py` (Seitenleiste, Hotkeys, Update-Start, Assistent), Seiten `page_*.py`, `wizard.py` (Einrichtung), `update_dialog.py`, `widgets.py` (Bausteine, **Tabellen** `make_table`/`SortItem`), `theme.py` (dunkles QSS) |
 
 Wichtige Entwurfsentscheidungen:
 
+- **Oberfläche skaliert mit der Fenstergröße** (Entwurf 1180 × 800 = Faktor 1, 0,7–1,3): `theme.set_scale()` rechnet
+  alle px/pt im Stylesheet um; feste Größen im Code nur über `theme.track_margins/_spacing/_min_height/_fixed_width …`
+  (nie direkt `setMinimumHeight(320)` o. Ä.). Das Hauptfenster setzt den Faktor 150 ms nach dem Größenändern.
+- **Infobereich (Tray):** Fenster schließen = im Hintergrund weiterlaufen (Einstellung `close_to_tray`), Beenden über
+  das Tray-Menü. Ein zweiter Programmstart schreibt `show.request` in den Datenordner und beendet sich; die laufende
+  Instanz zeigt dann ihr Fenster. Kein Autostart (Wunsch des Eigentümers).
+- **Wand:** `StatsStore.wall(raid)` – die Welle, an der ≥ 60 % der letzten 20 Versuche eines Raids enden (z. B. Boss);
+  angezeigt in Überwachung/Statistik/Statusnachricht, Meldung „Wand durchbrochen“ (Ereignis `wall`).
+- **Profil-Pakete** (`.astralpack`): alle Raids in einer Datei; beim Import werden vorhandene Raids übersprungen
+  (doppelte Profile stören die Erkennung).
 - **Engine und Oberfläche sind getrennt.** Die Engine läuft in einem Thread; die Oberfläche liest `engine.state` per Timer und
   Ereignisse aus `engine.events`. Widgets nur im GUI-Thread anfassen (`MainWindow.post(callable)` für Rückrufe aus Threads).
 - **Statistik zählt alle Versuche gleich** (der Eigentümer bekommt pro Welle Belohnungen). Kein „erfolgreich/Fehlversuch“ mehr

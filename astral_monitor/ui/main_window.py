@@ -9,12 +9,13 @@ import threading
 import time
 from typing import Callable, Optional
 
-from PySide6.QtCore import QEvent, QLockFile, Qt, QTimer
+from PySide6.QtCore import QEvent, QLibraryInfo, QLockFile, QProcess, Qt, QTimer, QTranslator
 from PySide6.QtGui import QIcon
-from PySide6.QtWidgets import (QApplication, QButtonGroup, QFrame, QHBoxLayout, QMainWindow,
-                               QMessageBox, QPushButton, QStackedWidget, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QApplication, QButtonGroup, QFrame, QHBoxLayout, QMainWindow, QMenu,
+                               QMessageBox, QPushButton, QStackedWidget, QSystemTrayIcon, QVBoxLayout, QWidget)
 
-from .. import app_paths, messages, winapi
+from .. import app_paths, i18n, messages, winapi
+from ..i18n import tr
 from ..version import __version__
 from ..engine import Engine, EngineError
 from ..hotkeys import HotkeyListener
@@ -39,7 +40,11 @@ class MainWindow(QMainWindow):
         self._status_key = None
         self.setWindowTitle(f"Anime Astral Monitor {__version__}")
         self.resize(1180, 800)
-        self.setMinimumSize(980, 680)
+        self.setMinimumSize(760, 520)              # kleiner geht, weil die Oberfläche mitskaliert (theme.set_scale)
+        self._scale_timer = QTimer(self)
+        self._scale_timer.setSingleShot(True)
+        self._scale_timer.setInterval(150)         # erst nach dem Ziehen neu skalieren (flüssig)
+        self._scale_timer.timeout.connect(self._apply_scale)
 
         central = QWidget()
         root = QHBoxLayout(central)
@@ -48,17 +53,17 @@ class MainWindow(QMainWindow):
 
         sidebar = QFrame()
         sidebar.setObjectName("sidebar")
-        sidebar.setFixedWidth(208)
+        theme.track_fixed_width(sidebar, 208)
         side = QVBoxLayout(sidebar)
-        side.setContentsMargins(12, 22, 12, 16)
-        side.setSpacing(4)
-        side.addWidget(label("Astral Monitor", "h2"))
+        theme.track_margins(side, 12, 22, 12, 16)
+        theme.track_spacing(side, 4)
+        side.addWidget(label(tr("Astral Monitor"), "h2"))
         side.addSpacing(14)
 
         self.stack = QStackedWidget()
         self.pages = [MonitorPage(self), StatsPage(self), AlertsPage(self), RaidsPage(self),
                       DetectPage(self), SettingsPage(self)]
-        names = ["Überwachung", "Statistik", "Meldungen", "Raids", "Erkennung", "Einstellungen"]
+        names = [tr("Überwachung"), tr("Statistik"), tr("Meldungen"), tr("Raids"), tr("Erkennung"), tr("Einstellungen")]
         self.nav = QButtonGroup(self)
         self.nav.setExclusive(True)
         for i, (name, page) in enumerate(zip(names, self.pages)):
@@ -77,9 +82,9 @@ class MainWindow(QMainWindow):
         self.status_box = QFrame()
         self.status_box.setObjectName("statusbox")
         box = QVBoxLayout(self.status_box)
-        box.setContentsMargins(12, 10, 12, 10)
-        box.setSpacing(2)
-        self.status_title = label("Gestoppt", "muted")
+        theme.track_margins(box, 12, 10, 12, 10)
+        theme.track_spacing(box, 2)
+        self.status_title = label(tr("Gestoppt"), "muted")
         self.status_sub = label("", "small")
         box.addWidget(self.status_title)
         box.addWidget(self.status_sub)
@@ -112,6 +117,60 @@ class MainWindow(QMainWindow):
         self.trim_timer.timeout.connect(winapi.trim_memory)
         self.trim_timer.start()
         QTimer.singleShot(30_000, winapi.trim_memory)
+        self._quitting = False
+        self._tray_hint_shown = False
+        self.tray = self._setup_tray()
+        show_request_file().unlink(missing_ok=True)          # Rest eines früheren Laufs
+
+    # --------------------------------------------------------------- Infobereich (Tray)
+    def _setup_tray(self) -> Optional[QSystemTrayIcon]:
+        """Symbol neben der Uhr: Fenster schließen = im Hintergrund weiterlaufen (kein Autostart)."""
+        if not QSystemTrayIcon.isSystemTrayAvailable():
+            return None
+        tray = QSystemTrayIcon(self.windowIcon() if not self.windowIcon().isNull()
+                               else QApplication.windowIcon(), self)
+        menu = QMenu(self)
+        menu.addAction(tr("Öffnen"), self.show_from_tray)
+        self.tray_toggle = menu.addAction(tr("Überwachung starten"), self.toggle_monitoring)
+        self.tray_pause = menu.addAction(tr("Pause"), self.toggle_pause)
+        menu.addSeparator()
+        menu.addAction(tr("Beenden"), self.quit_app)
+        menu.aboutToShow.connect(self._update_tray_menu)
+        tray.setContextMenu(menu)
+        tray.activated.connect(lambda reason: self.show_from_tray()
+                               if reason in (QSystemTrayIcon.ActivationReason.DoubleClick,
+                                             QSystemTrayIcon.ActivationReason.Trigger) else None)
+        tray.setToolTip(f"Anime Astral Monitor {__version__}")
+        tray.show()
+        return tray
+
+    def _update_tray_menu(self) -> None:
+        running = self.engine.running
+        self.tray_toggle.setText(tr("Überwachung stoppen") if running else tr("Überwachung starten"))
+        self.tray_pause.setEnabled(running)
+        self.tray_pause.setText(tr("Fortsetzen") if self.engine.state.paused else tr("Pause"))
+
+    def show_from_tray(self) -> None:
+        self.showNormal()
+        self.raise_()
+        self.activateWindow()
+
+    def quit_app(self) -> None:
+        """Wirklich beenden (aus dem Tray-Menü)."""
+        self._quitting = True
+        self.show_from_tray() if self.engine.running else None     # Rückfrage braucht ein sichtbares Fenster
+        self.close()
+
+    def resizeEvent(self, event) -> None:
+        super().resizeEvent(event)
+        self._scale_timer.start()
+
+    def _apply_scale(self) -> None:
+        """Schrift, Abstände und feste Größen passend zur Fenstergröße (0,7–1,3 des Entwurfs 1180 × 800)."""
+        if self.isMinimized():
+            return
+        if theme.set_scale(QApplication.instance(), theme.factor_for(self.width(), self.height())):
+            self._status_key = None                 # Statusfeld neu zeichnen
 
     def changeEvent(self, event) -> None:
         super().changeEvent(event)
@@ -125,7 +184,7 @@ class MainWindow(QMainWindow):
             for page in self.pages:
                 page.apply(s)
         except ValueError as exc:
-            QMessageBox.warning(self, "Ungültige Eingabe", str(exc))
+            QMessageBox.warning(self, tr("Ungültige Eingabe"), str(exc))
             return None
         return s
 
@@ -142,18 +201,31 @@ class MainWindow(QMainWindow):
             return False
         error = s.validate_detection()
         if error:
-            QMessageBox.warning(self, "Einstellungen", error)
+            QMessageBox.warning(self, tr("Einstellungen"), error)
             return False
         self.engine.apply_settings(s)
         try:
             s.save()
         except OSError as exc:
-            QMessageBox.critical(self, "Speichern", f"Konnte nicht speichern: {exc}")
+            QMessageBox.critical(self, tr("Speichern"), tr("Konnte nicht speichern: {error}", error=exc))
             return False
         self._setup_hotkeys()
         if show_message:
-            self.show_toast("Gespeichert ✓")
+            self.show_toast(tr("Gespeichert ✓"))
+        if s.language != i18n.language() and show_message:
+            answer = QMessageBox.question(self, tr("Sprache / Language"),
+                                          tr("Die Sprache wird nach einem Neustart des Programms umgestellt. "
+                                             "Jetzt neu starten?"))
+            if answer == QMessageBox.StandardButton.Yes:
+                self.restart_app()
         return True
+
+    def restart_app(self) -> None:
+        """Programm neu starten (z. B. nach Sprachwechsel); die neue Instanz wartet, bis diese beendet ist."""
+        args = sys.argv[1:] if getattr(sys, "frozen", False) else sys.argv
+        QProcess.startDetached(sys.executable, [a for a in args if a != "--restart"] + ["--restart"])
+        self._quitting = True
+        self.close()
 
     def _setup_hotkeys(self) -> None:
         s = self.engine.settings
@@ -164,19 +236,19 @@ class MainWindow(QMainWindow):
         if self._hotkeys is not None:
             self._hotkeys.stop()
         listener = HotkeyListener({
-            "Start/Stopp": (s.hotkey_toggle, lambda: self.post(self.toggle_monitoring)),
-            "Pause": (s.hotkey_pause, lambda: self.post(self.toggle_pause)),
-            "Status neu senden": (s.hotkey_status, lambda: self.post(self.resend_status)),
+            tr("Start/Stopp"): (s.hotkey_toggle, lambda: self.post(self.toggle_monitoring)),
+            tr("Pause"): (s.hotkey_pause, lambda: self.post(self.toggle_pause)),
+            tr("Status neu senden"): (s.hotkey_status, lambda: self.post(self.resend_status)),
         })
         listener.start()
         listener.ready.wait(2.0)
         self._hotkeys = listener
         page = self.pages[5]
         if listener.failed:
-            page.set_hotkey_status("Nicht registriert: " + "; ".join(listener.failed), False)
+            page.set_hotkey_status(tr("Nicht registriert: {keys}", keys="; ".join(listener.failed)), False)
         else:
-            page.set_hotkey_status(f"Aktiv: {s.hotkey_toggle} (Start/Stopp), {s.hotkey_pause} (Pause), "
-                                   f"{s.hotkey_status} (Status neu senden)", True)
+            page.set_hotkey_status(tr("Aktiv: {toggle} (Start/Stopp), {pause} (Pause), {status} (Status neu senden)",
+                                      toggle=s.hotkey_toggle, pause=s.hotkey_pause, status=s.hotkey_status), True)
 
     def create_diagnostics(self) -> None:
         from PySide6.QtCore import QUrl
@@ -190,13 +262,13 @@ class MainWindow(QMainWindow):
         try:
             path = build_report(self.engine, dest)
         except Exception as exc:
-            QMessageBox.critical(self, "Diagnose", f"Das Paket konnte nicht erstellt werden:\n{exc}")
+            QMessageBox.critical(self, tr("Diagnose"), tr("Das Paket konnte nicht erstellt werden:\n{error}", error=exc))
             return
         finally:
             self.unsetCursor()
-        QMessageBox.information(self, "Diagnose-Paket erstellt",
-                                f"Gespeichert:\n{path}\n\nDie Datei enthält Protokoll, Wertverlauf, Einstellungen "
-                                "(ohne Webhook) und einen Screenshot des Roblox-Fensters.")
+        QMessageBox.information(self, tr("Diagnose-Paket erstellt"),
+                                tr("Gespeichert:\n{path}\n\nDie Datei enthält Protokoll, Wertverlauf, Einstellungen "
+                                   "(ohne Webhook) und einen Screenshot des Roblox-Fensters.", path=path))
         QDesktopServices.openUrl(QUrl.fromLocalFile(str(path.parent)))
 
     def show_toast(self, text: str) -> None:
@@ -222,7 +294,7 @@ class MainWindow(QMainWindow):
         try:
             self.engine.start()
         except EngineError as exc:
-            QMessageBox.critical(self, "Start nicht möglich", str(exc))
+            QMessageBox.critical(self, tr("Start nicht möglich"), str(exc))
         finally:
             self.unsetCursor()
 
@@ -233,18 +305,18 @@ class MainWindow(QMainWindow):
     def resend_status(self) -> None:
         s = self.engine.settings
         if not s.status_enabled or not is_valid_webhook(s.webhook_url):
-            QMessageBox.information(self, "Live-Status", "Die Live-Statusnachricht ist nicht aktiv. Webhook eintragen und "
-                                                         "unter „Meldungen“ aktivieren.")
+            QMessageBox.information(self, tr("Live-Status"), tr("Die Live-Statusnachricht ist nicht aktiv. Webhook eintragen und "
+                                                         "unter „Meldungen“ aktivieren."))
             return
         self.engine.resend_status()
-        self.show_toast("Status wird neu gesendet …")
+        self.show_toast(tr("Status wird neu gesendet …"))
 
     def test_webhook(self, url: str, done: Callable[[bool, str], None]) -> None:
         """Sendet eine Test-Nachricht im Hintergrund; `done(ok, info)` läuft danach im GUI-Thread."""
         tmp = copy.deepcopy(self.engine.settings)
         tmp.webhook_url = url
-        payload, _files = messages.build_message(tmp, "start_stop", "🔔 Test-Nachricht", messages.COLOR_INFO,
-                                                 [("Status", "Verbindung zum Webhook funktioniert.", False)])
+        payload, _files = messages.build_message(tmp, "start_stop", tr("🔔 Test-Nachricht"), messages.COLOR_INFO,
+                                                 [(tr("Status"), tr("Verbindung zum Webhook funktioniert."), False)])
 
         def work() -> None:
             ok, info = DiscordSender(lambda: tmp).send_now(payload)
@@ -262,9 +334,9 @@ class MainWindow(QMainWindow):
         repo = updater.current_repo()
         if not repo:
             if manual:
-                QMessageBox.information(self, "Updates", "In dieser Version ist keine Update-Quelle hinterlegt. Die "
+                QMessageBox.information(self, tr("Updates"), tr("In dieser Version ist keine Update-Quelle hinterlegt. Die "
                                                          "automatische Prüfung gibt es in der installierten Version "
-                                                         "(Download von GitHub).")
+                                                         "(Download von GitHub)."))
             return
         if not manual and (not s.update_check or not updater.due(s.update_last_check)):
             return
@@ -281,7 +353,8 @@ class MainWindow(QMainWindow):
     def _update_result(self, info, error: Optional[str], manual: bool) -> None:
         if error:
             if manual:
-                QMessageBox.warning(self, "Updates", f"Die Suche nach Updates ist fehlgeschlagen:\n{error}")
+                QMessageBox.warning(self, tr("Updates"), tr("Die Suche nach Updates ist fehlgeschlagen:\n{error}",
+                                                            error=error))
             return
         self.engine.settings.update_last_check = time.time()
         try:
@@ -290,14 +363,16 @@ class MainWindow(QMainWindow):
             pass
         if info is None or not updater.is_newer(info.version):
             if manual:
-                QMessageBox.information(self, "Updates", f"Du hast die neueste Version ({__version__}).")
+                QMessageBox.information(self, tr("Updates"), tr("Du hast die neueste Version ({version}).",
+                                                                version=__version__))
             return
         if not manual and info.version == self.engine.settings.update_skip:
             return
         if not updater.is_installed_build():
             if manual:
-                QMessageBox.information(self, "Updates", f"Version {info.version} ist verfügbar:\n{info.page_url}\n\n"
-                                                         "Nur die installierte Version aktualisiert sich selbst.")
+                QMessageBox.information(self, tr("Updates"), tr("Version {version} ist verfügbar:\n{url}\n\n"
+                                                                "Nur die installierte Version aktualisiert sich selbst.",
+                                                                version=info.version, url=info.page_url))
             return
         from .update_dialog import UpdateDialog
         UpdateDialog(self, info).exec()
@@ -325,6 +400,32 @@ class MainWindow(QMainWindow):
             self.toggle_monitoring()
 
     # --------------------------------------------------------------- Takt
+    def _tray_tick(self) -> None:
+        """Etwa jede Sekunde: Tooltip am Symbol aktualisieren, Anzeige-Wunsch einer zweiten Instanz erfüllen."""
+        self._tray_count = getattr(self, "_tray_count", 0) + 1
+        if self._tray_count % 3:
+            return
+        request = show_request_file()
+        if request.exists():
+            try:
+                request.unlink()
+            except OSError:
+                pass
+            self.show_from_tray()
+        if self.tray is not None:
+            st = self.engine.state
+            if not st.running:
+                state = tr("Gestoppt")
+            elif st.paused:
+                state = tr("Pausiert")
+            elif st.wave_value is not None:
+                state = tr("Welle {wave}/{total}", wave=st.wave_value, total=st.wave_total)
+            else:
+                state = tr("Läuft")
+            text = f"Anime Astral Monitor – {state}" + (f" · {st.profile}" if st.profile else "")
+            if text != self.tray.toolTip():
+                self.tray.setToolTip(text)
+
     def _tick(self) -> None:
         refresh_stats = False
         for _ in range(200):
@@ -334,8 +435,7 @@ class MainWindow(QMainWindow):
                 break
             if kind == "event":
                 self.pages[0].add_event(data)
-                if "Raid" in data["text"]:
-                    refresh_stats = True
+                refresh_stats = True               # Statistik beim nächsten Anzeigen neu laden (nur Markierung)
         for _ in range(20):
             try:
                 self._ui_calls.get_nowait()()
@@ -343,6 +443,7 @@ class MainWindow(QMainWindow):
                 break
         if refresh_stats:
             self.pages[1].mark_dirty()
+        self._tray_tick()
         if self.isMinimized() or not self.isVisible():
             self._status_key = None                 # nach dem Wiederherstellen alles neu zeichnen
             return                                  # minimiert: nichts zeichnen (spart CPU)
@@ -351,12 +452,12 @@ class MainWindow(QMainWindow):
         key = "paused" if (st.running and st.paused) else ("on" if st.running else "off")
         if st.running:
             elapsed = time.monotonic() - (st.started_at or time.monotonic())
-            self.status_sub.setText(f"Laufzeit {messages.fmt_duration(elapsed)}")
+            self.status_sub.setText(tr("Laufzeit {time}", time=messages.fmt_duration(elapsed)))
         elif key != self._status_key:
             self.status_sub.setText("")
         if key != self._status_key:               # Stil nur bei Wechsel neu berechnen (spart CPU)
             self._status_key = key
-            self.status_title.setText({"paused": "● Pausiert", "on": "● Läuft", "off": "● Gestoppt"}[key])
+            self.status_title.setText("● " + {"paused": tr("Pausiert"), "on": tr("Läuft"), "off": tr("Gestoppt")}[key])
             self.status_title.setObjectName({"paused": "warn", "on": "good", "off": "muted"}[key])
             self.status_box.setProperty("state", "off" if key == "off" else "on")
             for widget in (self.status_title, self.status_box):
@@ -366,9 +467,22 @@ class MainWindow(QMainWindow):
         self.pages[self.stack.currentIndex()].refresh()
 
     def closeEvent(self, event) -> None:
+        if (self.tray is not None and self.engine.settings.close_to_tray
+                and not self._quitting and not self._force_close):
+            event.ignore()                          # weiterlaufen im Infobereich
+            self.hide()
+            QTimer.singleShot(1000, winapi.trim_memory)
+            if not self._tray_hint_shown:
+                self._tray_hint_shown = True
+                self.tray.showMessage(tr("Anime Astral Monitor"),
+                                      tr("Läuft im Hintergrund weiter. Rechtsklick auf das Symbol neben der Uhr → "
+                                         "„Beenden“ schließt das Programm."),
+                                      QSystemTrayIcon.MessageIcon.Information, 6000)
+            return
         if self.engine.running and not self._force_close:
-            answer = QMessageBox.question(self, "Beenden", "Die Überwachung läuft noch. Wirklich beenden?")
+            answer = QMessageBox.question(self, tr("Beenden"), tr("Die Überwachung läuft noch. Wirklich beenden?"))
             if answer != QMessageBox.StandardButton.Yes:
+                self._quitting = False
                 event.ignore()
                 return
         for page in self.pages:
@@ -377,7 +491,25 @@ class MainWindow(QMainWindow):
         if self._hotkeys is not None:
             self._hotkeys.stop()
         self.engine.shutdown()
+        if self.tray is not None:
+            self.tray.hide()
         event.accept()
+        QApplication.quit()                         # Programm endet (läuft sonst mit verstecktem Fenster weiter)
+
+
+def show_request_file():
+    """Datei, mit der eine zweite gestartete Instanz das laufende Programm bittet, sein Fenster zu zeigen."""
+    return app_paths.data_dir() / "show.request"
+
+
+def _install_qt_translation(app: QApplication, lang: str) -> None:
+    """Qt-eigene Texte (Ja/Nein, Abbrechen …) in der gewählten Sprache; Englisch ist Qt-Standard."""
+    if lang != "de":
+        return
+    translator = QTranslator(app)
+    if translator.load("qtbase_de", QLibraryInfo.path(QLibraryInfo.LibraryPath.TranslationsPath)):
+        app.installTranslator(translator)
+        app._qt_translator = translator             # Referenz halten
 
 
 def _install_crash_logging() -> None:
@@ -387,9 +519,9 @@ def _install_crash_logging() -> None:
     def handle(exc_type, exc, tb) -> None:
         log.critical("Unbehandelte Ausnahme", exc_info=(exc_type, exc, tb))
         try:
-            QMessageBox.critical(None, "Unerwarteter Fehler",
-                                 f"{exc_type.__name__}: {exc}\n\nDetails stehen in monitor.log "
-                                 f"({app_paths.log_file()}).")
+            QMessageBox.critical(None, tr("Unerwarteter Fehler"),
+                                 f"{exc_type.__name__}: {exc}\n\n"
+                                 + tr("Details stehen in monitor.log ({path}).", path=app_paths.log_file()))
         except Exception:
             pass
 
@@ -408,19 +540,30 @@ def run() -> int:
             pass
     app = QApplication(sys.argv)
     app.setApplicationName("Anime Astral Monitor")
+    app.setQuitOnLastWindowClosed(False)            # Fenster zu = weiter im Infobereich
     icon = app_paths.resource_path("assets/app.ico")
     if icon.is_file():
         app.setWindowIcon(QIcon(str(icon)))
+    try:
+        settings = Settings.load()
+    except Exception:
+        settings = Settings()
+    i18n.set_language(settings.language)            # vor dem Aufbau der Oberfläche
+    _install_qt_translation(app, settings.language)
     theme.apply(app)
 
     lock = QLockFile(str(app_paths.data_dir() / "app.lock"))       # nur eine Instanz gleichzeitig
-    if not lock.tryLock(300):
-        QMessageBox.information(None, "Bereits geöffnet", "Der Anime Astral Monitor läuft bereits.")
+    if not lock.tryLock(10_000 if "--restart" in sys.argv else 300):   # bei Neustart: auf die alte Instanz warten
+        # läuft schon (evtl. unsichtbar im Infobereich): dort das Fenster anzeigen lassen
+        try:
+            show_request_file().write_text("1", encoding="utf-8")
+        except OSError:
+            QMessageBox.information(None, tr("Bereits geöffnet"), tr("Der Anime Astral Monitor läuft bereits."))
         return 0
     try:
-        engine = Engine(Settings.load())
+        engine = Engine(settings)
     except Exception as exc:
-        QMessageBox.critical(None, "Start fehlgeschlagen", f"{type(exc).__name__}: {exc}")
+        QMessageBox.critical(None, tr("Start fehlgeschlagen"), f"{type(exc).__name__}: {exc}")
         return 1
     _install_crash_logging()
     window = MainWindow(engine)

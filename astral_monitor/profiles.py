@@ -13,6 +13,8 @@ from typing import Optional
 import cv2
 import numpy as np
 
+from .i18n import tr
+
 log = logging.getLogger("profiles")
 
 WORK_WIDTH = 640           # Vergleichsbreite (klein = schnell)
@@ -30,6 +32,9 @@ COMMON_DIST = 40
 # (vorher: falscher bis 504, Verwechslung „Alvarez War“/„Holy Grail War“).
 PROFILE_FORMAT = "astral-profile-1"
 PROFILE_SUFFIX = ".astralprofile"
+PACK_FORMAT = "astral-pack-1"              # alle Raids in einer Datei (zum Weitergeben an Freunde)
+PACK_SUFFIX = ".astralpack"
+MAX_PACK_PROFILES = 60
 MAX_IMPORT_IMAGES = 30
 MAX_IMPORT_IMAGE_BYTES = 4 * 1024 * 1024
 
@@ -38,7 +43,7 @@ def sanitize_name(name: str) -> str:
     cleaned = re.sub(r"[^\w \-]", "", name, flags=re.UNICODE).strip()
     cleaned = re.sub(r"\s+", " ", cleaned)[:40]
     if not cleaned:
-        raise ValueError("Bitte einen Namen aus Buchstaben oder Ziffern eingeben.")
+        raise ValueError(tr("Bitte einen Namen aus Buchstaben oder Ziffern eingeben."))
     return cleaned
 
 
@@ -107,7 +112,7 @@ class ProfileStore:
         clean = sanitize_name(name)
         images = self.images(clean)
         if not images:
-            raise ValueError("Das Profil hat noch keine Referenzbilder.")
+            raise ValueError(tr("Das Profil hat noch keine Referenzbilder."))
         meta = {"format": PROFILE_FORMAT, "name": clean, **{k: v for k, v in self.settings(clean).items()
                                                             if k in ("trigger_offset", "note")}}
         dest = dest.with_suffix(PROFILE_SUFFIX) if dest.suffix.lower() != PROFILE_SUFFIX else dest
@@ -117,23 +122,102 @@ class ProfileStore:
                 zf.write(path, path.name)
         return dest
 
+    def export_pack(self, dest: Path) -> tuple[Path, int]:
+        """Alle Profile mit Referenzbildern in eine Datei – Freunde importieren sie einmal und sind fertig."""
+        names = [n for n in self.names() if self.images(n)]
+        if not names:
+            raise ValueError(tr("Es gibt noch keine Profile mit Referenzbildern."))
+        dest = dest.with_suffix(PACK_SUFFIX) if dest.suffix.lower() != PACK_SUFFIX else dest
+        with zipfile.ZipFile(dest, "w", zipfile.ZIP_DEFLATED) as zf:
+            zf.writestr("pack.json", json.dumps({"format": PACK_FORMAT, "profiles": names}, indent=2, ensure_ascii=False))
+            for name in names:
+                meta = {"format": PROFILE_FORMAT, "name": name, **{k: v for k, v in self.settings(name).items()
+                                                                   if k in ("trigger_offset", "note")}}
+                zf.writestr(f"{name}/profile.json", json.dumps(meta, indent=2, ensure_ascii=False))
+                for path in self.images(name):
+                    zf.write(path, f"{name}/{path.name}")
+        return dest, len(names)
+
+    def import_pack(self, src: Path) -> tuple[list[str], list[str]]:
+        """Importiert alle Profile eines Pakets. Bereits vorhandene Raids werden übersprungen – zwei Profile für
+        denselben Raid würden sich bei der Erkennung gegenseitig stören. Rückgabe: (importiert, übersprungen)."""
+        try:
+            zf = zipfile.ZipFile(src)
+        except zipfile.BadZipFile as exc:
+            raise ValueError(tr("Das ist keine gültige Paket-Datei.")) from exc
+        imported, skipped = [], []
+        with zf:
+            try:
+                pack = json.loads(zf.read("pack.json").decode("utf-8"))
+            except (KeyError, ValueError) as exc:
+                raise ValueError(tr("Die Paket-Datei ist unvollständig (pack.json fehlt).")) from exc
+            if pack.get("format") != PACK_FORMAT or not isinstance(pack.get("profiles"), list):
+                raise ValueError(tr("Unbekanntes Dateiformat (nicht von diesem Programm erstellt)."))
+            if len(pack["profiles"]) > MAX_PACK_PROFILES:
+                raise ValueError(tr("Das Paket enthält mehr als {count} Profile.", count=MAX_PACK_PROFILES))
+            members = set(zf.namelist())
+            existing = {n.lower() for n in self.names()}
+            for raw in pack["profiles"]:
+                name = sanitize_name(str(raw))
+                if name.lower() in existing:
+                    skipped.append(name)
+                    continue
+                images = sorted(m.split("/", 1)[1] for m in members
+                                if m.startswith(f"{raw}/") and re.fullmatch(r"ref_\d+\.jpg", m.split("/", 1)[1]))
+                meta = {}
+                if f"{raw}/profile.json" in members:
+                    try:
+                        meta = json.loads(zf.read(f"{raw}/profile.json").decode("utf-8"))
+                    except ValueError:
+                        meta = {}
+                try:
+                    if not images or len(images) > MAX_IMPORT_IMAGES:
+                        raise ValueError(tr("1 bis {count} Referenzbilder erwartet", count=MAX_IMPORT_IMAGES))
+                    self._write_profile(name, [(img, zf.getinfo(f"{raw}/{img}"), f"{raw}/{img}") for img in images],
+                                        zf, meta)
+                except ValueError as exc:                # ein kaputtes Profil hält die anderen nicht auf
+                    skipped.append(f"{name} ({exc})")
+                    continue
+                existing.add(name.lower())
+                imported.append(name)
+        return imported, skipped
+
+    def _write_profile(self, name: str, images: list, zf: zipfile.ZipFile, meta: dict) -> None:
+        """Schreibt ein Profil aus einer ZIP-Datei; prüft jedes Bild, räumt bei Fehlern auf."""
+        folder = self.root / name
+        folder.mkdir()
+        try:
+            for filename, info, member in images:
+                if info.file_size > MAX_IMPORT_IMAGE_BYTES:
+                    raise ValueError(tr("Ein Bild in der Datei ist zu groß."))
+                data = zf.read(member)
+                if cv2.imdecode(np.frombuffer(data, np.uint8), cv2.IMREAD_COLOR) is None:
+                    raise ValueError(tr("Ein Bild in der Datei ist beschädigt."))
+                (folder / filename).write_bytes(data)
+            settings = {k: meta[k] for k in ("trigger_offset", "note") if k in meta}
+            if settings:
+                self.save_settings(name, settings)
+        except Exception:
+            shutil.rmtree(folder, ignore_errors=True)
+            raise
+
     def import_zip(self, src: Path) -> str:
         """Liest eine Profil-Datei (mit Prüfungen) und gibt den Namen des neuen Profils zurück."""
         try:
             zf = zipfile.ZipFile(src)
         except zipfile.BadZipFile as exc:
-            raise ValueError("Das ist keine gültige Profil-Datei.") from exc
+            raise ValueError(tr("Das ist keine gültige Profil-Datei.")) from exc
         with zf:
             names = {Path(n).name: n for n in zf.namelist() if not n.endswith("/")}
             try:
                 meta = json.loads(zf.read(names["profile.json"]).decode("utf-8"))
             except (KeyError, ValueError) as exc:
-                raise ValueError("Die Profil-Datei ist unvollständig (profile.json fehlt).") from exc
+                raise ValueError(tr("Die Profil-Datei ist unvollständig (profile.json fehlt).")) from exc
             if meta.get("format") != PROFILE_FORMAT:
-                raise ValueError("Unbekanntes Dateiformat (nicht von diesem Programm erstellt).")
+                raise ValueError(tr("Unbekanntes Dateiformat (nicht von diesem Programm erstellt)."))
             images = sorted(n for n in names if re.fullmatch(r"ref_\d+\.jpg", n))
             if not images or len(images) > MAX_IMPORT_IMAGES:
-                raise ValueError(f"Die Datei muss 1 bis {MAX_IMPORT_IMAGES} Referenzbilder enthalten.")
+                raise ValueError(tr("Die Datei muss 1 bis {count} Referenzbilder enthalten.", count=MAX_IMPORT_IMAGES))
             base = sanitize_name(str(meta.get("name", "Importiert")))
             name, i = base, 2
             while (self.root / name).exists():
@@ -144,10 +228,10 @@ class ProfileStore:
                 for img in images:
                     info = zf.getinfo(names[img])
                     if info.file_size > MAX_IMPORT_IMAGE_BYTES:
-                        raise ValueError("Ein Bild in der Datei ist zu groß.")
+                        raise ValueError(tr("Ein Bild in der Datei ist zu groß."))
                     data = zf.read(names[img])
                     if cv2.imdecode(np.frombuffer(data, np.uint8), cv2.IMREAD_COLOR) is None:
-                        raise ValueError("Ein Bild in der Datei ist beschädigt.")
+                        raise ValueError(tr("Ein Bild in der Datei ist beschädigt."))
                     (folder / img).write_bytes(data)
                 settings = {k: meta[k] for k in ("trigger_offset", "note") if k in meta}
                 if settings:

@@ -13,6 +13,7 @@ import cv2
 import numpy as np
 
 from . import winapi
+from .i18n import tr
 from .imaging import crop_roi
 from .settings import Roi
 
@@ -72,12 +73,12 @@ class WgcSource(FrameSource):
         try:
             from windows_capture import WindowsCapture
         except Exception as exc:
-            raise CaptureError("Das Paket „windows-capture“ fehlt (pip install windows-capture).") from exc
+            raise CaptureError(tr("Das Paket „windows-capture“ fehlt (pip install windows-capture).")) from exc
         hwnd = winapi.find_window(self._title)
         if hwnd is None:
-            raise CaptureError(f"Fenster „{self._title}“ nicht gefunden. Ist Roblox gestartet?")
+            raise CaptureError(tr("Fenster „{title}“ nicht gefunden. Ist Roblox gestartet?", title=self._title))
         if winapi.is_minimized(hwnd):
-            raise CaptureError("Das Roblox-Fenster ist minimiert. Bitte wiederherstellen.")
+            raise CaptureError(tr("Das Roblox-Fenster ist minimiert. Bitte wiederherstellen."))
 
         # Parameternamen unterscheiden sich je nach Version der Bibliothek -> der Reihe nach probieren
         attempts = [
@@ -99,12 +100,12 @@ class WgcSource(FrameSource):
             except Exception as exc:
                 last_error, self._control = exc, None
         if self._control is None:
-            raise CaptureError(f"Fenster-Capture konnte nicht gestartet werden: {last_error}")
+            raise CaptureError(tr("Fenster-Capture konnte nicht gestartet werden: {error}", error=last_error))
 
         if self.grab([], False, timeout=3.0) is None:
             self.stop()
-            raise CaptureError("Vom Roblox-Fenster kommen keine Bilder an (minimiert oder verdeckt "
-                               "durch Vollbild-Exklusivmodus?).")
+            raise CaptureError(tr("Vom Roblox-Fenster kommen keine Bilder an (minimiert oder verdeckt "
+                               "durch Vollbild-Exklusivmodus?)."))
 
     def _install_handlers(self, capture) -> None:
         @capture.event
@@ -161,7 +162,7 @@ class ScreenSource(FrameSource):
 
     def start(self) -> None:
         if winapi.find_window(self._title) is None:
-            raise CaptureError(f"Fenster „{self._title}“ nicht gefunden. Ist Roblox gestartet?")
+            raise CaptureError(tr("Fenster „{title}“ nicht gefunden. Ist Roblox gestartet?", title=self._title))
 
     def grab(self, rois, full=False, timeout=1.0):
         from PIL import ImageGrab

@@ -10,6 +10,7 @@ from typing import Optional
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 from . import app_paths, messages
+from .i18n import dec, tr
 from .stats import StatsStore
 
 W, H, S = 1200, 630, 2           # Zielgröße und Supersampling (Kanten glätten)
@@ -92,21 +93,21 @@ def render_card(stats: StatsStore, since: Optional[float], raid: Optional[str], 
         span = (last - first).total_seconds()
         c.text((W - 48, 44), f"{first:%d.%m.%Y} · {first:%H:%M}–{last:%H:%M}", 17, MUTED, anchor="ra")
         mins = int(span // 60)
-        c.text((W - 48, 70), f"{mins // 60} Std. {mins % 60} Min." if mins >= 60 else f"{mins} Min.", 15, DIM, anchor="ra")
+        c.text((W - 48, 70), tr("{h} Std. {m} Min.", h=mins // 60, m=mins % 60) if mins >= 60 else tr("{minutes} Min.", minutes=mins), 15, DIM, anchor="ra")
 
     if not recs:
         c.box((48, 130, W - 48, 560))
-        c.text((W // 2, 345), "Noch keine Versuche im gewählten Zeitraum", 26, MUTED, anchor="mm")
+        c.text((W // 2, 345), tr("Noch keine Versuche im gewählten Zeitraum"), 26, MUTED, anchor="mm")
         return c.png()
 
     # ---- Kennzahlen-Kacheln (3 × 2)
     tiles = [
-        ("Versuche", messages.fmt_int(summary.attempts), TEAL),
-        ("Wellen gesamt", messages.fmt_int(summary.waves_total), TEAL),
-        ("Wellen pro Stunde", f"{summary.waves_per_hour:.0f}" if summary.waves_per_hour else "–", TEXT),
-        ("Bestwelle", str(summary.best_wave), AMBER),
-        ("Ø Endwelle", f"{summary.avg_wave_all:.1f}".replace(".", ",") if summary.avg_wave_all else "–", TEXT),
-        ("Ø Dauer pro Versuch", messages.fmt_duration(summary.avg_duration_all), TEXT),
+        (tr("Versuche"), messages.fmt_int(summary.attempts), TEAL),
+        (tr("Wellen gesamt"), messages.fmt_int(summary.waves_total), TEAL),
+        (tr("Wellen pro Stunde"), f"{summary.waves_per_hour:.0f}" if summary.waves_per_hour else "–", TEXT),
+        (tr("Bestwelle"), str(summary.best_wave), AMBER),
+        (tr("Ø Endwelle"), dec(f"{summary.avg_wave_all:.1f}") if summary.avg_wave_all else "–", TEXT),
+        (tr("Ø Dauer pro Versuch"), messages.fmt_duration(summary.avg_duration_all), TEXT),
     ]
     tw, th, gap, x0, y0 = 184, 108, 14, 48, 120
     for i, (label, value, color) in enumerate(tiles):
@@ -120,13 +121,13 @@ def render_card(stats: StatsStore, since: Optional[float], raid: Optional[str], 
     c.box((px0, py0, px1, py1))
     hist = stats.wave_histogram(since, raid)
     if hist:
-        c.text((px0 + 20, py0 + 16), "Wo enden die Versuche?", 17, TEXT, bold=True)
-        c.text((px0 + 20, py0 + 40), "Anzahl Versuche je Endwelle", 13, MUTED)
+        c.text((px0 + 20, py0 + 16), tr("Wo enden die Versuche?"), 17, TEXT, bold=True)
+        c.text((px0 + 20, py0 + 40), tr("Anzahl Versuche je Endwelle"), 13, MUTED)
         data = [(a, b) for a, b in hist]
     else:
         data = [(f"{h:02d}", n) for h, n in stats.hourly_waves(10, raid)]
-        c.text((px0 + 20, py0 + 16), "Wellen pro Stunde", 17, TEXT, bold=True)
-        c.text((px0 + 20, py0 + 40), "Geschaffte Wellen, letzte 10 Stunden", 13, MUTED)
+        c.text((px0 + 20, py0 + 16), tr("Wellen pro Stunde"), 17, TEXT, bold=True)
+        c.text((px0 + 20, py0 + 40), tr("Geschaffte Wellen, letzte 10 Stunden"), 13, MUTED)
     cx0, cx1, cy0, cy1 = px0 + 24, px1 - 24, py0 + 78, py1 - 34
     n = max(1, len(data))
     slot = (cx1 - cx0) / n
@@ -146,18 +147,19 @@ def render_card(stats: StatsStore, since: Optional[float], raid: Optional[str], 
     per = stats.per_raid(since) if raid is None else [p for p in stats.per_raid(since) if p["raid"] == raid]
     rows = max(1, min(3, len(per)))
     c.box((48, 366, W - 48, 366 + 64 + rows * 52 + 4))
-    c.text((70, 382), "Profile" if raid is None else "Profil", 17, TEXT, bold=True)
+    c.text((70, 382), tr("Profile") if raid is None else tr("Profil"), 17, TEXT, bold=True)
     total = max((r.total_waves for r in recs), default=100) or 100
     for i, p in enumerate(per[:3]):
         y = 420 + i * 52
         c.text((70, y), p["raid"], 18, TEXT, bold=True)
-        sub = f"{p['attempts']} Versuche · {messages.fmt_int(p['waves_total'])} Wellen · Ø Welle {p['avg_wave']:.1f}"
+        sub = tr("{attempts} Versuche · {waves} Wellen · Ø Welle {avg}", attempts=p["attempts"],
+                 waves=messages.fmt_int(p["waves_total"]), avg=dec(f"{p['avg_wave']:.1f}"))
         c.text((70, y + 24), sub, 13, MUTED)
         bx0, bx1 = 560, W - 230
         c.bar((bx0, y + 12, bx1, y + 24), (30, 40, 52), radius=6)
         c.bar((bx0, y + 12, bx0 + (bx1 - bx0) * min(1.0, p["best_wave"] / total), y + 24), TEAL, radius=6)
-        c.text((W - 70, y + 4), f"Bestwelle {p['best_wave']}", 15, TEAL, bold=True, anchor="ra")
+        c.text((W - 70, y + 4), tr("Bestwelle {wave}", wave=p["best_wave"]), 15, TEAL, bold=True, anchor="ra")
     if not per:
-        c.text((70, 430), "Noch keine Profile erkannt – lege unter „Raids“ Referenzbilder an.", 15, MUTED)
-    c.text((W // 2, H - 22), "Erstellt mit Anime Astral Monitor", 12, DIM, anchor="mm")
+        c.text((70, 430), tr("Noch keine Profile erkannt – lege unter „Raids“ Referenzbilder an."), 15, MUTED)
+    c.text((W // 2, H - 22), tr("Erstellt mit Anime Astral Monitor"), 12, DIM, anchor="mm")
     return c.png()

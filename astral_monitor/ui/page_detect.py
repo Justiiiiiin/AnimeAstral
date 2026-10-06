@@ -9,6 +9,8 @@ from PySide6.QtWidgets import (QCheckBox, QFileDialog, QGridLayout, QHBoxLayout,
                                QMessageBox, QPlainTextEdit, QPushButton, QScrollArea, QVBoxLayout, QWidget)
 
 from ..engine import EngineError
+from ..i18n import tr
+from . import theme
 from ..settings import DEFAULT_QUEST_ROI, DEFAULT_WAVE_ROI, Roi
 from ..tracker import QuestTracker
 from .region_dialog import RegionDialog
@@ -24,17 +26,17 @@ class DetectPage(QWidget):
         self.quest_roi = Roi(**vars(DEFAULT_QUEST_ROI))
 
         outer = QVBoxLayout(self)
-        outer.setContentsMargins(28, 24, 28, 24)
-        outer.setSpacing(12)
-        outer.addWidget(label("Erkennung", "h1"))
-        outer.addWidget(label("Bereiche, Auslöser und Tests. Alles wird live am Roblox-Fenster geprüft.", "muted"))
+        theme.track_margins(outer, 28, 24, 28, 24)
+        theme.track_spacing(outer, 12)
+        outer.addWidget(label(tr("Erkennung"), "h1"))
+        outer.addWidget(label(tr("Bereiche, Auslöser und Tests. Alles wird live am Roblox-Fenster geprüft."), "muted"))
 
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         inner = QWidget()
         lay = QVBoxLayout(inner)
-        lay.setContentsMargins(0, 0, 8, 0)
-        lay.setSpacing(14)
+        theme.track_margins(lay, 0, 0, 8, 0)
+        theme.track_spacing(lay, 14)
         scroll.setWidget(inner)
         outer.addWidget(scroll, 1)
 
@@ -44,7 +46,7 @@ class DetectPage(QWidget):
         lay.addWidget(self._ocr_card())
         lay.addStretch(1)
 
-        save = QPushButton("Speichern")
+        save = QPushButton(tr("Speichern"))
         save.setObjectName("primary")
         save.clicked.connect(lambda: self.main.save_settings())
         row = QHBoxLayout()
@@ -54,42 +56,42 @@ class DetectPage(QWidget):
 
     # ------------------------------------------------------------------ Karten
     def _capture_card(self) -> Card:
-        card = Card("Aufnahme")
+        card = Card(tr("Aufnahme"))
         grid = QGridLayout()
         grid.setColumnStretch(1, 1)
         grid.setVerticalSpacing(8)
         self.title = QLineEdit()
         self.mode = ComboBox()
-        self.mode.addItem("Automatisch (Fenster-Capture, sonst Bildschirm)", "auto")
-        self.mode.addItem("Fenster-Capture (Roblox darf verdeckt sein)", "wgc")
-        self.mode.addItem("Bildschirm (Roblox muss sichtbar sein)", "screen")
-        grid.addWidget(label("Fenstertitel"), 0, 0)
+        self.mode.addItem(tr("Automatisch (Fenster-Capture, sonst Bildschirm)"), "auto")
+        self.mode.addItem(tr("Fenster-Capture (Roblox darf verdeckt sein)"), "wgc")
+        self.mode.addItem(tr("Bildschirm (Roblox muss sichtbar sein)"), "screen")
+        grid.addWidget(label(tr("Fenstertitel")), 0, 0)
         grid.addWidget(self.title, 0, 1)
-        grid.addWidget(label("Aufnahmeart"), 1, 0)
+        grid.addWidget(label(tr("Aufnahmeart")), 1, 0)
         grid.addWidget(self.mode, 1, 1)
         card.body.addLayout(grid)
         row = QHBoxLayout()
-        test = QPushButton("Capture-Test")
+        test = QPushButton(tr("Capture-Test"))
         test.clicked.connect(self._test_capture)
         row.addWidget(test)
         row.addStretch(1)
         card.body.addLayout(row)
-        card.body.addWidget(label("Aufnahmeart-Änderungen gelten nach einem Neustart der Überwachung. "
-                                  "Wechselst du zwischen Vollbild und Fenstermodus, Bereiche neu auswählen.",
+        card.body.addWidget(label(tr("Aufnahmeart-Änderungen gelten nach einem Neustart der Überwachung. "
+                                  "Wechselst du zwischen Vollbild und Fenstermodus, Bereiche neu auswählen."),
                                   "small", wrap=True))
         return card
 
     def _wave_card(self) -> Card:
-        card = Card("Wellenzähler („Wave 12/100“)")
-        card.body.addWidget(label("Wähle den Bereich großzügig (z. B. die ganze obere Mitte des Fensters). Das "
+        card = Card(tr("Wellenzähler („Wave 12/100“)"))
+        card.body.addWidget(label(tr("Wähle den Bereich großzügig (z. B. die ganze obere Mitte des Fensters). Das "
                                   "Programm findet „Wave x/100“ darin selbst, auch im Fenstermodus oder bei "
-                                  "verschobenem Layout. Der Bereich muss den Zähler nur enthalten.", "small", wrap=True))
+                                  "verschobenem Layout. Der Bereich muss den Zähler nur enthalten."), "small", wrap=True))
         row = QHBoxLayout()
         self.lbl_wave_roi = label("")
         row.addWidget(self.lbl_wave_roi, 1)
-        pick = QPushButton("Bereich auswählen …")
+        pick = QPushButton(tr("Bereich auswählen …"))
         pick.clicked.connect(lambda: self._pick("wave"))
-        reset = QPushButton("Standard")
+        reset = QPushButton(tr("Standard"))
         reset.clicked.connect(lambda: self._reset("wave"))
         row.addWidget(pick)
         row.addWidget(reset)
@@ -99,7 +101,7 @@ class DetectPage(QWidget):
         grid.setColumnStretch(1, 1)
         grid.setVerticalSpacing(8)
         self.totals = QLineEdit()
-        self.totals.setPlaceholderText("z. B. 100  oder  100, 50")
+        self.totals.setPlaceholderText(tr("z. B. 100  oder  100, 50"))
         self.offset = SpinBox()
         self.offset.setRange(0, 5)
         self.confirm = SpinBox()
@@ -107,22 +109,22 @@ class DetectPage(QWidget):
         self.cooldown = SpinBox()
         self.cooldown.setRange(0, 3600)
         self.cooldown.setSuffix(" s")
-        grid.addWidget(label("Erlaubte Gesamtwellen"), 0, 0)
+        grid.addWidget(label(tr("Erlaubte Gesamtwellen")), 0, 0)
         grid.addWidget(self.totals, 0, 1)
-        grid.addWidget(label("Auslöser: Gesamt minus"), 1, 0)
+        grid.addWidget(label(tr("Auslöser: Gesamt minus")), 1, 0)
         grid.addWidget(self.offset, 1, 1)
-        grid.addWidget(label("Bestätigungen"), 2, 0)
+        grid.addWidget(label(tr("Bestätigungen")), 2, 0)
         grid.addWidget(self.confirm, 2, 1)
-        grid.addWidget(label("Sperrzeit zwischen Raids"), 3, 0)
+        grid.addWidget(label(tr("Sperrzeit zwischen Raids")), 3, 0)
         grid.addWidget(self.cooldown, 3, 1)
         card.body.addLayout(grid)
-        card.body.addWidget(label("Auslöser 1 = ab 99/100 (auch 100/100 zählt). Bestätigungen = so oft wird der Wert "
-                                  "frisch gelesen, bevor der Raid zählt (2 empfohlen).", "small", wrap=True))
+        card.body.addWidget(label(tr("Auslöser 1 = ab 99/100 (auch 100/100 zählt). Bestätigungen = so oft wird der Wert "
+                                  "frisch gelesen, bevor der Raid zählt (2 empfohlen)."), "small", wrap=True))
 
-        card.body.addWidget(label("Fehlversuche und Neustarts (z. B. nach einer Niederlage) werden automatisch in "
-                                  "der Statistik erfasst: Anzahl, Ø Dauer und erreichte Welle.", "small", wrap=True))
+        card.body.addWidget(label(tr("Fehlversuche und Neustarts (z. B. nach einer Niederlage) werden automatisch in "
+                                  "der Statistik erfasst: Anzahl, Ø Dauer und erreichte Welle."), "small", wrap=True))
         test_row = QHBoxLayout()
-        test = QPushButton("Wellenzähler testen")
+        test = QPushButton(tr("Wellenzähler testen"))
         test.clicked.connect(self._test_wave)
         test_row.addWidget(test)
         test_row.addStretch(1)
@@ -136,22 +138,22 @@ class DetectPage(QWidget):
         return card
 
     def _quest_card(self) -> Card:
-        card = Card("Quests (Liste oben rechts)")
-        self.read_quests = QCheckBox("Quests lesen und melden")
+        card = Card(tr("Quests (Liste oben rechts)"))
+        self.read_quests = QCheckBox(tr("Quests lesen und melden"))
         card.body.addWidget(self.read_quests)
         row = QHBoxLayout()
         self.lbl_quest_roi = label("")
         row.addWidget(self.lbl_quest_roi, 1)
-        pick = QPushButton("Bereich auswählen …")
+        pick = QPushButton(tr("Bereich auswählen …"))
         pick.clicked.connect(lambda: self._pick("quest"))
-        reset = QPushButton("Standard")
+        reset = QPushButton(tr("Standard"))
         reset.clicked.connect(lambda: self._reset("quest"))
         row.addWidget(pick)
         row.addWidget(reset)
         card.body.addLayout(row)
-        card.body.addWidget(label("Wähle die ganze Quest-Liste (Titel und Fortschrittsbalken).", "small"))
+        card.body.addWidget(label(tr("Wähle die ganze Quest-Liste (Titel und Fortschrittsbalken)."), "small"))
         test_row = QHBoxLayout()
-        test = QPushButton("Quests testen")
+        test = QPushButton(tr("Quests testen"))
         test.clicked.connect(self._test_quests)
         test_row.addWidget(test)
         test_row.addStretch(1)
@@ -164,13 +166,13 @@ class DetectPage(QWidget):
         return card
 
     def _ocr_card(self) -> Card:
-        card = Card("Texterkennung (Tesseract)")
+        card = Card(tr("Texterkennung (Tesseract)"))
         row = QHBoxLayout()
         self.tess = QLineEdit()
-        self.tess.setPlaceholderText("Leer = automatisch suchen")
-        browse = QPushButton("Durchsuchen …")
+        self.tess.setPlaceholderText(tr("Leer = automatisch suchen"))
+        browse = QPushButton(tr("Durchsuchen …"))
         browse.clicked.connect(self._browse_tesseract)
-        check = QPushButton("Prüfen")
+        check = QPushButton(tr("Prüfen"))
         check.clicked.connect(self._check_ocr)
         row.addWidget(self.tess, 1)
         row.addWidget(browse)
@@ -178,7 +180,7 @@ class DetectPage(QWidget):
         card.body.addLayout(row)
         self.ocr_result = label("", "muted", wrap=True)
         card.body.addWidget(self.ocr_result)
-        self.debug = QCheckBox("Debug-Bilder bei Lesefehlern speichern (max. 40, Ordner siehe Statistik)")
+        self.debug = QCheckBox(tr("Debug-Bilder bei Lesefehlern speichern (max. 40, Ordner siehe Statistik)"))
         card.body.addWidget(self.debug)
         return card
 
@@ -213,7 +215,7 @@ class DetectPage(QWidget):
 
     def _refresh_labels(self) -> None:
         for lbl, roi in ((self.lbl_wave_roi, self.wave_roi), (self.lbl_quest_roi, self.quest_roi)):
-            lbl.setText(f"Bereich: x {roi.x0:.0%}–{roi.x1:.0%}, y {roi.y0:.0%}–{roi.y1:.0%} des Fensters")
+            lbl.setText(tr("Bereich: x {x0}–{x1}, y {y0}–{y1} des Fensters", x0=f"{roi.x0:.0%}", x1=f"{roi.x1:.0%}", y0=f"{roi.y0:.0%}", y1=f"{roi.y1:.0%}"))
 
     # ------------------------------------------------------------------ Aktionen
     def _pick(self, which: str) -> None:
@@ -221,15 +223,15 @@ class DetectPage(QWidget):
         try:
             res = self.engine.grab_for_ui(full=True)
         except EngineError as exc:
-            QMessageBox.warning(self, "Aufnahme", str(exc))
+            QMessageBox.warning(self, tr("Aufnahme"), str(exc))
             return
         if res is None or res.full is None:
-            QMessageBox.warning(self, "Aufnahme", "Kein Bild vom Roblox-Fenster erhalten.")
+            QMessageBox.warning(self, tr("Aufnahme"), tr("Kein Bild vom Roblox-Fenster erhalten."))
             return
         wave = which == "wave"
-        hint = ("Ziehe ein Rechteck um den Wellenzähler („Wave 12/100“) – mit etwas Rand."
-                if wave else "Ziehe ein Rechteck um die ganze Quest-Liste (Titel und Fortschrittsbalken).")
-        dialog = RegionDialog(self, res.full, "Bereich auswählen", hint,
+        hint = (tr("Ziehe ein Rechteck um den Wellenzähler („Wave 12/100“) – mit etwas Rand.")
+                if wave else tr("Ziehe ein Rechteck um die ganze Quest-Liste (Titel und Fortschrittsbalken)."))
+        dialog = RegionDialog(self, res.full, tr("Bereich auswählen"), hint,
                               self.wave_roi if wave else self.quest_roi)
         if dialog.exec() and dialog.roi():
             if wave:
@@ -251,30 +253,30 @@ class DetectPage(QWidget):
         try:
             res = self.engine.grab_for_ui(full=True)
         except EngineError as exc:
-            QMessageBox.warning(self, "Capture-Test", str(exc))
+            QMessageBox.warning(self, tr("Capture-Test"), str(exc))
             return
         if res is None:
-            QMessageBox.warning(self, "Capture-Test", "Kein Bild empfangen (Fenster minimiert?).")
+            QMessageBox.warning(self, tr("Capture-Test"), tr("Kein Bild empfangen (Fenster minimiert?)."))
             return
         ms = (time.perf_counter() - t0) * 1000
-        QMessageBox.information(self, "Capture-Test",
-                                f"Bild empfangen: {res.size[0]} × {res.size[1]} Pixel ({ms:.0f} ms inkl. Start).")
+        QMessageBox.information(self, tr("Capture-Test"),
+                                tr("Bild empfangen: {w} × {h} Pixel ({ms} ms inkl. Start).", w=res.size[0], h=res.size[1], ms=f"{ms:.0f}"))
 
     def _test_wave(self) -> None:
         self.main.apply_form()
         try:
             result = self.engine.test_wave()
         except EngineError as exc:
-            QMessageBox.warning(self, "Test", str(exc))
+            QMessageBox.warning(self, tr("Test"), str(exc))
             return
         if not result["ok"]:
             self.wave_result.setText(result["error"])
             return
         reading = result["reading"]
         if reading:
-            self.wave_result.setText(f"✅ Gelesen: {reading.value}/{reading.total}  ({result['ms']:.0f} ms)")
+            self.wave_result.setText(tr("✅ Gelesen: {value}/{total}  ({ms} ms)", value=reading.value, total=reading.total, ms=f"{result['ms']:.0f}"))
         else:
-            self.wave_result.setText("❌ Kein Wellenzähler erkannt. Bereich neu wählen oder zuerst einen Raid starten.")
+            self.wave_result.setText(tr("❌ Kein Wellenzähler erkannt. Bereich neu wählen oder zuerst einen Raid starten."))
         preview = result["crop"].copy()
         if result.get("box"):
             x0, y0, x1, y1 = result["box"]
@@ -287,7 +289,7 @@ class DetectPage(QWidget):
         try:
             result = self.engine.test_quests()
         except EngineError as exc:
-            QMessageBox.warning(self, "Test", str(exc))
+            QMessageBox.warning(self, tr("Test"), str(exc))
             return
         self.quest_result.setVisible(True)
         if not result["ok"]:
@@ -297,11 +299,11 @@ class DetectPage(QWidget):
         tracker.update(result["lines"])
         lines = [f"• {q['title']}  —  {q['cur'] if q['cur'] is not None else '?'} / {q['total'] or '?'}"
                  for q in tracker.snapshot()]
-        self.quest_result.setPlainText(f"{len(lines)} Quests ({result['ms']:.0f} ms)\n" + "\n".join(lines)
-                                       if lines else "Keine Quests erkannt. Bereich prüfen.")
+        self.quest_result.setPlainText(tr("{count} Quests ({ms} ms)", count=len(lines), ms=f"{result['ms']:.0f}") + "\n" + "\n".join(lines)
+                                       if lines else tr("Keine Quests erkannt. Bereich prüfen."))
 
     def _browse_tesseract(self) -> None:
-        path, _ = QFileDialog.getOpenFileName(self, "tesseract.exe auswählen", "", "Programm (*.exe);;Alle (*)")
+        path, _ = QFileDialog.getOpenFileName(self, tr("tesseract.exe auswählen"), "", tr("Programm (*.exe);;Alle (*)"))
         if path:
             self.tess.setText(path)
 
@@ -312,4 +314,4 @@ class DetectPage(QWidget):
         except EngineError as exc:
             self.ocr_result.setText(f"❌ {exc}")
             return
-        self.ocr_result.setText(f"✅ Tesseract {ocr.version} gefunden: {ocr.cmd}")
+        self.ocr_result.setText(tr("✅ Tesseract {version} gefunden: {path}", version=ocr.version, path=ocr.cmd))

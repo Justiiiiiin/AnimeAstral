@@ -64,6 +64,30 @@ class StatsTests(unittest.TestCase):
         self.assertIn("raid", path.read_text(encoding="utf-8").splitlines()[0])
 
 
+class WallTests(unittest.TestCase):
+    def store(self, waves, raid="Militech Convoy"):
+        path = Path(_env.DATA) / f"wall_{len(waves)}_{waves[-1]}.csv"
+        path.unlink(missing_ok=True)
+        st = StatsStore(path)
+        for i, w in enumerate(waves):
+            st.records.append(RunRecord(1_000_000 + i * 120, 108.0, None, w, 100, "abgebrochen", "", raid))
+        return st
+
+    def test_wall_found_and_broken(self):
+        st = self.store([29] * 30)
+        wall = st.wall("Militech Convoy")
+        self.assertEqual((wall.wave, wall.streak), (29, 30))
+        self.assertIsNone(st.wall(None))                       # nur je Raid
+        self.assertIsNone(self.store([60] * 20, raid="").wall("Unbekannt"))   # gemischte, nicht erkannte Läufe
+        self.assertIsNone(st.wall("Anderer Raid"))
+        self.assertIsNone(self.store([29] * 30 + [34]).wall("Militech Convoy"))   # gerade durchbrochen
+        self.assertEqual(self.store([29] * 30 + [34, 29, 29]).wall("Militech Convoy").streak, 2)
+
+    def test_no_wall_when_spread_or_few_runs(self):
+        self.assertIsNone(self.store([29] * 5).wall("Militech Convoy"))
+        self.assertIsNone(self.store([20, 25, 29, 31, 22, 27, 29, 33, 24, 26]).wall("Militech Convoy"))
+
+
 if __name__ == "__main__":
     unittest.main()
 

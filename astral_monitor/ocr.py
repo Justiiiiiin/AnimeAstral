@@ -13,6 +13,8 @@ from typing import Optional
 
 import numpy as np
 
+from .i18n import tr
+
 log = logging.getLogger("ocr")
 
 
@@ -159,13 +161,13 @@ class OcrEngine:
         try:
             import pytesseract
         except ImportError as exc:
-            raise OcrError("Das Paket „pytesseract“ fehlt (pip install pytesseract).") from exc
+            raise OcrError(tr("Das Paket „pytesseract“ fehlt (pip install pytesseract).")) from exc
 
         cmd = find_tesseract(tesseract_path)
         if not cmd:
             raise OcrError(
-                "Tesseract-OCR wurde nicht gefunden. Installiere es (Windows-Installer) "
-                "oder trage den Pfad zur tesseract.exe unter „Erkennung“ ein."
+                tr("Tesseract-OCR wurde nicht gefunden. Installiere es (Windows-Installer) "
+                "oder trage den Pfad zur tesseract.exe unter „Erkennung“ ein.")
             )
         pytesseract.pytesseract.tesseract_cmd = cmd
         bundled = bundled_dir()
@@ -187,7 +189,7 @@ class OcrEngine:
         try:
             self.version = str(pytesseract.get_tesseract_version())
         except Exception as exc:
-            raise OcrError(f"Tesseract lässt sich nicht starten ({cmd}): {exc}") from exc
+            raise OcrError(tr("Tesseract lässt sich nicht starten ({path}): {error}", path=cmd, error=exc)) from exc
 
     @property
     def backend(self) -> str:

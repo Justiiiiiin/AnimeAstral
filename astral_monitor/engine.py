@@ -13,6 +13,7 @@ from typing import Callable, Optional
 import numpy as np
 
 from . import app_paths, messages
+from .i18n import N_, dec, tr
 from .capture import CaptureError, FrameSource, GrabResult, create_source
 from .discord_client import DiscordSender
 from .guard import DISCONNECT_ROI, Guard
@@ -52,7 +53,7 @@ class EngineState:
     frame_size: tuple = (0, 0)
     wave_value: Optional[int] = None
     wave_total: Optional[int] = None
-    info: str = "Gestoppt"
+    info: str = N_("Gestoppt")              # Anzeige über tr()
     read_ms: float = 0.0
     hot: bool = False
     profile: str = ""                        # erkannter Raid
@@ -176,18 +177,18 @@ class Engine:
         self._halt.clear()
         self._pause.clear()
         self.state = EngineState(running=True, started_at=time.monotonic(),
-                                 source_info=source.name, info="Starte …")
+                                 source_info=source.name, info=tr("Starte …"))
         self.guard._state = self.state
         self.guard.reset(time.monotonic())
         self._thread = threading.Thread(target=self._loop, name="monitor", daemon=True)
         self._thread.start()
         log.info("Überwachung gestartet (%s). Wellenbereich %s, erlaubte Gesamtwerte %s, Auslöser ab Gesamt-%d.",
                  source.name, s.wave_roi.as_list(), s.allowed_totals_list(), s.trigger_offset)
-        self._event("Überwachung gestartet", "info")
+        self._event(tr("Überwachung gestartet"), "info")
         self.publisher.request_update()
-        self._notify("start_stop", "Monitor gestartet", messages.COLOR_INFO,
-                     [("Versuche gesamt", messages.fmt_int(self.stats.snapshot().total_attempts), True),
-                      ("Aufnahme", source.name, True)])
+        self._notify("start_stop", tr("Monitor gestartet"), messages.COLOR_INFO,
+                     [(tr("Versuche gesamt"), messages.fmt_int(self.stats.snapshot().total_attempts), True),
+                      (tr("Aufnahme"), source.name, True)])
 
     def stop(self) -> None:
         if not self.running:
@@ -199,19 +200,19 @@ class Engine:
         if self._source:
             self._source.stop()
             self._source = None
-        self.state = EngineState(running=False, info="Gestoppt")
+        self.state = EngineState(running=False, info=tr("Gestoppt"))
         self.guard._state = self.state
         log.info("Überwachung gestoppt.")
-        self._event("Überwachung gestoppt", "info")
+        self._event(tr("Überwachung gestoppt"), "info")
         self.publisher.request_update()
         if self.settings.report_on_stop and self.stats.summary(self.stats.session_start).ok \
                 + self.stats.summary(self.stats.session_start).failed:
-            self.send_report(self.stats.session_start, None, "Session-Bericht")
-        self._notify("start_stop", "Monitor beendet", messages.COLOR_GRAY,
-                     [("Laufzeit", messages.fmt_duration(uptime), True),
-                      ("Versuche Session", str(snap.session_attempts), True),
-                      ("Wellen Session", messages.fmt_int(snap.session_waves), True),
-                      ("Versuche gesamt", messages.fmt_int(snap.total_attempts), True)])
+            self.send_report(self.stats.session_start, None, tr("Session-Bericht"))
+        self._notify("start_stop", tr("Monitor beendet"), messages.COLOR_GRAY,
+                     [(tr("Laufzeit"), messages.fmt_duration(uptime), True),
+                      (tr("Versuche Session"), str(snap.session_attempts), True),
+                      (tr("Wellen Session"), messages.fmt_int(snap.session_waves), True),
+                      (tr("Versuche gesamt"), messages.fmt_int(snap.total_attempts), True)])
 
     def toggle_pause(self) -> bool:
         if self._pause.is_set():
@@ -297,6 +298,7 @@ class Engine:
             "avg_duration": snap.avg_duration, "per_hour": snap.per_hour,
             "uptime": (time.monotonic() - started) if started and st.running else None,
             "best_wave": self.stats.best_wave(profile or None) or None,
+            "wall": self.stats.wall(profile or None),
             "ram_mb": st.roblox_ram_mb if st.running else None,
             "quests": list(st.quests) if st.running else [], "last_event": self._last_event_text,
             "started_unix": (time.time() - (time.monotonic() - started)) if started and st.running else None,
@@ -422,8 +424,8 @@ class Engine:
             return
         self._error_times[key] = now
         log.error("Fehler (%s): %s", key, exc, exc_info=exc)
-        self._event(f"Fehler: {exc}", "error")
-        self._notify("error", "Programmfehler", messages.COLOR_ERROR,
+        self._event(tr("Fehler: {error}", error=exc), "error")
+        self._notify("error", tr("Programmfehler"), messages.COLOR_ERROR,
                      description=f"`{type(exc).__name__}`: {str(exc)[:500]}")
 
     def _debug_save(self, name: str, image: np.ndarray) -> None:
@@ -449,7 +451,7 @@ class Engine:
 
         while not self._halt.is_set():
             if self._pause.is_set():
-                self.state.paused, self.state.info = True, "Pausiert"
+                self.state.paused, self.state.info = True, tr("Pausiert")
                 self._halt.wait(0.3)
                 next_tick = time.monotonic()
                 continue
@@ -523,7 +525,7 @@ class Engine:
         if self._missing_since is None:
             self._missing_since = now
             log.warning("Keine Bilder vom Roblox-Fenster (Quelle: %s)", self.state.source_info)
-        self.state.info = "Kein Bild – Roblox-Fenster nicht verfügbar"
+        self.state.info = tr("Kein Bild – Roblox-Fenster nicht verfügbar")
         self.state.wave_value = None
         self.guard.on_missing(now)
         if not self._source.is_alive() and now - self._last_restart > 3:
@@ -555,7 +557,7 @@ class Engine:
             self.state.info = f"Wave {reading.value}/{reading.total}" + (" (Cache)" if reading.cached else "")
         else:
             self.state.wave_value = self.state.wave_total = None
-            self.state.info = "Kein Wellenzähler im Bild"
+            self.state.info = tr("Kein Wellenzähler im Bild")
 
         self.guard.on_wave(reading.value if reading else None, now)
         events = self.tracker.update(reading.value if reading else None,
@@ -625,14 +627,14 @@ class Engine:
         if self._rec_tries >= SCENE_TRIES:
             self._set_profile(run, "Unbekannt")
             best = ", ".join(f"{n}: {v}" for n, v in sorted(scores.items(), key=lambda kv: -kv[1])[:3])
-            self._event(f"Raid nicht erkannt ({best}). Referenzbild ergänzen?", "warn")
+            self._event(tr("Raid nicht erkannt ({scores}). Referenzbild ergänzen?", scores=best), "warn")
             self._debug_save("raid_unbekannt", crop)
 
     def _set_profile(self, run, name: str) -> None:
         run.profile = name
         self.state.profile = name
         if name != "Unbekannt":
-            self._event(f"Raid erkannt: {name}", "info")
+            self._event(tr("Raid erkannt: {name}", name=name), "info")
             log.info("Raid erkannt: %s", name)
             offset = self.profile_store.settings(name).get("trigger_offset")
             if isinstance(offset, int) and 0 <= offset <= 5:
@@ -672,8 +674,8 @@ class Engine:
         snap = self.stats.snapshot()
         dur_text = messages.fmt_duration_est(duration, bool(note))
         log.info("Raid beendet (#%d, Dauer %s).", snap.total_ok, dur_text)
-        self._event(f"Raid beendet · #{messages.fmt_int(snap.total_ok)}"
-                    f"{' · ' + raid if raid else ''} · {dur_text}", "ok")
+        self._event(tr("Raid beendet · #{count}", count=messages.fmt_int(snap.total_ok))
+                    + (f" · {raid}" if raid else "") + f" · {dur_text}", "ok")
         self._send_raid(snap, record, full, fails=fails)
         self.publisher.request_update()
 
@@ -693,7 +695,7 @@ class Engine:
             self.stats.add(record)
             self.guard.on_raid_end(now)
             snap = self.stats.snapshot()
-            self._event(f"Raid beendet (spät erkannt) · #{messages.fmt_int(snap.total_ok)}", "ok")
+            self._event(tr("Raid beendet (spät erkannt) · #{count}", count=messages.fmt_int(snap.total_ok)), "ok")
             self._send_raid(snap, record, None, late=True, fails=fails)
             self.publisher.request_update()
             self._burst_until, self._next_quest = now + BURST_SECONDS, now + BURST_INTERVAL
@@ -702,23 +704,35 @@ class Engine:
         raid = self._raid_label(info.get("profile"))
         duration, note = self._estimate(info)
         prev_best, prev_count = self.stats.best_wave(raid or None), self.stats.attempts(raid or None)
+        wall = self.stats.wall(raid)
         record = RunRecord(time.time(), duration, None, info["max_wave"], info["total"],
                            "abgebrochen", note, raid)
         self.stats.add(record)
         dur = messages.fmt_duration_est(duration, bool(note))
         text = (f"Fehlversuch bei Welle {info['max_wave']}/{info['total']} · {dur}"
                 + (f" ({raid})" if raid else ""))
+        shown = (tr("Fehlversuch bei Welle {wave}/{total} · {time}", wave=info["max_wave"], total=info["total"],
+                    time=dur) + (f" ({raid})" if raid else ""))
         log.info(text)
-        self._event(text, "warn")
-        fields = [("Höchste Welle", f"{info['max_wave']}/{info['total']}", True), ("Dauer", dur, True)]
+        self._event(shown, "warn")
+        fields = [(tr("Höchste Welle"), f"{info['max_wave']}/{info['total']}", True), (tr("Dauer"), dur, True)]
         if raid:
             fields.insert(0, ("Raid", raid, True))
-        self._notify("raid_aborted", "Fehlversuch / Neustart", messages.COLOR_WARN, fields)
-        if raid and prev_count >= 5 and info["max_wave"] > prev_best:
-            self._event(f"Neuer Rekord in {raid}: Welle {info['max_wave']} (vorher {prev_best})", "ok")
-            self._notify("record", f"🏆 Neuer Rekord: Welle {info['max_wave']}", messages.COLOR_OK,
-                         [("Raid", raid, True), ("Bisher", str(prev_best), True),
-                          ("Versuche", str(prev_count + 1), True)])
+        self._notify("raid_aborted", tr("Fehlversuch / Neustart"), messages.COLOR_WARN, fields)
+        if wall and info["max_wave"] > wall.wave:
+            log.info("Wand durchbrochen in %s: Welle %d (Wand %d nach %d Versuchen)",
+                     raid, info["max_wave"], wall.wave, wall.streak)
+            self._event(tr("Wand durchbrochen in {raid}: Welle {wave} (vorher {streak}× an Welle {wall})",
+                           raid=raid, wave=info["max_wave"], streak=wall.streak, wall=wall.wave), "ok")
+            self._notify("wall", tr("🎉 Wand durchbrochen: Welle {wave}", wave=info["max_wave"]), messages.COLOR_OK,
+                         [(tr("Raid"), raid, True), (tr("Wand"), tr("Welle {wave}", wave=wall.wave), True),
+                          (tr("Versuche daran"), str(wall.streak), True)])
+        elif raid and prev_count >= 5 and info["max_wave"] > prev_best:
+            self._event(tr("Neuer Rekord in {raid}: Welle {wave} (vorher {before})", raid=raid, wave=info["max_wave"],
+                           before=prev_best), "ok")
+            self._notify("record", tr("🏆 Neuer Rekord: Welle {wave}", wave=info["max_wave"]), messages.COLOR_OK,
+                         [(tr("Raid"), raid, True), (tr("Bisher"), str(prev_best), True),
+                          (tr("Versuche"), str(prev_count + 1), True)])
         self.publisher.request_update()
 
     @staticmethod
@@ -733,35 +747,35 @@ class Engine:
             per = next((p for p in self.stats.per_raid() if p["raid"] == record.raid), None)
             avg = per["avg"] if per and per["avg"] else avg
         fields = [
-            ("Raid", f"#{messages.fmt_int(snap.total_ok)}" + (f" · {record.raid}" if record.raid else ""), True),
-            ("Dauer", messages.fmt_duration_est(record.duration_s, record.estimated), True),
-            ("Ø Dauer" + (f" ({record.raid})" if record.raid else ""), messages.fmt_duration(avg), True),
-            ("Raids pro Stunde", f"{snap.per_hour:.1f}".replace(".", ",") if snap.per_hour else "–", True),
-            ("Session", f"{snap.session_ok} Raids · {messages.fmt_duration(elapsed)}", True),
-            ("Zykluszeit", messages.fmt_duration(record.cycle_s), True),
+            (tr("Raid"), f"#{messages.fmt_int(snap.total_ok)}" + (f" · {record.raid}" if record.raid else ""), True),
+            (tr("Dauer"), messages.fmt_duration_est(record.duration_s, record.estimated), True),
+            (tr("Ø Dauer") + (f" ({record.raid})" if record.raid else ""), messages.fmt_duration(avg), True),
+            (tr("Raids pro Stunde"), dec(f"{snap.per_hour:.1f}") if snap.per_hour else "–", True),
+            (tr("Session"), tr("{count} Raids · {time}", count=snap.session_ok, time=messages.fmt_duration(elapsed)), True),
+            (tr("Zykluszeit"), messages.fmt_duration(record.cycle_s), True),
         ]
         if fails[0]:
-            fields.insert(3, ("Fehlversuche davor", f"{fails[0]} · Ø {messages.fmt_duration(fails[1])}", True))
+            fields.insert(3, (tr("Fehlversuche davor"), f"{fails[0]} · Ø {messages.fmt_duration(fails[1])}", True))
         quests = self.quest_tracker.snapshot()
         if self.settings.attach_quests and quests:
-            fields.append(("Quests (Stand vor diesem Raid)", messages.quest_text(quests), False))
+            fields.append((tr("Quests (Stand vor diesem Raid)"), messages.quest_text(quests), False))
         image = ("raid.jpg", encode_jpeg(full)) if full is not None else None
-        self._notify("raid_done", "Raid erfolgreich beendet!", messages.COLOR_OK, fields,
-                     "Ohne Screenshot erkannt." if late else None, image)
+        self._notify("raid_done", tr("Raid erfolgreich beendet!"), messages.COLOR_OK, fields,
+                     tr("Ohne Screenshot erkannt.") if late else None, image)
 
     def _send_uptime(self, now: float) -> None:
         if self.settings.status_enabled and self.settings.webhook_url:
             return                                  # die Live-Statusnachricht ersetzt das Lebenszeichen
         snap = self.stats.snapshot()
         uptime = now - (self.state.started_at or now)
-        fields = [("Uptime", messages.fmt_duration(uptime), True),
-                  ("Versuche Session", str(snap.session_attempts), True),
-                  ("Wellen Session", messages.fmt_int(snap.session_waves), True),
-                  ("Versuche gesamt", messages.fmt_int(snap.total_attempts), True)]
+        fields = [(tr("Uptime"), messages.fmt_duration(uptime), True),
+                  (tr("Versuche Session"), str(snap.session_attempts), True),
+                  (tr("Wellen Session"), messages.fmt_int(snap.session_waves), True),
+                  (tr("Versuche gesamt"), messages.fmt_int(snap.total_attempts), True)]
         quests = self.quest_tracker.snapshot()
         if self.settings.attach_quests and quests:
-            fields.append(("Quests", messages.quest_text(quests), False))
-        self._notify("uptime", "🟢 Lebenszeichen", messages.COLOR_GRAY, fields)
+            fields.append((tr("Quests"), messages.quest_text(quests), False))
+        self._notify("uptime", tr("🟢 Lebenszeichen"), messages.COLOR_GRAY, fields)
 
     # ---------------------------------------------------------------------- Quests
     def _process_quests(self, crop: np.ndarray, now: float) -> None:
@@ -778,16 +792,17 @@ class Engine:
 
         for change in changes:
             q = change.quest
-            self._event(f"Quest: {q.title} · {change.old} → {change.new}/{q.total or '?'}", "info")
+            self._event(tr("Quest: {title} · {old} → {new}/{total}", title=q.title, old=change.old, new=change.new,
+                           total=q.total or "?"), "info")
         for quest in completed:
-            self._event(f"Quest abgeschlossen: {quest.title}", "ok")
-            self._notify("quest_done", "✅ Quest abgeschlossen", messages.COLOR_OK,
-                         [("Quest", quest.title, False)])
+            self._event(tr("Quest abgeschlossen: {title}", title=quest.title), "ok")
+            self._notify("quest_done", tr("✅ Quest abgeschlossen"), messages.COLOR_OK,
+                         [(tr("Quest"), quest.title, False)])
         if changes and in_burst:
             self._burst_until = 0.0
             lines_txt = "\n".join(
                 f"• {c.quest.title}: {messages.fmt_int(c.old)} → **{messages.fmt_int(c.new)}**"
                 f"/{messages.fmt_int(c.quest.total) if c.quest.total else '?'}" for c in changes)
-            self._notify("quest_update", "Quest-Fortschritt", messages.COLOR_INFO,
-                         [("Änderungen", lines_txt, False),
-                          ("Alle Quests", messages.quest_text(self.state.quests), False)])
+            self._notify("quest_update", tr("Quest-Fortschritt"), messages.COLOR_INFO,
+                         [(tr("Änderungen"), lines_txt, False),
+                          (tr("Alle Quests"), messages.quest_text(self.state.quests), False)])

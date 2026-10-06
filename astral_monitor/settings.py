@@ -7,6 +7,7 @@ from dataclasses import dataclass, field, fields
 from typing import Optional
 
 from . import app_paths
+from .i18n import N_, tr
 
 log = logging.getLogger("settings")
 
@@ -52,25 +53,26 @@ RPC_GAME_LINK = "https://www.roblox.com/games/102072869879193/CYBER-Anime-Astral
 
 # (Schlüssel, Anzeigename, Standard: senden, Standard: Ping)
 EVENT_DEFS: list[tuple[str, str, bool, bool]] = [
-    ("raid_done", "Raid beendet", True, False),
-    ("raid_aborted", "Fehlversuch / Neustart", False, False),
-    ("quest_update", "Quest-Fortschritt nach Raid", True, False),
-    ("quest_done", "Quest abgeschlossen", True, False),
-    ("roblox_down", "Roblox beendet / Disconnect", True, True),
-    ("stall", "Stillstand-Alarm", True, True),
-    ("health", "Speicher-Warnung", True, False),
-    ("record", "Neuer Rekord (Welle)", True, False),
-    ("report", "Bericht / Statistik-Karte", True, False),
-    ("uptime", "Uptime (nur ohne Live-Status)", True, False),
-    ("start_stop", "Start und Stopp", True, False),
-    ("error", "Programmfehler", True, True),
+    ("raid_done", N_("Raid beendet"), True, False),
+    ("raid_aborted", N_("Fehlversuch / Neustart"), False, False),
+    ("quest_update", N_("Quest-Fortschritt nach Raid"), True, False),
+    ("quest_done", N_("Quest abgeschlossen"), True, False),
+    ("roblox_down", N_("Roblox beendet / Disconnect"), True, True),
+    ("stall", N_("Stillstand-Alarm"), True, True),
+    ("health", N_("Speicher-Warnung"), True, False),
+    ("record", N_("Neuer Rekord (Welle)"), True, False),
+    ("wall", N_("Wand durchbrochen"), True, False),
+    ("report", N_("Bericht / Statistik-Karte"), True, False),
+    ("uptime", N_("Uptime (nur ohne Live-Status)"), True, False),
+    ("start_stop", N_("Start und Stopp"), True, False),
+    ("error", N_("Programmfehler"), True, True),
 ]
 
 # Prüfintervalle in Sekunden: ruhig, kurz vor Raid-Ende ("heiß"), Quest-Abstand
 PRESETS: dict[str, dict] = {
-    "eco": {"label": "Sparsam", "idle": 2.0, "hot": 0.5, "quest": 60.0},
-    "balanced": {"label": "Ausgewogen", "idle": 1.0, "hot": 0.25, "quest": 30.0},
-    "fast": {"label": "Schnell", "idle": 0.5, "hot": 0.15, "quest": 15.0},
+    "eco": {"label": N_("Sparsam"), "idle": 2.0, "hot": 0.5, "quest": 60.0},
+    "balanced": {"label": N_("Ausgewogen"), "idle": 1.0, "hot": 0.25, "quest": 30.0},
+    "fast": {"label": N_("Schnell"), "idle": 0.5, "hot": 0.15, "quest": 15.0},
 }
 
 
@@ -131,6 +133,9 @@ class Settings:
     rpc_enabled: bool = False
     rpc_client_id: str = ""
     rpc_game_link: str = RPC_GAME_LINK
+    # Oberfläche
+    language: str = "de"                # de | en (gilt nach Neustart)
+    close_to_tray: bool = True          # Fenster schließen = im Infobereich weiterlaufen
     # Sonstiges
     settings_version: int = 6
     uptime_minutes: int = 10
@@ -152,46 +157,46 @@ class Settings:
 
     def validate(self) -> Optional[str]:
         if not is_valid_webhook(self.webhook_url):
-            return "Bitte eine gültige Discord-Webhook-URL eintragen (Seite „Meldungen“)."
+            return tr("Bitte eine gültige Discord-Webhook-URL eintragen (Seite „Meldungen“).")
         return self.validate_detection()
 
     def validate_detection(self) -> Optional[str]:
         if not self.wave_roi.is_valid():
-            return "Der Bereich des Wellenzählers ist ungültig (Seite „Erkennung“)."
+            return tr("Der Bereich des Wellenzählers ist ungültig (Seite „Erkennung“).")
         if not self.allowed_totals_list():
-            return "Bitte mindestens eine erlaubte Gesamtwellenzahl eintragen, z. B. 100."
+            return tr("Bitte mindestens eine erlaubte Gesamtwellenzahl eintragen, z. B. 100.")
         if not 0 <= self.trigger_offset <= 5:
-            return "Der Auslöser-Abstand muss zwischen 0 und 5 liegen."
+            return tr("Der Auslöser-Abstand muss zwischen 0 und 5 liegen.")
         if not 1 <= self.confirm_reads <= 4:
-            return "Die Anzahl der Bestätigungen muss zwischen 1 und 4 liegen."
+            return tr("Die Anzahl der Bestätigungen muss zwischen 1 und 4 liegen.")
         if self.cooldown_seconds < 0:
-            return "Die Sperrzeit darf nicht negativ sein."
+            return tr("Die Sperrzeit darf nicht negativ sein.")
         if not 1 <= self.uptime_minutes <= 1440:
-            return "Das Uptime-Intervall muss zwischen 1 und 1440 Minuten liegen."
+            return tr("Das Uptime-Intervall muss zwischen 1 und 1440 Minuten liegen.")
         if self.read_quests and not self.quest_roi.is_valid():
-            return "Der Quest-Bereich ist ungültig (Seite „Erkennung“)."
+            return tr("Der Quest-Bereich ist ungültig (Seite „Erkennung“).")
         if not self.scene_roi.is_valid():
-            return "Der Szenen-Bereich ist ungültig (Seite „Raids“)."
+            return tr("Der Szenen-Bereich ist ungültig (Seite „Raids“).")
         if not 1 <= self.profile_min_inliers <= 200:
-            return "Die Mindest-Übereinstimmung muss zwischen 1 und 200 liegen."
+            return tr("Die Mindest-Übereinstimmung muss zwischen 1 und 200 liegen.")
         if not 1 <= self.stall_minutes <= 240:
-            return "Die Stillstand-Zeit muss zwischen 1 und 240 Minuten liegen."
+            return tr("Die Stillstand-Zeit muss zwischen 1 und 240 Minuten liegen.")
         if self.no_raid_minutes < 0 or self.ram_alert_gb < 0:
-            return "Wächter-Werte dürfen nicht negativ sein."
+            return tr("Wächter-Werte dürfen nicht negativ sein.")
         from .hotkeys import parse_hotkey
-        keys = (("Start/Stopp", self.hotkey_toggle), ("Pause", self.hotkey_pause),
-                ("Status neu senden", self.hotkey_status))
+        keys = ((N_("Start/Stopp"), self.hotkey_toggle), (N_("Pause"), self.hotkey_pause),
+                (N_("Status neu senden"), self.hotkey_status))
         for name, text in keys:
             try:
                 parse_hotkey(text)
             except ValueError as exc:
-                return f"Hotkey {name}: {exc}"
+                return tr("Hotkey {name}: {error}", name=tr(name), error=exc)
         if len({t.strip().lower() for _n, t in keys}) < len(keys):
-            return "Die Hotkeys müssen unterschiedlich sein."
+            return tr("Die Hotkeys müssen unterschiedlich sein.")
         if self.rpc_client_id.strip() and not self.rpc_client_id.strip().isdigit():
-            return "Die Discord-Anwendungs-ID besteht nur aus Ziffern (Entwicklerportal → Anwendung → Allgemein)."
+            return tr("Die Discord-Anwendungs-ID besteht nur aus Ziffern (Entwicklerportal → Anwendung → Allgemein).")
         if not 20 <= self.status_interval <= 3600:
-            return "Das Intervall der Live-Status-Nachricht muss zwischen 20 und 3600 Sekunden liegen."
+            return tr("Das Intervall der Live-Status-Nachricht muss zwischen 20 und 3600 Sekunden liegen.")
         return None
 
     # ------------------------------------------------------------ Speichern/Laden

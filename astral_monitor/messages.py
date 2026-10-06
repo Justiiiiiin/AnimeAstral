@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from .settings import Settings
+from .i18n import N_, dec, thousands, tr
 
 COLOR_OK = 0x3DD6B5
 COLOR_WARN = 0xF5A524
@@ -23,7 +24,7 @@ def fmt_duration(seconds: Optional[float]) -> str:
 
 
 def fmt_int(value: int) -> str:
-    return f"{value:,}".replace(",", ".")
+    return thousands(f"{value:,}")
 
 
 def quest_text(quests: list[dict], limit: int = 6) -> str:
@@ -76,39 +77,44 @@ def fmt_duration_est(seconds: Optional[float], estimated: bool = False) -> str:
 
 
 STATUS_COLORS = {"running": COLOR_OK, "paused": COLOR_WARN, "stopped": COLOR_GRAY}
-STATUS_TEXT = {"running": "🟢 Läuft", "paused": "🟡 Pausiert", "stopped": "⚫ Gestoppt"}
+STATUS_TEXT = {"running": ("🟢", N_("Läuft")), "paused": ("🟡", N_("Pausiert")), "stopped": ("⚫", N_("Gestoppt"))}
 
 
 def build_status(settings: Settings, snap: dict) -> dict:
     """Embed der Live-Statusnachricht aus einem Zustandsabzug der Engine."""
     status = snap.get("status", "stopped")
-    wave = f"Welle {snap['wave']}/{snap['total_waves']}" if snap.get("wave") is not None else "Kein Raid im Bild"
+    wave = (tr("Welle {wave}/{total}", wave=snap["wave"], total=snap["total_waves"]) if snap.get("wave") is not None
+            else tr("Kein Raid im Bild"))
     profile = f" · {snap['profile']}" if snap.get("profile") else ""
     wph, avg_wave = snap.get("waves_per_hour"), snap.get("avg_wave")
     fields = [
-        ("Versuche (Session)", str(snap.get("session_attempts", 0)), True),
-        ("Wellen (Session)", fmt_int(snap.get("session_waves", 0)), True),
-        ("Wellen pro Stunde", f"{wph:.0f}" if wph else "–", True),
-        ("Ø Endwelle", f"{avg_wave:.1f}".replace(".", ",") if avg_wave else "–", True),
-        ("Versuche gesamt", fmt_int(snap.get("total_attempts", 0)), True),
-        ("Laufzeit", fmt_duration(snap.get("uptime")), True),
+        (tr("Versuche (Session)"), str(snap.get("session_attempts", 0)), True),
+        (tr("Wellen (Session)"), fmt_int(snap.get("session_waves", 0)), True),
+        (tr("Wellen pro Stunde"), f"{wph:.0f}" if wph else "–", True),
+        (tr("Ø Endwelle"), dec(f"{avg_wave:.1f}") if avg_wave else "–", True),
+        (tr("Versuche gesamt"), fmt_int(snap.get("total_attempts", 0)), True),
+        (tr("Laufzeit"), fmt_duration(snap.get("uptime")), True),
     ]
     if snap.get("best_wave"):
-        label = f"Bestwelle ({snap['profile']})" if snap.get("profile") else "Bestwelle"
+        label = tr("Bestwelle") + (f" ({snap['profile']})" if snap.get("profile") else "")
         fields.append((label, str(snap["best_wave"]), True))
+    if snap.get("wall"):
+        fields.append((tr("Wand"), tr("Welle {wave} · {streak}× in Folge", wave=snap["wall"].wave,
+                                         streak=snap["wall"].streak), True))
     if snap.get("ram_mb"):
-        fields.append(("Roblox", f"{snap['ram_mb'] / 1024:.1f} GB RAM".replace(".", ","), True))
+        fields.append(("Roblox", dec(f"{snap['ram_mb'] / 1024:.1f} GB RAM"), True))
     if snap.get("quests") and settings.attach_quests:
-        fields.append(("Quests", quest_text(snap["quests"], limit=5), False))
+        fields.append((tr("Quests"), quest_text(snap["quests"], limit=5), False))
     description = f"## {wave}{profile}"
     if snap.get("last_event"):
-        description += f"\n-# Zuletzt: {snap['last_event']}"
+        description += "\n-# " + tr("Zuletzt: {event}", event=snap["last_event"])
+    emoji, word = STATUS_TEXT.get(status, ("", status))
     embed = {
-        "title": f"{STATUS_TEXT.get(status, status)} · Live-Status",
+        "title": f"{emoji} {tr(word)} · Live-Status",
         "description": description,
         "color": STATUS_COLORS.get(status, COLOR_GRAY),
         "fields": [{"name": n[:256], "value": (v or "–")[:1024], "inline": bool(i)} for n, v, i in fields[:25]],
         "timestamp": datetime.now(timezone.utc).isoformat(),
-        "footer": {"text": f"{settings.username} · aktualisiert"},
+        "footer": {"text": f"{settings.username} · " + tr("aktualisiert")},
     }
     return {"username": settings.username, "embeds": [embed], "allowed_mentions": {"parse": []}}

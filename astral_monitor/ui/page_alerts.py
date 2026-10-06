@@ -7,6 +7,8 @@ from PySide6.QtWidgets import (QCheckBox, QGridLayout, QHBoxLayout, QLineEdit, Q
                                QPushButton, QVBoxLayout, QWidget)
 
 from .. import messages
+from ..i18n import tr
+from . import theme
 from ..discord_client import DiscordSender
 from ..settings import EVENT_DEFS, is_valid_webhook
 from .widgets import Card, SpinBox, label
@@ -19,87 +21,87 @@ class AlertsPage(QWidget):
         self.engine = main.engine
 
         root = QVBoxLayout(self)
-        root.setContentsMargins(28, 24, 28, 24)
-        root.setSpacing(16)
-        root.addWidget(label("Meldungen", "h1"))
-        root.addWidget(label("Was wird an Discord gesendet, und wann gibt es einen Ping?", "muted"))
+        theme.track_margins(root, 28, 24, 28, 24)
+        theme.track_spacing(root, 16)
+        root.addWidget(label(tr("Meldungen"), "h1"))
+        root.addWidget(label(tr("Was wird an Discord gesendet, und wann gibt es einen Ping?"), "muted"))
 
-        hook = Card("Discord")
+        hook = Card(tr("Discord"))
         grid = QGridLayout()
         grid.setColumnStretch(1, 1)
         grid.setVerticalSpacing(8)
         self.url = QLineEdit()
         self.url.setEchoMode(QLineEdit.EchoMode.Password)
-        self.url.setPlaceholderText("https://discord.com/api/webhooks/…")
-        show = QCheckBox("anzeigen")
+        self.url.setPlaceholderText(tr("https://discord.com/api/webhooks/…"))
+        show = QCheckBox(tr("anzeigen"))
         show.toggled.connect(lambda on: self.url.setEchoMode(
             QLineEdit.EchoMode.Normal if on else QLineEdit.EchoMode.Password))
         self.name = QLineEdit()
         self.ping = QLineEdit()
-        self.ping.setPlaceholderText("Deine Discord-ID (nur Ziffern)")
-        grid.addWidget(label("Webhook-URL"), 0, 0)
+        self.ping.setPlaceholderText(tr("Deine Discord-ID (nur Ziffern)"))
+        grid.addWidget(label(tr("Webhook-URL")), 0, 0)
         grid.addWidget(self.url, 0, 1)
         grid.addWidget(show, 0, 2)
-        grid.addWidget(label("Anzeigename"), 1, 0)
+        grid.addWidget(label(tr("Anzeigename")), 1, 0)
         grid.addWidget(self.name, 1, 1, 1, 2)
-        grid.addWidget(label("Ping-Ziel"), 2, 0)
+        grid.addWidget(label(tr("Ping-Ziel")), 2, 0)
         grid.addWidget(self.ping, 2, 1, 1, 2)
         hook.body.addLayout(grid)
         row = QHBoxLayout()
-        test = QPushButton("Test-Nachricht senden")
+        test = QPushButton(tr("Test-Nachricht senden"))
         test.clicked.connect(self._send_test)
         row.addWidget(test)
         row.addStretch(1)
         hook.body.addLayout(row)
         root.addWidget(hook)
 
-        live = Card("Live-Status")
-        self.status_enabled = QCheckBox("Eine Statusnachricht verwenden, die sich selbst aktualisiert (ersetzt die Uptime-Meldungen)")
+        live = Card(tr("Live-Status"))
+        self.status_enabled = QCheckBox(tr("Eine Statusnachricht verwenden, die sich selbst aktualisiert (ersetzt die Uptime-Meldungen)"))
         live.body.addWidget(self.status_enabled)
         lrow = QHBoxLayout()
-        lrow.addWidget(label("Aktualisieren alle"))
+        lrow.addWidget(label(tr("Aktualisieren alle")))
         self.status_interval = SpinBox()
         self.status_interval.setRange(20, 3600)
         self.status_interval.setSuffix(" s")
         lrow.addWidget(self.status_interval)
         lrow.addStretch(1)
         live.body.addLayout(lrow)
-        self.status_bottom = QCheckBox("Nach jeder Meldung des Programms automatisch ganz nach unten schieben")
+        self.status_bottom = QCheckBox(tr("Nach jeder Meldung des Programms automatisch ganz nach unten schieben"))
         live.body.addWidget(self.status_bottom)
         brow = QHBoxLayout()
-        resend = QPushButton("Jetzt unten neu senden")
+        resend = QPushButton(tr("Jetzt unten neu senden"))
         resend.clicked.connect(self.main.resend_status)
         brow.addWidget(resend)
         brow.addStretch(1)
         live.body.addLayout(brow)
-        live.body.addWidget(label("Tipp: Rechtsklick auf die Statusnachricht → „Anheften“. Eine angeheftete Nachricht bleibt "
+        live.body.addWidget(label(tr("Tipp: Rechtsklick auf die Statusnachricht → „Anheften“. Eine angeheftete Nachricht bleibt "
                                   "angeheftet und wird nur bearbeitet. Per Webhook lässt sie sich nicht automatisch anheften; "
-                                  "„Neu senden“ erzeugt eine neue Nachricht (neu anheften).", "small", wrap=True))
-        self.report_on_stop = QCheckBox("Beim Stoppen eine Statistik-Karte senden")
+                                  "„Neu senden“ erzeugt eine neue Nachricht (neu anheften)."), "small", wrap=True))
+        self.report_on_stop = QCheckBox(tr("Beim Stoppen eine Statistik-Karte senden"))
         live.body.addWidget(self.report_on_stop)
         root.addWidget(live)
 
-        events = Card("Ereignisse")
+        events = Card(tr("Ereignisse"))
         table = QGridLayout()
         table.setColumnStretch(0, 1)
         table.setVerticalSpacing(6)
-        table.addWidget(label("Ereignis", "small"), 0, 0)
-        table.addWidget(label("Senden", "small"), 0, 1)
-        table.addWidget(label("Ping", "small"), 0, 2)
+        table.addWidget(label(tr("Ereignis"), "small"), 0, 0)
+        table.addWidget(label(tr("Senden"), "small"), 0, 1)
+        table.addWidget(label(tr("Ping"), "small"), 0, 2)
         self.send_boxes: dict[str, QCheckBox] = {}
         self.ping_boxes: dict[str, QCheckBox] = {}
         for i, (key, text, _s, _p) in enumerate(EVENT_DEFS, start=1):
-            table.addWidget(label(text), i, 0)
+            table.addWidget(label(tr(text)), i, 0)
             send, ping = QCheckBox(), QCheckBox()
             self.send_boxes[key], self.ping_boxes[key] = send, ping
             table.addWidget(send, i, 1)
             table.addWidget(ping, i, 2)
         events.body.addLayout(table)
-        self.attach = QCheckBox("Quest-Fortschritt in Raid- und Uptime-Meldungen anhängen")
+        self.attach = QCheckBox(tr("Quest-Fortschritt in Raid- und Uptime-Meldungen anhängen"))
         events.body.addWidget(self.attach)
         root.addWidget(events)
 
-        save = QPushButton("Speichern")
+        save = QPushButton(tr("Speichern"))
         save.setObjectName("primary")
         save.clicked.connect(lambda: self.main.save_settings())
         row2 = QHBoxLayout()
@@ -127,7 +129,7 @@ class AlertsPage(QWidget):
         s.username = self.name.text().strip() or "Anime Astral Monitor"
         ping = self.ping.text().strip()
         if ping and not ping.isdigit():
-            raise ValueError("Die Discord-ID darf nur aus Ziffern bestehen.")
+            raise ValueError(tr("Die Discord-ID darf nur aus Ziffern bestehen."))
         s.ping_user_id = ping
         for key in self.send_boxes:
             s.events[key] = {"send": self.send_boxes[key].isChecked(),
@@ -144,7 +146,7 @@ class AlertsPage(QWidget):
     def _send_test(self) -> None:
         url = self.url.text().strip()
         if not is_valid_webhook(url):
-            QMessageBox.warning(self, "Webhook", "Bitte zuerst eine gültige Webhook-URL eintragen.")
+            QMessageBox.warning(self, tr("Webhook"), tr("Bitte zuerst eine gültige Webhook-URL eintragen."))
             return
-        self.main.test_webhook(url, lambda ok, info: QMessageBox.information(self, "Discord", "Test-Nachricht gesendet ✅")
-                               if ok else QMessageBox.critical(self, "Discord", f"Senden fehlgeschlagen:\n{info}"))
+        self.main.test_webhook(url, lambda ok, info: QMessageBox.information(self, tr("Discord"), tr("Test-Nachricht gesendet ✅"))
+                               if ok else QMessageBox.critical(self, tr("Discord"), tr("Senden fehlgeschlagen:\n{error}", error=info)))

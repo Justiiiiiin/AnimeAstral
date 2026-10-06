@@ -8,6 +8,8 @@ from PySide6.QtWidgets import (QDialog, QHBoxLayout, QMessageBox, QProgressBar, 
                                QVBoxLayout)
 
 from .. import updater
+from ..i18n import tr
+from . import theme
 from ..version import __version__
 from .widgets import label
 
@@ -16,23 +18,23 @@ class UpdateDialog(QDialog):
     def __init__(self, main, info: updater.ReleaseInfo) -> None:
         super().__init__(main)
         self.main, self.info = main, info
-        self.setWindowTitle("Update verfügbar")
+        self.setWindowTitle(tr("Update verfügbar"))
         self.setModal(True)
         self.resize(560, 460)
         self._state = {"done": 0, "total": 0, "error": None, "path": None, "finished": False}
         self._cancel = False
 
         lay = QVBoxLayout(self)
-        lay.setContentsMargins(28, 24, 28, 20)
-        lay.setSpacing(12)
-        lay.addWidget(label(f"Version {info.version} ist verfügbar", "h1"))
-        lay.addWidget(label(f"Du hast Version {__version__}.", "muted"))
+        theme.track_margins(lay, 28, 24, 28, 20)
+        theme.track_spacing(lay, 12)
+        lay.addWidget(label(tr("Version {version} ist verfügbar", version=info.version), "h1"))
+        lay.addWidget(label(tr("Du hast Version {version}.", version=__version__), "muted"))
         notes = QTextBrowser()                  # GitHub-Versionshinweise sind Markdown
         notes.setOpenExternalLinks(True)
-        notes.setMarkdown(info.notes or "Keine Versionshinweise angegeben.")
+        notes.setMarkdown(info.notes or tr("Keine Versionshinweise angegeben."))
         lay.addWidget(notes, 1)
-        self.warn = label("Die laufende Überwachung wird für das Update beendet; danach startet das Programm neu."
-                          if main.engine.running else "Das Programm startet nach dem Update automatisch neu.", "muted", wrap=True)
+        self.warn = label(tr("Die laufende Überwachung wird für das Update beendet; danach startet das Programm neu.")
+                          if main.engine.running else tr("Das Programm startet nach dem Update automatisch neu."), "muted", wrap=True)
         lay.addWidget(self.warn)
         self.bar = QProgressBar()
         self.bar.setRange(0, 100)
@@ -42,11 +44,11 @@ class UpdateDialog(QDialog):
         lay.addWidget(self.status)
 
         row = QHBoxLayout()
-        self.btn_skip = QPushButton("Diese Version überspringen")
+        self.btn_skip = QPushButton(tr("Diese Version überspringen"))
         self.btn_skip.clicked.connect(self._skip)
-        self.btn_later = QPushButton("Später")
+        self.btn_later = QPushButton(tr("Später"))
         self.btn_later.clicked.connect(self.reject)
-        self.btn_go = QPushButton("Jetzt aktualisieren")
+        self.btn_go = QPushButton(tr("Jetzt aktualisieren"))
         self.btn_go.setObjectName("primary")
         self.btn_go.clicked.connect(self._start)
         row.addWidget(self.btn_skip)
@@ -63,7 +65,7 @@ class UpdateDialog(QDialog):
         self._plan = None
         self._plan_state = {"done": False, "plan": None}
         self.btn_go.setEnabled(False)
-        self.status.setText("Prüfe Download-Größe …")
+        self.status.setText(tr("Prüfe Download-Größe …"))
 
         def plan_work() -> None:
             try:
@@ -84,10 +86,10 @@ class UpdateDialog(QDialog):
         self._plan_timer.stop()
         self._plan = self._plan_state["plan"]
         if self._plan is not None:
-            self.status.setText(f"Download: {self.info.patch_size / 1048576:.1f} MB "
-                                f"(nur {len(self._plan.changed)} geänderte Dateien)")
+            self.status.setText(tr("Download: {mb} MB (nur {count} geänderte Dateien)",
+                                   mb=f"{self.info.patch_size / 1048576:.1f}", count=len(self._plan.changed)))
         else:
-            self.status.setText(f"Download: {self.info.size / 1048576:.0f} MB (kompletter Installer)")
+            self.status.setText(tr("Download: {mb} MB (kompletter Installer)", mb=f"{self.info.size / 1048576:.0f}"))
         self.btn_go.setEnabled(True)
 
     def _skip(self) -> None:
@@ -97,11 +99,11 @@ class UpdateDialog(QDialog):
     def _start(self) -> None:
         for btn in (self.btn_skip, self.btn_later):
             btn.setEnabled(False)
-        self.btn_go.setText("Abbrechen")
+        self.btn_go.setText(tr("Abbrechen"))
         self.btn_go.clicked.disconnect()
         self.btn_go.clicked.connect(self._abort)
         self.bar.setVisible(True)
-        self.status.setText("Lade herunter …")
+        self.status.setText(tr("Lade herunter …"))
         self.timer.start()
 
         def work() -> None:
@@ -118,29 +120,30 @@ class UpdateDialog(QDialog):
     def _abort(self) -> None:
         self._cancel = True
         self.btn_go.setEnabled(False)
-        self.status.setText("Wird abgebrochen …")
+        self.status.setText(tr("Wird abgebrochen …"))
 
     def _poll(self) -> None:
         total, done = self._state["total"], self._state["done"]
         if total:
             self.bar.setValue(int(done * 100 / total))
-            self.status.setText(f"{done / 1048576:.1f} von {total / 1048576:.1f} MB")
+            self.status.setText(tr("{done} von {total} MB", done=f"{done / 1048576:.1f}", total=f"{total / 1048576:.1f}"))
         if not self._state["finished"]:
             return
         self.timer.stop()
         if self._state["error"]:
             if not self._cancel:
-                QMessageBox.warning(self, "Update", f"Das Update ist fehlgeschlagen:\n{self._state['error']}")
+                QMessageBox.warning(self, tr("Update"), tr("Das Update ist fehlgeschlagen:\n{error}",
+                                                                        error=self._state["error"]))
             self.reject()
             return
-        self.status.setText("Installiere … das Programm startet gleich neu.")
+        self.status.setText(tr("Installiere … das Programm startet gleich neu."))
         try:
             if self._plan is not None:
                 updater.launch_patch(self._state["path"], self._plan, relaunch=True)
             else:
                 updater.launch_installer(self._state["path"], relaunch=True)
         except (OSError, updater.UpdateError) as exc:
-            QMessageBox.warning(self, "Update", f"Der Installer konnte nicht gestartet werden:\n{exc}")
+            QMessageBox.warning(self, tr("Update"), tr("Der Installer konnte nicht gestartet werden:\n{error}", error=exc))
             self.reject()
             return
         self.accept()

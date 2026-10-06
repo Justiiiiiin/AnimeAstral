@@ -7,6 +7,8 @@ import sys
 import threading
 from typing import Callable
 
+from .i18n import tr
+
 log = logging.getLogger("hotkeys")
 
 MOD_ALT, MOD_CONTROL, MOD_SHIFT, MOD_WIN, MOD_NOREPEAT = 0x0001, 0x0002, 0x0004, 0x0008, 0x4000
@@ -20,11 +22,11 @@ def parse_hotkey(text: str) -> tuple[int, int]:
     """'Ctrl+Alt+S' -> (Modifier-Maske, virtueller Tastencode). Wirft ValueError bei ungültiger Eingabe."""
     parts = [p.strip().lower() for p in text.replace(" ", "").split("+") if p.strip()]
     if len(parts) < 2:
-        raise ValueError("bitte Modifier und Taste angeben, z. B. Ctrl+Alt+S")
+        raise ValueError(tr("bitte Modifier und Taste angeben, z. B. Ctrl+Alt+S"))
     mods = 0
     for part in parts[:-1]:
         if part not in _MODS:
-            raise ValueError(f"unbekannter Modifier „{part}“ (erlaubt: Ctrl, Alt, Shift, Win)")
+            raise ValueError(tr("unbekannter Modifier „{key}“ (erlaubt: Ctrl, Alt, Shift, Win)", key=part))
         mods |= _MODS[part]
     key = parts[-1]
     if len(key) == 1 and key.isalnum():
@@ -34,7 +36,7 @@ def parse_hotkey(text: str) -> tuple[int, int]:
     elif key in _SPECIAL:
         vk = _SPECIAL[key]
     else:
-        raise ValueError(f"unbekannte Taste „{key}“")
+        raise ValueError(tr("unbekannte Taste „{key}“", key=key))
     return mods, vk
 
 
@@ -71,7 +73,7 @@ class HotkeyListener(threading.Thread):
             if user32.RegisterHotKey(None, i, mods | MOD_NOREPEAT, vk):
                 actions[i] = func
             else:
-                self.failed.append(f"{name} ({text}) – evtl. von einem anderen Programm belegt")
+                self.failed.append(tr("{name} ({key}) – evtl. von einem anderen Programm belegt", name=name, key=text))
         self.ready.set()
 
         while True:

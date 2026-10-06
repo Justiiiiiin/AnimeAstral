@@ -9,6 +9,8 @@ from PySide6.QtWidgets import (QHBoxLayout, QListWidget, QListWidgetItem, QProgr
                                QPushButton, QVBoxLayout, QWidget)
 
 from .. import messages
+from ..i18n import dec, tr
+from . import theme
 from .widgets import Card, QuestRow, StatCard, bgr_to_pixmap, label, smooth
 
 LEVEL_COLORS = {"ok": "#3DD6B5", "warn": "#F5A524", "error": "#FF9A9A", "info": "#E6EAF0"}
@@ -25,23 +27,23 @@ class MonitorPage(QWidget):
         self._was_running = None
 
         root = QVBoxLayout(self)
-        root.setContentsMargins(28, 24, 28, 24)
-        root.setSpacing(16)
+        theme.track_margins(root, 28, 24, 28, 24)
+        theme.track_spacing(root, 16)
 
         # Kopfzeile
         head = QHBoxLayout()
         titles = QVBoxLayout()
-        titles.addWidget(label("Überwachung", "h1"))
+        titles.addWidget(label(tr("Überwachung"), "h1"))
         self.subtitle = label("", "muted")
         titles.addWidget(self.subtitle)
         head.addLayout(titles, 1)
-        self.btn_status = QPushButton("Status neu senden")
-        self.btn_status.setToolTip("Löscht die Statusnachricht in Discord und sendet sie ganz unten im Chat neu.")
+        self.btn_status = QPushButton(tr("Status neu senden"))
+        self.btn_status.setToolTip(tr("Löscht die Statusnachricht in Discord und sendet sie ganz unten im Chat neu."))
         self.btn_status.clicked.connect(self.main.resend_status)
         head.addWidget(self.btn_status)
-        self.btn_pause = QPushButton("Pause")
+        self.btn_pause = QPushButton(tr("Pause"))
         self.btn_pause.clicked.connect(self.main.toggle_pause)
-        self.btn_start = QPushButton("Starten")
+        self.btn_start = QPushButton(tr("Starten"))
         self.btn_start.setObjectName("primary")
         self.btn_start.clicked.connect(self.main.toggle_monitoring)
         head.addWidget(self.btn_pause)
@@ -50,26 +52,26 @@ class MonitorPage(QWidget):
 
         # Kennzahlen
         kpis = QHBoxLayout()
-        kpis.setSpacing(12)
-        self.k_total = StatCard("Versuche gesamt")
-        self.k_session = StatCard("Versuche (Session)")
-        self.k_waves = StatCard("Wellen (Session)")
-        self.k_avg = StatCard("Ø Endwelle")
-        self.k_rate = StatCard("Wellen pro Stunde")
+        theme.track_spacing(kpis, 12)
+        self.k_total = StatCard(tr("Versuche gesamt"))
+        self.k_session = StatCard(tr("Versuche (Session)"))
+        self.k_waves = StatCard(tr("Wellen (Session)"))
+        self.k_avg = StatCard(tr("Ø Endwelle"))
+        self.k_rate = StatCard(tr("Wellen pro Stunde"))
         for card in (self.k_total, self.k_session, self.k_waves, self.k_avg, self.k_rate):
             kpis.addWidget(card, 1)
         root.addLayout(kpis)
 
         # Mitte
         mid = QHBoxLayout()
-        mid.setSpacing(16)
+        theme.track_spacing(mid, 16)
         left = QVBoxLayout()
-        left.setSpacing(16)
+        theme.track_spacing(left, 16)
 
-        live = Card("Live-Erkennung")
+        live = Card(tr("Live-Erkennung"))
         self.preview = label("", "preview")
         self.preview.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.preview.setMinimumHeight(70)
+        theme.track_min_height(self.preview, 70)
         live.body.addWidget(self.preview)
         self.wave = label("–", "wave")
         self.wave.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -94,6 +96,7 @@ class MonitorPage(QWidget):
         live.body.addWidget(self.i_self)
         self._self_proc = None
         self._next_self = 0.0
+        self._next_wall, self._wall = 0.0, None
         try:
             import psutil
             self._self_proc = psutil.Process()
@@ -103,17 +106,17 @@ class MonitorPage(QWidget):
             self._self_proc = None
         left.addWidget(live)
 
-        quests = Card("Quests")
+        quests = Card(tr("Quests"))
         self.quest_box = QVBoxLayout()
-        self.quest_box.setSpacing(6)
-        self.quest_empty = label("Noch keine Quests gelesen.", "muted")
+        theme.track_spacing(self.quest_box, 6)
+        self.quest_empty = label(tr("Noch keine Quests gelesen."), "muted")
         self.quest_box.addWidget(self.quest_empty)
         quests.body.addLayout(self.quest_box)
         left.addWidget(quests)
         left.addStretch(1)
         mid.addLayout(left, 3)
 
-        events = Card("Ereignisse")
+        events = Card(tr("Ereignisse"))
         self.events = QListWidget()
         smooth(self.events)
         events.body.addWidget(self.events, 1)
@@ -137,17 +140,17 @@ class MonitorPage(QWidget):
 
         if running != self._was_running:
             self._was_running = running
-            self.btn_start.setText("Stoppen" if running else "Starten")
+            self.btn_start.setText(tr("Stoppen") if running else tr("Starten"))
             self.btn_start.setObjectName("danger" if running else "primary")
             self.btn_start.style().unpolish(self.btn_start)
             self.btn_start.style().polish(self.btn_start)
             self.btn_pause.setVisible(running)
-        self.btn_pause.setText("Fortsetzen" if st.paused else "Pause")
+        self.btn_pause.setText(tr("Fortsetzen") if st.paused else tr("Pause"))
         if running:
             w, h = st.frame_size
             self.subtitle.setText(f"{st.source_info} · {w} × {h}")
         else:
-            self.subtitle.setText("Gestoppt – Einstellungen prüfen und starten")
+            self.subtitle.setText(tr("Gestoppt – Einstellungen prüfen und starten"))
 
         now = time.monotonic()
         if now - self._last_snap > 1.5:
@@ -156,7 +159,7 @@ class MonitorPage(QWidget):
             self.k_total.set_value(messages.fmt_int(snap.total_attempts))
             self.k_session.set_value(str(snap.session_attempts))
             self.k_waves.set_value(messages.fmt_int(snap.session_waves))
-            self.k_avg.set_value(f"{snap.avg_wave:.1f}".replace(".", ",") if snap.avg_wave else "–")
+            self.k_avg.set_value(dec(f"{snap.avg_wave:.1f}") if snap.avg_wave else "–")
             self.k_rate.set_value(f"{snap.waves_per_hour:.0f}" if snap.waves_per_hour else "–")
 
         if st.wave_value is not None and st.wave_total:
@@ -166,26 +169,33 @@ class MonitorPage(QWidget):
             self.wave.setText("–")
             self.wave_bar.setValue(0)
         total = st.wave_total or max(s.allowed_totals_list() or [100])
-        self.i_trigger.setText(f"Auslöser: ab {total - s.trigger_offset}/{total}")
-        self.i_read.setText(f"Lesezeit: {st.read_ms:.0f} ms")
-        self.i_mode.setText("Takt: schnell (kurz vor Ende)" if st.hot else "Takt: ruhig")
-        self.status_line.setText(st.info)
-        self.i_raid.setText(f"Raid: {st.profile}" if st.profile else "Raid: –")
+        self.i_trigger.setText(tr("Auslöser: ab {wave}/{total}", wave=total - s.trigger_offset, total=total))
+        self.i_read.setText(tr("Lesezeit: {ms} ms", ms=f"{st.read_ms:.0f}"))
+        self.i_mode.setText(tr("Takt: schnell (kurz vor Ende)") if st.hot else tr("Takt: ruhig"))
+        self.status_line.setText(tr(st.info))
+        raid_text = tr("Raid: {name}", name=st.profile or "–")
+        if st.profile and now >= self._next_wall:
+            self._next_wall = now + 5.0
+            self._wall = self.engine.stats.wall(st.profile)
+        if st.profile and self._wall:
+            raid_text += " · " + tr("Wand: Welle {wave} ({streak}× in Folge)", wave=self._wall.wave,
+                                    streak=self._wall.streak)
+        self.i_raid.setText(raid_text)
         if st.roblox_alive is None:
-            self.i_proc.setText("Roblox-Prozess: nicht gefunden")
+            self.i_proc.setText(tr("Roblox-Prozess: nicht gefunden"))
         elif st.roblox_alive is False:
-            self.i_proc.setText("Roblox-Prozess: beendet")
+            self.i_proc.setText(tr("Roblox-Prozess: beendet"))
         else:
-            ram = f"{st.roblox_ram_mb / 1024:.1f} GB RAM".replace(".", ",") if st.roblox_ram_mb else "–"
+            ram = dec(f"{st.roblox_ram_mb / 1024:.1f} GB RAM") if st.roblox_ram_mb else "–"
             cpu = f"{st.roblox_cpu:.0f} % CPU" if st.roblox_cpu is not None else "–"
-            self.i_proc.setText(f"Roblox-Prozess: läuft · {ram} · {cpu}")
+            self.i_proc.setText(tr("Roblox-Prozess: läuft · {ram} · {cpu}", ram=ram, cpu=cpu))
         if self._self_proc is not None and now >= self._next_self:
             self._next_self = now + 3.0                 # eigene Auslastung (gleich gemessen wie bei Roblox)
             try:
                 ram_mb = self._self_proc.memory_info().rss / 1048576
                 cpu = self._self_proc.cpu_percent(None) / self._cpu_count
-                self.i_self.setText(f"Dieses Programm: {ram_mb:.0f} MB RAM · "
-                                    + f"{cpu:.1f} % CPU".replace(".", ","))
+                self.i_self.setText(tr("Dieses Programm: {ram} MB RAM · {cpu} % CPU", ram=f"{ram_mb:.0f}",
+                                       cpu=dec(f"{cpu:.1f}")))
             except Exception:
                 self.i_self.setText("")
 

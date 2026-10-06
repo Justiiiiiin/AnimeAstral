@@ -14,6 +14,8 @@ from PySide6.QtWidgets import (QAbstractItemView, QComboBox, QDoubleSpinBox, QFr
                                QTableWidgetItem, QVBoxLayout, QWidget)
 
 from .. import app_paths
+from ..i18n import thousands
+from . import theme
 
 
 def bgr_to_pixmap(bgr: np.ndarray, max_width: Optional[int] = None) -> QPixmap:
@@ -165,8 +167,8 @@ class Card(QFrame):
         super().__init__()
         self.setObjectName("card")
         self.body = QVBoxLayout(self)
-        self.body.setContentsMargins(16, 14, 16, 14)
-        self.body.setSpacing(10)
+        theme.track_margins(self.body, 16, 14, 16, 14)
+        theme.track_spacing(self.body, 10)
         if title:
             self.body.addWidget(label(title, "h2"))
 
@@ -174,7 +176,7 @@ class Card(QFrame):
 class StatCard(Card):
     def __init__(self, title: str, value: str = "–") -> None:
         super().__init__()
-        self.body.setSpacing(2)
+        theme.track_spacing(self.body, 2)
         self.title_label = label(title, "small", wrap=True)     # umbrechen statt die Kachelreihe zu verbreitern
         self.body.addWidget(self.title_label)
         self.value = label(value, "kpi")
@@ -193,8 +195,8 @@ class QuestRow(QWidget):
     def __init__(self) -> None:
         super().__init__()
         lay = QVBoxLayout(self)
-        lay.setContentsMargins(0, 2, 0, 2)
-        lay.setSpacing(4)
+        theme.track_margins(lay, 0, 2, 0, 2)
+        theme.track_spacing(lay, 4)
         top = QHBoxLayout()
         self.title = QLabel("")
         self.value = QLabel("")
@@ -208,8 +210,8 @@ class QuestRow(QWidget):
         lay.addWidget(self.bar)
 
     def set_quest(self, q: dict) -> None:
-        cur = "?" if q["cur"] is None else f"{q['cur']:,}".replace(",", ".")
-        tot = "?" if not q["total"] else f"{q['total']:,}".replace(",", ".")
+        cur = "?" if q["cur"] is None else thousands(f"{q['cur']:,}")
+        tot = "?" if not q["total"] else thousands(f"{q['total']:,}")
         self.title.setText(q["title"])
         self.value.setText(f"{cur} / {tot}")
         self.bar.setValue(q["percent"] or 0)
@@ -221,7 +223,7 @@ class BarChart(QWidget):
     def __init__(self) -> None:
         super().__init__()
         self._data: list[tuple[str, int]] = []
-        self.setMinimumHeight(180)
+        theme.track_min_height(self, 180)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
     def set_data(self, data: list[tuple[str, int]]) -> None:

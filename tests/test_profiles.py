@@ -49,6 +49,37 @@ class ProfileTests(unittest.TestCase):
         self.assertEqual(self.b.settings(name)["trigger_offset"], 2)
         self.assertEqual(self.b.import_zip(self.zip), "Militech Convoy 2")
 
+    def test_pack_roundtrip_skips_existing(self):
+        self.a.create("Alvarez War")
+        self.a.add_image("Alvarez War", image())
+        self.a.add_image("Alvarez War", image())
+        pack = Path(_env.DATA) / f"{self.id()}.astralpack"
+        path, count = self.a.export_pack(pack)
+        self.assertEqual(count, 2)
+        self.b.create("Alvarez War")                          # Freund hat diesen Raid schon
+        imported, skipped = self.b.import_pack(path)
+        self.assertEqual(imported, ["Militech Convoy"])
+        self.assertEqual(skipped, ["Alvarez War"])
+        self.assertEqual(self.b.settings("Militech Convoy")["note"], "Boss bei 27")
+        self.assertEqual(self.b.import_pack(path), ([], ["Alvarez War", "Militech Convoy"]))   # zweimal: nichts doppelt
+
+    def test_pack_with_broken_profile_imports_the_rest(self):
+        pack = Path(_env.DATA) / f"{self.id()}.astralpack"
+        good = cv2.imencode(".jpg", image())[1].tobytes()
+        with zipfile.ZipFile(pack, "w") as z:
+            z.writestr("pack.json", json.dumps({"format": "astral-pack-1", "profiles": ["Gut", "Kaputt", "../Boese"]}))
+            z.writestr("Gut/ref_01.jpg", good)
+            z.writestr("Kaputt/ref_01.jpg", b"kein jpg")
+            z.writestr("../Boese/ref_01.jpg", good)
+        imported, skipped = self.b.import_pack(pack)
+        self.assertEqual(imported, ["Gut"])
+        self.assertTrue(skipped[0].startswith("Kaputt"))
+        self.assertTrue(skipped[1].startswith("Boese"))                         # Pfad mit „..“ abgelehnt
+        self.assertEqual(self.b.names(), ["Gut"])                               # nichts außerhalb des Ordners
+        self.a.export_zip("Militech Convoy", self.zip)           # einzelnes Profil ist kein Paket
+        with self.assertRaises(ValueError):
+            self.b.import_pack(self.zip)
+
     def test_bad_files_are_rejected_cleanly(self):
         good = json.dumps({"format": "astral-profile-1", "name": "X"})
         cases = {"leer": [("profile.json", good)],

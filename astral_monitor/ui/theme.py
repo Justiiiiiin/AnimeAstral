@@ -1,6 +1,9 @@
 """Dunkles Theme (QSS)."""
 from __future__ import annotations
 
+import re
+import weakref
+
 from PySide6.QtGui import QColor, QFont, QPalette
 from PySide6.QtWidgets import QApplication
 
@@ -103,10 +106,103 @@ QDialog {{ background: {BG}; }}
 """
 
 
+# ------------------------------------------------------------------ Skalierung mit der Fenstergröße
+# Alles ist für 1180 × 800 entworfen (Faktor 1). Das Hauptfenster setzt den Faktor beim Größenändern (0,7–1,3); Schrift,
+# Abstände und Knopfhöhen im Stylesheet sowie per track() angemeldete feste Größen im Code werden umgerechnet.
+DESIGN_SIZE = (1180, 800)
+SCALE_MIN, SCALE_MAX = 0.7, 1.3
+_scale = 1.0
+_tracked: list = []                             # (schwache Referenz, Funktion(objekt, faktor))
+_SIZE_RE = re.compile(r"(\d+(?:\.\d+)?)(px|pt)")
+
+
+def scale() -> float:
+    return _scale
+
+
+def px(value: float) -> int:
+    """Pixelwert im aktuellen Maßstab (mindestens 1)."""
+    return max(1, round(value * _scale))
+
+
+def track(obj, apply_fn) -> None:
+    """Feste Größe im Code skalierbar machen: apply_fn(obj, faktor) läuft sofort und bei jeder Änderung."""
+    _tracked.append((weakref.ref(obj), apply_fn))
+    apply_fn(obj, _scale)
+
+
+def _s(value: int, factor: float) -> int:
+    return max(0, round(value * factor))
+
+
+def track_margins(layout, left: int, top: int, right: int, bottom: int) -> None:
+    track(layout, lambda o, f: o.setContentsMargins(_s(left, f), _s(top, f), _s(right, f), _s(bottom, f)))
+
+
+def track_spacing(layout, value: int) -> None:
+    track(layout, lambda o, f: o.setSpacing(_s(value, f)))
+
+
+def track_min_height(widget, value: int) -> None:
+    track(widget, lambda o, f: o.setMinimumHeight(_s(value, f)))
+
+
+def track_min_width(widget, value: int) -> None:
+    track(widget, lambda o, f: o.setMinimumWidth(_s(value, f)))
+
+
+def track_fixed_width(widget, value: int) -> None:
+    track(widget, lambda o, f: o.setFixedWidth(_s(value, f)))
+
+
+def track_fixed_height(widget, value: int) -> None:
+    track(widget, lambda o, f: o.setFixedHeight(_s(value, f)))
+
+
+def style(factor: float) -> str:
+    def repl(m: re.Match) -> str:
+        value = float(m.group(1))
+        if m.group(2) == "pt":
+            return f"{value * factor:.1f}pt"
+        return f"{max(1, round(value * factor)) if value else 0}px"
+    return _SIZE_RE.sub(repl, STYLE)
+
+
+def factor_for(width: int, height: int) -> float:
+    """Faktor für eine Fenstergröße: proportional, gerundet auf 0,05 (weniger Neuberechnungen)."""
+    raw = min(width / DESIGN_SIZE[0], height / DESIGN_SIZE[1])
+    return round(min(SCALE_MAX, max(SCALE_MIN, raw)) * 20) / 20
+
+
+def set_scale(app: QApplication, factor: float) -> bool:
+    global _scale
+    if abs(factor - _scale) < 0.001:
+        return False
+    _scale = factor
+    font = QFont("Segoe UI")
+    font.setPointSizeF(10 * factor)
+    app.setFont(font)
+    app.setStyleSheet(style(factor))
+    alive = []
+    for ref, fn in _tracked:
+        obj = ref()
+        if obj is None:
+            continue
+        try:
+            fn(obj, factor)
+            alive.append((ref, fn))
+        except RuntimeError:                        # Qt-Objekt bereits gelöscht
+            pass
+    _tracked[:] = alive
+    return True
+
+
 def apply(app: QApplication) -> None:
-    app.setFont(QFont("Segoe UI", 10))
+    font = QFont("Segoe UI")
+    font.setPointSizeF(10 * _scale)
+    app.setFont(font)
     palette = app.palette()                     # Links (z. B. Versionshinweise): Standardblau ist auf Dunkel kaum lesbar
     palette.setColor(QPalette.ColorRole.Link, QColor(ACCENT))
     palette.setColor(QPalette.ColorRole.LinkVisited, QColor(ACCENT))
     app.setPalette(palette)
-    app.setStyleSheet(STYLE)
+    app.setStyleSheet(style(_scale))
