@@ -510,7 +510,7 @@ class MainWindow(QMainWindow):
 
     def set_appearance(self, design: Optional[str] = None, mode: Optional[str] = None,
                        zoom: Optional[int] = None, fit: Optional[bool] = None,
-                       reduce_motion: Optional[bool] = None) -> None:
+                       reduce_motion: Optional[bool] = None, accent: Optional[str] = None) -> None:
         """Design, Farbschema und UI-Größe – sofort sichtbar und gespeichert (ohne Speichern-Leiste)."""
         s = self.engine.settings
         if design is not None:
@@ -521,6 +521,10 @@ class MainWindow(QMainWindow):
             s.ui_zoom = min(theme.ZOOM_MAX, max(theme.ZOOM_MIN, int(zoom)))
         if fit is not None:
             s.ui_auto_fit = fit
+        if accent is not None:
+            s.ui_accent = accent
+            theme.set_accent(accent)
+            theme._mode = ""                          # erzwingt Neuberechnung der Palette
         if reduce_motion is not None:
             s.ui_reduce_motion = reduce_motion
             theme.set_motion(not reduce_motion)
@@ -1071,6 +1075,7 @@ def run() -> int:
             pass
     i18n.set_language(settings.language)            # vor dem Aufbau der Oberfläche
     _install_qt_translation(app, settings.language)
+    theme.set_accent(settings.ui_accent)
     theme.apply(app, settings.ui_design, settings.ui_mode)
     theme.set_motion(not settings.ui_reduce_motion)
 

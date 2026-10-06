@@ -409,7 +409,44 @@ def _resolve(design_key: str, mode: str) -> tuple[str, dict]:
     info = design_info(design_key)
     effective = _system_mode() if mode == "system" else mode
     palettes = info["palettes"]
-    return effective, palettes.get(effective, palettes["dark"])
+    palette = palettes.get(effective, palettes["dark"])
+    return effective, with_accent(palette, _accent) if _accent else palette
+
+
+# Eigene Akzentfarbe (leer = Farbe des Designs). Vorschläge für die Auswahl in den Einstellungen.
+ACCENTS = ["#45E0BF", "#7B8CFF", "#FF6FB5", "#FFB547", "#4FB3FF", "#7BE07B", "#FF7A6B"]
+_accent = ""
+
+
+def set_accent(value: str) -> None:
+    global _accent
+    _accent = value if QColor.isValidColorName(value or "") and (value or "").startswith("#") else ""
+
+
+def with_accent(palette: dict, accent: str) -> dict:
+    """Palette mit eigener Akzentfarbe: zweite Verlaufsfarbe um 40° im Farbkreis versetzt, Schrift auf dem Akzent
+    automatisch hell/dunkel, getönte Hintergründe passend zur Helligkeit des Designs."""
+    base = QColor(accent)
+    h, s, v, _a = base.getHsv()
+    second = QColor.fromHsv((h + 40) % 360 if h >= 0 else 0, s, v)
+    dark_bg = QColor(palette["bg"]).lightness() < 128
+
+    def mix(a: QColor, b: str, t: float) -> str:
+        c = QColor(b)
+        return QColor(round(a.red() * t + c.red() * (1 - t)), round(a.green() * t + c.green() * (1 - t)),
+                      round(a.blue() * t + c.blue() * (1 - t))).name().upper()
+
+    out = dict(palette)
+    out.update({
+        "accent": base.name().upper(), "accent2": second.name().upper(),
+        "accentHover": base.lighter(112).name().upper(), "accent2Hover": second.lighter(112).name().upper(),
+        "onAccent": "#0B0E14" if base.lightness() > 150 else "#FFFFFF",
+    })
+    for key, t in (("softA", 0.22 if dark_bg else 0.16), ("softB", 0.16 if dark_bg else 0.12),
+                   ("okBg", 0.10), ("okBorder", 0.40)):
+        if key in palette:
+            out[key] = mix(base if key != "softB" else second, palette["bg"], t)
+    return out
 
 
 # ------------------------------------------------------------------ Skalierung

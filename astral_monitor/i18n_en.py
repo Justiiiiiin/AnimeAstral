@@ -857,4 +857,9 @@ EN: dict[str, str] = {
     "Update-Reste": "Update leftovers",
     "Sonstiges": "Other",
     "Protokoll": "Log",
+    # Akzentfarbe (0.7.2)
+    "Farbe des gewählten Designs": "Color of the selected design",
+    "Eigene …": "Custom …",
+    "Akzentfarbe": "Accent color",
+    "Eigene Farbe wählen": "Choose a custom color",
 }

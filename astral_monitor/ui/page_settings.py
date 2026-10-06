@@ -4,7 +4,7 @@ from __future__ import annotations
 from PySide6.QtCore import QUrl, Qt
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import (QButtonGroup, QCheckBox, QHBoxLayout, QLineEdit, QListWidget, QListWidgetItem, QMenu,
-                               QMessageBox, QPushButton, QVBoxLayout, QWidget)
+                               QMessageBox, QPushButton, QToolButton, QVBoxLayout, QWidget)
 
 from .. import app_paths, roblox_join, storage
 from ..i18n import LANGUAGES, tr
@@ -174,6 +174,30 @@ class SettingsPage(QWidget):
         zoom_row.addStretch(1)
         lg.addWidget(label(tr("UI-Größe")), 2, 0)
         lg.addLayout(zoom_row, 2, 1, 1, 2)
+        accent_row = QHBoxLayout()
+        theme.track_spacing(accent_row, 6)
+        self.accent_group = QButtonGroup(self)
+        self.accent_group.setExclusive(True)
+        auto = QPushButton(tr("Design"))
+        auto.setObjectName("chipbtn")
+        auto.setCheckable(True)
+        auto.setProperty("accent", "")
+        auto.setToolTip(tr("Farbe des gewählten Designs"))
+        self.accent_group.addButton(auto)
+        accent_row.addWidget(auto)
+        for hex_color in theme.ACCENTS:
+            accent_row.addWidget(self._swatch(hex_color))
+        self.accent_custom = QPushButton(tr("Eigene …"))
+        self.accent_custom.setObjectName("chipbtn")
+        self.accent_custom.setCheckable(True)
+        self.accent_custom.clicked.connect(self._pick_accent)
+        accent_row.addWidget(self.accent_custom)
+        accent_row.addStretch(1)
+        self.accent_group.buttonClicked.connect(
+            lambda b: b is not self.accent_custom and self.main.set_appearance(accent=b.property("accent")))
+        self.accent_group.addButton(self.accent_custom)
+        lg.addWidget(label(tr("Akzentfarbe")), 3, 0)
+        lg.addLayout(accent_row, 3, 1, 1, 2)
         look.body.addLayout(lg)
         self.auto_fit = QCheckBox(tr("Zusätzlich an die Fenstergröße anpassen"))
         self.auto_fit.toggled.connect(lambda on: self.main.set_appearance(fit=on))
@@ -410,6 +434,30 @@ class SettingsPage(QWidget):
         VersionsDialog(self.main).exec()
 
     # ------------------------------------------------------------------ Darstellung
+    def _swatch(self, hex_color: str) -> QToolButton:
+        btn = QToolButton()
+        btn.setCheckable(True)
+        btn.setProperty("accent", hex_color)
+        btn.setToolTip(hex_color)
+        btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        size = theme.px(24)
+        btn.setFixedSize(size, size)
+        btn.setStyleSheet(f"QToolButton {{ background: {hex_color}; border-radius: {size // 2}px; padding: 0; "
+                          f"min-width: {size - 4}px; max-width: {size - 4}px; min-height: {size - 4}px; "
+                          f"max-height: {size - 4}px; border: 2px solid transparent; }}"
+                          "QToolButton:checked { border: 2px solid palette(window-text); }")
+        self.accent_group.addButton(btn)
+        return btn
+
+    def _pick_accent(self) -> None:
+        from PySide6.QtGui import QColor
+        from PySide6.QtWidgets import QColorDialog
+        s = self.main.engine.settings
+        color = QColorDialog.getColor(QColor(s.ui_accent or theme.color("accent")), self, tr("Akzentfarbe"))
+        if color.isValid():
+            self.main.set_appearance(accent=color.name().upper())
+        self._sync_look(s)
+
     def _set_zoom(self, value: int) -> None:
         self.main.set_appearance(zoom=value)
         self._sync_look(self.main.engine.settings)
@@ -417,7 +465,7 @@ class SettingsPage(QWidget):
     def _sync_look(self, s) -> None:
         """Bedienelemente der Darstellung auf den gespeicherten Stand setzen (ohne erneut auszulösen)."""
         widgets = [self.design, self.zoom, self.auto_fit, self.reduce_motion] + [b for _p, b in self.zoom_buttons]
-        widgets += self.mode_group.buttons()
+        widgets += self.mode_group.buttons() + self.accent_group.buttons()
         for w in widgets:
             w.blockSignals(True)
         self.design.setCurrentIndex(max(0, self.design.findData(s.ui_design)))
@@ -426,6 +474,11 @@ class SettingsPage(QWidget):
         self.reduce_motion.setChecked(s.ui_reduce_motion)
         for pct, btn in self.zoom_buttons:
             btn.setChecked(pct == s.ui_zoom)
+        preset = {b.property("accent") for b in self.accent_group.buttons() if b is not self.accent_custom}
+        for btn in self.accent_group.buttons():
+            btn.setChecked(btn.property("accent") == s.ui_accent if btn is not self.accent_custom
+                           else s.ui_accent not in preset)
+        self.accent_custom.setToolTip(s.ui_accent if s.ui_accent not in preset else tr("Eigene Farbe wählen"))
         light_ok = theme.has_mode(s.ui_design, "light")
         for btn in self.mode_group.buttons():
             mode = btn.property("mode")

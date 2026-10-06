@@ -167,6 +167,7 @@ class Settings:
     ui_zoom: int = 100                  # 50–200 % (mehr pro Seite sehen = kleiner)
     ui_auto_fit: bool = True            # zusätzlich an die Fenstergröße anpassen (0,7–1,3)
     ui_reduce_motion: bool = False      # keine Überblendungen/Schalter-Animationen (spart Leistung)
+    ui_accent: str = ""                 # eigene Akzentfarbe „#RRGGBB“ (leer = Farbe des Designs)
     anti_afk_enabled: bool = False      # alle N Minuten kurz zu Roblox, Leertaste, zurück (antiafk.py)
     anti_afk_minutes: int = 10
     auto_rejoin_enabled: bool = False   # nach Disconnect/Kick/Absturz neu beitreten (rejoin.py)
@@ -303,6 +304,8 @@ class Settings:
             s.ui_zoom = min(200, max(50, int(s.ui_zoom)))
         except (TypeError, ValueError):
             s.ui_zoom = 100
+        if not is_hex_color(s.ui_accent):
+            s.ui_accent = ""
         if s.ui_mode not in ("dark", "light", "system"):
             s.ui_mode = "dark"
         if not s.server_favorites and s.private_server_link:
