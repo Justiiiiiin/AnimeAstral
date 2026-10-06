@@ -21,7 +21,9 @@ Es muss nichts weiter installiert werden (Texterkennung ist enthalten). Windows 
 - **Auto-Start** der Überwachung beim Betreten des Spiels, optionales **Anti-AFK**
 - **Wächter:** Alarm bei Absturz, Disconnect, Stillstand, hohem Speicherverbrauch
 - Quests, Hotkeys, Tray-Symbol, Discord-Profilstatus, Deutsch/Englisch
-- Designs **Nebula**, Astral und Klassisch, hell/dunkel, UI-Größe 50–200 %
+- **Monatsrückblick** und Wochenüberblick, Server-Favoriten per Code teilen, Tages-Beiträge im Forum-Kanal
+- Designs **Nebula**, Astral, Klassisch und Saison-Designs, hell/dunkel, Akzentfarbe, eigenes Hintergrundbild,
+  UI-Größe 50–200 %
 - **Automatische Updates** (meist nur wenige MB), alle Versionshinweise im Programm, Downgrade möglich
 
 ## Datenschutz

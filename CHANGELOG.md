@@ -4,6 +4,27 @@ Neueste Version oben. Kurze Stichpunkte, keine Erklärungen (die stehen im Progr
 Der Abschnitt einer Version wird beim Veröffentlichen automatisch als Versionshinweis übernommen
 (`tools/release_notes.py`) und ist im Programm unter Einstellungen → Updates → „Alle Versionen“ lesbar.
 
+## 0.7.5
+
+### ✨ Neu
+- Monatsrückblick als Karte (speichern oder an Discord)
+- Wochenüberblick: Farmzeit je Tag (Statistik → Woche)
+- Raid-Meldungen als Tages-Beitrag im Forum-Kanal
+- Eigene Embed-Farbe je Ereignis
+- Server-Favoriten per Code mit Freunden teilen
+- Akzentfarbe frei wählbar
+- Eigenes Hintergrundbild (abdunkelbar)
+- Saison-Designs „Kürbisnacht“ und „Frost“
+- Logo-Animation beim Start (abschaltbar)
+- Abgesicherter Start (Umschalt halten)
+- Beta-Kanal für Vorabversionen
+
+### 🔧 Verbessert
+- Wellenzahl färbt sich nahe der Bestwelle
+- Schalter „Animationen reduzieren“
+- Speicher-Übersicht mit Aufräumen
+- Diagnose-Paket ohne IDs, Links und Benutzername
+
 ## 0.7.1
 
 ### 🔧 Verbessert
