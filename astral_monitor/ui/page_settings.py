@@ -6,7 +6,7 @@ from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import (QButtonGroup, QCheckBox, QHBoxLayout, QLineEdit, QListWidget, QListWidgetItem, QMenu,
                                QMessageBox, QPushButton, QVBoxLayout, QWidget)
 
-from .. import app_paths, roblox_join
+from .. import app_paths, roblox_join, storage
 from ..i18n import LANGUAGES, tr
 from ..settings import MAX_FAVORITES, PRESETS
 from ..version import __version__
@@ -281,6 +281,16 @@ class SettingsPage(QWidget):
         path = label(str(app_paths.data_dir()), "small", wrap=True)
         path.setToolTip(str(app_paths.data_dir()))
         data.body.addWidget(path)
+        srow = QHBoxLayout()
+        self.storage_label = label("", "small")
+        clean_btn = QPushButton(tr("Aufräumen"))
+        clean_btn.setToolTip(tr("Ältere Protokolle, Debug-Bilder und Update-Reste löschen – Statistik, Raids und "
+                                "Einstellungen bleiben"))
+        clean_btn.clicked.connect(self._clean_storage)
+        srow.addWidget(self.storage_label)
+        srow.addWidget(clean_btn)
+        srow.addStretch(1)
+        data.body.addLayout(srow)
         drow = QHBoxLayout()
         open_btn = QPushButton(tr("Ordner öffnen"))
         open_btn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(str(app_paths.data_dir()))))
@@ -431,6 +441,26 @@ class SettingsPage(QWidget):
         preset = PRESETS.get(self.perf.currentData(), PRESETS["balanced"])
         self.perf.setToolTip(tr("Ruhig alle {idle} s, kurz vor Raid-Ende alle {hot} s, Quests alle {quest} s.",
                                   idle=f"{preset['idle']:g}", hot=f"{preset['hot']:g}", quest=f"{preset['quest']:g}"))
+
+    # ------------------------------------------------------------------ Speicher
+    def refresh_storage(self) -> None:
+        try:
+            items = storage.usage()
+        except OSError:
+            return
+        total = sum(u.size for u in items)
+        self.storage_label.setText(tr("Belegt: {size}", size=storage.fmt_size(total)))
+        self.storage_label.setToolTip("\n".join(f"{tr(u.label)}: {storage.fmt_size(u.size)}"
+                                                for u in items if u.size))
+
+    def _clean_storage(self) -> None:
+        freed = storage.clean()
+        self.refresh_storage()
+        self.main.show_toast(tr("Aufgeräumt: {size} frei", size=storage.fmt_size(freed)))
+
+    def showEvent(self, event) -> None:
+        super().showEvent(event)
+        self.refresh_storage()
 
     def load(self, s) -> None:
         self._sync_look(s)

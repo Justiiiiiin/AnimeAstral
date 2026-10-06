@@ -93,6 +93,25 @@ class SafeStartTests(unittest.TestCase):
         self.assertNotIn("safe_mode", safe.to_dict())
 
 
+class StorageTests(unittest.TestCase):
+    def test_usage_and_clean(self):
+        import tempfile
+        from astral_monitor import storage
+        base = Path(tempfile.mkdtemp(dir=_env.DATA))
+        (base / "debug").mkdir()
+        (base / "debug" / "a.png").write_bytes(b"x" * 500)
+        (base / "updates" / "apply").mkdir(parents=True)
+        (base / "updates" / "AnimeAstralMonitor-Setup-1.exe").write_bytes(b"x" * 1000)
+        (base / "updates" / "apply" / "apply.log").write_text("ok")
+        (base / "monitor.log.1").write_bytes(b"x" * 200)
+        sizes = {u.label: u.size for u in storage.usage(base)}
+        self.assertEqual(sizes["Debug-Bilder"], 500)
+        self.assertEqual(sizes["Ältere Protokolle"], 200)
+        self.assertEqual(storage.clean(base), 1700)
+        self.assertTrue((base / "updates" / "apply" / "apply.log").exists())     # Update-Protokoll bleibt
+        self.assertEqual(storage.fmt_size(1536), "2 KB")
+
+
 class WaveColorTests(unittest.TestCase):
     def test_tiers(self):
         from astral_monitor.ui.page_monitor import wave_token

@@ -845,4 +845,16 @@ EN: dict[str, str] = {
     "Geht auch: beim Start die Umschalttaste halten.":
         "Restart with default settings without deleting yours – helps when something stops working. "
         "Also possible: hold Shift while starting.",
+    # Speicher (0.7.2)
+    "Aufräumen": "Clean up",
+    "Ältere Protokolle, Debug-Bilder und Update-Reste löschen – Statistik, Raids und Einstellungen bleiben":
+        "Delete older logs, debug images and update leftovers – statistics, raids and settings stay",
+    "Belegt: {size}": "Used: {size}",
+    "Aufgeräumt: {size} frei": "Cleaned up: {size} freed",
+    "Raids und Einstellungen": "Raids and settings",
+    "Ältere Protokolle": "Older logs",
+    "Debug-Bilder": "Debug images",
+    "Update-Reste": "Update leftovers",
+    "Sonstiges": "Other",
+    "Protokoll": "Log",
 }
