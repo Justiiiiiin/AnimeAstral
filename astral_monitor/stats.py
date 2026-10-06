@@ -82,6 +82,25 @@ def _span_hours(recs: list) -> float:
     return (max(r.ts_end for r in recs) - start) / 3600
 
 
+FARM_GAP = 15 * 60       # längere Lücken zwischen zwei Raid-Enden zählen als Pause, nicht als Farmzeit
+
+
+def farm_seconds(recs: list) -> float:
+    """Farmzeit: Abstände zwischen aufeinanderfolgenden Raid-Enden (bis FARM_GAP); der erste Raid eines Blocks
+    zählt mit seiner gemessenen Dauer (sonst mit der typischen Dauer)."""
+    if not recs:
+        return 0.0
+    ends = sorted(recs, key=lambda r: r.ts_end)
+    measured = [r.duration_s for r in ends if r.duration_s]
+    typical = statistics.median(measured) if measured else 0.0
+    total, prev = 0.0, None
+    for rec in ends:
+        gap = None if prev is None else rec.ts_end - prev
+        total += gap if gap is not None and gap <= FARM_GAP else (rec.duration_s or typical)
+        prev = rec.ts_end
+    return total
+
+
 def _opt_float(text) -> Optional[float]:
     try:
         return float(text) if text not in ("", None) else None
@@ -298,6 +317,55 @@ class StatsStore:
                      sum(r.max_wave for r in self.records if st <= r.ts_end < st + 3600
                          and (raid is None or (r.raid or "Unbekannt") == raid)))
                     for st in starts]
+
+    def daily(self, days: int = 7, raid: Optional[str] = None, end: Optional[datetime] = None) -> list[dict]:
+        """Je Kalendertag (älteste zuerst, bis einschließlich `end`/heute): Versuche, Wellen, Farmzeit (s)."""
+        from datetime import timedelta
+        last = (end or datetime.now()).replace(hour=0, minute=0, second=0, microsecond=0)
+        out = []
+        with self._lock:
+            for i in range(days - 1, -1, -1):
+                start = last - timedelta(days=i)
+                lo, hi = start.timestamp(), (start + timedelta(days=1)).timestamp()
+                recs = [r for r in self.records if lo <= r.ts_end < hi
+                        and (raid is None or (r.raid or "Unbekannt") == raid)]
+                out.append({"day": start.date(), "attempts": len(recs), "waves": sum(r.max_wave for r in recs),
+                            "farm_s": farm_seconds(recs)})
+        return out
+
+    def month(self, year: int, month: int) -> dict:
+        """Monatsrückblick: Summen, Bestwerte, bester Tag, Lieblingsraid, Raids je Tag, Vergleich zum Vormonat."""
+        import calendar
+        n_days = calendar.monthrange(year, month)[1]
+        lo = datetime(year, month, 1).timestamp()
+        hi = datetime(year + (month == 12), month % 12 + 1, 1).timestamp()
+        py, pm = (year - 1, 12) if month == 1 else (year, month - 1)
+        plo = datetime(py, pm, 1).timestamp()
+        with self._lock:
+            recs = [r for r in self.records if lo <= r.ts_end < hi]
+            prev = [r for r in self.records if plo <= r.ts_end < lo]
+        per_day = [0] * n_days
+        for r in recs:
+            per_day[datetime.fromtimestamp(r.ts_end).day - 1] += 1
+        raids: dict[str, int] = {}
+        for r in recs:
+            raids[r.raid or "Unbekannt"] = raids.get(r.raid or "Unbekannt", 0) + 1
+        hours: dict[int, int] = {}
+        for r in recs:
+            h = datetime.fromtimestamp(r.ts_end).hour
+            hours[h] = hours.get(h, 0) + 1
+        best_day = max(range(n_days), key=lambda i: per_day[i]) if recs else None
+        named = {k: v for k, v in raids.items() if k != "Unbekannt"} or raids     # benannte Raids bevorzugen
+        favorite = max(named.items(), key=lambda kv: kv[1])[0] if named else ""
+        return {"year": year, "month": month, "attempts": len(recs), "waves": sum(r.max_wave for r in recs),
+                "farm_s": farm_seconds(recs), "best_wave": max((r.max_wave for r in recs), default=0),
+                "avg_wave": (sum(r.max_wave for r in recs) / len(recs)) if recs else None,
+                "per_day": per_day, "best_day": (best_day + 1) if best_day is not None else None,
+                "best_day_attempts": per_day[best_day] if best_day is not None else 0,
+                "favorite_raid": favorite, "favorite_count": raids.get(favorite, 0),
+                "peak_hour": max(hours.items(), key=lambda kv: kv[1])[0] if hours else None,
+                "active_days": sum(1 for n in per_day if n),
+                "prev_attempts": len(prev), "prev_waves": sum(r.max_wave for r in prev)}
 
     def per_raid(self, since: Optional[float] = None) -> list[dict]:
         """Kennzahlen je Raid-Name (leerer Name = „Unbekannt“)."""

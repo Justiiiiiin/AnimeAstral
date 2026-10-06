@@ -10,7 +10,7 @@ from typing import Optional
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 from . import app_paths, messages
-from .i18n import dec, tr
+from .i18n import N_, dec, tr
 from .stats import StatsStore
 
 W, H, S = 1200, 630, 2           # Zielgröße und Supersampling (Kanten glätten)
@@ -157,5 +157,81 @@ def render_card(stats: StatsStore, since: Optional[float], raid: Optional[str], 
         c.text((W - 70, y + 4), tr("Bestwelle {wave}", wave=p["best_wave"]), 15, TEAL, bold=True, anchor="ra")
     if not per:
         c.text((70, 430), tr("Noch keine Raids zugeordnet – wähle auf der Startseite den aktuellen Raid aus."), 15, MUTED)
+    c.text((W // 2, H - 22), tr("Erstellt mit Anime Astral Monitor"), 12, DIM, anchor="mm")
+    return c.png()
+
+
+MONTHS = (N_("Januar"), N_("Februar"), N_("März"), N_("April"), N_("Mai"), N_("Juni"), N_("Juli"), N_("August"),
+          N_("September"), N_("Oktober"), N_("November"), N_("Dezember"))
+VIOLET = (123, 140, 255)
+
+
+def month_title(year: int, month: int) -> str:
+    return f"{tr(MONTHS[month - 1])} {year}"
+
+
+def render_month_card(stats: StatsStore, year: int, month: int) -> bytes:
+    """Monatsrückblick („Wrapped“): Summen, Vergleich zum Vormonat, Raids je Tag und die Höhepunkte des Monats."""
+    m = stats.month(year, month)
+    c = _Canvas()
+    logo_path = app_paths.resource_path("assets/app.png")
+    if logo_path.is_file():
+        logo = Image.open(logo_path).convert("RGBA").resize((56 * S, 56 * S), Image.LANCZOS)
+        c.img.paste(logo, (48 * S, 36 * S), logo)
+    c.text((120, 38), tr("MONATSRÜCKBLICK"), 14, TEAL, bold=True, spacing=2.2)
+    c.text((120, 58), month_title(year, month), 32, TEXT, bold=True)
+    if not m["attempts"]:
+        c.box((48, 130, W - 48, 560))
+        c.text((W // 2, 345), tr("In diesem Monat gibt es noch keine Raids"), 26, MUTED, anchor="mm")
+        return c.png()
+    if m["prev_attempts"]:
+        change = round(100 * (m["attempts"] - m["prev_attempts"]) / m["prev_attempts"])
+        c.text((W - 48, 48), tr("{change} % Raids zum Vormonat", change=f"{change:+d}"), 17,
+               TEAL if change >= 0 else AMBER, bold=True, anchor="ra")
+
+    tiles = [
+        (tr("Raids"), messages.fmt_int(m["attempts"]), TEAL),
+        (tr("Wellen"), messages.fmt_int(m["waves"]), TEAL),
+        (tr("Farmzeit"), tr("{hours} Std.", hours=dec(f"{m['farm_s'] / 3600:.0f}")), VIOLET),
+        (tr("Bestwelle"), str(m["best_wave"]), AMBER),
+        (tr("Ø Endwelle"), dec(f"{m['avg_wave']:.1f}") if m["avg_wave"] else "–", TEXT),
+        (tr("Aktive Tage"), f"{m['active_days']}/{len(m['per_day'])}", TEXT),
+    ]
+    tw, th, gap, x0, y0 = 184, 108, 14, 48, 120
+    for i, (label, value, color) in enumerate(tiles):
+        x, y = x0 + (i % 3) * (tw + gap), y0 + (i // 3) * (th + gap)
+        c.box((x, y, x + tw, y + th))
+        c.text((x + 18, y + 16), label, 14, MUTED)
+        c.text((x + 18, y + 40), value, 38, color, bold=True)
+
+    px0, py0, px1, py1 = 640, 120, W - 48, 350               # Raids je Tag
+    c.box((px0, py0, px1, py1))
+    c.text((px0 + 20, py0 + 16), tr("Raids je Tag"), 17, TEXT, bold=True)
+    days = m["per_day"]
+    cx0, cx1, cy0, cy1 = px0 + 20, px1 - 20, py0 + 56, py1 - 32
+    slot = (cx1 - cx0) / len(days)
+    top = max(days) or 1
+    for i, n in enumerate(days):
+        bx, bw = cx0 + i * slot + slot * 0.15, slot * 0.7
+        bh = (cy1 - cy0) * n / top
+        c.bar((bx, cy1 - max(bh, 2), bx + bw, cy1), TEAL if i + 1 == m["best_day"] else
+              ((44, 112, 100) if n else (30, 40, 52)), radius=3)
+        if i % 5 == 0 or i == len(days) - 1:
+            c.text((bx + bw / 2, cy1 + 8), str(i + 1), 12, MUTED, anchor="ma")
+
+    c.box((48, 366, W - 48, 506))                             # Höhepunkte
+    c.text((70, 382), tr("Höhepunkte"), 17, TEXT, bold=True)
+    highlights = [(tr("Bester Tag"), tr("{day}. {month} · {count} Raids", day=m["best_day"],
+                                         month=tr(MONTHS[month - 1]), count=m["best_day_attempts"]), TEAL)]
+    if m["favorite_raid"] and m["favorite_raid"] != "Unbekannt":
+        highlights.append((tr("Lieblingsraid"), tr("{raid} · {count}×", raid=m["favorite_raid"],
+                                                   count=m["favorite_count"]), VIOLET))
+    if m["peak_hour"] is not None:
+        highlights.append((tr("Stärkste Uhrzeit"), tr("{hour} Uhr", hour=m["peak_hour"]), AMBER))
+    col = (W - 96 - 40) / max(1, len(highlights))
+    for i, (title, value, color) in enumerate(highlights):
+        x = 70 + i * col
+        c.text((x, 430), title, 14, MUTED)
+        c.text((x, 454), value, 26, color, bold=True)
     c.text((W // 2, H - 22), tr("Erstellt mit Anime Astral Monitor"), 12, DIM, anchor="mm")
     return c.png()

@@ -318,6 +318,18 @@ class Engine:
         self.sender.submit(payload, files)
         return True
 
+    def send_month(self, year: int, month: int) -> bool:
+        """Monatsrückblick als Bild an Discord (Ereignis „Bericht / Statistik-Karte“)."""
+        if not self.settings.webhook_url or not self.settings.events.get("report", {"send": True}).get("send"):
+            return False
+        from .report_card import month_title, render_month_card
+        png = render_month_card(self.stats, year, month)
+        title = "📅 " + tr("Monatsrückblick {month}", month=month_title(year, month))
+        payload, files = messages.build_message(self.settings, "report", title, messages.COLOR_INFO,
+                                                image=("monat.png", png, "image/png"))
+        self.sender.submit(payload, files)
+        return True
+
     def _estimate(self, info: dict) -> tuple[Optional[float], str]:
         """Dauer eines Laufs; war der Start nicht zu sehen, wird sie aus der typischen Zeit pro Welle geschätzt."""
         if info.get("duration") is not None:

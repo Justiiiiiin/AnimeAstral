@@ -14,7 +14,7 @@ from PySide6.QtWidgets import (QButtonGroup, QFileDialog, QHBoxLayout, QMenu, QM
 from .. import app_paths, messages
 from ..i18n import N_, dec, tr
 from . import theme
-from .widgets import (BarChart, Card, ComboBox, SortItem, StatCard, label, make_table, restore_header,
+from .widgets import (PARAGRAPH, BarChart, Card, ComboBox, SortItem, StatCard, label, make_table, restore_header,
                       save_header)
 
 RANGES = [("session", N_("Diese Session"), N_("Session-Bericht")),
@@ -22,6 +22,15 @@ RANGES = [("session", N_("Diese Session"), N_("Session-Bericht")),
           ("24h", N_("Letzte 24 Stunden"), N_("Tagesbericht")), ("7d", N_("Letzte 7 Tage"), N_("Wochenbericht")),
           ("all", N_("Alles"), N_("Gesamtbericht"))]
 ALL_PROFILES = N_("Alle Raids (gesamt)")
+WEEKDAYS = (N_("Mo"), N_("Di"), N_("Mi"), N_("Do"), N_("Fr"), N_("Sa"), N_("So"))
+
+
+def fmt_hours(seconds: float) -> str:
+    """Farmzeit kurz: „45 min“, „2,5 h“, „12 h“."""
+    if seconds < 3600:
+        return tr("{minutes} min", minutes=round(seconds / 60))
+    hours = seconds / 3600
+    return tr("{hours} h", hours=dec(f"{hours:.1f}") if hours < 10 else f"{hours:.0f}")
 
 
 def _num(value: Optional[float], digits: int = 1) -> str:
@@ -41,6 +50,7 @@ class StatsPage(QWidget):
         self._last = 0.0
         self._rows: list = []
         self._profile_names: list[str] = []
+        self._week_text = ""
 
         root = QVBoxLayout(self)
         theme.track_margins(root, 28, 24, 28, 24)
@@ -72,6 +82,9 @@ class StatsPage(QWidget):
         more.setToolTip(tr("Weitere Aktionen"))
         more.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
         menu = QMenu(more)
+        menu.addAction(tr("Monatsrückblick speichern …"), self._save_month)
+        menu.addAction(tr("Monatsrückblick an Discord"), self._send_month)
+        menu.addSeparator()
         menu.addAction(tr("Ausgewählten Eintrag löschen"), self._delete_selected)
         menu.addSeparator()
         menu.addAction(tr("CSV öffnen"), self._open_csv)
@@ -120,7 +133,7 @@ class StatsPage(QWidget):
         tabs = QHBoxLayout()
         self.chart_group = QButtonGroup(self)
         self.chart_group.setExclusive(True)
-        for i, text in enumerate((tr("Endwellen"), tr("Trend"), tr("Wellen pro Stunde"))):
+        for i, text in enumerate((tr("Endwellen"), tr("Trend"), tr("Wellen pro Stunde"), tr("Woche"))):
             btn = QPushButton(text)
             btn.setCheckable(True)
             btn.setObjectName("tab")
@@ -131,7 +144,8 @@ class StatsPage(QWidget):
         chart_card.body.addLayout(tabs)
         self.charts = QStackedWidget()
         self.chart_hist, self.chart_trend, self.chart_hour = BarChart(), BarChart(), BarChart()
-        for chart in (self.chart_hist, self.chart_trend, self.chart_hour):
+        self.chart_week = BarChart()
+        for chart in (self.chart_hist, self.chart_trend, self.chart_hour, self.chart_week):
             self.charts.addWidget(chart)
         chart_card.body.addWidget(self.charts, 1)
         self.chart_group.idClicked.connect(self._chart_changed)
@@ -174,7 +188,9 @@ class StatsPage(QWidget):
         self.charts.setCurrentIndex(index)
         self.chart_info.set_info(tr((N_("Wo enden die Versuche? Anzahl je Endwelle (Gruppen, wenn die Spanne groß ist)."),
                                     N_("Ø Endwelle je Stunde (bei langen Zeiträumen je Tag) – steigt sie, wirst du besser."),
-                                    N_("Geschaffte Wellen der letzten 10 Stunden."))[index]))
+                                    N_("Geschaffte Wellen der letzten 10 Stunden."),
+                                    N_("Farmzeit je Tag der letzten 7 Tage – Pausen über 15 Minuten zählen nicht."))
+                                   [index]) + (self._week_text if index == 3 else ""))
 
     # ------------------------------------------------------------------ Aktionen
     def _save_card(self) -> None:
@@ -190,6 +206,35 @@ class StatsPage(QWidget):
             QMessageBox.critical(self, tr("Speichern"), tr("Konnte nicht speichern: {error}", error=exc))
             return
         self.main.show_toast(tr("Karte gespeichert ✓"))
+
+    @staticmethod
+    def _month() -> tuple[int, int]:
+        """Laufender Monat – in den ersten 3 Tagen der Vormonat (dann ist der Rückblick „fertig“)."""
+        now = datetime.now()
+        if now.day <= 3:
+            return (now.year - 1, 12) if now.month == 1 else (now.year, now.month - 1)
+        return now.year, now.month
+
+    def _save_month(self) -> None:
+        from ..report_card import render_month_card
+        year, month = self._month()
+        path, _ = QFileDialog.getSaveFileName(self, tr("Monatsrückblick speichern"),
+                                              str(Path.home() / f"astral-{year}-{month:02d}.png"), tr("Bild (*.png)"))
+        if not path:
+            return
+        try:
+            Path(path).write_bytes(render_month_card(self.engine.stats, year, month))
+        except OSError as exc:
+            QMessageBox.critical(self, tr("Speichern"), tr("Konnte nicht speichern: {error}", error=exc))
+            return
+        self.main.show_toast(tr("Karte gespeichert ✓"))
+
+    def _send_month(self) -> None:
+        if not self.engine.send_month(*self._month()):
+            QMessageBox.information(self, tr("Discord"), tr("Bitte zuerst einen Webhook eintragen und „Bericht / Statistik-Karte“ "
+                                                     "unter „Meldungen“ aktiviert lassen."))
+            return
+        self.main.show_toast(tr("Karte wird gesendet …"))
 
     def _send_card(self) -> None:
         if not self.engine.send_report(self._since(), self._raid(), self._report_title()):
@@ -288,6 +333,15 @@ class StatsPage(QWidget):
         by_day = self.range.currentData() in ("7d", "all")
         self.chart_trend.set_data([(label_, int(round(avg))) for label_, avg, _n in stats.trend(since, raid, by_day)])
         self.chart_hour.set_data([(f"{h:02d}", c) for h, c in stats.hourly_waves(10, raid)])
+        week = stats.daily(7, raid)
+        self.chart_week.set_data([(tr(WEEKDAYS[d["day"].weekday()]), round(d["farm_s"] / 60)) for d in week],
+                                 fmt=lambda minutes: fmt_hours(minutes * 60))
+        self._week_text = PARAGRAPH + tr("Diese Woche: {time} · {attempts} Versuche · {waves} Wellen",
+                                         time=fmt_hours(sum(d["farm_s"] for d in week)),
+                                         attempts=sum(d["attempts"] for d in week),
+                                         waves=messages.fmt_int(sum(d["waves"] for d in week)))
+        if self.charts.currentIndex() == 3:
+            self._chart_changed(3)
 
         per_rows = []
         for item in stats.per_raid(since):

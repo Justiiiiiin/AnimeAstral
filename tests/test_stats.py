@@ -114,3 +114,25 @@ class CombinedStatsTests(unittest.TestCase):
         entry = st.per_raid()[0]
         self.assertEqual((entry["attempts"], entry["waves_total"]), (20, s.waves_total))
         self.assertTrue(any(w > 0 for _h, w in st.hourly_waves(4, "Militech Convoy")))
+
+
+class FarmTimeTests(unittest.TestCase):
+    def test_farm_time_week_and_month(self):
+        from datetime import datetime
+        from astral_monitor.stats import farm_seconds
+        path = Path(_env.DATA) / "farm.csv"
+        path.unlink(missing_ok=True)
+        store = StatsStore(path)
+        base = datetime(2026, 10, 6, 8, 0).timestamp()
+        for i in range(10):                                   # 10 Raids im Abstand von 2 Minuten
+            store.add(RunRecord(base + i * 120, 110.0, None, 50 + i, 100, "ok", "", "Alvarez"))
+        store.add(RunRecord(base + 3 * 3600, 100.0, None, 90, 100, "ok", "", ""))   # nach langer Pause
+        recs = store.last_runs(100)
+        self.assertAlmostEqual(farm_seconds(recs), 110 + 9 * 120 + 100)            # Pause zählt nicht
+        week = store.daily(7, end=datetime(2026, 10, 7))
+        self.assertEqual([d["attempts"] for d in week], [0, 0, 0, 0, 0, 11, 0])
+        m = store.month(2026, 10)
+        self.assertEqual((m["attempts"], m["best_wave"], m["best_day"], m["active_days"]), (11, 90, 6, 1))
+        self.assertEqual(m["favorite_raid"], "Alvarez")                             # benannter Raid vor „Unbekannt“
+        self.assertEqual(m["peak_hour"], 8)
+        self.assertEqual(store.month(2026, 11)["prev_attempts"], 11)

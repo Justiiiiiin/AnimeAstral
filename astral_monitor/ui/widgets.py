@@ -338,11 +338,14 @@ class BarChart(QWidget):
     def __init__(self) -> None:
         super().__init__()
         self._data: list[tuple[str, int]] = []
+        self._fmt = str                                 # Beschriftung über den Balken
         theme.track_min_height(self, 180)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
-    def set_data(self, data: list[tuple[str, int]]) -> None:
+    def set_data(self, data: list[tuple[str, int]], fmt=None) -> None:
+        """fmt: Wert -> Beschriftung (z. B. Minuten als „2,5 h“); Standard: die Zahl."""
         self._data = data
+        self._fmt = fmt or str
         self.update()
 
     def paintEvent(self, _event) -> None:
@@ -373,5 +376,5 @@ class BarChart(QWidget):
                 p.drawText(QRectF(x - gap, h - bottom_pad + 4, bw + 2 * gap, line), name, center)
             if value:                                   # keine „0“ über leeren Balken
                 p.setPen(QColor(theme.color("text")))
-                p.drawText(QRectF(x - gap, h - bottom_pad - bh - line - 2, bw + 2 * gap, line), str(value), center)
+                p.drawText(QRectF(x - gap, h - bottom_pad - bh - line - 2, bw + 2 * gap, line), self._fmt(value), center)
         p.end()
