@@ -25,6 +25,8 @@ QMainWindow, QStackedWidget {{ background: {BG}; }}
 QFrame#sidebar {{ background: {SIDEBAR}; border-right: 1px solid #1E2630; }}
 QFrame#topbar {{ background: {SIDEBAR}; border-bottom: 1px solid #1E2630; }}
 QFrame#topbar QWidget {{ background: transparent; }}
+QFrame#topbar QPushButton#slim {{ background: #18212B; min-height: 28px; padding: 0 12px; border-radius: 7px; }}
+QFrame#topbar QPushButton#slim:hover {{ background: #1E2A37; }}
 QFrame#sidebar QWidget {{ background: transparent; }}
 QFrame#card {{ background: {CARD}; border: 1px solid {BORDER}; border-radius: 10px; }}
 QFrame#card QWidget {{ background: transparent; }}

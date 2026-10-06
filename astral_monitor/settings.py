@@ -138,6 +138,7 @@ class Settings:
     close_to_tray: bool = True          # Fenster schließen = im Infobereich weiterlaufen
     anti_afk_enabled: bool = False      # alle N Minuten kurz zu Roblox, Leertaste, zurück (antiafk.py)
     anti_afk_minutes: int = 10
+    private_server_link: str = ""       # roblox.com/games/…?privateServerLinkCode=… (nur lokal, roblox_join.py)
     # Sonstiges
     settings_version: int = 6
     uptime_minutes: int = 10

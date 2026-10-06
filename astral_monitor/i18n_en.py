@@ -86,6 +86,31 @@ EN: dict[str, str] = {
     "Automatisch (Fenster-Capture, sonst Bildschirm)": "Automatic (window capture, otherwise screen)",
     "Automatisch nach Updates suchen (höchstens alle 6 Stunden)": "Check for updates automatically (at most every 6 hours)",
     "Beenden": "Quit",
+    "Beitreten": "Join",
+    "Bitte zuerst unter Einstellungen → Privater Server deinen Link eintragen.":
+        "Please enter your link under Settings → Private server first.",
+    "Kein Link eingetragen.": "No link entered.",
+    "Kein gültiger Private-Server-Link (erwartet: roblox.com/games/…?privateServerLinkCode=…).":
+        "Not a valid private server link (expected: roblox.com/games/…?privateServerLinkCode=…).",
+    "Nur unter Windows möglich.": "Only possible on Windows.",
+    "Privater Server": "Private server",
+    "Roblox konnte nicht gestartet werden ({error}). Ist Roblox installiert?":
+        "Roblox could not be started ({error}). Is Roblox installed?",
+    "Roblox wird gestartet und tritt dem privaten Server bei …": "Starting Roblox and joining the private server …",
+    "Server beitreten": "Join server",
+    "Spiel {place} · Code …{tail}": "Game {place} · code …{tail}",
+    "Startet Roblox direkt in deinem privaten Server (Link unter Einstellungen → Privater Server).":
+        "Starts Roblox directly in your private server (link under Settings → Private server).",
+    "Startet Roblox direkt in deinem privaten Server, ohne Browser (Knopf auch oben in der Kopfzeile und im Tray-Menü). "
+    "Teilen-Links („roblox.com/share?code=…“) einmal im Browser öffnen und dann den Link aus der Adresszeile kopieren. "
+    "Der Link bleibt nur auf diesem PC und ist im Diagnose-Paket nicht enthalten.":
+        "Starts Roblox directly in your private server, without a browser (button also in the header and the tray "
+        "menu). Open share links (“roblox.com/share?code=…”) once in the browser, then copy the link from the address "
+        "bar. The link stays on this PC only and is not included in the diagnostics package.",
+    "Teilen-Link erkannt – bitte einmal im Browser öffnen und dann den Link aus der Adresszeile kopieren (enthält "
+    "„privateServerLinkCode“).":
+        "Share link detected – please open it once in the browser and copy the link from the address bar (it contains "
+        "“privateServerLinkCode”).",
     "Beendet um": "Ended at",
     "Bei sehr langen Sitzungen hilft ein Neustart von Roblox.": "For very long sessions, restarting Roblox helps.",
     "Beim Schließen im Infobereich (neben der Uhr) weiterlaufen":

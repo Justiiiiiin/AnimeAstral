@@ -70,8 +70,9 @@ def build_report(engine, dest_dir: Path) -> Path:
               f"Datensätze: gesamt {len(engine.stats.records)}, Fehlversuche {engine.stats.failed_count()}"]
 
     settings = s.to_dict()
-    if settings.get("webhook_url"):
-        settings["webhook_url"] = "<entfernt>"
+    for secret in ("webhook_url", "private_server_link", "ping_user_id", "rpc_client_id"):   # persönliche Zugänge/IDs
+        if settings.get(secret):
+            settings[secret] = "<entfernt>"
     if settings.get("ping_user_id"):
         settings["ping_user_id"] = "<entfernt>"
 

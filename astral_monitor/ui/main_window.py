@@ -14,7 +14,7 @@ from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (QApplication, QButtonGroup, QFrame, QHBoxLayout, QMainWindow, QMenu,
                                QMessageBox, QPushButton, QStackedWidget, QSystemTrayIcon, QVBoxLayout, QWidget)
 
-from .. import app_paths, i18n, messages, winapi
+from .. import app_paths, i18n, messages, roblox_join, winapi
 from ..i18n import tr
 from ..version import __version__
 from ..engine import Engine, EngineError
@@ -67,6 +67,13 @@ class MainWindow(QMainWindow):
         self.afk_switch.setToolTip(afk_label.toolTip())
         self.afk_switch.setChecked(engine.settings.anti_afk_enabled)
         self.afk_switch.toggled.connect(self.set_anti_afk)
+        join_btn = QPushButton(tr("Server beitreten"))
+        join_btn.setObjectName("slim")
+        join_btn.setToolTip(tr("Startet Roblox direkt in deinem privaten Server (Link unter Einstellungen → Privater "
+                               "Server)."))
+        join_btn.clicked.connect(lambda: self.join_private_server())
+        top.addWidget(join_btn)
+        top.addSpacing(theme.px(12))
         top.addWidget(self.afk_info)
         top.addWidget(afk_label)
         top.addWidget(self.afk_switch)
@@ -158,6 +165,7 @@ class MainWindow(QMainWindow):
         menu.addAction(tr("Öffnen"), self.show_from_tray)
         self.tray_toggle = menu.addAction(tr("Überwachung starten"), self.toggle_monitoring)
         self.tray_pause = menu.addAction(tr("Pause"), self.toggle_pause)
+        menu.addAction(tr("Server beitreten"), lambda: self.join_private_server())
         self.tray_afk = menu.addAction(tr("Anti-AFK"))
         self.tray_afk.setCheckable(True)
         self.tray_afk.toggled.connect(lambda on: self.afk_switch.setChecked(on))
@@ -180,6 +188,29 @@ class MainWindow(QMainWindow):
         self.tray_afk.blockSignals(True)
         self.tray_afk.setChecked(self.afk_switch.isChecked())
         self.tray_afk.blockSignals(False)
+
+    # --------------------------------------------------------------- Privater Server
+    def join_private_server(self, link: Optional[str] = None) -> None:
+        """Roblox direkt im privaten Server starten. Mit `link` (aus den Einstellungen) wird er auch gespeichert."""
+        s = self.engine.settings
+        if link is not None and link.strip() != s.private_server_link:
+            s.private_server_link = link.strip()
+            try:
+                s.save()
+            except OSError:
+                pass
+        if not s.private_server_link:
+            self.show_from_tray()
+            self.nav.button(5).click()                  # Einstellungen öffnen
+            QMessageBox.information(self, tr("Privater Server"),
+                                    tr("Bitte zuerst unter Einstellungen → Privater Server deinen Link eintragen."))
+            return
+        ok, info = roblox_join.join(s.private_server_link)
+        self.engine._event(info, "info" if ok else "warn")
+        if ok:
+            self.show_toast(info)
+        else:
+            QMessageBox.warning(self, tr("Privater Server"), info)
 
     # --------------------------------------------------------------- Anti-AFK
     def set_anti_afk(self, on: bool) -> None:

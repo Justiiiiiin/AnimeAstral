@@ -6,7 +6,7 @@ from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import (QCheckBox, QGridLayout, QHBoxLayout, QLineEdit,
                                QPushButton, QScrollArea, QVBoxLayout, QWidget)
 
-from .. import app_paths
+from .. import app_paths, roblox_join
 from ..i18n import LANGUAGES, tr
 from . import theme
 from ..version import __version__
@@ -132,6 +132,24 @@ class SettingsPage(QWidget):
                                     "Verantwortung."), "small", wrap=True))
         root.addWidget(afk)
 
+        ps = Card(tr("Privater Server"))
+        prow = QHBoxLayout()
+        self.ps_link = QLineEdit()
+        self.ps_link.setPlaceholderText("https://www.roblox.com/games/…?privateServerLinkCode=…")
+        self.ps_link.textChanged.connect(lambda text: self.ps_state.setText(roblox_join.explain(text)))
+        prow.addWidget(self.ps_link, 1)
+        ps_btn = QPushButton(tr("Beitreten"))
+        ps_btn.clicked.connect(lambda: self.main.join_private_server(self.ps_link.text()))
+        prow.addWidget(ps_btn)
+        ps.body.addLayout(prow)
+        self.ps_state = label("", "small", wrap=True)
+        ps.body.addWidget(self.ps_state)
+        ps.body.addWidget(label(tr("Startet Roblox direkt in deinem privaten Server, ohne Browser (Knopf auch oben in "
+                                   "der Kopfzeile und im Tray-Menü). Teilen-Links („roblox.com/share?code=…“) einmal im "
+                                   "Browser öffnen und dann den Link aus der Adresszeile kopieren. Der Link bleibt nur "
+                                   "auf diesem PC und ist im Diagnose-Paket nicht enthalten."), "small", wrap=True))
+        root.addWidget(ps)
+
         keys = Card(tr("Hotkeys (global, auch während des Spiels)"))
         kg = QGridLayout()
         kg.setColumnStretch(1, 1)
@@ -222,6 +240,8 @@ class SettingsPage(QWidget):
         self.language.setCurrentIndex(max(0, self.language.findData(s.language)))
         self.close_to_tray.setChecked(s.close_to_tray)
         self.afk_minutes.setValue(s.anti_afk_minutes)
+        self.ps_link.setText(s.private_server_link)
+        self.ps_state.setText(roblox_join.explain(s.private_server_link))
         self.perf.setCurrentIndex(max(0, self.perf.findData(s.performance)))
         self.low_priority.setChecked(s.low_priority)
         self.uptime.setValue(s.uptime_minutes)
@@ -249,6 +269,7 @@ class SettingsPage(QWidget):
         s.language = self.language.currentData() or "de"
         s.close_to_tray = self.close_to_tray.isChecked()
         s.anti_afk_minutes = self.afk_minutes.value()
+        s.private_server_link = self.ps_link.text().strip()
         s.performance = self.perf.currentData()
         s.low_priority = self.low_priority.isChecked()
         s.uptime_minutes = self.uptime.value()
