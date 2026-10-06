@@ -27,6 +27,7 @@ from .version import __version__
 log = logging.getLogger("updater")
 
 API_LATEST = "https://api.github.com/repos/{repo}/releases/latest"
+API_LIST = "https://api.github.com/repos/{repo}/releases?per_page=50"
 INSTALLER_RE = re.compile(r"^AnimeAstralMonitor-Setup-.+\.exe$", re.IGNORECASE)
 PATCH_RE = re.compile(r"^AnimeAstralMonitor-Update-.+\.zip$", re.IGNORECASE)
 MANIFEST_RE = re.compile(r"^files-.+\.json$", re.IGNORECASE)
@@ -53,6 +54,7 @@ class ReleaseInfo:
     patch_url: Optional[str] = None
     patch_name: str = ""
     patch_size: int = 0
+    published: str = ""                 # ISO-Zeit der Veröffentlichung (GitHub)
 
 
 @dataclass
@@ -99,12 +101,9 @@ def pick_assets(release: dict, repo: str) -> tuple[Optional[dict], Optional[dict
     return installer, sha
 
 
-def check_latest(repo: str, timeout: float = 12.0, getter: Callable = requests.get) -> Optional[ReleaseInfo]:
-    """Neueste Veröffentlichung. None = keine passende Veröffentlichung (noch ohne Installer). Fehler -> UpdateError."""
-    if not re.fullmatch(r"[\w.-]+/[\w.-]+", repo):
-        raise UpdateError(tr("Kein gültiges GitHub-Repository eingetragen."))
+def _get_json(url: str, timeout: float, getter: Callable):
     try:
-        resp = getter(API_LATEST.format(repo=repo), timeout=timeout,
+        resp = getter(url, timeout=timeout,
                       headers={"Accept": "application/vnd.github+json", "User-Agent": f"AnimeAstralMonitor/{__version__}"})
     except requests.RequestException as exc:
         raise UpdateError(tr("Keine Verbindung zu GitHub ({error}).", error=exc.__class__.__name__)) from exc
@@ -113,9 +112,20 @@ def check_latest(repo: str, timeout: float = 12.0, getter: Callable = requests.g
     if resp.status_code != 200:
         raise UpdateError(tr("GitHub antwortete mit HTTP {code}.", code=resp.status_code))
     try:
-        data = resp.json()
+        return resp.json()
     except ValueError as exc:
         raise UpdateError(tr("Ungültige Antwort von GitHub.")) from exc
+
+
+def _check_repo(repo: str) -> None:
+    if not re.fullmatch(r"[\w.-]+/[\w.-]+", repo):
+        raise UpdateError(tr("Kein gültiges GitHub-Repository eingetragen."))
+
+
+def release_info(data: dict, repo: str) -> Optional[ReleaseInfo]:
+    """Eine Veröffentlichung aus der GitHub-Antwort; None = ohne Installer (nicht installierbar)."""
+    if not isinstance(data, dict) or data.get("draft"):
+        return None
     installer, sha = pick_assets(data, repo)
     if installer is None:
         return None
@@ -127,7 +137,24 @@ def check_latest(repo: str, timeout: float = 12.0, getter: Callable = requests.g
                        sha_url=sha["browser_download_url"] if sha else None,
                        manifest_url=manifest["browser_download_url"] if manifest else None,
                        patch_url=patch["browser_download_url"] if patch else None,
-                       patch_name=patch["name"] if patch else "", patch_size=int((patch or {}).get("size") or 0))
+                       patch_name=patch["name"] if patch else "", patch_size=int((patch or {}).get("size") or 0),
+                       published=str(data.get("published_at") or ""))
+
+
+def check_latest(repo: str, timeout: float = 12.0, getter: Callable = requests.get) -> Optional[ReleaseInfo]:
+    """Neueste Veröffentlichung. None = keine passende Veröffentlichung (noch ohne Installer). Fehler -> UpdateError."""
+    _check_repo(repo)
+    data = _get_json(API_LATEST.format(repo=repo), timeout, getter)
+    return release_info(data, repo) if data is not None else None
+
+
+def list_releases(repo: str, timeout: float = 12.0, getter: Callable = requests.get) -> list[ReleaseInfo]:
+    """Alle installierbaren Veröffentlichungen, neueste zuerst (für Versionshinweise und Downgrade)."""
+    _check_repo(repo)
+    data = _get_json(API_LIST.format(repo=repo), timeout, getter) or []
+    out = [info for info in (release_info(d, repo) for d in data if not d.get("prerelease")) if info]
+    out.sort(key=lambda r: version_key(r.version), reverse=True)
+    return out
 
 
 def pick_patch_assets(release: dict, repo: str) -> tuple[Optional[dict], Optional[dict]]:

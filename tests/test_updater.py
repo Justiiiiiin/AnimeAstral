@@ -113,3 +113,38 @@ class UpdaterTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ReleaseListTests(unittest.TestCase):
+    def test_list_sorted_and_filtered(self):
+        def rel(tag, **extra):
+            data = {k: v for k, v in RELEASE.items() if k != "tag_name"}
+            data.update(tag_name=tag, published_at="2026-10-06T12:00:00Z", **extra)
+            return data
+        no_installer = rel("v0.5.5")
+        no_installer["assets"] = []
+        listing = [rel("v0.5.2"), rel("v0.6.10"), rel("v0.6.9"), rel("v0.7.0-beta", prerelease=True),
+                   rel("v0.8.0", draft=True), no_installer]
+        out = updater.list_releases(REPO, getter=lambda *a, **k: Resp(200, listing))
+        self.assertEqual([r.version for r in out], ["0.6.10", "0.6.9", "0.5.2"])     # numerisch, nicht als Text
+        self.assertEqual(out[0].published, "2026-10-06T12:00:00Z")
+        self.assertEqual(updater.list_releases(REPO, getter=lambda *a, **k: Resp(404)), [])
+
+
+class ChangelogTests(unittest.TestCase):
+    def test_every_version_has_short_notes(self):
+        import importlib.util
+        import re
+        root = Path(__file__).resolve().parent.parent
+        spec = importlib.util.spec_from_file_location("release_notes", root / "tools" / "release_notes.py")
+        notes = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(notes)
+        from astral_monitor.version import __version__
+        body = notes.section(__version__)
+        self.assertIsNotNone(body, f"CHANGELOG.md braucht einen Abschnitt „## {__version__}“")
+        for line in body.splitlines():                     # Stichpunkte statt Erklärungen
+            if line.startswith("- "):
+                self.assertLessEqual(len(line), 70, line)
+        self.assertIsNone(notes.section("9.9.9", "## 1.0\n- x\n"))
+        self.assertEqual(notes.section("1.0", "## 1.0\n### Neu\n- x\n## 0.9\n- y\n"), "#### Neu\n- x")
+        self.assertTrue(re.search(r"^## 0\.5\.0", (root / "CHANGELOG.md").read_text(encoding="utf-8"), re.M))

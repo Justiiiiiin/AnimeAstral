@@ -15,10 +15,12 @@ from .widgets import label
 
 
 class UpdateDialog(QDialog):
-    def __init__(self, main, info: updater.ReleaseInfo) -> None:
+    def __init__(self, main, info: updater.ReleaseInfo, full_install: bool = False) -> None:
+        """full_install: kompletten Installer nutzen (Downgrade/Neuinstallation – Update-Pakete gehen nur vorwärts)."""
         super().__init__(main)
         self.main, self.info = main, info
-        self.setWindowTitle(tr("Update verfügbar"))
+        newer = updater.is_newer(info.version)
+        self.setWindowTitle(tr("Update verfügbar") if newer else tr("Version installieren"))
         self.setModal(True)
         self.resize(560, 460)
         self._state = {"done": 0, "total": 0, "error": None, "path": None, "finished": False}
@@ -27,7 +29,8 @@ class UpdateDialog(QDialog):
         lay = QVBoxLayout(self)
         theme.track_margins(lay, 28, 24, 28, 20)
         theme.track_spacing(lay, 12)
-        lay.addWidget(label(tr("Version {version} ist verfügbar", version=info.version), "h1"))
+        lay.addWidget(label(tr("Version {version} ist verfügbar", version=info.version) if newer
+                            else tr("Version {version} installieren", version=info.version), "h1"))
         lay.addWidget(label(tr("Du hast Version {version}.", version=__version__), "muted"))
         notes = QTextBrowser()                  # GitHub-Versionshinweise sind Markdown
         notes.setOpenExternalLinks(True)
@@ -46,12 +49,17 @@ class UpdateDialog(QDialog):
         row = QHBoxLayout()
         self.btn_skip = QPushButton(tr("Diese Version überspringen"))
         self.btn_skip.clicked.connect(self._skip)
+        self.btn_skip.setVisible(newer and not full_install)
+        btn_all = QPushButton(tr("Alle Versionen …"))
+        btn_all.setToolTip(tr("Versionshinweise aller Versionen lesen oder eine ältere Version installieren"))
+        btn_all.clicked.connect(self._all_versions)
         self.btn_later = QPushButton(tr("Später"))
         self.btn_later.clicked.connect(self.reject)
-        self.btn_go = QPushButton(tr("Jetzt aktualisieren"))
+        self.btn_go = QPushButton(tr("Jetzt aktualisieren") if newer else tr("Installieren"))
         self.btn_go.setObjectName("primary")
         self.btn_go.clicked.connect(self._start)
         row.addWidget(self.btn_skip)
+        row.addWidget(btn_all)
         row.addStretch(1)
         row.addWidget(self.btn_later)
         row.addWidget(self.btn_go)
@@ -69,7 +77,7 @@ class UpdateDialog(QDialog):
 
         def plan_work() -> None:
             try:
-                self._plan_state["plan"] = updater.prepare_patch(info)
+                self._plan_state["plan"] = None if full_install else updater.prepare_patch(info)
             except Exception:
                 self._plan_state["plan"] = None
             self._plan_state["done"] = True
@@ -91,6 +99,11 @@ class UpdateDialog(QDialog):
         else:
             self.status.setText(tr("Download: {mb} MB (kompletter Installer)", mb=f"{self.info.size / 1048576:.0f}"))
         self.btn_go.setEnabled(True)
+
+    def _all_versions(self) -> None:
+        from .versions_dialog import VersionsDialog
+        self.reject()
+        VersionsDialog(self.main).exec()
 
     def _skip(self) -> None:
         self.main.skip_version(self.info.version)

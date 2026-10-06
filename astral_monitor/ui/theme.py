@@ -191,8 +191,7 @@ QFrame#statusbox[state="off"] { background: @card; border: 1px solid @border; }
 QLabel#h1 { font-size: 19pt; font-weight: 700; }
 QLabel#h2 { font-size: 11pt; font-weight: 600; }
 QLabel#brand { font-size: 12pt; font-weight: 700; color: @text; }
-QFrame#topbar QLabel#brandmark { background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 @accent, stop:1 @accent2);
-  border-radius: 7px; min-width: 14px; max-width: 14px; min-height: 14px; max-height: 14px; }
+QFrame#topbar QLabel#brandmark { background: transparent; }
 QLabel#muted { color: @muted; }
 QLabel#small { color: @muted; font-size: 9pt; }
 QLabel#kpi { font-family: "Segoe UI Variable Display", "Segoe UI"; font-size: 21pt; font-weight: 700; }

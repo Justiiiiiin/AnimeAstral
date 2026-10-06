@@ -238,7 +238,10 @@ class SettingsPage(QWidget):
         rpc.body.addLayout(rg)
         root.addWidget(rpc)
 
-        upd = Card(tr("Updates"))
+        upd = Card(tr("Updates"),
+                   tr("Neue Versionen kommen meist als kleines Paket (nur geänderte Dateien). Unter „Alle "
+                      "Versionen“ liest du die Änderungen jeder Version und kannst bei Problemen zu einer älteren "
+                      "zurückkehren – Einstellungen und Statistik bleiben erhalten."))
         upd.body.addWidget(label(tr("Installierte Version: {version}", version=__version__), "muted"))
         self.update_check = QCheckBox(tr("Automatisch nach Updates suchen (höchstens alle 6 Stunden)"))
         upd.body.addWidget(self.update_check)
@@ -246,6 +249,10 @@ class SettingsPage(QWidget):
         ubtn = QPushButton(tr("Jetzt nach Updates suchen"))
         ubtn.clicked.connect(lambda: self.main.check_updates(True))
         urow.addWidget(ubtn)
+        vbtn = QPushButton(tr("Alle Versionen …"))
+        vbtn.setToolTip(tr("Versionshinweise aller Versionen lesen oder eine ältere Version installieren"))
+        vbtn.clicked.connect(self._versions)
+        urow.addWidget(vbtn)
         urow.addStretch(1)
         upd.body.addLayout(urow)
         upd.body.addStretch(1)
@@ -366,6 +373,10 @@ class SettingsPage(QWidget):
         menu.addSeparator()
         menu.addAction(tr("Löschen"), self._delete_server)
         menu.exec(self.servers.viewport().mapToGlobal(pos))
+
+    def _versions(self) -> None:
+        from .versions_dialog import VersionsDialog
+        VersionsDialog(self.main).exec()
 
     # ------------------------------------------------------------------ Darstellung
     def _set_zoom(self, value: int) -> None:

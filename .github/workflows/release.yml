@@ -92,12 +92,15 @@ jobs:
             Out-File -FilePath dist\SHA256SUMS.txt -Encoding ascii
           Get-Content dist\SHA256SUMS.txt
 
+      - name: Versionshinweis aus CHANGELOG.md
+        run: python tools/release_notes.py "$env:VERSION" | Out-File -FilePath dist/release_notes.md -Encoding utf8
+
       - name: Veröffentlichen
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.ref_type == 'tag' && github.ref_name || format('v{0}', env.VERSION) }}
           name: Anime Astral Monitor ${{ env.VERSION }}
-          generate_release_notes: true
+          body_path: dist/release_notes.md
           files: |
             dist/AnimeAstralMonitor-Setup-*.exe
             dist/AnimeAstralMonitor-Update-*.zip

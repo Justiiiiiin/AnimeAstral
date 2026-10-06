@@ -438,6 +438,7 @@ class MainWindow(QMainWindow):
         if theme.set_scale(QApplication.instance(),
                            theme.factor_for(self.width(), self.height(), s.ui_zoom, s.ui_auto_fit)):
             self._status_key = None                 # Statusfeld neu zeichnen
+            self._apply_design()                    # Logo/Symbole in der neuen Größe
 
     # --------------------------------------------------------------- Darstellung
     def _go(self, index: int) -> None:
@@ -470,6 +471,9 @@ class MainWindow(QMainWindow):
         self.gear.setIcon(theme.glyph_icon("settings", 22))
         self.gear.setChecked(self.stack.currentIndex() == 5)
         self.brandmark.setVisible(info["icons"])
+        logo = app_paths.resource_path("assets/app.png")
+        if info["icons"] and logo.is_file():
+            self.brandmark.setPixmap(QIcon(str(logo)).pixmap(QSize(theme.px(22), theme.px(22))))
         self.pages[0].recolor()
         for page in self.pages:
             page.update()

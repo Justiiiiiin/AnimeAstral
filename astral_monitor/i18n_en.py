@@ -767,4 +767,36 @@ EN: dict[str, str] = {
     "Gib das Passwort ein, das du beim Export vergeben hast. Deine aktuellen Einstellungen werden danach ersetzt.":
         "Enter the password you chose when exporting. Your current settings will then be replaced.",
     "Wiederholen": "Repeat",
+    # Versionen & Änderungen (0.6.6)
+    "Neue Versionen kommen meist als kleines Paket (nur geänderte Dateien). Unter „Alle Versionen“ liest du die "
+    "Änderungen jeder Version und kannst bei Problemen zu einer älteren zurückkehren – Einstellungen und Statistik "
+    "bleiben erhalten.":
+        "New versions usually arrive as a small package (changed files only). Under “All versions” you can read the "
+        "changes of every version and go back to an older one if something breaks – settings and statistics are "
+        "kept.",
+    "Alle Versionen …": "All versions …",
+    "Versionshinweise aller Versionen lesen oder eine ältere Version installieren":
+        "Read the release notes of every version or install an older one",
+    "Version installieren": "Install version",
+    "Installieren": "Install",
+    "Version {version} installieren": "Install version {version}",
+    "Versionen & Änderungen": "Versions & changes",
+    "Lade Versionen …": "Loading versions …",
+    "Schließen": "Close",
+    "Diese Version installieren": "Install this version",
+    "Version {version} installieren? Deine Einstellungen und Statistik bleiben erhalten.\n\nDamit nicht sofort wieder "
+    "das neueste Update angeboten wird, wird es übersprungen – unter Einstellungen → Updates kannst du jederzeit "
+    "wieder aktualisieren.":
+        "Install version {version}? Your settings and statistics are kept.\n\nSo that the newest update is not "
+        "offered again right away, it is skipped – you can update again any time under Settings → Updates.",
+    "Installiert: {version}": "Installed: {version}",
+    "Erneut installieren": "Reinstall",
+    "Installieren geht nur in der installierten Version (nicht beim Start aus dem Quellcode).":
+        "Installing only works in the installed version (not when started from source).",
+    "In dieser Version ist keine Update-Quelle hinterlegt.": "This version has no update source.",
+    "installiert": "installed",
+    "Auf {version} aktualisieren": "Update to {version}",
+    "Zurück zu {version}": "Back to {version}",
+    "Ältere Version": "Older version",
+    "neu": "new",
 }
