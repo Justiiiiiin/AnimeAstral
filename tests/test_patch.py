@@ -95,6 +95,16 @@ class PatchTests(unittest.TestCase):
                                 plan, work)
         self.assertFalse((work / "staging").exists())
 
+    def test_cleanup_downloads(self):
+        folder = self.root / "updates"
+        (folder / "apply" / "staging").mkdir(parents=True)
+        for name in ("AnimeAstralMonitor-Setup-0.5.2.exe", "AnimeAstralMonitor-Update-0.5.3.zip", "x.zip.part",
+                     "apply/plan.json", "apply/apply.ps1", "apply/apply.log"):
+            (folder / name).write_bytes(b"x")
+        self.assertEqual(updater.cleanup_downloads(folder), 5)
+        self.assertEqual(sorted(p.name for p in folder.rglob("*") if p.is_file()), ["apply.log"])   # Protokoll bleibt
+        self.assertFalse((folder / "apply" / "staging").exists())
+
     @unittest.skipUnless(sys.platform == "win32", "Austausch-Skript nur unter Windows")
     def test_apply_script_replaces_and_rolls_back(self):
         plan = updater.plan_patch(self.local, remote_manifest(), self.app)

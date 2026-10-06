@@ -73,6 +73,10 @@ Wichtige Entwurfsentscheidungen:
   - `astral_monitor/__init__.py` setzt `OPENBLAS_NUM_THREADS=1` usw. **vor** dem numpy-Import (OpenBLAS legt sonst je Kern
     Puffer an: 257 statt 32 MB), `cv2.setNumThreads(1)`.
   - Oberfläche zeichnet nicht, solange das Fenster minimiert ist.
+  - Arbeitsspeicher: `winapi.trim_memory()` 30 s nach Start, alle 10 Min. und beim Minimieren. Der Working Set enthält
+    sonst Start-Reste und geteilte Seiten von Grafiktreibern (WGC lädt AMD- und NVIDIA-Treiber, ~370 MB) und Schriften;
+    gemessen 178 MB → dauerhaft ~50 MB (eigener Anteil/USS ~36 MB). Die Anzeige „Dieses Programm“ zeigt den Working Set.
+  - Update-Downloads werden beim Start gelöscht (`updater.cleanup_downloads`), sonst blieben ~60 MB liegen.
 - **Raid-Statistik je Raid oder gesamt** (Auswahlfeld „Alle Raids (gesamt)“). Der Eigentümer will **keine vielen
   Einzelprofile**, nur je gespieltem Raid einen Eintrag mit Referenzbildern.
 - **Zeitangaben:** Die Engine nutzt `time.monotonic()` für Takt/Dauer; in Tests wird die Uhr teils künstlich gesetzt.

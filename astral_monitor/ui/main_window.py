@@ -9,12 +9,12 @@ import threading
 import time
 from typing import Callable, Optional
 
-from PySide6.QtCore import QLockFile, Qt, QTimer
+from PySide6.QtCore import QEvent, QLockFile, Qt, QTimer
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (QApplication, QButtonGroup, QFrame, QHBoxLayout, QMainWindow,
                                QMessageBox, QPushButton, QStackedWidget, QVBoxLayout, QWidget)
 
-from .. import app_paths, messages
+from .. import app_paths, messages, winapi
 from ..version import __version__
 from ..engine import Engine, EngineError
 from ..hotkeys import HotkeyListener
@@ -98,12 +98,25 @@ class MainWindow(QMainWindow):
         self._force_close = False
         if not engine.settings.wizard_done:
             QTimer.singleShot(500, self.open_wizard)        # beim ersten Start: Einrichtungsassistent
+        QTimer.singleShot(4000, updater.cleanup_downloads)               # Reste früherer Updates entfernen
         QTimer.singleShot(6000, lambda: self.check_updates(False))     # leise im Hintergrund (höchstens alle 6 Stunden)
 
         self.timer = QTimer(self)
         self.timer.setInterval(400)
         self.timer.timeout.connect(self._tick)
         self.timer.start()
+
+        # Speicher aufräumen: nach dem Start, danach alle 10 Minuten und beim Minimieren (siehe winapi.trim_memory)
+        self.trim_timer = QTimer(self)
+        self.trim_timer.setInterval(10 * 60 * 1000)
+        self.trim_timer.timeout.connect(winapi.trim_memory)
+        self.trim_timer.start()
+        QTimer.singleShot(30_000, winapi.trim_memory)
+
+    def changeEvent(self, event) -> None:
+        super().changeEvent(event)
+        if event.type() == QEvent.Type.WindowStateChange and self.isMinimized():
+            QTimer.singleShot(1000, winapi.trim_memory)
 
     # --------------------------------------------------------------- Einstellungen
     def collect_settings(self) -> Optional[Settings]:

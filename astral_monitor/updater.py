@@ -383,6 +383,24 @@ def launch_patch(zip_path: Path, plan: PatchPlan, relaunch: bool = True, folder:
     return plan_file
 
 
+def cleanup_downloads(folder: Optional[Path] = None) -> int:
+    """Beim Start: heruntergeladene Installer/Pakete früherer Updates löschen (sonst bleiben ~60 MB liegen).
+    Dateien, die gerade noch benutzt werden, bleiben bis zum nächsten Start. Das Austausch-Protokoll bleibt erhalten."""
+    folder = folder or (app_paths.data_dir() / "updates")
+    removed = 0
+    for pattern in ("*.exe", "*.zip", "*.part", "apply/plan.json", "apply/apply.ps1"):
+        for path in folder.glob(pattern):
+            try:
+                path.unlink()
+                removed += 1
+            except OSError:
+                pass
+    for sub in ("apply/staging", "apply/backup"):
+        if (folder / sub).is_dir():
+            shutil.rmtree(folder / sub, ignore_errors=True)
+    return removed
+
+
 def launch_installer(path: Path, relaunch: bool = True) -> None:
     """Startet den Installer leise im Hintergrund. Danach muss sich das Programm beenden."""
     args = [str(path), "/SILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/CLOSEAPPLICATIONS"]
