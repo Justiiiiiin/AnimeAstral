@@ -191,6 +191,14 @@ class MainWindow(QMainWindow):
         self.gear.setCursor(Qt.CursorShape.PointingHandCursor)
         theme.track(self.gear, lambda o, f: o.setIconSize(QSize(round(22 * f), round(22 * f))))
         self.gear.clicked.connect(lambda: self.nav.button(5).click())
+        self.notes_btn = QToolButton()                 # Notizbuch (nur mit Beta-Updates)
+        self.notes_btn.setObjectName("gear")
+        self.notes_btn.setToolTip(tr("Notizbuch (Beta)"))
+        self.notes_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        theme.track(self.notes_btn, lambda o, f: o.setIconSize(QSize(round(22 * f), round(22 * f))))
+        self.notes_btn.clicked.connect(self.open_notes)
+        self._notes = None
+        side.addWidget(self.notes_btn, 0, Qt.AlignmentFlag.AlignHCenter)
         bottom.addWidget(self.gear, 0, Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignHCenter)
         side.addLayout(bottom)
 
@@ -278,6 +286,7 @@ class MainWindow(QMainWindow):
         self.tray_auto = menu.addAction(tr("Auto-Start"))
         self.tray_auto.setCheckable(True)
         self.tray_auto.toggled.connect(lambda on: self.auto_switch.setChecked(on))
+        self.tray_notes = menu.addAction(tr("Notizbuch"), self.open_notes)
         menu.addSeparator()
         menu.addAction(tr("Beenden"), self.quit_app)
         menu.aboutToShow.connect(self._update_tray_menu)
@@ -289,7 +298,16 @@ class MainWindow(QMainWindow):
         tray.show()
         return tray
 
+    def open_notes(self) -> None:
+        from .notes_window import NotesWindow
+        if self._notes is None:
+            self._notes = NotesWindow(self)
+        self._notes.show()
+        self._notes.raise_()
+        self._notes.activateWindow()
+
     def _update_tray_menu(self) -> None:
+        self.tray_notes.setVisible(self.engine.settings.update_beta)
         running = self.engine.running
         self.tray_toggle.setText(tr("Überwachung stoppen") if running else tr("Überwachung starten"))
         self.tray_pause.setEnabled(running)
@@ -485,6 +503,8 @@ class MainWindow(QMainWindow):
         self.nav.button(5).setVisible(not info["gear"])
         self.gear.setVisible(info["gear"])
         self.gear.setIcon(theme.glyph_icon("settings", 22))
+        self.notes_btn.setIcon(theme.glyph_icon("notes", 22))
+        self.notes_btn.setVisible(self.engine.settings.update_beta)
         self.gear.setChecked(self.stack.currentIndex() == 5)
         rail = bool(info.get("rail"))
         for i, name in enumerate(self._nav_names):    # schmale Leiste: nur Symbole, Name als Tooltip
@@ -584,6 +604,7 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, tr("Speichern"), tr("Konnte nicht speichern: {error}", error=exc))
             return False
         self._setup_hotkeys()
+        self.notes_btn.setVisible(s.update_beta)
         if show_message:
             self.show_toast(tr("Gespeichert ✓"))
         if s.language != i18n.language() and show_message:

@@ -642,7 +642,7 @@ def apply(app: QApplication, design_key: str = DEFAULT_DESIGN, mode: str = "dark
 # ------------------------------------------------------------------ Symbole (Windows-Symbolschrift)
 ICON_FONTS = ("Segoe Fluent Icons", "Segoe MDL2 Assets")
 GLYPHS = {"monitor": "", "stats": "", "alerts": "", "raids": "", "detect": "",
-          "settings": ""}
+          "settings": "", "notes": chr(0xE70B)}
 
 
 def glyph_icon(name: str, size: int = 18) -> QIcon:

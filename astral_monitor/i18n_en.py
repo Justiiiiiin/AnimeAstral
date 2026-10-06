@@ -896,4 +896,8 @@ EN: dict[str, str] = {
     "Monatsrückblick speichern …": "Save monthly recap …",
     "Monatsrückblick an Discord": "Monthly recap to Discord",
     "Monatsrückblick speichern": "Save monthly recap",
+    # Notizbuch (Beta, 0.7.2)
+    "Notizbuch": "Notebook",
+    "Notizbuch (Beta)": "Notebook (beta)",
+    "Upgrades, Codes, Pläne … wird automatisch gespeichert.": "Upgrades, codes, plans … saved automatically.",
 }
