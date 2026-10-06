@@ -64,7 +64,7 @@ class VersionsDialog(QDialog):
 
         def work() -> None:
             try:
-                self._result["data"] = updater.list_releases(repo) if repo else []
+                self._result["data"] = updater.list_releases(repo, beta=self.main.engine.settings.update_beta) if repo else []
                 if not repo:
                     self._result["error"] = tr("In dieser Version ist keine Update-Quelle hinterlegt.")
             except updater.UpdateError as exc:
@@ -90,7 +90,8 @@ class VersionsDialog(QDialog):
         for i, rel in enumerate(self.releases):
             mark = ("  ● " + tr("installiert")) if rel.version == __version__ else \
                 ("  ★ " + tr("neu")) if updater.is_newer(rel.version) else ""
-            item = QListWidgetItem(f"{rel.version}   {_date(rel.published)}{mark}")
+            beta = ("  β " + tr("Beta")) if rel.prerelease else ""
+            item = QListWidgetItem(f"{rel.version}   {_date(rel.published)}{beta}{mark}")
             item.setData(Qt.ItemDataRole.UserRole, i)
             self.list.addItem(item)
             if rel.version == __version__:

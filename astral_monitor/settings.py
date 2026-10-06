@@ -146,6 +146,7 @@ class Settings:
     update_check: bool = True
     update_last_check: float = 0.0
     update_skip: str = ""
+    update_beta: bool = False           # Betas (Vorabversionen) anbieten
     rpc_enabled: bool = False
     rpc_client_id: str = ""
     rpc_game_link: str = RPC_GAME_LINK

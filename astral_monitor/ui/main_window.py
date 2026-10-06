@@ -830,7 +830,7 @@ class MainWindow(QMainWindow):
 
         def work() -> None:
             try:
-                info, error = updater.check_latest(repo), None
+                info, error = updater.check_latest(repo, beta=s.update_beta), None
             except updater.UpdateError as exc:
                 info, error = None, str(exc)
             self.post(lambda: self._update_result(info, error, manual))

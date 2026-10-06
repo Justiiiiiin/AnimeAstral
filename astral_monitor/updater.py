@@ -55,6 +55,7 @@ class ReleaseInfo:
     patch_name: str = ""
     patch_size: int = 0
     published: str = ""                 # ISO-Zeit der Veröffentlichung (GitHub)
+    prerelease: bool = False            # Beta (Vorabversion)
 
 
 @dataclass
@@ -75,7 +76,18 @@ def is_installed_build() -> bool:
 
 
 def version_key(text: str) -> tuple:
-    return tuple(int(p) for p in re.findall(r"\d+", text)) or (0,)
+    """Sortierschlüssel: „0.7.2-beta.1“ < „0.7.2-beta.2“ < „0.7.2“ < „0.7.3-beta.1“."""
+    main, _, beta = text.strip().lstrip("vV").partition("-")
+    nums = tuple(int(p) for p in re.findall(r"\d+", main)) or (0,)
+    nums += (0,) * (4 - len(nums))                     # 0.7 == 0.7.0
+    if not beta:
+        return nums + (1, 0)
+    n = re.findall(r"\d+", beta)
+    return nums + (0, int(n[0]) if n else 0)
+
+
+def is_beta(version: str) -> bool:
+    return "-" in version.strip()
 
 
 def is_newer(candidate: str, current: str = __version__) -> bool:
@@ -138,21 +150,31 @@ def release_info(data: dict, repo: str) -> Optional[ReleaseInfo]:
                        manifest_url=manifest["browser_download_url"] if manifest else None,
                        patch_url=patch["browser_download_url"] if patch else None,
                        patch_name=patch["name"] if patch else "", patch_size=int((patch or {}).get("size") or 0),
-                       published=str(data.get("published_at") or ""))
+                       published=str(data.get("published_at") or ""),
+                       prerelease=bool(data.get("prerelease")) or is_beta(tag))
 
 
-def check_latest(repo: str, timeout: float = 12.0, getter: Callable = requests.get) -> Optional[ReleaseInfo]:
-    """Neueste Veröffentlichung. None = keine passende Veröffentlichung (noch ohne Installer). Fehler -> UpdateError."""
+def check_latest(repo: str, timeout: float = 12.0, getter: Callable = requests.get,
+                 beta: bool = False) -> Optional[ReleaseInfo]:
+    """Neueste Veröffentlichung (mit beta=True auch Betas). None = keine passende Veröffentlichung (noch ohne
+    Installer). Fehler -> UpdateError."""
     _check_repo(repo)
+    if beta:
+        found = list_releases(repo, timeout, getter, beta=True)
+        return found[0] if found else None
     data = _get_json(API_LATEST.format(repo=repo), timeout, getter)
     return release_info(data, repo) if data is not None else None
 
 
-def list_releases(repo: str, timeout: float = 12.0, getter: Callable = requests.get) -> list[ReleaseInfo]:
-    """Alle installierbaren Veröffentlichungen, neueste zuerst (für Versionshinweise und Downgrade)."""
+def list_releases(repo: str, timeout: float = 12.0, getter: Callable = requests.get,
+                  beta: bool = False) -> list[ReleaseInfo]:
+    """Alle installierbaren Veröffentlichungen, neueste zuerst (für Versionshinweise und Downgrade).
+    Betas nur mit beta=True."""
     _check_repo(repo)
     data = _get_json(API_LIST.format(repo=repo), timeout, getter) or []
-    out = [info for info in (release_info(d, repo) for d in data if not d.get("prerelease")) if info]
+    out = [info for info in (release_info(d, repo) for d in data if isinstance(d, dict)) if info]
+    if not beta:
+        out = [r for r in out if not r.prerelease]
     out.sort(key=lambda r: version_key(r.version), reverse=True)
     return out
 

@@ -14,7 +14,7 @@ CHANGELOG = Path(__file__).resolve().parent.parent / "CHANGELOG.md"
 def section(version: str, text: str | None = None) -> str | None:
     text = CHANGELOG.read_text(encoding="utf-8") if text is None else text
     version = version.lstrip("vV")
-    match = re.search(rf"^## {re.escape(version)}\b[^\n]*\n(.*?)(?=^## |\Z)", text, re.M | re.S)
+    match = re.search(rf"^## {re.escape(version)}(?![\w.-])[^\n]*\n(.*?)(?=^## |\Z)", text, re.M | re.S)
     if not match:
         return None
     body = match.group(1).strip()

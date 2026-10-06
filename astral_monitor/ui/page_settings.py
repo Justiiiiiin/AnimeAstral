@@ -12,8 +12,8 @@ from ..settings import MAX_FAVORITES, PRESETS
 from ..version import __version__
 from . import theme
 from .server_dialog import ServerDialog
-from .widgets import (Card, ComboBox, DoubleSpinBox, SpinBox, columns, form_grid, label, section, short_field,
-                      smooth)
+from .widgets import (Card, ComboBox, DoubleSpinBox, InfoButton, SpinBox, columns, form_grid, label, section,
+                      short_field, smooth)
 
 
 class SettingsPage(QWidget):
@@ -245,6 +245,14 @@ class SettingsPage(QWidget):
         upd.body.addWidget(label(tr("Installierte Version: {version}", version=__version__), "muted"))
         self.update_check = QCheckBox(tr("Automatisch nach Updates suchen (höchstens alle 6 Stunden)"))
         upd.body.addWidget(self.update_check)
+        brow = QHBoxLayout()
+        self.update_beta = QCheckBox(tr("Beta-Updates erhalten"))
+        brow.addWidget(self.update_beta)
+        brow.addWidget(InfoButton(tr("Neue Versionen kommen früher zu dir, können aber noch Fehler enthalten. "
+                                     "Ausschalten und unter „Alle Versionen“ zur letzten stabilen Version "
+                                     "zurückkehren geht jederzeit.")))
+        brow.addStretch(1)
+        upd.body.addLayout(brow)
         urow = QHBoxLayout()
         ubtn = QPushButton(tr("Jetzt nach Updates suchen"))
         ubtn.clicked.connect(lambda: self.main.check_updates(True))
@@ -426,6 +434,7 @@ class SettingsPage(QWidget):
         self.hk_pause.setText(s.hotkey_pause)
         self.hk_status_edit.setText(s.hotkey_status)
         self.update_check.setChecked(s.update_check)
+        self.update_beta.setChecked(s.update_beta)
         self.rpc_enabled.setChecked(s.rpc_enabled)
         self.rpc_id.setText(s.rpc_client_id)
         self.rpc_link.setText(s.rpc_game_link)
@@ -450,6 +459,7 @@ class SettingsPage(QWidget):
         s.hotkey_pause = self.hk_pause.text().strip()
         s.hotkey_status = self.hk_status_edit.text().strip()
         s.update_check = self.update_check.isChecked()
+        s.update_beta = self.update_beta.isChecked()
         s.rpc_enabled = self.rpc_enabled.isChecked()
         s.rpc_client_id = self.rpc_id.text().strip()
         s.rpc_game_link = self.rpc_link.text().strip()

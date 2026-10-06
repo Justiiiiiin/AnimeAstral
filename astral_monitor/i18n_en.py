@@ -795,4 +795,11 @@ EN: dict[str, str] = {
     "gesamt {count}": "total {count}",
     "Live-Status · aktualisiert": "Live status · updated",
     "Wellen": "Waves",
+    # Beta-Kanal (0.7.2)
+    "Beta": "Beta",
+    "Beta-Updates erhalten": "Receive beta updates",
+    "Neue Versionen kommen früher zu dir, können aber noch Fehler enthalten. Ausschalten und unter „Alle Versionen“ "
+    "zur letzten stabilen Version zurückkehren geht jederzeit.":
+        "You get new versions earlier, but they may still contain bugs. You can switch this off and return to the "
+        "latest stable version under “All versions” at any time.",
 }

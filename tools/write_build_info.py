@@ -14,8 +14,8 @@ def main() -> int:
         print(__doc__)
         return 2
     version = sys.argv[1].lstrip("vV")
-    if not re.fullmatch(r"\d+(\.\d+){1,3}", version):
-        print(f"Ungültige Versionsnummer: {version!r} (erwartet z. B. 0.5.1)")
+    if not re.fullmatch(r"\d+(\.\d+){1,3}(-beta\.\d+)?", version):
+        print(f"Ungültige Versionsnummer: {version!r} (erwartet z. B. 0.5.1 oder 0.5.1-beta.1)")
         return 2
     repo = sys.argv[2] if len(sys.argv) > 2 else ""
     rpc_id = sys.argv[3] if len(sys.argv) > 3 else ""

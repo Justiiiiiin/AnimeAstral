@@ -130,6 +130,35 @@ class ReleaseListTests(unittest.TestCase):
         self.assertEqual(out[0].published, "2026-10-06T12:00:00Z")
         self.assertEqual(updater.list_releases(REPO, getter=lambda *a, **k: Resp(404)), [])
 
+    def test_beta_channel(self):
+        def rel(tag, **extra):
+            data = {k: v for k, v in RELEASE.items() if k != "tag_name"}
+            data.update(tag_name=tag, **extra)
+            return data
+        listing = [rel("v0.7.1"), rel("v0.7.2-beta.2", prerelease=True), rel("v0.7.2-beta.10", prerelease=True)]
+        get = lambda *a, **k: Resp(200, listing)                                     # noqa: E731
+        self.assertEqual(updater.check_latest(REPO, getter=get, beta=True).version, "0.7.2-beta.10")
+        self.assertTrue(updater.check_latest(REPO, getter=get, beta=True).prerelease)
+        self.assertEqual([r.version for r in updater.list_releases(REPO, getter=get)], ["0.7.1"])
+        self.assertEqual(len(updater.list_releases(REPO, getter=get, beta=True)), 3)
+
+    def test_beta_version_order(self):
+        order = ["0.7.1", "0.7.2-beta.1", "0.7.2-beta.2", "0.7.2-beta.10", "0.7.2", "0.7.3-beta.1", "0.8"]
+        self.assertEqual(sorted(reversed(order), key=updater.version_key), order)
+        self.assertTrue(updater.is_newer("0.7.2", "0.7.2-beta.3"))           # Beta -> stabile Version
+        self.assertFalse(updater.is_newer("0.7.2-beta.1", "0.7.2"))
+        self.assertEqual(updater.version_key("0.7"), updater.version_key("0.7.0"))
+
+    def test_beta_notes_section(self):
+        import importlib.util
+        root = Path(__file__).resolve().parent.parent
+        spec = importlib.util.spec_from_file_location("release_notes", root / "tools" / "release_notes.py")
+        notes = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(notes)
+        text = "## 0.7.2-beta.1\n- Beta\n## 0.7.2\n- Stabil\n"
+        self.assertEqual(notes.section("0.7.2", text), "- Stabil")
+        self.assertEqual(notes.section("v0.7.2-beta.1", text), "- Beta")
+
 
 class ChangelogTests(unittest.TestCase):
     def test_every_version_has_short_notes(self):
