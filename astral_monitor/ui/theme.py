@@ -27,6 +27,10 @@ QFrame#topbar {{ background: {SIDEBAR}; border-bottom: 1px solid #1E2630; }}
 QFrame#topbar QWidget {{ background: transparent; }}
 QFrame#topbar QPushButton#slim {{ background: #18212B; min-height: 28px; padding: 0 12px; border-radius: 7px; }}
 QFrame#topbar QPushButton#slim:hover {{ background: #1E2A37; }}
+QFrame#topbar QToolButton#slim {{ background: #18212B; min-height: 28px; padding: 0 30px 0 12px; border-radius: 7px; }}
+QFrame#topbar QToolButton#slim:hover {{ background: #1E2A37; }}
+QFrame#topbar QToolButton#slim::menu-button {{ border: none; border-left: 1px solid #2B3644; width: 22px; }}
+QFrame#topbar QToolButton#slim::menu-arrow {{ image: url("{{ARROW}}"); width: 9px; height: 6px; }}
 QFrame#sidebar QWidget {{ background: transparent; }}
 QFrame#card {{ background: {CARD}; border: 1px solid {BORDER}; border-radius: 10px; }}
 QFrame#card QWidget {{ background: transparent; }}

@@ -46,7 +46,6 @@ class Roi:
 DEFAULT_WAVE_ROI = Roi(0.30, 0.0, 0.70, 0.13)
 DEFAULT_QUEST_ROI = Roi(0.905, 0.100, 1.000, 0.300)
 # Kulisse zur Raid-Erkennung: nur die Mitte, ohne Menüs/Leisten/Quest-Liste
-DEFAULT_SCENE_ROI = Roi(0.14, 0.10, 0.86, 0.68)
 
 # Spielseite für das Thumbnail im Discord-Profilstatus (Place-Nummer aus dem laufenden Roblox-Client, geprüft 06.10.2026)
 RPC_GAME_LINK = "https://www.roblox.com/games/102072869879193/CYBER-Anime-Astral-Simulator"
@@ -81,6 +80,23 @@ def default_events() -> dict[str, dict[str, bool]]:
     return {k: {"send": send, "ping": ping} for k, _label, send, ping in EVENT_DEFS}
 
 
+MAX_FAVORITES = 20
+
+
+def clean_favorites(value) -> list[dict]:
+    """Server-Favoriten aus der Datei: nur gültige Einträge {"name", "link"}, Namen eindeutig, höchstens 20."""
+    out, seen = [], set()
+    for entry in value if isinstance(value, list) else []:
+        if not isinstance(entry, dict):
+            continue
+        name = " ".join(str(entry.get("name", "")).split())[:40]
+        link = str(entry.get("link", "")).strip()
+        if name and link and name.lower() not in seen:
+            seen.add(name.lower())
+            out.append({"name": name, "link": link})
+    return out[:MAX_FAVORITES]
+
+
 def is_valid_webhook(url: str) -> bool:
     return url.startswith("https://") and "/api/webhooks/" in url
 
@@ -107,9 +123,8 @@ class Settings:
     # Quests
     read_quests: bool = True
     quest_roi: Roi = field(default_factory=lambda: Roi(**vars(DEFAULT_QUEST_ROI)))
-    # Raid-Erkennung (Referenzbilder)
-    scene_roi: Roi = field(default_factory=lambda: Roi(**vars(DEFAULT_SCENE_ROI)))
-    profile_min_inliers: int = 14
+    # Raid: auf der Startseite ausgewählt (keine Bilderkennung mehr)
+    current_raid: str = ""
     # Wächter
     guard_enabled: bool = True
     stall_minutes: int = 10
@@ -139,9 +154,10 @@ class Settings:
     anti_afk_enabled: bool = False      # alle N Minuten kurz zu Roblox, Leertaste, zurück (antiafk.py)
     anti_afk_minutes: int = 10
     auto_rejoin_enabled: bool = False   # nach Disconnect/Kick/Absturz neu beitreten (rejoin.py)
-    private_server_link: str = ""    # roblox.com/games/…?privateServerLinkCode=… (nur lokal, roblox_join.py)
+    server_favorites: list = field(default_factory=list)   # [{"name", "link"}] – nur lokal, Diagnose schwärzt die Links
+    private_server_link: str = "" # roblox.com/games/…?privateServerLinkCode=… (nur lokal, roblox_join.py)
     # Sonstiges
-    settings_version: int = 6
+    settings_version: int = 7
     uptime_minutes: int = 10
     total_offset: int = 0               # Startwert für "Raids gesamt"
     tesseract_path: str = ""
@@ -179,10 +195,6 @@ class Settings:
             return tr("Das Uptime-Intervall muss zwischen 1 und 1440 Minuten liegen.")
         if self.read_quests and not self.quest_roi.is_valid():
             return tr("Der Quest-Bereich ist ungültig (Seite „Erkennung“).")
-        if not self.scene_roi.is_valid():
-            return tr("Der Szenen-Bereich ist ungültig (Seite „Raids“).")
-        if not 1 <= self.profile_min_inliers <= 200:
-            return tr("Die Mindest-Übereinstimmung muss zwischen 1 und 200 liegen.")
         if not 1 <= self.stall_minutes <= 240:
             return tr("Die Stillstand-Zeit muss zwischen 1 und 240 Minuten liegen.")
         if self.no_raid_minutes < 0 or self.ram_alert_gb < 0:
@@ -221,7 +233,7 @@ class Settings:
                 continue
             value = data[f.name]
             try:
-                if f.name in ("wave_roi", "quest_roi", "scene_roi"):
+                if f.name in ("wave_roi", "quest_roi"):
                     value = Roi.from_list(value)
                 elif f.name == "events":
                     merged = default_events()
@@ -250,6 +262,9 @@ class Settings:
             # Ab Version 0.3 zählen Fehlversuche in der Statistik; eine Meldung pro Neustart ist standardmäßig aus.
             s.events["raid_aborted"]["send"] = False
             s.settings_version = 3
+        s.server_favorites = clean_favorites(s.server_favorites)
+        if not s.server_favorites and s.private_server_link:
+            s.server_favorites = [{"name": "Server 1", "link": s.private_server_link}]   # Link aus 0.6.2/0.6.3
         s.settings_version = max(s.settings_version, cls.settings_version)    # nach allen Schritten: aktueller Stand
         return s
 

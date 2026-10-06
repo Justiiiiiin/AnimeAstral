@@ -12,7 +12,8 @@ from typing import Callable, Optional
 from PySide6.QtCore import QEvent, QLibraryInfo, QLockFile, QProcess, Qt, QTimer, QTranslator
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (QApplication, QButtonGroup, QFrame, QHBoxLayout, QMainWindow, QMenu,
-                               QMessageBox, QPushButton, QStackedWidget, QSystemTrayIcon, QVBoxLayout, QWidget)
+                               QMessageBox, QPushButton, QStackedWidget, QSystemTrayIcon, QToolButton, QVBoxLayout,
+                               QWidget)
 
 from .. import app_paths, i18n, messages, roblox_join, winapi
 from ..i18n import tr
@@ -21,7 +22,7 @@ from ..engine import Engine, EngineError
 from ..hotkeys import HotkeyListener
 from .. import updater
 from ..discord_client import DiscordSender
-from ..settings import Settings, is_valid_webhook
+from ..settings import Settings, clean_favorites, is_valid_webhook
 from . import theme
 from .page_alerts import AlertsPage
 from .page_detect import DetectPage
@@ -67,12 +68,17 @@ class MainWindow(QMainWindow):
         self.afk_switch.setToolTip(afk_label.toolTip())
         self.afk_switch.setChecked(engine.settings.anti_afk_enabled)
         self.afk_switch.toggled.connect(self.set_anti_afk)
-        join_btn = QPushButton(tr("Server beitreten"))
-        join_btn.setObjectName("slim")
-        join_btn.setToolTip(tr("Startet Roblox direkt in deinem privaten Server (Link unter Einstellungen → Privater "
-                               "Server)."))
-        join_btn.clicked.connect(lambda: self.join_private_server())
-        top.addWidget(join_btn)
+        self.join_btn = QToolButton()
+        self.join_btn.setObjectName("slim")
+        self.join_btn.setText(tr("Server beitreten"))
+        self.join_btn.setToolTip(tr("Klick: dem markierten Server beitreten. Pfeil: anderen gespeicherten Server "
+                                    "wählen (verwalten unter Einstellungen → Privater Server)."))
+        self.join_btn.setPopupMode(QToolButton.ToolButtonPopupMode.MenuButtonPopup)
+        join_menu = QMenu(self.join_btn)
+        join_menu.aboutToShow.connect(lambda: self._fill_server_menu(join_menu))
+        self.join_btn.setMenu(join_menu)
+        self.join_btn.clicked.connect(lambda: self.join_private_server())
+        top.addWidget(self.join_btn)
         top.addSpacing(theme.px(12))
         top.addWidget(self.afk_info)
         top.addWidget(afk_label)
@@ -141,6 +147,7 @@ class MainWindow(QMainWindow):
 
         for page in self.pages:
             page.load(engine.settings)
+        self._update_join_btn()
 
         self._hotkeys: Optional[HotkeyListener] = None
         self._hotkey_sig = None
@@ -201,7 +208,8 @@ class MainWindow(QMainWindow):
         menu.addAction(tr("Öffnen"), self.show_from_tray)
         self.tray_toggle = menu.addAction(tr("Überwachung starten"), self.toggle_monitoring)
         self.tray_pause = menu.addAction(tr("Pause"), self.toggle_pause)
-        menu.addAction(tr("Server beitreten"), lambda: self.join_private_server())
+        servers = menu.addMenu(tr("Server beitreten"))
+        servers.aboutToShow.connect(lambda: self._fill_server_menu(servers))
         self.tray_afk = menu.addAction(tr("Anti-AFK"))
         self.tray_afk.setCheckable(True)
         self.tray_afk.toggled.connect(lambda on: self.afk_switch.setChecked(on))
@@ -232,27 +240,84 @@ class MainWindow(QMainWindow):
         self.tray_rejoin.blockSignals(False)
 
     # --------------------------------------------------------------- Privater Server
-    def join_private_server(self, link: Optional[str] = None) -> None:
-        """Roblox direkt im privaten Server starten. Mit `link` (aus den Einstellungen) wird er auch gespeichert."""
+    def join_private_server(self) -> None:
+        """Roblox direkt im markierten Server-Favoriten starten."""
         s = self.engine.settings
-        if link is not None and link.strip() != s.private_server_link:
-            s.private_server_link = link.strip()
-            try:
-                s.save()
-            except OSError:
-                pass
         if not s.private_server_link:
             self.show_from_tray()
             self.nav.button(5).click()                  # Einstellungen öffnen
             QMessageBox.information(self, tr("Privater Server"),
-                                    tr("Bitte zuerst unter Einstellungen → Privater Server deinen Link eintragen."))
+                                    tr("Bitte zuerst unter Einstellungen → Privater Server einen Server anlegen."))
             return
         ok, info = roblox_join.join(s.private_server_link)
+        name = self.active_server_name()
+        if ok and name:
+            info = tr("Roblox wird gestartet und tritt „{name}“ bei …", name=name)
         self.engine._event(info, "info" if ok else "warn")
         if ok:
             self.show_toast(info)
         else:
             QMessageBox.warning(self, tr("Privater Server"), info)
+
+    def active_server_name(self) -> str:
+        s = self.engine.settings
+        return next((f["name"] for f in s.server_favorites if f["link"] == s.private_server_link), "")
+
+    def join_favorite(self, index: int) -> None:
+        """Server aus dem Menü: wird zum markierten Server (auch für Auto-Rejoin) und sofort betreten."""
+        favs = self.engine.settings.server_favorites
+        if 0 <= index < len(favs):
+            self.set_server_favorites(favs, favs[index]["link"])
+            self.join_private_server()
+
+    def set_server_favorites(self, favorites: list, active_link: str) -> None:
+        """Favoriten ändern (sofort gespeichert – wie bei den Raids, ohne Speichern-Leiste)."""
+        s = self.engine.settings
+        s.server_favorites = clean_favorites(favorites)
+        links = [f["link"] for f in s.server_favorites]
+        s.private_server_link = active_link if active_link in links else (links[0] if links else "")
+        try:
+            s.save()
+        except OSError as exc:
+            QMessageBox.critical(self, tr("Speichern"), tr("Konnte nicht speichern: {error}", error=exc))
+        self.pages[5].load_servers(s)
+        self._update_join_btn()
+
+    def _update_join_btn(self) -> None:
+        name = self.active_server_name()
+        self.join_btn.setText(tr("Beitreten: {name}", name=name) if name else tr("Server beitreten"))
+
+    def _fill_server_menu(self, menu: QMenu) -> None:
+        menu.clear()
+        s = self.engine.settings
+        for i, fav in enumerate(s.server_favorites):
+            act = menu.addAction(fav["name"], lambda i=i: self.join_favorite(i))
+            act.setCheckable(True)
+            act.setChecked(fav["link"] == s.private_server_link)
+        if not s.server_favorites:
+            menu.addAction(tr("Noch keine Server gespeichert")).setEnabled(False)
+        menu.addSeparator()
+        menu.addAction(tr("Server verwalten …"), self._manage_servers)
+
+    def _manage_servers(self) -> None:
+        self.show_from_tray()
+        self.nav.button(5).click()
+
+    # --------------------------------------------------------------- Raid-Auswahl
+    def select_raid(self, name: str) -> None:
+        """Aktuellen Raid setzen (Startseite, Raids-Seite) – sofort wirksam und gespeichert."""
+        self.engine.set_current_raid(name)
+        try:
+            self.engine.settings.save()
+        except OSError:
+            pass
+        self.pages[0].reload_raids()
+        self.show_toast(tr("Aktueller Raid: {name}", name=name) if name else tr("Kein Raid gewählt"))
+
+    def raids_changed(self) -> None:
+        """Nach Anlegen/Umbenennen/Löschen: Auswahl und Statistik auffrischen."""
+        self.pages[0].reload_raids()
+        self.pages[1].mark_dirty()
 
     # --------------------------------------------------------------- Anti-AFK
     def set_anti_afk(self, on: bool) -> None:

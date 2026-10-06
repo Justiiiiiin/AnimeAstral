@@ -64,7 +64,7 @@ nutzen das). Dort: `settings.json`, `raid_history.csv`, `monitor.log`, `profiles
 | `tracker.py` | Zustandsautomat der Wellen: Lauf-Start/-Ende, Neustart-Erkennung (2 passende Lesungen), **Plausibilitätsfilter** (unmögliche Sprünge nach oben werden ignoriert), Auslöser bei 99/100 |
 | `quests.py` | Quest-Liste (Titel + Fortschritt) per OCR, `QuestTracker` in `tracker.py` |
 | `stats.py` | `StatsStore` (CSV `raid_history.csv`), alle Kennzahlen, Verteilung, Trend, Rekorde |
-| `profiles.py` | Raid-Profile: Referenzbilder, ORB-Merkmalsvergleich zur **Raid-Erkennung**, Export/Import (`.astralprofile`) |
+| `profiles.py` | Raids als Namensliste (anlegen, umbenennen, löschen, Notiz/Auslöser je Raid) |
 | `guard.py` | Wächter: Roblox-Prozess, Stillstand, RAM/CPU (Disconnects: `rejoin.py`) |
 | `status.py` | **Live-Statusnachricht**: eine Discord-Nachricht, die per `PATCH` bearbeitet wird; „unten neu senden“ = `DELETE` + `POST` |
 | `discord_client.py`, `messages.py` | Versand (eigener Thread, Wiederholung bei 429) und Embeds |
@@ -87,8 +87,6 @@ Wichtige Entwurfsentscheidungen:
   Instanz zeigt dann ihr Fenster. Kein Autostart (Wunsch des Eigentümers).
 - **Wand:** `StatsStore.wall(raid)` – die Welle, an der ≥ 60 % der letzten 20 Versuche eines Raids enden (z. B. Boss);
   angezeigt in Überwachung/Statistik/Statusnachricht, Meldung „Wand durchbrochen“ (Ereignis `wall`).
-- **Profil-Pakete** (`.astralpack`): alle Raids in einer Datei; beim Import werden vorhandene Raids übersprungen
-  (doppelte Profile stören die Erkennung).
 - **Engine und Oberfläche sind getrennt.** Die Engine läuft in einem Thread; die Oberfläche liest `engine.state` per Timer und
   Ereignisse aus `engine.events`. Widgets nur im GUI-Thread anfassen (`MainWindow.post(callable)` für Rückrufe aus Threads).
 - **Statistik zählt alle Versuche gleich** (der Eigentümer bekommt pro Welle Belohnungen). Kein „erfolgreich/Fehlversuch“ mehr
@@ -111,8 +109,13 @@ Wichtige Entwurfsentscheidungen:
     sonst Start-Reste und geteilte Seiten von Grafiktreibern (WGC lädt AMD- und NVIDIA-Treiber, ~370 MB) und Schriften;
     gemessen 178 MB → dauerhaft ~50 MB (eigener Anteil/USS ~36 MB). Die Anzeige „Dieses Programm“ zeigt den Working Set.
   - Update-Downloads werden beim Start gelöscht (`updater.cleanup_downloads`), sonst blieben ~60 MB liegen.
-- **Raid-Statistik je Raid oder gesamt** (Auswahlfeld „Alle Raids (gesamt)“). Der Eigentümer will **keine vielen
-  Einzelprofile**, nur je gespieltem Raid einen Eintrag mit Referenzbildern.
+- **Raid-Statistik je Raid oder gesamt** (Auswahlfeld „Alle Raids (gesamt)“). Raids sind nur noch **Namen**
+  (`profiles.py`, Ordner mit `profile.json`: Notiz, eigener Auslöser). Der aktuelle Raid wird auf der Startseite per
+  Dropdown gewählt (`settings.current_raid`, `Engine.set_current_raid` – gilt sofort, auch für den laufenden Versuch).
+  Umbenennen (`Engine.rename_raid`) benennt Ordner, CSV-Verlauf und Auswahl mit um; Löschen behält die Statistik.
+- **Server-Favoriten** (`settings.server_favorites`, max. 20; `private_server_link` = der markierte, gilt für
+  „Server beitreten“ und Auto-Rejoin). Änderungen werden sofort gespeichert (`MainWindow.set_server_favorites`), nicht
+  über die Speichern-Leiste. Kopfzeilen-Knopf mit Pfeil-Menü und Tray-Untermenü. Diagnose schwärzt die Links.
 - **Zeitangaben:** Die Engine nutzt `time.monotonic()` für Takt/Dauer; in Tests wird die Uhr teils künstlich gesetzt.
 
 ## Release-Ablauf (GitHub, dieses Repository – der Build liest den Namen selbst aus `github.repository`)
@@ -176,14 +179,9 @@ Stand 06.10.2026 (Claude Code unter Windows): Punkte 1, 3 und 5 erledigt, 2 und 
   **Defense-Modi und andere Raids** könnten ein anderes Format haben – der Eigentümer liefert Screenshots; dann Parser/Suche erweitern.
 - Plausibilitätsfilter im Tracker: erlaubter Sprung `UP_BASE + UP_PER_SECOND * Sekunden` (4 + 1,5/s). Passt zu etwa einer Welle alle
   3,7 s. Schnellere Modi könnten Anpassung brauchen (Simulationen setzen `UP_BASE` hoch, weil sie 100× schneller laufen).
-- **Raid-Erkennung per Referenzbild** (geprüft 06.10.2026 mit 7 echten Profilen): Die eigene Armee steht in jeder Map
-  unten mittig und erzeugte die meisten Übereinstimmungen – „Alvarez War“ und „Holy Grail War“ wurden verwechselt bzw.
-  nicht entschieden. Lösung in `profiles.py`: Bereich `ARMY_BOX` (nach Ort, gilt für jede Armee, großzügig für größere
-  Armeen) wird ignoriert, und Merkmale, die auch in Bildern anderer Profile vorkommen, werden beim Laden verworfen
-  (`_distinctive`). Ergebnis: richtiger Raid ≥ 51 Treffer, falscher ≤ 12; vorher falscher bis 504. Gegnernamen über der
-  Lebensleiste sind keine Alternative (Gegner sterben zu schnell). Laden dauert mit vielen Profilen 1–2 s → im
-  Hintergrund (`reload_async`), ein gemeinsamer Vergleicher (`Engine.get_matcher`). Zwei Profile für denselben Raid
-  löschen sich gegenseitig die Merkmale → Warnung (`RaidMatcher.warnings`). Prüfhilfen: `_shots/eval_methods.py`.
+- **Keine Raid-Erkennung per Bild mehr** (seit 0.6.4, Wunsch des Eigentümers): Die Kamera im Spiel ist frei
+  einstellbar und zeigt zum Ressourcensparen manchmal nichts – der ORB-Vergleich (bis 0.6.3) war dadurch unzuverlässig.
+  Nicht wieder einbauen, ohne zu fragen. Die Wellenzähler-Texterkennung bleibt natürlich.
 - **Geplant für Version 1.0** (Vorschläge, noch nicht gebaut; Reihenfolge nach Wunsch des Eigentümers klären):
   Dauerlauf-Test (Nacht) und Absturz-Neustart, Tray-Symbol + Autostart, Hilfe-Seite im Programm, Push per ntfy, Lizenz/„Über“-Seite,
   Browser-Ansicht im Heimnetz (Handy), Deutsch/Englisch, Tages-/Wochenziele, Zeitraum-Vergleich, Excel-Export/Backup,

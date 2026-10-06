@@ -160,6 +160,6 @@ def render_card(stats: StatsStore, since: Optional[float], raid: Optional[str], 
         c.bar((bx0, y + 12, bx0 + (bx1 - bx0) * min(1.0, p["best_wave"] / total), y + 24), TEAL, radius=6)
         c.text((W - 70, y + 4), tr("Bestwelle {wave}", wave=p["best_wave"]), 15, TEAL, bold=True, anchor="ra")
     if not per:
-        c.text((70, 430), tr("Noch keine Profile erkannt – lege unter „Raids“ Referenzbilder an."), 15, MUTED)
+        c.text((70, 430), tr("Noch keine Raids zugeordnet – wähle auf der Startseite den aktuellen Raid aus."), 15, MUTED)
     c.text((W // 2, H - 22), tr("Erstellt mit Anime Astral Monitor"), 12, DIM, anchor="mm")
     return c.png()

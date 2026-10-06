@@ -402,6 +402,18 @@ class StatsStore:
         with self._lock:
             return list(reversed(self._in_range(since, raid)[-n:]))
 
+    def rename_raid(self, old: str, new: str) -> int:
+        """Raid umbenennen: alle bisherigen Versuche zählen danach zum neuen Namen. Rückgabe: Anzahl."""
+        with self._lock:
+            count = 0
+            for rec in self.records:
+                if rec.raid == old:
+                    rec.raid = new
+                    count += 1
+            if count:
+                self._rewrite()
+            return count
+
     def delete_record(self, rec: RunRecord) -> bool:
         """Entfernt einen einzelnen Eintrag dauerhaft (z. B. eine Fehllesung)."""
         with self._lock:

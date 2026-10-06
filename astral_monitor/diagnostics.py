@@ -65,7 +65,7 @@ def build_report(engine, dest_dir: Path) -> Path:
               f"Bildgröße: {state.frame_size}  Lesezeit: {state.read_ms:.0f} ms",
               f"Welle: {state.wave_value}/{state.wave_total}  Info: {state.info}",
               f"Lauf: {None if run is None else (run.first_wave, run.max_wave, run.total, run.completed)}",
-              f"erkannter Raid: {state.profile or '-'}",
+              f"gewählter Raid: {state.profile or '-'}",
               f"Roblox-Prozess: alive={state.roblox_alive} RAM={state.roblox_ram_mb} CPU={state.roblox_cpu}",
               f"Datensätze: gesamt {len(engine.stats.records)}, Fehlversuche {engine.stats.failed_count()}"]
 
@@ -73,6 +73,8 @@ def build_report(engine, dest_dir: Path) -> Path:
     for secret in ("webhook_url", "private_server_link", "ping_user_id", "rpc_client_id"):   # persönliche Zugänge/IDs
         if settings.get(secret):
             settings[secret] = "<entfernt>"
+    settings["server_favorites"] = [{"name": f.get("name", ""), "link": "<entfernt>"}
+                                    for f in settings.get("server_favorites") or []]
     if settings.get("ping_user_id"):
         settings["ping_user_id"] = "<entfernt>"
 

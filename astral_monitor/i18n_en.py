@@ -5,7 +5,6 @@ EN: dict[str, str] = {
     " (später unter „Erkennung“ / „Meldungen“)": " (later under “Detection” / “Alerts”)",
     " GB": " GB",
     " Min": " min",
-    "1 bis {count} Referenzbilder erwartet": "expected 1 to {count} reference images",
     "12-Stunden-Bericht": "12-hour report",
     "Abbrechen": "Cancel",
     "Abgebrochen.": "Cancelled.",
@@ -15,14 +14,9 @@ EN: dict[str, str] = {
     "Aktuell Welle {wave}.": "Currently wave {wave}.",
     "Aktuellen Raid und Fortschritt in meinem Discord-Profil anzeigen":
         "Show the current raid and progress in my Discord profile",
-    "Alle Dateien": "All files",
     "Alle Quests": "All quests",
     "Alle Raids (gesamt)": "All raids (total)",
-    "Alle Raids exportieren": "Export all raids",
     "Alle Raids im Vergleich": "All raids compared",
-    "Alle Raids mit Referenzbildern als eine Datei (.astralpack) – für Freunde":
-        "All raids with reference images as one file (.astralpack) – for friends",
-    "Alle exportieren …": "Export all …",
     "Alles": "Everything",
     "Alles bereit ✨": "All set ✨",
     "Anime Astral Monitor": "Anime Astral Monitor",
@@ -46,9 +40,6 @@ EN: dict[str, str] = {
     "Anwendungs-ID": "Application ID",
     "Anzahl Versuche je Endwelle": "Attempts per final wave",
     "Anzeigename": "Display name",
-    "Astral-Paket": "Astral pack",
-    "Astral-Profil": "Astral profile",
-    "Astral-Profil oder -Paket": "Astral profile or pack",
     "Aufnahme": "Capture",
     "Aufnahmeart": "Capture mode",
     "Aufnahmeart-Änderungen gelten nach einem Neustart der Überwachung. Wechselst du zwischen Vollbild und Fenstermodus, "
@@ -69,8 +60,6 @@ EN: dict[str, str] = {
     "Automatisch nach Updates suchen (höchstens alle 6 Stunden)": "Check for updates automatically (at most every 6 hours)",
     "Beenden": "Quit",
     "Beitreten": "Join",
-    "Bitte zuerst unter Einstellungen → Privater Server deinen Link eintragen.":
-        "Please enter your link under Settings → Private server first.",
     "Kein Link eingetragen.": "No link entered.",
     "Kein gültiger Private-Server-Link (erwartet: roblox.com/share?code=…&type=Server oder "
     "roblox.com/games/…?privateServerLinkCode=…).":
@@ -84,14 +73,11 @@ EN: dict[str, str] = {
     "Roblox wird gestartet und tritt dem privaten Server bei …": "Starting Roblox and joining the private server …",
     "Server beitreten": "Join server",
     "Spiel {place} · Code …{tail}": "Game {place} · code …{tail}",
-    "Startet Roblox direkt in deinem privaten Server (Link unter Einstellungen → Privater Server).":
-        "Starts Roblox directly in your private server (link under Settings → Private server).",
     "Beendet um": "Ended at",
     "Bei sehr langen Sitzungen hilft ein Neustart von Roblox.": "For very long sessions, restarting Roblox helps.",
     "Beim Stoppen eine Statistik-Karte senden": "Send a stats card when stopping",
     "Bereich auswählen": "Select area",
     "Bereich auswählen …": "Select area …",
-    "Bereich ändern …": "Change area …",
     "Bereich: x {x0}–{x1}, y {y0}–{y1} des Fensters": "Area: x {x0}–{x1}, y {y0}–{y1} of the window",
     "Bereiche, Auslöser und Tests. Alles wird live am Roblox-Fenster geprüft.":
         "Areas, trigger and tests. Everything is checked live on the Roblox window.",
@@ -105,11 +91,8 @@ EN: dict[str, str] = {
     "Bestätigungen": "Confirmations",
     "Bild (*.png)": "Image (*.png)",
     "Bild empfangen: {w} × {h} Pixel ({ms} ms inkl. Start).": "Image received: {w} × {h} pixels ({ms} ms incl. start).",
-    "Bild löschen": "Delete image",
     "Bild {w} × {h} ✓": "Image {w} × {h} ✓",
     "Bild: nicht geprüft": "Image: not checked",
-    "Bildbereich auswählen": "Select image area",
-    "Bildbereich für den Vergleich": "Image area for comparison",
     "Bilder vom Roblox-Fenster kommen wieder an": "Images from the Roblox window are arriving again",
     "Bildschirm (Roblox muss sichtbar sein)": "Screen (Roblox must be visible)",
     "Bis zum Ende geschafft": "Completed to the end",
@@ -120,7 +103,6 @@ EN: dict[str, str] = {
     "Bitte mindestens eine erlaubte Gesamtwellenzahl eintragen, z. B. 100.":
         "Please enter at least one allowed total wave count, e.g. 100.",
     "Bitte unten deine eigene Discord-Anwendungs-ID eintragen.": "Please enter your own Discord application ID below.",
-    "Bitte zuerst ein Profil auswählen.": "Please select a profile first.",
     "Bitte zuerst eine gültige Webhook-URL eintragen.": "Please enter a valid webhook URL first.",
     "Bitte zuerst einen Eintrag in der Tabelle auswählen.": "Please select an entry in the table first.",
     "Bitte zuerst einen Webhook eintragen und „Bericht / Statistik-Karte“ unter „Meldungen“ aktiviert lassen.":
@@ -130,23 +112,15 @@ EN: dict[str, str] = {
     "Das Fenster ist minimiert, geschlossen oder eingefroren.": "The window is minimized, closed or frozen.",
     "Das Intervall der Live-Status-Nachricht muss zwischen 20 und 3600 Sekunden liegen.":
         "The live status interval must be between 20 and 3600 seconds.",
-    "Das Paket enthält mehr als {count} Profile.": "The pack contains more than {count} profiles.",
     "Das Paket konnte nicht erstellt werden:\n{error}": "The package could not be created:\n{error}",
     "Das Paket „pypresence“ fehlt in dieser Programmversion.": "The package “pypresence” is missing in this version.",
     "Das Paket „pytesseract“ fehlt (pip install pytesseract).": "The package “pytesseract” is missing (pip install pytesseract).",
     "Das Paket „windows-capture“ fehlt (pip install windows-capture).":
         "The package “windows-capture” is missing (pip install windows-capture).",
-    "Das Profil hat noch keine Referenzbilder.": "The profile has no reference images yet.",
-    "Das Programm erkennt beim Raid-Start anhand von Referenzbildern, welcher Raid läuft. Name und Statistik erscheinen "
-    "dann in Verlauf und Discord.":
-        "When a raid starts, the program uses reference images to recognize which raid is running. Its name and stats "
-        "then appear in the history and on Discord.",
     "Das Programm startet nach dem Update automatisch neu.": "The program restarts automatically after the update.",
     "Das Roblox-Fenster ist minimiert. Bitte wiederherstellen.": "The Roblox window is minimized. Please restore it.",
     "Das Update ist fehlgeschlagen:\n{error}": "The update failed:\n{error}",
     "Das Uptime-Intervall muss zwischen 1 und 1440 Minuten liegen.": "The uptime interval must be between 1 and 1440 minutes.",
-    "Das ist keine gültige Paket-Datei.": "This is not a valid pack file.",
-    "Das ist keine gültige Profil-Datei.": "This is not a valid profile file.",
     "Das sieht nicht wie eine Webhook-URL aus": "This does not look like a webhook URL",
     "Daten": "Data",
     "Datenordner öffnen": "Open data folder",
@@ -158,13 +132,11 @@ EN: dict[str, str] = {
     "Der Installer konnte nicht gestartet werden:\n{error}": "The installer could not be started:\n{error}",
     "Der Quest-Bereich ist ungültig (Seite „Erkennung“).": "The quest area is invalid (page “Detection”).",
     "Der Roblox-Prozess läuft nicht mehr (Absturz oder geschlossen).": "The Roblox process is no longer running (crashed or closed).",
-    "Der Szenen-Bereich ist ungültig (Seite „Raids“).": "The scene area is invalid (page “Raids”).",
     "Der Zähler steht seit {minutes} Min. bei Welle {wave}.": "The counter has been stuck at wave {wave} for {minutes} min.",
     "Details stehen in monitor.log ({path}).": "Details are in monitor.log ({path}).",
     "Diagnose": "Diagnostics",
     "Diagnose-Paket erstellt": "Diagnostics package created",
     "Die Anzahl der Bestätigungen muss zwischen 1 und 4 liegen.": "The number of confirmations must be between 1 and 4.",
-    "Die Datei muss 1 bis {count} Referenzbilder enthalten.": "The file must contain 1 to {count} reference images.",
     "Die Discord-Anwendungs-ID besteht nur aus Ziffern (Entwicklerportal → Anwendung → Allgemein).":
         "The Discord application ID consists of digits only (developer portal → application → general).",
     "Die Discord-Desktop-App wurde nicht gefunden – bitte Discord am PC starten (nicht im Browser).":
@@ -173,9 +145,6 @@ EN: dict[str, str] = {
     "Die Hotkeys müssen unterschiedlich sein.": "The hotkeys must be different.",
     "Die Live-Statusnachricht ist nicht aktiv. Webhook eintragen und unter „Meldungen“ aktivieren.":
         "The live status message is not active. Enter a webhook and enable it under “Alerts”.",
-    "Die Mindest-Übereinstimmung muss zwischen 1 und 200 liegen.": "The minimum match must be between 1 and 200.",
-    "Die Paket-Datei ist unvollständig (pack.json fehlt).": "The pack file is incomplete (pack.json missing).",
-    "Die Profil-Datei ist unvollständig (profile.json fehlt).": "The profile file is incomplete (profile.json missing).",
     "Die Prüfsumme der heruntergeladenen Datei stimmt nicht – Update abgebrochen.":
         "The checksum of the downloaded file does not match – update cancelled.",
     "Die Sperrzeit darf nicht negativ sein.": "The cooldown must not be negative.",
@@ -206,11 +175,6 @@ EN: dict[str, str] = {
     "Du hast die neueste Version ({version}).": "You have the latest version ({version}).",
     "Du kannst die Einstellungen jederzeit ändern. Viel Erfolg!": "You can change the settings at any time. Good luck!",
     "Durchsuchen …": "Browse …",
-    "Ein Bild in der Datei ist beschädigt.": "An image in the file is damaged.",
-    "Ein Bild in der Datei ist zu groß.": "An image in the file is too large.",
-    "Ein Paket (.astralpack) enthält alle Raids – Freunde importieren es einmal. Raids, die schon vorhanden sind, werden "
-    "dabei übersprungen.":
-        "A pack (.astralpack) contains all raids – friends import it once. Raids that already exist are skipped.",
     "Einrichtung": "Setup",
     "Einstellungen": "Settings",
     "Eintrag löschen": "Delete entry",
@@ -219,15 +183,9 @@ EN: dict[str, str] = {
     "Endwellen": "Final waves",
     "Ereignis": "Event",
     "Ereignisse": "Events",
-    "Erkannt: {name}": "Recognized: {name}",
     "Erkennung": "Detection",
-    "Erkennung testen": "Test recognition",
     "Erlaubte Gesamtwellen": "Allowed total waves",
     "Erstellt mit Anime Astral Monitor": "Created with Anime Astral Monitor",
-    "Es gibt noch keine Profile mit Referenzbildern.": "There are no profiles with reference images yet.",
-    "Exportieren": "Export",
-    "Exportieren …": "Export …",
-    "Exportiert: {name} ✓": "Exported: {name} ✓",
     "Fehler: {error}": "Error: {error}",
     "Fehlgeschlagen: {error}": "Failed: {error}",
     "Fehlversuch / Neustart": "Failed attempt / restart",
@@ -257,17 +215,12 @@ EN: dict[str, str] = {
         "the Roblox window.",
     "Gestoppt": "Stopped",
     "Gestoppt – Einstellungen prüfen und starten": "Stopped – check the settings and start",
-    "Gilt nur für dieses Profil. Die Statistik wird automatisch je Profil geführt.":
-        "Applies only to this profile. Statistics are kept per profile automatically.",
     "GitHub antwortete mit HTTP {code}.": "GitHub answered with HTTP {code}.",
     "Grenze": "Limit",
     "Hoher Speicherverbrauch": "High memory usage",
     "Hotkey {name}: {error}": "Hotkey {name}: {error}",
     "Höchste Welle": "Highest wave",
     "Im Update-Paket fehlt {file}.": "{file} is missing in the update package.",
-    "Importieren": "Import",
-    "Importieren …": "Import …",
-    "Importiert: {names}.": "Imported: {names}.",
     "In dieser Version ist keine Update-Quelle hinterlegt. Die automatische Prüfung gibt es in der installierten Version "
     "(Download von GitHub).":
         "This version has no update source. Automatic checking is available in the installed version (download from "
@@ -282,7 +235,6 @@ EN: dict[str, str] = {
         "or “All raids”.",
     "Jetzt aktualisieren": "Update now",
     "Jetzt nach Updates suchen": "Check for updates now",
-    "Jetzt testen": "Test now",
     "Jetzt unten neu senden": "Resend at the bottom now",
     "Kanal-Einstellungen → Integrationen → Webhooks → Neuer Webhook → „Webhook-URL kopieren“.":
         "Channel settings → Integrations → Webhooks → New webhook → “Copy webhook URL”.",
@@ -298,8 +250,6 @@ EN: dict[str, str] = {
     "Kein Raid-Fortschritt": "No raid progress",
     "Kein Wellenzähler im Bild": "No wave counter on screen",
     "Kein Zähler erkannt – läuft gerade ein Raid?": "No counter detected – is a raid running?",
-    "Kein eindeutiger Treffer (zu wenig oder zu ähnliche Übereinstimmung)":
-        "No clear match (too few or too similar matches)",
     "Kein gültiges GitHub-Repository eingetragen.": "No valid GitHub repository set.",
     "Keine Bilder vom Roblox-Fenster": "No images from the Roblox window",
     "Keine Quests erkannt. Bereich prüfen.": "No quests detected. Check the area.",
@@ -310,7 +260,6 @@ EN: dict[str, str] = {
     "Laufzeit": "Uptime",
     "Laufzeit {time}": "Running {time}",
     "Leer = automatisch suchen": "Empty = search automatically",
-    "Lege zuerst ein Profil an („Neu …“).": "Create a profile first (“New …”).",
     "Leistung": "Performance",
     "Lesezeit: {ms} ms": "Read time: {ms} ms",
     "Letzte 12 Stunden": "Last 12 hours",
@@ -328,19 +277,13 @@ EN: dict[str, str] = {
         "Deletes the status message in Discord and sends it again at the bottom of the chat.",
     "Meine Raids": "My raids",
     "Meldungen": "Alerts",
-    "Mindest-Übereinstimmung": "Minimum match",
-    "Mit „Jetzt testen“ prüfst du, ob dein Raid erkannt wird.": "Use “Test now” to check whether your raid is recognized.",
     "Monitor beendet": "Monitor stopped",
     "Monitor gestartet": "Monitor started",
     "Name des Raids (z. B. MaxTac Call):": "Name of the raid (e.g. MaxTac Call):",
     "Neu …": "New …",
     "Neuer Rekord (Welle)": "New record (wave)",
     "Neuer Rekord in {raid}: Welle {wave} (vorher {before})": "New record in {raid}: wave {wave} (previously {before})",
-    "Neues Profil": "New profile",
     "Nicht registriert: {keys}": "Not registered: {keys}",
-    "Nichts Neues importiert.": "Nothing new imported.",
-    "Noch keine Profile erkannt – lege unter „Raids“ Referenzbilder an.":
-        "No profiles recognized yet – add reference images under “Raids”.",
     "Noch keine Quests gelesen.": "No quests read yet.",
     "Noch keine Versuche im gewählten Zeitraum": "No attempts in the selected period yet",
     "Notiz": "Note",
@@ -353,14 +296,6 @@ EN: dict[str, str] = {
     "Ping": "Ping",
     "Ping-Ziel": "Ping target",
     "Profil": "Profile",
-    "Profil exportieren": "Export profile",
-    "Profil löschen": "Delete profile",
-    "Profil mit Referenzbildern als Datei speichern, um es mit Freunden zu teilen":
-        "Save the profile with its reference images as a file to share with friends",
-    "Profil oder Paket importieren": "Import profile or pack",
-    "Profil „{name}“ samt Referenzbildern löschen?": "Delete profile “{name}” including its reference images?",
-    "Profil-Einstellungen": "Profile settings",
-    "Profil-Einstellungen gespeichert ✓": "Profile settings saved ✓",
     "Profile": "Profiles",
     "Programm (*.exe);;Alle (*)": "Program (*.exe);;All (*)",
     "Programmfehler": "Program error",
@@ -384,16 +319,10 @@ EN: dict[str, str] = {
     "Raid beendet (spät erkannt) · #{count}": "Raid finished (detected late) · #{count}",
     "Raid beendet · #{count}": "Raid finished · #{count}",
     "Raid erfolgreich beendet!": "Raid completed!",
-    "Raid erkannt: {name}": "Raid recognized: {name}",
-    "Raid nicht erkannt ({scores}). Referenzbild ergänzen?": "Raid not recognized ({scores}). Add a reference image?",
     "Raid: {name}": "Raid: {name}",
     "Raids": "Raids",
     "Raids laufen wieder": "Raids are running again",
     "Raids pro Stunde": "Raids per hour",
-    "Referenzbild": "Reference image",
-    "Referenzbild aufnehmen": "Capture reference image",
-    "Referenzbild gespeichert ✓": "Reference image saved ✓",
-    "Referenzbilder": "Reference images",
     "Roblox": "Roblox",
     "Roblox RAM": "Roblox RAM",
     "Roblox beendet / Disconnect": "Roblox closed / disconnect",
@@ -423,8 +352,6 @@ EN: dict[str, str] = {
     "Sprache / Language": "Sprache / Language",
     "Später": "Later",
     "Standard": "Default",
-    "Standard: die Mitte ohne Menüs, Leisten und Quest-Liste. Nach Änderung die Referenzbilder neu aufnehmen.":
-        "Default: the center without menus, bars and quest list. After changing it, capture the reference images again.",
     "Start / Stopp": "Start / stop",
     "Start fehlgeschlagen": "Start failed",
     "Start nicht möglich": "Cannot start",
@@ -432,12 +359,6 @@ EN: dict[str, str] = {
     "Start/Stopp": "Start/stop",
     "Starte Roblox und Anime Astral. Das Fenster darf auch verdeckt sein.":
         "Start Roblox and Anime Astral. The window may also be covered.",
-    "Starte den Raid, warte bis „Wave“ sichtbar ist und nimm 3 bis 5 Bilder auf (am besten zu verschiedenen "
-    "Zeitpunkten). Verglichen wird nur die Umgebung – die eigene Armee in der Bildmitte und alles, was in jedem Raid "
-    "gleich aussieht, wird ignoriert. Pro Raid nur ein Profil anlegen.":
-        "Start the raid, wait until “Wave” is visible and capture 3 to 5 images (ideally at different moments). Only "
-        "the surroundings are compared – your own army in the center and everything that looks the same in every "
-        "raid is ignored. Create only one profile per raid.",
     "Starte einen Raid, bis oben „Wave x/100“ zu sehen ist, und klicke auf „Suchen“.":
         "Start a raid until “Wave x/100” is visible at the top, then click “Search”.",
     "Starte …": "Starting …",
@@ -465,7 +386,6 @@ EN: dict[str, str] = {
     "Test-Nachricht gesendet ✓": "Test message sent ✓",
     "Test-Nachricht senden": "Send test message",
     "Trend": "Trend",
-    "Unbekanntes Dateiformat (nicht von diesem Programm erstellt).": "Unknown file format (not created by this program).",
     "Unerwarteter Fehler": "Unexpected error",
     "Ungültige Antwort von GitHub.": "Invalid response from GitHub.",
     "Ungültige Eingabe": "Invalid input",
@@ -533,8 +453,6 @@ EN: dict[str, str] = {
     "selbst, auch im Fenstermodus oder bei verschobenem Layout. Der Bereich muss den Zähler nur enthalten.":
         "Choose the area generously (e.g. the whole upper middle of the window). The program finds “Wave x/100” in it "
         "by itself, also in windowed mode or with a shifted layout. The area only needs to contain the counter.",
-    "Wähle die Kulisse (Gebäude, Boden), aber ohne Menüs, Leisten und Quest-Liste.":
-        "Choose the scenery (buildings, ground), but without menus, bars and the quest list.",
     "Wähle die ganze Quest-Liste (Titel und Fortschrittsbalken).": "Choose the whole quest list (titles and progress bars).",
     "Zeit/Welle": "Time/wave",
     "Ziehe ein Rechteck um den Wellenzähler („Wave 12/100“) – mit etwas Rand.":
@@ -559,16 +477,13 @@ EN: dict[str, str] = {
     "unbekannte Taste „{key}“": "unknown key “{key}”",
     "unbekannter Modifier „{key}“ (erlaubt: Ctrl, Alt, Shift, Win)": "unknown modifier “{key}” (allowed: Ctrl, Alt, Shift, Win)",
     "wie global": "as global",
-    "x {x0}–{x1}, y {y0}–{y1} des Fensters": "x {x0}–{x1}, y {y0}–{y1} of the window",
     "z. B. „Boss bei Welle 27“": "e.g. “Boss at wave 27”",
     "{attempts} Versuche · {waves} Wellen · Ø Welle {avg}": "{attempts} attempts · {waves} waves · avg. wave {avg}",
     "{count} Quests ({ms} ms)": "{count} quests ({ms} ms)",
-    "{count} Raids exportiert: {name} ✓": "{count} raids exported: {name} ✓",
     "{count} Raids · {time}": "{count} raids · {time}",
     "{done} von {total} MB": "{done} of {total} MB",
     "{h} Std. {m} Min.": "{h} h {m} min",
     "{minutes} Min.": "{minutes} min",
-    "{name}   ({count} Bilder)": "{name}   ({count} images)",
     "{name} ({key}) – evtl. von einem anderen Programm belegt": "{name} ({key}) – possibly used by another program",
     "Änderungen": "Changes",
     "Öffnen": "Open",
@@ -580,14 +495,11 @@ EN: dict[str, str] = {
     "Ø Zeit pro Welle": "Avg. time per wave",
     "Übernehmen": "Apply",
     "Überspringen": "Skip",
-    "Übersprungen (schon vorhanden oder fehlerhaft): {names}.": "Skipped (already present or faulty): {names}.",
     "Überwachung": "Monitoring",
     "Überwachung gestartet": "Monitoring started",
     "Überwachung gestoppt": "Monitoring stopped",
     "Überwachung starten": "Start monitoring",
     "Überwachung stoppen": "Stop monitoring",
-    "⚠️ Fast gleich wie ein anderes Profil (derselbe Raid doppelt angelegt?): {names} – doppeltes Profil löschen.":
-        "⚠️ Almost identical to another profile (same raid added twice?): {names} – delete the duplicate profile.",
     "✅ Gelesen: {value}/{total}  ({ms} ms)": "✅ Read: {value}/{total}  ({ms} ms)",
     "✅ Quest abgeschlossen": "✅ Quest completed",
     "✅ Tesseract {version} gefunden: {path}": "✅ Tesseract {version} found: {path}",
@@ -654,12 +566,6 @@ EN: dict[str, str] = {
         "The wave counter from the game appears here once monitoring starts.",
     "Noch keine Ereignisse – Start, Raids, Alarme und Rejoins erscheinen hier.":
         "No events yet – starts, raids, alerts and rejoins appear here.",
-    "Prüft das aktuelle Roblox-Bild und zeigt, welcher Raid erkannt wird.":
-        "Checks the current Roblox image and shows which raid is recognized.",
-    "Wie viele Bildmerkmale mindestens passen müssen. Höher = strenger, niedriger = erkennt auch bei kleinen "
-    "Änderungen.":
-        "How many image features must match at least. Higher = stricter, lower = also recognizes small changes.",
-    "Bild {n}": "Image {n}",
     "Privater Server und Auto-Rejoin": "Private server and auto-rejoin",
     "Niedrige Prozesspriorität (das Spiel hat Vorrang)": "Low process priority (the game comes first)",
     "Wächter aktiv": "Guard active",
@@ -674,10 +580,6 @@ EN: dict[str, str] = {
     "Ruhig alle {idle} s, kurz vor Raid-Ende alle {hot} s, Quests alle {quest} s.":
         "Idle every {idle} s, close to the raid end every {hot} s, quests every {quest} s.",
     "Roblox-Helfer, Überwachung und Programm.": "Roblox helpers, monitoring and program.",
-    "Startet Roblox ohne Browser direkt in deinem privaten Server. Teilen-Links („roblox.com/share?code=…“) und "
-    "klassische Links funktionieren. Der Link bleibt nur auf diesem PC.":
-        "Starts Roblox directly in your private server without a browser. Share links (“roblox.com/share?code=…”) "
-        "and classic links work. The link stays on this PC only.",
     "Auto-Rejoin (Schalter in der Kopfzeile): Nach Verbindungsabbruch, Kick oder Absturz tritt das Programm nach "
     "15 s wieder bei – bis zu 5 Versuche. Wer Roblox selbst schließt, wird nicht zurückgeholt.":
         "Auto-rejoin (switch in the header): after a disconnect, kick or crash the program rejoins after 15 s – up "
@@ -718,4 +620,70 @@ EN: dict[str, str] = {
     "sortiert, Spaltenränder ziehen ändert die Breite.":
         "Durations only use measured times (estimates are marked with ~). Table: click a header to sort, drag column "
         "borders to change the width.",
+    # Raids als Namensliste, Server-Favoriten (0.6.4)
+    "Ein Raid „{name}“ gibt es schon.": "A raid “{name}” already exists.",
+    "Profil „{name}“ gibt es nicht.": "There is no profile “{name}”.",
+    "Noch keine Raids zugeordnet – wähle auf der Startseite den aktuellen Raid aus.":
+        "No raids assigned yet – choose the current raid on the start page.",
+    "Klick: dem markierten Server beitreten. Pfeil: anderen gespeicherten Server wählen (verwalten unter "
+    "Einstellungen → Privater Server).":
+        "Click: join the marked server. Arrow: choose another saved server (manage under Settings → Private server).",
+    "Roblox wird gestartet und tritt „{name}“ bei …": "Roblox is starting and joining “{name}” …",
+    "Server verwalten …": "Manage servers …",
+    "Bitte zuerst unter Einstellungen → Privater Server einen Server anlegen.":
+        "Please add a server first under Settings → Private server.",
+    "Beitreten: {name}": "Join: {name}",
+    "Aktueller Raid: {name}": "Current raid: {name}",
+    "Kein Raid gewählt": "No raid selected",
+    "Noch keine Server gespeichert": "No servers saved yet",
+    "Welcher Raid gerade läuft – gilt sofort, auch für den laufenden Versuch. Raids anlegen und umbenennen unter "
+    "„Raids“.":
+        "Which raid is running – applies immediately, also to the current attempt. Add and rename raids under "
+        "“Raids”.",
+    "– kein Raid gewählt –": "– no raid selected –",
+    "Aktueller Raid": "Current raid",
+    "Raids anlegen …": "Add raids …",
+    "Umbenennen …": "Rename …",
+    "Raid-Einstellungen": "Raid settings",
+    "1 = Raid zählt ab 99/100. „wie global“ nutzt den Wert unter „Erkennung“.":
+        "1 = the raid counts from 99/100. “as global” uses the value under “Detection”.",
+    "{attempts} Versuche · Bestwelle {best} · Ø Endwelle {avg}": "{attempts} attempts · best wave {best} · avg. end wave {avg}",
+    "Raid-Einstellungen gespeichert ✓": "Raid settings saved ✓",
+    "Als aktuellen Raid wählen": "Select as current raid",
+    "Neuer Raid": "New raid",
+    "Raid umbenennen": "Rename raid",
+    "Neuer Name für „{name}“:": "New name for “{name}”:",
+    "Umbenannt: {old} → {new} ✓": "Renamed: {old} → {new} ✓",
+    "Deine Raids als Liste. Welcher gerade läuft, wählst du auf der Startseite aus – Statistik, Discord und "
+    "Profilstatus nutzen dann diesen Namen.":
+        "Your raids as a list. You choose which one is running on the start page – statistics, Discord and the "
+        "profile status then use that name.",
+    "Doppelklick oder Rechtsklick auf einen Raid zum Umbenennen. Beim Umbenennen zieht die Statistik mit.":
+        "Double-click or right-click a raid to rename it. The statistics follow the new name.",
+    "Noch keine Raids": "No raids yet",
+    "Lege mit „Neu …“ deinen ersten Raid an.": "Add your first raid with “New …”.",
+    "Raid löschen": "Delete raid",
+    "Raid „{name}“ aus der Liste löschen? Die bisherige Statistik bleibt erhalten.":
+        "Delete raid “{name}” from the list? Its statistics are kept.",
+    "Ändern …": "Edit …",
+    "Server hinzufügen": "Add server",
+    "Server ändern": "Edit server",
+    "Der markierte Server gilt für „Server beitreten“ und Auto-Rejoin. Startet Roblox ohne Browser; Teilen-Links und "
+    "klassische Links funktionieren. Die Links bleiben nur auf diesem PC.":
+        "The marked server is used for “Join server” and auto-rejoin. Starts Roblox without a browser; share links "
+        "and classic links work. The links stay on this PC only.",
+    "Noch kein Server – mit „Neu …“ deinen Teilen-Link speichern.": "No server yet – save your share link with “New …”.",
+    "Höchstens {n} Server.": "At most {n} servers.",
+    "Server löschen": "Delete server",
+    "„{name}“ aus der Liste löschen?": "Delete “{name}” from the list?",
+    "Markiert = wird für „Server beitreten“ und Auto-Rejoin verwendet": "Marked = used for “Join server” and auto-rejoin",
+    "z. B. Mein Server oder Server von Max": "e.g. My server or Max’s server",
+    "Bitte einen Namen eingeben.": "Please enter a name.",
+    "Diesen Namen gibt es schon.": "This name already exists.",
+    "Name": "Name",
+    "Link": "Link",
+    "Teilen-Link aus Roblox („Teilen“ → Link kopieren) oder klassischer Link mit „privateServerLinkCode“. Der Link "
+    "bleibt nur auf diesem PC.":
+        "Share link from Roblox (“Share” → copy link) or a classic link with “privateServerLinkCode”. The link stays "
+        "on this PC only.",
 }

@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (QHBoxLayout, QListWidget, QListWidgetItem, QProgr
 from .. import messages
 from ..i18n import dec, tr
 from . import theme
-from .widgets import Card, QuestRow, StatCard, bgr_to_pixmap, label, smooth
+from .widgets import Card, ComboBox, QuestRow, StatCard, bgr_to_pixmap, label, smooth
 
 LEVEL_COLORS = {"ok": "#3DD6B5", "warn": "#F5A524", "error": "#FF9A9A", "info": "#E6EAF0"}
 
@@ -37,6 +37,17 @@ class MonitorPage(QWidget):
         self.subtitle = label("", "muted")
         titles.addWidget(self.subtitle)
         head.addLayout(titles, 1)
+        raid_box = QVBoxLayout()
+        theme.track_spacing(raid_box, 2)
+        raid_box.addWidget(label(tr("Aktueller Raid"), "small"))
+        self.raid_combo = ComboBox()
+        theme.track_min_width(self.raid_combo, 220)
+        self.raid_combo.setToolTip(tr("Welcher Raid gerade läuft – gilt sofort, auch für den laufenden Versuch. "
+                                      "Raids anlegen und umbenennen unter „Raids“."))
+        self.raid_combo.activated.connect(self._raid_chosen)
+        raid_box.addWidget(self.raid_combo)
+        head.addLayout(raid_box)
+        head.addSpacing(theme.px(8))
         self.btn_status = QPushButton(tr("Status neu senden"))
         self.btn_status.setToolTip(tr("Löscht die Statusnachricht in Discord und sendet sie ganz unten im Chat neu."))
         self.btn_status.clicked.connect(self.main.resend_status)
@@ -126,6 +137,28 @@ class MonitorPage(QWidget):
         events.body.addWidget(self.events, 1)
         mid.addWidget(events, 2)
         root.addLayout(mid, 1)
+
+    def _raid_chosen(self, _index: int) -> None:
+        name = self.raid_combo.currentData()
+        if name is None:                               # „Raids anlegen …“
+            self.reload_raids()
+            self.main.nav.button(3).click()
+            return
+        self.main.select_raid(name)
+
+    def reload_raids(self) -> None:
+        """Auswahlliste neu füllen (nach Anlegen/Umbenennen/Löschen) und den gewählten Raid markieren."""
+        current = self.engine.settings.current_raid
+        self.raid_combo.blockSignals(True)
+        self.raid_combo.clear()
+        self.raid_combo.addItem(tr("– kein Raid gewählt –"), "")
+        for name in self.engine.profile_store.names():
+            self.raid_combo.addItem(name, name)
+        if self.raid_combo.count() == 1:
+            self.raid_combo.addItem(tr("Raids anlegen …"), None)
+        index = self.raid_combo.findData(current)
+        self.raid_combo.setCurrentIndex(max(0, index))
+        self.raid_combo.blockSignals(False)
 
     # ---------------------------------------------------------------- Ereignisse
     def add_event(self, data: dict) -> None:
@@ -223,7 +256,7 @@ class MonitorPage(QWidget):
 
     # Einstellungen werden auf dieser Seite nicht bearbeitet
     def load(self, settings) -> None:
-        pass
+        self.reload_raids()
 
     def apply(self, settings) -> None:
         pass

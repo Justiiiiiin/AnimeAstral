@@ -21,7 +21,7 @@ from .discord_client import DiscordSender
 from .guard import Guard
 from .imaging import change_fraction, encode_jpeg, to_gray
 from .ocr import OcrEngine, OcrError
-from .profiles import ProfileStore, RaidMatcher
+from .profiles import ProfileStore
 from .presence import PresenceUpdater
 from .status import StatusPublisher
 from .quests import QuestReader
@@ -37,9 +37,6 @@ STALE_SECONDS = 3.0         # spätestens alle X s trotzdem neu lesen
 HOT_MARGIN = 5              # „heiß" = so viele Wellen vor dem Auslöser
 BURST_SECONDS = 30.0        # so lange nach einem Raid wird auf Quest-Änderungen gewartet
 BURST_INTERVAL = 4.0
-SCENE_TRIES = 6             # so viele Vergleichsversuche pro Raid, dann „Unbekannt"
-SCENE_EVERY = 1.5           # Sekunden zwischen den Versuchen
-SCENE_VOTES = 2             # so viele übereinstimmende Treffer legen den Raid fest
 
 
 class EngineError(RuntimeError):
@@ -58,7 +55,7 @@ class EngineState:
     info: str = N_("Gestoppt")              # Anzeige über tr()
     read_ms: float = 0.0
     hot: bool = False
-    profile: str = ""                        # erkannter Raid
+    profile: str = ""                        # gewählter Raid (Startseite)
     roblox_alive: Optional[bool] = None
     roblox_ram_mb: Optional[float] = None
     roblox_cpu: Optional[float] = None
@@ -135,7 +132,7 @@ class Engine:
         # Verlauf der gelesenen Werte für die Diagnose: (Zeit, Welle, Gesamt, höchste Welle im Lauf, Info)
         self.trace: "collections.deque" = collections.deque(maxlen=4000)
         self.profile_store = ProfileStore(app_paths.profiles_dir())
-        self.matcher: Optional[RaidMatcher] = None
+        self.profile_store.remove_reference_images()     # Bilder der früheren Raid-Erkennung (bis 0.6.3) entfernen
         self.guard = Guard(lambda: self.settings, self.state, self._notify, self._event,
                            self._grab_full, self.get_ocr)
         self._reset_runtime()
@@ -152,8 +149,6 @@ class Engine:
         self.tracker.cooldown = settings.cooldown_seconds
         if self.wave_reader:
             self.wave_reader.set_allowed(settings.allowed_totals_list())
-        if self.matcher:
-            self.matcher.min_inliers = settings.profile_min_inliers
         self.presence.poke()
 
     def start(self) -> None:
@@ -174,7 +169,6 @@ class Engine:
         self.quest_reader = QuestReader(ocr)
         self.tracker = WaveTracker(s.trigger_offset, s.cooldown_seconds)
         self.quest_tracker = QuestTracker()
-        self.get_matcher().min_inliers = s.profile_min_inliers
         self._reset_runtime()
         self.stats.begin_session()
         if s.low_priority:
@@ -254,12 +248,11 @@ class Engine:
         res = self._source.grab([], True, 0.8)
         return res.full if res else None
 
-    def grab_for_ui(self, with_quests: bool = False, full: bool = False,
-                    with_scene: bool = False) -> Optional[GrabResult]:
+    def grab_for_ui(self, with_quests: bool = False, full: bool = False) -> Optional[GrabResult]:
         """Einmaliges Bild für Tests/Bereichsauswahl (nutzt die laufende Quelle oder eine kurze eigene).
-        crops: [Wellenzähler, (Quests), (Szene)]"""
+        crops: [Wellenzähler, (Quests)]"""
         s = self.settings
-        rois = [s.wave_roi] + ([s.quest_roi] if with_quests else []) + ([s.scene_roi] if with_scene else [])
+        rois = [s.wave_roi] + ([s.quest_roi] if with_quests else [])
         if self._source is not None and self.running:
             return self._source.grab(rois, full, timeout=2.0)
         try:
@@ -339,37 +332,13 @@ class Engine:
             return None, ""
         return info.get("observed", 0.0) + max(0, info["first_wave"] - 1) * spw, "geschätzt"
 
-    def capture_reference(self, name: str) -> Optional[str]:
-        """Speichert die aktuelle Kulisse als Referenzbild für ein Raid-Profil."""
-        res = self.grab_for_ui(with_scene=True)
-        if res is None:
-            return None
-        path = self.profile_store.add_image(name, res.crops[1])
-        return str(path)
-
-    def get_matcher(self) -> RaidMatcher:
-        """Ein Vergleicher für Überwachung und Test; lädt beim ersten Mal im Hintergrund."""
-        if self.matcher is None:
-            self.matcher = RaidMatcher(self.profile_store, self.settings.profile_min_inliers, load=False)
-            self.matcher.reload_async()
-        return self.matcher
-
-    def reload_profiles(self) -> None:
-        self.get_matcher().reload_async()
-
-    def test_scene(self) -> dict:
-        res = self.grab_for_ui(with_scene=True)
-        if res is None:
-            return {"ok": False, "error": "Kein Bild vom Roblox-Fenster erhalten."}
-        matcher = self.get_matcher()
-        matcher.min_inliers = self.settings.profile_min_inliers
-        if not matcher.has_profiles:
-            return {"ok": False, "error": "Die Referenzbilder werden noch geladen – gleich noch einmal testen."
-                    if matcher.loading else "Noch keine Referenzbilder vorhanden."}
-        t0 = time.perf_counter()
-        scores = matcher.score(res.crops[1])
-        return {"ok": True, "crop": res.crops[1], "scores": scores, "decision": matcher.decide(scores),
-                "ms": (time.perf_counter() - t0) * 1000, "warnings": list(matcher.warnings)}
+    def rename_raid(self, old: str, new: str) -> str:
+        """Raid umbenennen: Profil-Ordner, Verlauf und aktuelle Auswahl. Rückgabe: neuer Name."""
+        name = self.profile_store.rename(old, new)
+        self.stats.rename_raid(old, name)
+        if self.settings.current_raid == old:
+            self.set_current_raid(name)
+        return name
 
     # ------------------------------------------------------------------ Intern
     def _reset_runtime(self) -> None:
@@ -377,10 +346,6 @@ class Engine:
         self._next_status = 0.0
         self._trace_last = (None, None)
         self._trace_at = 0.0
-        self._rec_run = None
-        self._rec_votes: dict[str, int] = {}
-        self._rec_tries = 0
-        self._next_scene = 0.0
         self._prev_gray: Optional[np.ndarray] = None
         self._last_ocr = 0.0
         self._reading = None
@@ -499,8 +464,6 @@ class Engine:
         request = [("wave", s.wave_roi)]
         if s.read_quests and s.quest_roi.is_valid() and now >= self._next_quest:
             request.append(("quest", s.quest_roi))
-        if self._want_scene(now):
-            request.append(("scene", s.scene_roi))
 
         result = self._source.grab([roi for _name, roi in request], False, 1.0)
         if result is None:
@@ -515,8 +478,6 @@ class Engine:
             self._process_wave(crops["wave"], now)
             if "quest" in crops:
                 self._process_quests(crops["quest"], now)
-            if "scene" in crops:
-                self._process_scene(crops["scene"], now)
 
         guard.poll_process(now)
         guard.check_stall(now, self.tracker.run is not None)
@@ -566,9 +527,12 @@ class Engine:
         self.guard.on_wave(reading.value if reading else None, now)
         events = self.tracker.update(reading.value if reading else None,
                                      reading.total if reading else None, now)
-        if self.tracker.run is None:
-            self.state.profile = ""
+        run = self.tracker.run
+        if run is None:
+            self.state.profile = self.settings.current_raid
             self.tracker.offset = self.settings.trigger_offset      # Profil-Auslöser nur während des Laufs
+        elif run.profile is None and self.settings.current_raid:
+            self._set_profile(run, self.settings.current_raid)     # neuer Versuch: gewählter Raid
         self._trace_wave(reading, now)
         for kind, data in events:
             if kind == "candidate":
@@ -603,48 +567,23 @@ class Engine:
                  sum(1 for r in self.stats.records if r.result != "ok" and r.ts_end >= self.stats.session_start),
                  sum(1 for r in self.stats.records if r.result == "ok" and r.ts_end >= self.stats.session_start))
 
-    # --------------------------------------------------------------- Raid-Erkennung
-    def _want_scene(self, now: float) -> bool:
+    # --------------------------------------------------------------- Raid-Auswahl
+    def set_current_raid(self, name: str) -> None:
+        """Raid aus der Auswahl auf der Startseite (keine Bilderkennung mehr – die Kamera ist frei einstellbar).
+        Gilt sofort, auch für den gerade laufenden Versuch."""
+        self.settings.current_raid = name
         run = self.tracker.run
-        if self.matcher is None or not self.matcher.has_profiles or run is None or run.completed:
-            return False
-        if run.profile is not None or now < self._next_scene:
-            return False
-        return True
-
-    def _process_scene(self, crop: np.ndarray, now: float) -> None:
-        run = self.tracker.run
-        if run is None:
-            return
-        if self._rec_run is not run:                      # neuer Raid: Zähler zurücksetzen
-            self._rec_run, self._rec_votes, self._rec_tries = run, {}, 0
-        self._next_scene = now + SCENE_EVERY
-        self._rec_tries += 1
-        scores = self.matcher.score(crop)
-        name = self.matcher.decide(scores)
-        log.debug("Raid-Vergleich %d: %s -> %s", self._rec_tries, scores, name)
-        if name:
-            self._rec_votes[name] = self._rec_votes.get(name, 0) + 1
-            if self._rec_votes[name] >= SCENE_VOTES:
-                self._set_profile(run, name)
-                return
-        if self._rec_tries >= SCENE_TRIES:
-            self._set_profile(run, "Unbekannt")
-            best = ", ".join(f"{n}: {v}" for n, v in sorted(scores.items(), key=lambda kv: -kv[1])[:3])
-            self._event(tr("Raid nicht erkannt ({scores}). Referenzbild ergänzen?", scores=best), "warn")
-            self._debug_save("raid_unbekannt", crop)
+        if run is not None and not run.completed:
+            self._set_profile(run, name)
+        self.state.profile = name
+        self.publisher.request_update()
+        self.presence.poke()
 
     def _set_profile(self, run, name: str) -> None:
-        run.profile = name
+        run.profile = name or None
         self.state.profile = name
-        if name != "Unbekannt":
-            self._event(tr("Raid erkannt: {name}", name=name), "info")
-            log.info("Raid erkannt: %s", name)
-            offset = self.profile_store.settings(name).get("trigger_offset")
-            if isinstance(offset, int) and 0 <= offset <= 5:
-                self.tracker.offset = offset              # eigener Auslöser für dieses Profil
-                log.info("Auslöser für %s: ab Gesamt-%d", name, offset)
-            self.publisher.request_update()
+        offset = self.profile_store.settings(name).get("trigger_offset") if name else None
+        self.tracker.offset = offset if isinstance(offset, int) and 0 <= offset <= 5 else self.settings.trigger_offset
 
     def _on_candidate(self, now: float) -> None:
         """Auslöser gesehen: mit frischen Bildern bestätigen und Screenshot aufnehmen."""

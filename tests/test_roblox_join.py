@@ -43,5 +43,24 @@ class JoinTests(unittest.TestCase):
         self.assertIn("123456", explain("https://www.roblox.com/games/123456/x?privateServerLinkCode=12345678"))
 
 
+class FavoriteTests(unittest.TestCase):
+    def test_migration_and_cleaning(self):
+        from astral_monitor.settings import Settings, clean_favorites
+        link = "https://www.roblox.com/share?code=0123456789abcdef0123456789abcdef&type=Server"
+        s = Settings.from_dict({"private_server_link": link, "settings_version": 6})
+        self.assertEqual(s.server_favorites, [{"name": "Server 1", "link": link}])     # Link aus 0.6.3 übernommen
+        self.assertEqual(clean_favorites([{"name": " A  b ", "link": " x "}, {"name": "a B", "link": "y"},
+                                          {"name": "", "link": "z"}, "kaputt", {"name": "C"}]),
+                         [{"name": "A b", "link": "x"}])
+        self.assertEqual(len(clean_favorites([{"name": f"S{i}", "link": "l"} for i in range(50)])), 20)
+
+    def test_diagnostics_hide_links(self):
+        import inspect
+        from astral_monitor import diagnostics
+        src = inspect.getsource(diagnostics)
+        self.assertIn('"server_favorites"', src)
+        self.assertIn('"link": "<entfernt>"', src)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -1,16 +1,19 @@
 """Seite „Einstellungen": Roblox-Helfer, Überwachung, Programm."""
 from __future__ import annotations
 
-from PySide6.QtCore import QUrl
+from PySide6.QtCore import QUrl, Qt
 from PySide6.QtGui import QDesktopServices
-from PySide6.QtWidgets import QCheckBox, QHBoxLayout, QLineEdit, QPushButton, QVBoxLayout, QWidget
+from PySide6.QtWidgets import (QCheckBox, QHBoxLayout, QLineEdit, QListWidget, QListWidgetItem, QMenu, QMessageBox,
+                               QPushButton, QVBoxLayout, QWidget)
 
 from .. import app_paths, roblox_join
 from ..i18n import LANGUAGES, tr
-from ..settings import PRESETS
+from ..settings import MAX_FAVORITES, PRESETS
 from ..version import __version__
 from . import theme
-from .widgets import Card, ComboBox, DoubleSpinBox, SpinBox, columns, form_grid, label, section, short_field
+from .server_dialog import ServerDialog
+from .widgets import (Card, ComboBox, DoubleSpinBox, SpinBox, columns, form_grid, label, section, short_field,
+                      smooth)
 
 
 class SettingsPage(QWidget):
@@ -28,20 +31,32 @@ class SettingsPage(QWidget):
         # ------------------------------------------------------------------ Roblox
         root.addWidget(section(tr("Roblox")))
         ps = Card(tr("Privater Server und Auto-Rejoin"))
+        self.servers = QListWidget()
+        smooth(self.servers)
+        theme.track_fixed_height(self.servers, 132)
+        self.servers.currentRowChanged.connect(self._server_selected)
+        self.servers.itemDoubleClicked.connect(lambda _i: self._join_selected())
+        self.servers.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.servers.customContextMenuRequested.connect(self._server_menu)
+        ps.body.addWidget(self.servers)
         prow = QHBoxLayout()
-        self.ps_link = QLineEdit()
-        self.ps_link.setPlaceholderText("https://www.roblox.com/share?code=…&type=Server")
-        self.ps_link.textChanged.connect(lambda text: self.ps_state.setText(roblox_join.explain(text)))
-        prow.addWidget(self.ps_link, 1)
-        ps_btn = QPushButton(tr("Beitreten"))
-        ps_btn.clicked.connect(lambda: self.main.join_private_server(self.ps_link.text()))
-        prow.addWidget(ps_btn)
+        add = QPushButton(tr("Neu …"))
+        add.clicked.connect(self._add_server)
+        edit = QPushButton(tr("Ändern …"))
+        edit.clicked.connect(self._edit_server)
+        delete = QPushButton(tr("Löschen"))
+        delete.clicked.connect(self._delete_server)
+        join = QPushButton(tr("Beitreten"))
+        join.setObjectName("primary")
+        join.clicked.connect(self._join_selected)
+        for btn in (add, edit, delete):
+            prow.addWidget(btn)
+        prow.addStretch(1)
+        prow.addWidget(join)
         ps.body.addLayout(prow)
-        self.ps_state = label("", "small", wrap=True)
-        ps.body.addWidget(self.ps_state)
-        ps.body.addWidget(label(tr("Startet Roblox ohne Browser direkt in deinem privaten Server. Teilen-Links "
-                                   "(„roblox.com/share?code=…“) und klassische Links funktionieren. Der Link bleibt nur "
-                                   "auf diesem PC."), "small", wrap=True))
+        ps.body.addWidget(label(tr("Der markierte Server gilt für „Server beitreten“ und Auto-Rejoin. Startet Roblox "
+                                   "ohne Browser; Teilen-Links und klassische Links funktionieren. Die Links bleiben "
+                                   "nur auf diesem PC."), "small", wrap=True))
         ps.body.addWidget(label(tr("Auto-Rejoin (Schalter in der Kopfzeile): Nach Verbindungsabbruch, Kick oder Absturz "
                                    "tritt das Programm nach 15 s wieder bei – bis zu 5 Versuche. Wer Roblox selbst "
                                    "schließt, wird nicht zurückgeholt."), "small", wrap=True))
@@ -206,6 +221,88 @@ class SettingsPage(QWidget):
         root.addLayout(columns(upd, data))
         root.addStretch(1)
 
+    # ------------------------------------------------------------------ Server-Favoriten
+    def load_servers(self, s) -> None:
+        self.servers.blockSignals(True)
+        self.servers.clear()
+        for fav in s.server_favorites:
+            active = fav["link"] == s.private_server_link
+            item = QListWidgetItem(("● " if active else "    ") + fav["name"] + "   ·   "
+                                   + roblox_join.explain(fav["link"]))
+            item.setToolTip(tr("Markiert = wird für „Server beitreten“ und Auto-Rejoin verwendet") if active else "")
+            self.servers.addItem(item)
+            if active:
+                self.servers.setCurrentItem(item)
+        if not s.server_favorites:
+            empty = QListWidgetItem(tr("Noch kein Server – mit „Neu …“ deinen Teilen-Link speichern."))
+            empty.setFlags(Qt.ItemFlag.NoItemFlags)
+            self.servers.addItem(empty)
+        self.servers.blockSignals(False)
+
+    def _favs(self) -> list:
+        return [dict(f) for f in self.main.engine.settings.server_favorites]
+
+    def _selected(self) -> int:
+        row = self.servers.currentRow()
+        return row if 0 <= row < len(self.main.engine.settings.server_favorites) else -1
+
+    def _server_selected(self, row: int) -> None:
+        favs = self._favs()
+        if 0 <= row < len(favs) and favs[row]["link"] != self.main.engine.settings.private_server_link:
+            self.main.set_server_favorites(favs, favs[row]["link"])      # Auswahl = markierter Server
+
+    def _add_server(self) -> None:
+        favs = self._favs()
+        if len(favs) >= MAX_FAVORITES:
+            QMessageBox.information(self, tr("Privater Server"), tr("Höchstens {n} Server.", n=MAX_FAVORITES))
+            return
+        dlg = ServerDialog(self, tr("Server hinzufügen"), taken=tuple(f["name"] for f in favs))
+        if dlg.exec():
+            favs.append({"name": dlg.result_name(), "link": dlg.result_link()})
+            self.main.set_server_favorites(favs, dlg.result_link())
+
+    def _edit_server(self) -> None:
+        i, favs = self._selected(), self._favs()
+        if i < 0:
+            return
+        old = favs[i]
+        dlg = ServerDialog(self, tr("Server ändern"), old["name"], old["link"],
+                           taken=tuple(f["name"] for j, f in enumerate(favs) if j != i))
+        if dlg.exec():
+            was_active = old["link"] == self.main.engine.settings.private_server_link
+            favs[i] = {"name": dlg.result_name(), "link": dlg.result_link()}
+            self.main.set_server_favorites(favs, favs[i]["link"] if was_active
+                                           else self.main.engine.settings.private_server_link)
+
+    def _delete_server(self) -> None:
+        i, favs = self._selected(), self._favs()
+        if i < 0:
+            return
+        if QMessageBox.question(self, tr("Server löschen"), tr("„{name}“ aus der Liste löschen?",
+                                                               name=favs[i]["name"])) != QMessageBox.StandardButton.Yes:
+            return
+        del favs[i]
+        self.main.set_server_favorites(favs, self.main.engine.settings.private_server_link)
+
+    def _join_selected(self) -> None:
+        i = self._selected()
+        if i >= 0:
+            self.main.join_favorite(i)
+        else:
+            self.main.join_private_server()
+
+    def _server_menu(self, pos) -> None:
+        item = self.servers.itemAt(pos)
+        if item is None or self.servers.row(item) >= len(self.main.engine.settings.server_favorites):
+            return
+        self.servers.setCurrentItem(item)
+        menu = QMenu(self)
+        menu.addAction(tr("Beitreten"), self._join_selected)
+        menu.addAction(tr("Ändern …"), self._edit_server)
+        menu.addSeparator()
+        menu.addAction(tr("Löschen"), self._delete_server)
+        menu.exec(self.servers.viewport().mapToGlobal(pos))
+
     def _show_preset(self) -> None:
         preset = PRESETS.get(self.perf.currentData(), PRESETS["balanced"])
         self.perf_info.setText(tr("Ruhig alle {idle} s, kurz vor Raid-Ende alle {hot} s, Quests alle {quest} s.",
@@ -215,8 +312,7 @@ class SettingsPage(QWidget):
         self.language.setCurrentIndex(max(0, self.language.findData(s.language)))
         self.close_to_tray.setChecked(s.close_to_tray)
         self.afk_minutes.setValue(s.anti_afk_minutes)
-        self.ps_link.setText(s.private_server_link)
-        self.ps_state.setText(roblox_join.explain(s.private_server_link))
+        self.load_servers(s)
         self.perf.setCurrentIndex(max(0, self.perf.findData(s.performance)))
         self._show_preset()
         self.low_priority.setChecked(s.low_priority)
@@ -242,7 +338,6 @@ class SettingsPage(QWidget):
         s.language = self.language.currentData() or "de"
         s.close_to_tray = self.close_to_tray.isChecked()
         s.anti_afk_minutes = self.afk_minutes.value()
-        s.private_server_link = self.ps_link.text().strip()
         s.performance = self.perf.currentData()
         s.low_priority = self.low_priority.isChecked()
         s.guard_enabled = self.guard_enabled.isChecked()
