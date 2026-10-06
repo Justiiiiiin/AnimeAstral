@@ -262,19 +262,20 @@ class StatsStore:
             return statistics.median(values) if len(values) >= 3 else None
 
     def wave_histogram(self, since: Optional[float] = None, raid: Optional[str] = None,
-                       max_bars: int = 20) -> list[tuple[str, int]]:
-        """Verteilung der Endwellen aller Versuche: [(Beschriftung, Anzahl)]."""
+                       max_bars: int = 10) -> list[tuple[str, int]]:
+        """Verteilung der Endwellen: [(Beschriftung, Anzahl)] in runden Schritten (1, 2, 5, 10, 20 …), höchstens
+        ~10 Balken – vorher bis zu 20 Balken in krummen Schritten, deren Beschriftung unlesbar war."""
         with self._lock:
             waves = [r.max_wave for r in self._in_range(since, raid)]
         if not waves:
             return []
         lo, hi = min(waves), max(waves)
-        size = max(1, math.ceil((hi - lo + 1) / max_bars))
-        start = (lo // size) * size
-        bins = [0] * ((hi - start) // size + 1)
-        for w in waves:
-            bins[(w - start) // size] += 1
-        return [(str(start + i * size), c) for i, c in enumerate(bins)]
+        size = next((n for n in (1, 2, 5, 10, 20, 25, 50, 100) if hi // n - lo // n + 1 <= max_bars), 100)
+        out = []
+        for base in range((lo // size) * size, hi + 1, size):
+            count = sum(1 for w in waves if base <= w < base + size)
+            out.append((str(base) if size == 1 else f"{base}–{base + size - 1}", count))
+        return out
 
     def trend(self, since: Optional[float] = None, raid: Optional[str] = None,
               by_day: bool = False, limit: int = 24) -> list[tuple[str, float, int]]:

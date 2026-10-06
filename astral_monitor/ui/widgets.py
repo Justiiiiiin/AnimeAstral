@@ -300,18 +300,26 @@ class BarChart(QWidget):
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
         w, h = self.width(), self.height()
         n = len(self._data)
-        top_pad, bottom_pad, gap = 22, 22, 8
+        fm = p.fontMetrics()
+        line = fm.height()
+        top_pad, bottom_pad, gap = line + 6, line + 8, max(4, theme.px(8))
         bw = (w - gap * (n - 1)) / n
+        # Achsenbeschriftung nur so dicht, dass sie sich nicht überlappt (jede k-te)
+        widest = max(fm.horizontalAdvance(name) for name, _ in self._data) + theme.px(6)
+        step = max(1, int(-(-widest // (bw + gap))))
         max_v = max(1, max(v for _, v in self._data))
+        best = max(range(n), key=lambda i: self._data[i][1])
+        center = QTextOption(Qt.AlignmentFlag.AlignCenter)
         for i, (name, value) in enumerate(self._data):
             x = i * (bw + gap)
             bh = (h - top_pad - bottom_pad) * value / max_v
-            rect = QRectF(x, h - bottom_pad - bh, bw, max(bh, 1))
             p.setPen(Qt.PenStyle.NoPen)
-            p.setBrush(QColor("#3DD6B5" if i == n - 1 else "#2B6B60"))
-            p.drawRoundedRect(rect, 3, 3)
+            p.setBrush(QColor("#3DD6B5" if i == best and value else "#2B6B60" if value else "#1E2630"))
+            p.drawRoundedRect(QRectF(x, h - bottom_pad - max(bh, 2), bw, max(bh, 2)), 3, 3)
             p.setPen(QColor("#8B97A8"))
-            center = QTextOption(Qt.AlignmentFlag.AlignCenter)
-            p.drawText(QRectF(x, h - bottom_pad + 4, bw, 16), name, center)
-            p.drawText(QRectF(x, h - bottom_pad - bh - 18, bw, 16), str(value), center)
+            if i % step == 0:
+                p.drawText(QRectF(x - gap, h - bottom_pad + 4, bw + 2 * gap, line), name, center)
+            if value:                                   # keine „0“ über leeren Balken
+                p.setPen(QColor("#E6EAF0"))
+                p.drawText(QRectF(x - gap, h - bottom_pad - bh - line - 2, bw + 2 * gap, line), str(value), center)
         p.end()

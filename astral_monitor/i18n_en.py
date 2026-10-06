@@ -95,7 +95,6 @@ EN: dict[str, str] = {
     "Bild: nicht geprüft": "Image: not checked",
     "Bilder vom Roblox-Fenster kommen wieder an": "Images from the Roblox window are arriving again",
     "Bildschirm (Roblox muss sichtbar sein)": "Screen (Roblox must be visible)",
-    "Bis zum Ende geschafft": "Completed to the end",
     "Bisher": "Previous",
     "Bitte eine gültige Discord-Webhook-URL eintragen (Seite „Meldungen“).":
         "Please enter a valid Discord webhook URL (page “Alerts”).",
@@ -178,7 +177,6 @@ EN: dict[str, str] = {
     "Einrichtung": "Setup",
     "Einstellungen": "Settings",
     "Eintrag löschen": "Delete entry",
-    "Ende": "End",
     "Endwelle": "Final wave",
     "Endwellen": "Final waves",
     "Ereignis": "Event",
@@ -403,11 +401,9 @@ EN: dict[str, str] = {
         "Version {version} is available:\n{url}\n\nOnly the installed version updates itself.",
     "Versuche": "Attempts",
     "Versuche (Session)": "Attempts (session)",
-    "Versuche (alle Zeit)": "Attempts (all time)",
     "Versuche Session": "Attempts session",
     "Versuche daran": "Attempts at it",
     "Versuche gesamt": "Attempts total",
-    "Versuche pro Stunde": "Attempts per hour",
     "Versuche {attempts} · Wellen {waves}": "Attempts {attempts} · Waves {waves}",
     "Vom Roblox-Fenster kommen keine Bilder an (minimiert oder verdeckt durch Vollbild-Exklusivmodus?).":
         "No images are coming from the Roblox window (minimized or covered by exclusive fullscreen?).",
@@ -454,7 +450,6 @@ EN: dict[str, str] = {
         "Choose the area generously (e.g. the whole upper middle of the window). The program finds “Wave x/100” in it "
         "by itself, also in windowed mode or with a shifted layout. The area only needs to contain the counter.",
     "Wähle die ganze Quest-Liste (Titel und Fortschrittsbalken).": "Choose the whole quest list (titles and progress bars).",
-    "Zeit/Welle": "Time/wave",
     "Ziehe ein Rechteck um den Wellenzähler („Wave 12/100“) – mit etwas Rand.":
         "Drag a rectangle around the wave counter (“Wave 12/100”) – with some margin.",
     "Ziehe ein Rechteck um die ganze Quest-Liste (Titel und Fortschrittsbalken).":
@@ -492,7 +487,6 @@ EN: dict[str, str] = {
     "Ø Endwelle": "Avg. final wave",
     "Ø Endwelle je Stunde (bei langen Zeiträumen je Tag) – steigt sie, wirst du besser.":
         "Avg. final wave per hour (per day for long periods) – if it rises, you are getting better.",
-    "Ø Zeit pro Welle": "Avg. time per wave",
     "Übernehmen": "Apply",
     "Überspringen": "Skip",
     "Überwachung": "Monitoring",
@@ -503,7 +497,6 @@ EN: dict[str, str] = {
     "✅ Gelesen: {value}/{total}  ({ms} ms)": "✅ Read: {value}/{total}  ({ms} ms)",
     "✅ Quest abgeschlossen": "✅ Quest completed",
     "✅ Tesseract {version} gefunden: {path}": "✅ Tesseract {version} found: {path}",
-    "✓ komplett": "✓ complete",
     "❌ Kein Wellenzähler erkannt. Bereich neu wählen oder zuerst einen Raid starten.":
         "❌ No wave counter detected. Select the area again or start a raid first.",
     "🎉 Wand durchbrochen: Welle {wave}": "🎉 Wall broken: wave {wave}",
@@ -616,10 +609,6 @@ EN: dict[str, str] = {
     "settings.json enthält deine Webhook-URL unverschlüsselt – nicht weitergeben.":
         "settings.json contains your webhook URL unencrypted – do not share it.",
     "Weitere Aktionen": "More actions",
-    "Dauer-Werte nutzen nur gemessene Zeiten (geschätzte sind mit ~ markiert). Tabelle: Überschrift anklicken "
-    "sortiert, Spaltenränder ziehen ändert die Breite.":
-        "Durations only use measured times (estimates are marked with ~). Table: click a header to sort, drag column "
-        "borders to change the width.",
     # Raids als Namensliste, Server-Favoriten (0.6.4)
     "Ein Raid „{name}“ gibt es schon.": "A raid “{name}” already exists.",
     "Profil „{name}“ gibt es nicht.": "There is no profile “{name}”.",
@@ -686,4 +675,15 @@ EN: dict[str, str] = {
     "bleibt nur auf diesem PC.":
         "Share link from Roblox (“Share” → copy link) or a classic link with “privateServerLinkCode”. The link stays "
         "on this PC only.",
+    # Statistik vereinfacht (0.6.5)
+    "Dauer-Werte nutzen nur gemessene Zeiten; geschätzte (mit ~) fließen nicht ein.":
+        "Durations only use measured times; estimates (marked ~) are not included.",
+    "Überschrift anklicken sortiert, Spaltenränder ziehen ändert die Breite. ✓ = bis zum Ende geschafft, ~ = "
+    "geschätzte Dauer.":
+        "Click a header to sort, drag column borders to change the width. ✓ = reached the end, ~ = estimated "
+        "duration.",
+    "Ø {dur} pro Versuch  ·  {spw} pro Welle  ·  {aph} Versuche/Std.  ·  {done}× bis zum Ende  ·  {all} Versuche "
+    "insgesamt":
+        "Avg. {dur} per attempt  ·  {spw} per wave  ·  {aph} attempts/h  ·  {done}× to the end  ·  {all} attempts "
+        "in total",
 }

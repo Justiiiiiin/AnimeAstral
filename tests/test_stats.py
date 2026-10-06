@@ -33,6 +33,9 @@ class StatsTests(unittest.TestCase):
     def test_histogram_trend_and_best(self):
         hist = dict(self.st.wave_histogram(None, "Militech Convoy"))
         self.assertEqual(sum(hist.values()), 11)          # alle Versuche, auch der bis zum Ende
+        self.assertLessEqual(len(hist), 10)               # lesbar: höchstens 10 Balken in runden Schritten
+        self.assertEqual(hist["20–29"], 10)
+        self.assertEqual(hist["90–99"], 1)
         self.assertEqual(self.st.best_wave("Militech Convoy"), 99)
         self.assertEqual(self.st.best_wave("Defense"), 40)
         self.assertTrue(self.st.trend(None, "Defense"))

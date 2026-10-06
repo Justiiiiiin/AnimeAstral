@@ -96,25 +96,23 @@ class StatsPage(QWidget):
         self.k_avg_wave = StatCard(tr("Ø Endwelle"))
         self.k_best_wave = StatCard(tr("Bestwelle (Rekord)"))
         root.addLayout(kpi_row(self.k_attempts, self.k_waves, self.k_wph, self.k_avg_wave, self.k_best_wave))
-        self.k_avg_dur = StatCard(tr("Ø Dauer pro Versuch"))
-        self.k_spw = StatCard(tr("Ø Zeit pro Welle"))
-        self.k_aph = StatCard(tr("Versuche pro Stunde"))
-        self.k_done = StatCard(tr("Bis zum Ende geschafft"))
-        self.k_all = StatCard(tr("Versuche (alle Zeit)"))
-        root.addLayout(kpi_row(self.k_avg_dur, self.k_spw, self.k_aph, self.k_done, self.k_all))
+        # Nebenwerte als eine ruhige Zeile statt fünf weiterer Kacheln
+        self.details = label("", "muted", wrap=True)
+        self.details.setToolTip(tr("Dauer-Werte nutzen nur gemessene Zeiten; geschätzte (mit ~) fließen nicht ein."))
+        root.addWidget(self.details)
         self.wall_label = label("", "warn", wrap=True)          # „Wand“ des gewählten Raids
         self.wall_label.setVisible(False)
         root.addWidget(self.wall_label)
-        root.addWidget(label(tr("Dauer-Werte nutzen nur gemessene Zeiten (geschätzte sind mit ~ markiert). Tabelle: "
-                             "Überschrift anklicken sortiert, Spaltenränder ziehen ändert die Breite."), "small", wrap=True))
 
         mid = QHBoxLayout()
         theme.track_spacing(mid, 16)
         runs = Card(tr("Letzte Versuche"))
-        self.table = make_table([tr("Beendet um"), tr("Raid"), tr("Endwelle"), tr("Dauer"), tr("Zeit/Welle"), tr("Ende")],
-                                rights=(2, 3, 4), widths=(150, 150, 90, 80, 90, 110), selectable=True)
+        self.table = make_table([tr("Beendet um"), tr("Raid"), tr("Endwelle"), tr("Dauer")],
+                                rights=(2, 3), widths=(140, 150, 90, 80), selectable=True)
+        self.table.setToolTip(tr("Überschrift anklicken sortiert, Spaltenränder ziehen ändert die Breite. "
+                                 "✓ = bis zum Ende geschafft, ~ = geschätzte Dauer."))
         theme.track_min_height(self.table, 320)
-        restore_header(self.table, "stats_runs")
+        restore_header(self.table, "stats_runs2")
         runs.body.addWidget(self.table, 1)
         mid.addWidget(runs, 3)
 
@@ -157,7 +155,7 @@ class StatsPage(QWidget):
         self._dirty = True
 
     def save_ui(self) -> None:
-        save_header(self.table, "stats_runs")
+        save_header(self.table, "stats_runs2")
         save_header(self.per_table, "stats_raids")
 
     def _raid(self) -> Optional[str]:
@@ -263,11 +261,12 @@ class StatsPage(QWidget):
         self.k_wph.set_value(_num(s.waves_per_hour, 0))
         self.k_avg_wave.set_value(_num(s.avg_wave_all))
         self.k_best_wave.set_value(str(stats.best_wave(raid) or "–"))
-        self.k_avg_dur.set_value(_dur(s.avg_duration_all))
-        self.k_spw.set_value("–" if s.sec_per_wave is None else dec(f"{s.sec_per_wave:.1f} s"))
-        self.k_aph.set_value(_num(s.attempts_per_hour))
-        self.k_done.set_value(messages.fmt_int(s.ok))
-        self.k_all.set_value(messages.fmt_int(stats.snapshot().total_attempts))
+        self.details.setText(tr("Ø {dur} pro Versuch  ·  {spw} pro Welle  ·  {aph} Versuche/Std.  ·  {done}× bis zum "
+                                "Ende  ·  {all} Versuche insgesamt",
+                                dur=_dur(s.avg_duration_all),
+                                spw="–" if s.sec_per_wave is None else dec(f"{s.sec_per_wave:.1f} s"),
+                                aph=_num(s.attempts_per_hour), done=messages.fmt_int(s.ok),
+                                all=messages.fmt_int(stats.snapshot().total_attempts)))
         wall = stats.wall(raid)
         self.wall_label.setVisible(wall is not None)
         if wall:
@@ -281,13 +280,11 @@ class StatsPage(QWidget):
         for i, rec in enumerate(self._rows):
             first = SortItem(datetime.fromtimestamp(rec.ts_end).strftime("%d.%m. %H:%M:%S"), rec.ts_end)
             first.setData(Qt.ItemDataRole.UserRole, i)                      # Verweis auf den Datensatz (für „Löschen“)
-            per_wave = (rec.duration_s / rec.max_wave) if rec.duration_s and rec.max_wave else None
+            done = "  ✓" if rec.result == "ok" else ""
             rows.append([
                 first, SortItem(rec.raid or "–", (rec.raid or "~").lower()),
-                SortItem(f"{rec.max_wave}/{rec.total_waves}", rec.max_wave, right=True),
-                SortItem(messages.fmt_duration_est(rec.duration_s, rec.estimated), rec.duration_s or -1, right=True),
-                SortItem("–" if per_wave is None else dec(f"{per_wave:.1f} s"), per_wave or -1, right=True),
-                SortItem(tr("✓ komplett") if rec.result == "ok" else "", 1 if rec.result == "ok" else 0)])
+                SortItem(f"{rec.max_wave}/{rec.total_waves}{done}", rec.max_wave, right=True),
+                SortItem(messages.fmt_duration_est(rec.duration_s, rec.estimated), rec.duration_s or -1, right=True)])
         self._fill(self.table, rows)
 
         self.chart_hist.set_data(stats.wave_histogram(since, raid))
