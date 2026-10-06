@@ -809,4 +809,12 @@ EN: dict[str, str] = {
         "Pages appear without fading and switches flip instantly. Saves a little performance, e.g. while Roblox "
         "is running.",
     "Bestwelle: {wave}": "Best wave: {wave}",
+    # Embed-Farben (0.7.2)
+    "Farbe wählen …": "Choose color …",
+    "Standardfarbe": "Default color",
+    "Embed-Farbe": "Embed color",
+    "Eigene Farbe {color}": "Custom color {color}",
+    "Auto": "Auto",
+    "Standardfarbe des Programms": "The program's default color",
+    "Farbe": "Color",
 }

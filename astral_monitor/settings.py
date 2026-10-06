@@ -75,6 +75,12 @@ PRESETS: dict[str, dict] = {
 }
 
 
+def is_hex_color(value) -> bool:
+    """Eigene Embed-Farbe: „#RRGGBB“."""
+    return isinstance(value, str) and len(value) == 7 and value[0] == "#" and all(
+        c in "0123456789abcdefABCDEF" for c in value[1:])
+
+
 def default_events() -> dict[str, dict[str, bool]]:
     return {k: {"send": send, "ping": ping} for k, _label, send, ping in EVENT_DEFS}
 
@@ -264,6 +270,8 @@ class Settings:
                             for sub in ("send", "ping"):
                                 if sub in entry:
                                     merged[key][sub] = bool(entry[sub])
+                            if is_hex_color(entry.get("color")):
+                                merged[key]["color"] = entry["color"].upper()
                     value = merged
                 setattr(s, f.name, value)
             except (TypeError, ValueError):

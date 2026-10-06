@@ -4,7 +4,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Optional
 
-from .settings import Settings
+from .settings import Settings, is_hex_color
 from .i18n import N_, dec, thousands, tr
 
 COLOR_OK = 0x45E0BF            # Logo-Türkis
@@ -68,7 +68,10 @@ def build_message(settings: Settings, kind: str, title: str, color: int,
                   fields: list[tuple[str, str, bool]] | None = None,
                   description: str | None = None,
                   image: tuple | None = None) -> tuple[dict, list]:
-    """Gibt (payload, files) zurück. `fields`: (Name, Wert, inline)."""
+    """Gibt (payload, files) zurück. `fields`: (Name, Wert, inline). Eine eigene Farbe je Ereignis hat Vorrang."""
+    custom = settings.events.get(kind, {}).get("color")
+    if is_hex_color(custom):
+        color = int(custom[1:], 16)
     embed: dict = {
         "title": title,
         "color": color,

@@ -2,13 +2,48 @@
 from __future__ import annotations
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import (QCheckBox, QGridLayout, QHBoxLayout, QLineEdit, QMessageBox,
-                               QPushButton, QVBoxLayout, QWidget)
+from PySide6.QtGui import QColor
+from PySide6.QtWidgets import (QCheckBox, QColorDialog, QGridLayout, QHBoxLayout, QLineEdit, QMenu, QMessageBox,
+                               QPushButton, QToolButton, QVBoxLayout, QWidget)
 
 from ..i18n import tr
 from . import theme
-from ..settings import EVENT_DEFS, is_valid_webhook
+from ..settings import EVENT_DEFS, is_hex_color, is_valid_webhook
 from .widgets import Card, SpinBox, form_grid, label
+
+
+class ColorButton(QToolButton):
+    """Farbfeld für die Embed-Farbe eines Ereignisses; leer = Standardfarbe des Programms."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.value = ""
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        menu = QMenu(self)
+        menu.addAction(tr("Farbe wählen …"), self._pick)
+        menu.addAction(tr("Standardfarbe"), lambda: self.set_value(""))
+        self.setMenu(menu)
+        self.setFixedSize(theme.px(34), theme.px(22))
+        self.set_value("")
+
+    def _pick(self) -> None:
+        color = QColorDialog.getColor(QColor(self.value or theme.color("accent")), self, tr("Embed-Farbe"))
+        if color.isValid():
+            self.set_value(color.name().upper())
+
+    def set_value(self, value: str) -> None:
+        self.value = value if is_hex_color(value) else ""
+        if self.value:
+            self.setText("")
+            self.setStyleSheet(f"QToolButton {{ background: {self.value}; border-radius: 6px; }}"
+                               "QToolButton::menu-indicator { image: none; width: 0; }")
+            self.setToolTip(tr("Eigene Farbe {color}", color=self.value))
+        else:
+            self.setText(tr("Auto"))
+            self.setStyleSheet("QToolButton { font-size: 8pt; padding: 0; }"
+                               "QToolButton::menu-indicator { image: none; width: 0; }")
+            self.setToolTip(tr("Standardfarbe des Programms"))
 
 
 class AlertsPage(QWidget):
@@ -92,10 +127,13 @@ class AlertsPage(QWidget):
         table.addWidget(label(tr("Ereignis"), "small"), 0, 0)
         table.addWidget(label(tr("Senden"), "small"), 0, 1, center)
         table.addWidget(label(tr("Ping"), "small"), 0, 2, center)
+        table.addWidget(label(tr("Farbe"), "small"), 0, 3, center)
         table.setColumnMinimumWidth(1, 64)
         table.setColumnMinimumWidth(2, 64)
+        table.setColumnMinimumWidth(3, 64)
         self.send_boxes: dict[str, QCheckBox] = {}
         self.ping_boxes: dict[str, QCheckBox] = {}
+        self.color_buttons: dict[str, ColorButton] = {}
         for i, (key, text, _s, _p) in enumerate(EVENT_DEFS, start=1):
             table.addWidget(label(tr(text)), i, 0)
             send, ping = QCheckBox(), QCheckBox()
@@ -103,6 +141,8 @@ class AlertsPage(QWidget):
             self.send_boxes[key], self.ping_boxes[key] = send, ping
             table.addWidget(send, i, 1, center)
             table.addWidget(ping, i, 2, center)
+            self.color_buttons[key] = ColorButton()
+            table.addWidget(self.color_buttons[key], i, 3, center)
         events.body.addLayout(table)
         self.attach = QCheckBox(tr("Quest-Fortschritt an Raid- und Uptime-Meldungen anhängen"))
         events.body.addWidget(self.attach)
@@ -124,6 +164,7 @@ class AlertsPage(QWidget):
             self.send_boxes[key].setChecked(bool(entry.get("send")))
             self.ping_boxes[key].setChecked(bool(entry.get("ping")))
             self.ping_boxes[key].setEnabled(bool(entry.get("send")))
+            self.color_buttons[key].set_value(entry.get("color", ""))
         self.attach.setChecked(s.attach_quests)
         self.status_enabled.setChecked(s.status_enabled)
         self._sync_uptime(s.status_enabled)
@@ -142,6 +183,8 @@ class AlertsPage(QWidget):
         for key in self.send_boxes:
             s.events[key] = {"send": self.send_boxes[key].isChecked(),
                              "ping": self.ping_boxes[key].isChecked()}
+            if self.color_buttons[key].value:
+                s.events[key]["color"] = self.color_buttons[key].value
         s.attach_quests = self.attach.isChecked()
         s.status_enabled = self.status_enabled.isChecked()
         s.status_interval = self.status_interval.value()

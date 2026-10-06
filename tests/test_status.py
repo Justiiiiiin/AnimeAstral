@@ -83,6 +83,18 @@ class StatusTests(unittest.TestCase):
         self.assertIn("gestoppt", stopped["description"])
         self.assertEqual(messages.progress_bar(5, 10, width=4), "▰▰▱▱")
 
+    def test_custom_embed_color(self):
+        from astral_monitor import messages
+        self.s.events["record"]["color"] = "#FF00AA"
+        payload, _ = messages.build_message(self.s, "record", "x", messages.COLOR_OK)
+        self.assertEqual(payload["embeds"][0]["color"], 0xFF00AA)
+        payload, _ = messages.build_message(self.s, "raid_done", "x", messages.COLOR_OK)
+        self.assertEqual(payload["embeds"][0]["color"], messages.COLOR_OK)          # ohne eigene Farbe: Standard
+        loaded = Settings.from_dict(self.s.to_dict())
+        self.assertEqual(loaded.events["record"]["color"], "#FF00AA")
+        self.s.events["record"]["color"] = "rot"
+        self.assertNotIn("color", Settings.from_dict(self.s.to_dict()).events["record"])   # ungültig: verworfen
+
     def test_logo_as_webhook_avatar(self):
         import os
         from astral_monitor import messages
