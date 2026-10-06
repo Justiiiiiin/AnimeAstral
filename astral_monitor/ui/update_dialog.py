@@ -4,7 +4,7 @@ from __future__ import annotations
 import threading
 
 from PySide6.QtCore import QTimer
-from PySide6.QtWidgets import (QDialog, QHBoxLayout, QMessageBox, QPlainTextEdit, QProgressBar, QPushButton,
+from PySide6.QtWidgets import (QDialog, QHBoxLayout, QMessageBox, QProgressBar, QPushButton, QTextBrowser,
                                QVBoxLayout)
 
 from .. import updater
@@ -27,9 +27,9 @@ class UpdateDialog(QDialog):
         lay.setSpacing(12)
         lay.addWidget(label(f"Version {info.version} ist verfügbar", "h1"))
         lay.addWidget(label(f"Du hast Version {__version__}.", "muted"))
-        notes = QPlainTextEdit()
-        notes.setReadOnly(True)
-        notes.setPlainText(info.notes or "Keine Versionshinweise angegeben.")
+        notes = QTextBrowser()                  # GitHub-Versionshinweise sind Markdown
+        notes.setOpenExternalLinks(True)
+        notes.setMarkdown(info.notes or "Keine Versionshinweise angegeben.")
         lay.addWidget(notes, 1)
         self.warn = label("Die laufende Überwachung wird für das Update beendet; danach startet das Programm neu."
                           if main.engine.running else "Das Programm startet nach dem Update automatisch neu.", "muted", wrap=True)

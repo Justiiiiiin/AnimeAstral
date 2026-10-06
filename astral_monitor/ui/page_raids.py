@@ -96,15 +96,17 @@ class RaidsPage(QWidget):
         self.p_trigger.setRange(-1, 5)
         self.p_trigger.setSpecialValueText("wie global")
         prow.addWidget(self.p_trigger)
-        prow.addSpacing(16)
-        prow.addWidget(label("Notiz"))
+        prow.addStretch(1)
+        prof.body.addLayout(prow)
+        nrow = QHBoxLayout()                       # eigene Zeile, sonst wird die Seite bei kleinem Fenster zu breit
+        nrow.addWidget(label("Notiz"))
         self.p_note = QLineEdit()
         self.p_note.setPlaceholderText("z. B. „Boss bei Welle 27“")
-        prow.addWidget(self.p_note, 1)
+        nrow.addWidget(self.p_note, 1)
         save_p = QPushButton("Übernehmen")
         save_p.clicked.connect(self._save_profile_settings)
-        prow.addWidget(save_p)
-        prof.body.addLayout(prow)
+        nrow.addWidget(save_p)
+        prof.body.addLayout(nrow)
         prof.body.addWidget(label("Gilt nur für dieses Profil. Die Statistik wird automatisch je Profil geführt.",
                                   "small", wrap=True))
         right_col.addWidget(prof, 0)
@@ -126,7 +128,7 @@ class RaidsPage(QWidget):
 
         area = Card("Bildbereich für den Vergleich")
         arow = QHBoxLayout()
-        self.lbl_roi = label("")
+        self.lbl_roi = label("", wrap=True)        # umbrechen, sonst wird die Seite bei kleinem Fenster zu breit
         arow.addWidget(self.lbl_roi, 1)
         pick = QPushButton("Bereich ändern …")
         pick.clicked.connect(self._pick_roi)

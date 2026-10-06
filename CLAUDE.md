@@ -87,21 +87,18 @@ GitHub-Weg bestätigt ist; `build_exe.bat` baut lokal.
 
 ## Ungetestet – bitte als Erstes prüfen
 
-1. **Gesamte Oberfläche:** Alle Seiten wurden nie angezeigt (nur mit einem Platzhalter-Qt auf Tippfehler geprüft). Starte
-   `python run.py`, klicke alle Seiten durch, prüfe Layout/Überlappungen, die neue **Statistik-Seite** (Tabellen ziehen,
-   sortieren, Spalten merken), den **Einrichtungsassistenten** (`Einstellungen → Einrichtungsassistent`) und den
-   **Update-Dialog**.
-2. **Fenster-Aufnahme (`WgcSource`):** Das Paket `windows-capture` ändert Parameternamen je Version; der Code probiert mehrere
-   Aufrufe. Mit echtem Roblox prüfen (auch Vollbild/Fenstermodus, verdecktes Fenster, gelber Rahmen).
-3. **GitHub-Bau:** `release.yml` wurde nie vollständig erfolgreich gesehen. Ein früherer Lauf brach nach ~18 s mit
-   „exit code 1“ ab (vermutlich die Versionseingabe mit „v“, inzwischen tolerant gemacht, nicht bestätigt). Prüfe:
-   Chocolatey-Pakete `tesseract` und `innosetup`, Pfad `C:\Program Files\Tesseract-OCR`, `ISCC.exe`, das Bündeln von Tesseract
-   (`build_exe.py: bundle_tesseract`: exe, DLLs, `eng.traineddata`, `configs`, `tessconfigs`).
-4. **Installer:** `installer/AnimeAstralMonitor.iss` wurde nie kompiliert (nur Struktur geprüft). `German.isl`,
-   `ArchitecturesInstallIn64BitMode=x64compatible`, die `[Run]`-Zeile mit `/relaunch=1` (Pascal-Funktion
-   `RelaunchRequested`) kontrollieren; echtes Update über die App auf eine neuere Version testen.
-5. **Mitgeliefertes Tesseract:** Findet `tesseract.exe` seine `tessdata` neben sich? (`ocr.py` entfernt dafür
-   `TESSDATA_PREFIX`.) `image_to_data` braucht `tessdata/configs/tsv`.
+Stand 06.10.2026 (Claude Code unter Windows): Punkte 1, 3 und 5 erledigt, 2 und 4 teilweise.
+
+1. ~~**Gesamte Oberfläche**~~ – geprüft (alle Seiten bei 1180×800 und 980×680, Assistent, Update-Dialog, Statistik:
+   sortieren, Spaltenbreite merken über `ui_state.json`). Behoben: Statistik- und Raids-Seite zu breit bei kleinem Fenster,
+   Hauptknöpfe in Karten unlesbar (QSS-Regel `QFrame#card QWidget` überschrieb `QPushButton#primary`), Update-Dialog zeigt
+   Versionshinweise jetzt als Markdown mit lesbaren Links. Offen: echte Klick-Bedienung durch den Eigentümer.
+2. **Fenster-Aufnahme (`WgcSource`):** Läuft mit echtem Roblox stundenlang stabil (v0.5.0, `windows-capture` 2.0.1,
+   Lesezeit ~81 ms). Noch offen: Vollbild ↔ Fenstermodus, verdecktes Fenster, gelber Rahmen.
+3. ~~**GitHub-Bau**~~ – Lauf vom 05.10.2026 erfolgreich, Release `v0.5.0` mit Installer + `SHA256SUMS.txt`.
+4. **Installer:** Kompiliert und installiert (v0.5.0 läuft). Noch offen: echtes Update über die App auf eine neuere
+   Version inkl. `/relaunch=1`.
+5. ~~**Mitgeliefertes Tesseract**~~ – findet `tessdata` neben sich ohne `TESSDATA_PREFIX`, TSV-Ausgabe funktioniert.
 6. **Discord-Profilstatus (`presence.py`):** Nur gegen Attrappen getestet. Nötig ist eine **Discord-Anwendungs-ID** (Entwicklerportal
    → Anwendung → „Application ID“, nicht geheim). Sie fehlt noch: bitte als Repository-Variable `RPC_CLIENT_ID` oder fest in
    `build_info.py` eintragen. Als Bild dient das Roblox-Spiel-Thumbnail (öffentliche Roblox-Schnittstellen `universes/v1/places/…/universe`
@@ -128,6 +125,10 @@ GitHub-Weg bestätigt ist; `build_exe.bat` baut lokal.
   ruhige Discord-Kanäle (eine Statusnachricht statt vieler Meldungen; Pings nur bei echten Problemen).
 
 ## Arbeitsweise
+
+- **Python auf dem Rechner des Eigentümers ist die Microsoft-Store-Version:** Sie leitet `%APPDATA%` um (sieht dort eine
+  alte Kopie statt der echten Daten) und scheitert bei globalem `pip install` an langen Pfaden. Deshalb immer die
+  virtuelle Umgebung `.venv` im Projektordner nutzen (`.venv\Scripts\python.exe`).
 
 - Vor größeren Änderungen einen Git-Stand anlegen. Nach jeder Änderung `python -m unittest discover -s tests` ausführen.
 - Neue Logik möglichst **ohne Qt** halten, damit sie in `tests/` prüfbar bleibt (Muster: `tests/_env.py` setzt `ASTRAL_DATA_DIR`).

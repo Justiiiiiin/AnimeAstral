@@ -43,14 +43,14 @@ class StatsPage(QWidget):
         root.setContentsMargins(28, 24, 28, 24)
         root.setSpacing(14)
 
+        # Titel und Bedienleiste in eigenen Zeilen, sonst wird die Seite bei kleinem Fenster zu breit
+        root.addWidget(label("Statistik", "h1"))
+        root.addWidget(label("Jeder Versuch zählt – auch wenn er nicht bis Welle 100 geht, denn jede Welle gibt "
+                             "Belohnungen. Wähle einen Raid oder „Alle Raids“.", "muted", wrap=True))
         head = QHBoxLayout()
-        titles = QVBoxLayout()
-        titles.addWidget(label("Statistik", "h1"))
-        titles.addWidget(label("Jeder Versuch zählt – auch wenn er nicht bis Welle 100 geht, denn jede Welle gibt "
-                               "Belohnungen. Wähle einen Raid oder „Alle Raids“.", "muted", wrap=True))
-        head.addLayout(titles, 1)
+        head.setSpacing(8)
         self.profile = ComboBox()
-        self.profile.setMinimumWidth(190)
+        self.profile.setMinimumWidth(170)
         self.profile.addItem(ALL_PROFILES, None)
         self.profile.currentIndexChanged.connect(lambda _i: self.mark_dirty())
         self.range = ComboBox()
@@ -59,6 +59,7 @@ class StatsPage(QWidget):
         self.range.currentIndexChanged.connect(lambda _i: self.mark_dirty())
         head.addWidget(self.profile)
         head.addWidget(self.range)
+        head.addStretch(1)
         save_card = QPushButton("Karte speichern")
         save_card.setToolTip("Statistik als Bild (PNG) speichern – zum Teilen mit Freunden")
         save_card.clicked.connect(self._save_card)

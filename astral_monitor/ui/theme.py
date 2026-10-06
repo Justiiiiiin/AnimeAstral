@@ -1,7 +1,7 @@
 """Dunkles Theme (QSS)."""
 from __future__ import annotations
 
-from PySide6.QtGui import QFont
+from PySide6.QtGui import QColor, QFont, QPalette
 from PySide6.QtWidgets import QApplication
 
 BG = "#0F1419"
@@ -50,11 +50,20 @@ QPushButton#primary {{ background: {ACCENT}; color: #06201A; border: 1px solid {
 QPushButton#primary:hover {{ background: #52E0C1; }}
 QPushButton#danger {{ background: #2A1519; color: {DANGER}; border: 1px solid #6B3038; font-weight: 600; }}
 QPushButton#danger:hover {{ background: #351B20; }}
+QFrame#card QPushButton {{ background: #18212B; }}
+QFrame#card QPushButton:hover {{ background: #1E2A37; }}
+QFrame#card QPushButton#primary {{ background: {ACCENT}; }}
+QFrame#card QPushButton#primary:hover {{ background: #52E0C1; }}
+QFrame#card QPushButton#danger {{ background: #2A1519; }}
+QFrame#card QPushButton#danger:hover {{ background: #351B20; }}
+QFrame#card QPushButton#nav {{ background: transparent; }}
+QFrame#card QPushButton#nav:hover {{ background: #121A22; }}
+QFrame#card QPushButton#nav:checked {{ background: #18212B; }}
 QPushButton#nav {{ background: transparent; border: none; text-align: left; padding: 0 14px;
   color: {MUTED}; min-height: 42px; border-radius: 8px; }}
 QPushButton#nav:hover {{ background: #121A22; }}
 QPushButton#nav:checked {{ background: #18212B; color: {TEXT}; }}
-QLineEdit, QSpinBox, QComboBox, QPlainTextEdit {{ background: {SIDEBAR}; border: 1px solid #2B3644;
+QLineEdit, QSpinBox, QComboBox, QPlainTextEdit, QTextBrowser {{ background: {SIDEBAR}; border: 1px solid #2B3644;
   border-radius: 8px; padding: 6px 10px; min-height: 28px; selection-background-color: #25405A; }}
 QLineEdit:focus, QSpinBox:focus, QComboBox:focus {{ border: 1px solid {ACCENT}; }}
 QComboBox QAbstractItemView {{ background: {CARD}; border: 1px solid #2B3644; selection-background-color: #25405A; }}
@@ -96,4 +105,8 @@ QDialog {{ background: {BG}; }}
 
 def apply(app: QApplication) -> None:
     app.setFont(QFont("Segoe UI", 10))
+    palette = app.palette()                     # Links (z. B. Versionshinweise): Standardblau ist auf Dunkel kaum lesbar
+    palette.setColor(QPalette.ColorRole.Link, QColor(ACCENT))
+    palette.setColor(QPalette.ColorRole.LinkVisited, QColor(ACCENT))
+    app.setPalette(palette)
     app.setStyleSheet(STYLE)
