@@ -167,6 +167,7 @@ class Settings:
     ui_zoom: int = 100                  # 50–200 % (mehr pro Seite sehen = kleiner)
     ui_auto_fit: bool = True            # zusätzlich an die Fenstergröße anpassen (0,7–1,3)
     ui_reduce_motion: bool = False      # keine Überblendungen/Schalter-Animationen (spart Leistung)
+    ui_intro: bool = True               # Logo-Animation beim Start (entfällt bei „Animationen reduzieren“)
     ui_accent: str = ""                 # eigene Akzentfarbe „#RRGGBB“ (leer = Farbe des Designs)
     anti_afk_enabled: bool = False      # alle N Minuten kurz zu Roblox, Leertaste, zurück (antiafk.py)
     anti_afk_minutes: int = 10

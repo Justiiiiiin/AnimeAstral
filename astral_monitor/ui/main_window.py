@@ -198,6 +198,7 @@ class MainWindow(QMainWindow):
         theme.track(self.notes_btn, lambda o, f: o.setIconSize(QSize(round(22 * f), round(22 * f))))
         self.notes_btn.clicked.connect(self.open_notes)
         self._notes = None
+        self._intro_done = False
         side.addWidget(self.notes_btn, 0, Qt.AlignmentFlag.AlignHCenter)
         bottom.addWidget(self.gear, 0, Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignHCenter)
         side.addLayout(bottom)
@@ -530,7 +531,8 @@ class MainWindow(QMainWindow):
 
     def set_appearance(self, design: Optional[str] = None, mode: Optional[str] = None,
                        zoom: Optional[int] = None, fit: Optional[bool] = None,
-                       reduce_motion: Optional[bool] = None, accent: Optional[str] = None) -> None:
+                       reduce_motion: Optional[bool] = None, accent: Optional[str] = None,
+                       intro: Optional[bool] = None) -> None:
         """Design, Farbschema und UI-Größe – sofort sichtbar und gespeichert (ohne Speichern-Leiste)."""
         s = self.engine.settings
         if design is not None:
@@ -541,6 +543,8 @@ class MainWindow(QMainWindow):
             s.ui_zoom = min(theme.ZOOM_MAX, max(theme.ZOOM_MIN, int(zoom)))
         if fit is not None:
             s.ui_auto_fit = fit
+        if intro is not None:
+            s.ui_intro = intro
         if accent is not None:
             s.ui_accent = accent
             theme.set_accent(accent)
@@ -565,6 +569,11 @@ class MainWindow(QMainWindow):
         super().showEvent(event)
         self._apply_scale()
         winapi.set_titlebar(int(self.winId()), theme.is_dark(), theme.color("topbar"))
+        if not self._intro_done:                      # Logo-Animation nur beim ersten Zeigen
+            self._intro_done = True
+            if self.engine.settings.ui_intro and theme.animations():
+                from .intro import IntroOverlay
+                IntroOverlay(self).start()
 
     def changeEvent(self, event) -> None:
         super().changeEvent(event)

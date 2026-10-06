@@ -205,11 +205,15 @@ class SettingsPage(QWidget):
         mrow = QHBoxLayout()
         self.reduce_motion = QCheckBox(tr("Animationen reduzieren"))
         self.reduce_motion.toggled.connect(lambda on: self.main.set_appearance(reduce_motion=on))
+        self.reduce_motion.toggled.connect(lambda on: self.intro.setEnabled(not on))
         mrow.addWidget(self.reduce_motion)
         mrow.addWidget(InfoButton(tr("Seiten erscheinen ohne Überblendung, Schalter springen sofort um. "
                                      "Spart etwas Leistung, z. B. wenn Roblox nebenher läuft.")))
         mrow.addStretch(1)
         look.body.addLayout(mrow)
+        self.intro = QCheckBox(tr("Logo-Animation beim Start"))
+        self.intro.toggled.connect(lambda on: self.main.set_appearance(intro=on))
+        look.body.addWidget(self.intro)
         self.mode_hint = label("", "small", wrap=True)
         look.body.addWidget(self.mode_hint)
         root.addWidget(look)
@@ -475,7 +479,7 @@ class SettingsPage(QWidget):
 
     def _sync_look(self, s) -> None:
         """Bedienelemente der Darstellung auf den gespeicherten Stand setzen (ohne erneut auszulösen)."""
-        widgets = [self.design, self.zoom, self.auto_fit, self.reduce_motion] + [b for _p, b in self.zoom_buttons]
+        widgets = [self.design, self.zoom, self.auto_fit, self.reduce_motion, self.intro] + [b for _p, b in self.zoom_buttons]
         widgets += self.mode_group.buttons() + self.accent_group.buttons()
         for w in widgets:
             w.blockSignals(True)
@@ -483,6 +487,8 @@ class SettingsPage(QWidget):
         self.zoom.setValue(s.ui_zoom)
         self.auto_fit.setChecked(s.ui_auto_fit)
         self.reduce_motion.setChecked(s.ui_reduce_motion)
+        self.intro.setChecked(s.ui_intro)
+        self.intro.setEnabled(not s.ui_reduce_motion)
         for pct, btn in self.zoom_buttons:
             btn.setChecked(pct == s.ui_zoom)
         preset = {b.property("accent") for b in self.accent_group.buttons() if b is not self.accent_custom}

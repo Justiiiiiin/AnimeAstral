@@ -900,4 +900,5 @@ EN: dict[str, str] = {
     "Notizbuch": "Notebook",
     "Notizbuch (Beta)": "Notebook (beta)",
     "Upgrades, Codes, Pläne … wird automatisch gespeichert.": "Upgrades, codes, plans … saved automatically.",
+    "Logo-Animation beim Start": "Logo animation at startup",
 }
