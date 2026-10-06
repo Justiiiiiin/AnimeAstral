@@ -123,9 +123,31 @@ def jump_in_roblox(title: str) -> tuple[bool, str]:
     time.sleep(0.15)                               # Roblox die Aktivierung verarbeiten lassen
     _press_space()
     time.sleep(0.1)
-    if switched and previous and u32.IsWindow(previous):
-        _bring_to_front(previous)
+    if switched:
+        _restore(hwnd, previous)
     return True, ("mit Fensterwechsel" if switched else "Roblox war schon vorne")
+
+
+def _restore(roblox, previous) -> None:
+    """Vorheriges Fenster wieder sichtbar nach vorne. Nur aktivieren reicht nicht: manche Programme (z. B. Electron-
+    Apps) werden dadurch aktiv, aber nicht nach oben geholt – Roblox bliebe sichtbar davor (gemeldet 06.10.2026).
+    Deshalb Roblox ganz nach hinten schieben und das vorherige Fenster ausdrücklich nach oben holen."""
+    import ctypes
+    from ctypes import wintypes
+
+    u32 = ctypes.windll.user32
+    u32.SetWindowPos.argtypes = [wintypes.HWND, wintypes.HWND, ctypes.c_int, ctypes.c_int, ctypes.c_int,
+                                 ctypes.c_int, wintypes.UINT]
+    u32.GetAncestor.restype = wintypes.HWND
+    u32.GetAncestor.argtypes = [wintypes.HWND, wintypes.UINT]
+    flags = 0x0001 | 0x0002 | 0x0010              # SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE
+    u32.SetWindowPos(roblox, wintypes.HWND(1), 0, 0, 0, 0, flags)   # HWND_BOTTOM
+    if not previous or not u32.IsWindow(previous):
+        return
+    target = u32.GetAncestor(previous, 3) or previous          # GA_ROOTOWNER: das sichtbare Hauptfenster
+    _bring_to_front(target)
+    u32.BringWindowToTop(target)
+    u32.SetWindowPos(target, wintypes.HWND(0), 0, 0, 0, 0, 0x0001 | 0x0002)   # HWND_TOP
 
 
 def _bring_to_front(hwnd) -> bool:
