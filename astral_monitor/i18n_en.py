@@ -901,4 +901,12 @@ EN: dict[str, str] = {
     "Notizbuch (Beta)": "Notebook (beta)",
     "Upgrades, Codes, Pläne … wird automatisch gespeichert.": "Upgrades, codes, plans … saved automatically.",
     "Logo-Animation beim Start": "Logo animation at startup",
+    # Hintergrundbild (0.7.2)
+    "Bild wählen …": "Choose image …",
+    "Abdunkeln ": "Dim ",
+    "Entfernen": "Remove",
+    "Hintergrund": "Background",
+    "Hintergrundbild wählen": "Choose background image",
+    "Bilder (*.png *.jpg *.jpeg *.webp *.bmp)": "Images (*.png *.jpg *.jpeg *.webp *.bmp)",
+    "Das Bild konnte nicht geladen werden: {error}": "The image could not be loaded: {error}",
 }

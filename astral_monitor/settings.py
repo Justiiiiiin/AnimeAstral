@@ -168,6 +168,8 @@ class Settings:
     ui_auto_fit: bool = True            # zusätzlich an die Fenstergröße anpassen (0,7–1,3)
     ui_reduce_motion: bool = False      # keine Überblendungen/Schalter-Animationen (spart Leistung)
     ui_intro: bool = True               # Logo-Animation beim Start (entfällt bei „Animationen reduzieren“)
+    ui_background: str = ""             # eigenes Hintergrundbild (Dateiname im Datenordner, leer = keins)
+    ui_background_dim: int = 70         # Abdunkeln in % (Lesbarkeit)
     ui_accent: str = ""                 # eigene Akzentfarbe „#RRGGBB“ (leer = Farbe des Designs)
     anti_afk_enabled: bool = False      # alle N Minuten kurz zu Roblox, Leertaste, zurück (antiafk.py)
     anti_afk_minutes: int = 10
@@ -307,6 +309,13 @@ class Settings:
             s.ui_zoom = 100
         if not is_hex_color(s.ui_accent):
             s.ui_accent = ""
+        if not (isinstance(s.ui_background, str) and s.ui_background.startswith("background.")
+                and "/" not in s.ui_background and "\\" not in s.ui_background):
+            s.ui_background = ""                    # nur die eigene Kopie im Datenordner
+        try:
+            s.ui_background_dim = min(95, max(0, int(s.ui_background_dim)))
+        except (TypeError, ValueError):
+            s.ui_background_dim = 70
         if s.ui_mode not in ("dark", "light", "system"):
             s.ui_mode = "dark"
         if not s.server_favorites and s.private_server_link:

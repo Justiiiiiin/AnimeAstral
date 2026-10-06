@@ -559,7 +559,24 @@ def style(factor: float) -> str:
         if m.group(2) == "pt":
             return f"{value * factor:.1f}pt"
         return f"{max(1, round(value * factor)) if value else 0}px"
-    return _SIZE_RE.sub(repl, text)
+    text = _SIZE_RE.sub(repl, text)
+    if _backdrop:                                   # Hintergrundbild: Flächen zwischen den Karten durchsichtig
+        text += '\n*[glass="true"] { background: transparent; }\n'
+    return text
+
+
+_backdrop = False
+
+
+def set_backdrop(on: bool) -> None:
+    """Hintergrundbild an/aus – Stylesheet neu setzen, wenn sich etwas ändert."""
+    global _backdrop
+    if bool(on) == _backdrop:
+        return
+    _backdrop = bool(on)
+    app = QApplication.instance()
+    if app is not None:
+        app.setStyleSheet(style(_scale))
 
 
 def _font(factor: float) -> QFont:

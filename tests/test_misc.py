@@ -80,6 +80,14 @@ class CardTests(unittest.TestCase):
         self.assertGreater(len(full), len(empty) // 2)
 
 
+class AppearanceSettingsTests(unittest.TestCase):
+    def test_background_and_accent_are_sanitized(self):
+        s = Settings.from_dict({"ui_background": "..\\..\\evil.png", "ui_background_dim": 400, "ui_accent": "rot"})
+        self.assertEqual((s.ui_background, s.ui_background_dim, s.ui_accent), ("", 95, ""))
+        s = Settings.from_dict({"ui_background": "background.jpg", "ui_background_dim": 40, "ui_accent": "#FF6FB5"})
+        self.assertEqual((s.ui_background, s.ui_background_dim, s.ui_accent), ("background.jpg", 40, "#FF6FB5"))
+
+
 class SafeStartTests(unittest.TestCase):
     def test_safe_mode_never_overwrites(self):
         own = Settings()

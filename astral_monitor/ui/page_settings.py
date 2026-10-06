@@ -1,6 +1,8 @@
 """Seite „Einstellungen": Roblox-Helfer, Überwachung, Programm."""
 from __future__ import annotations
 
+from pathlib import Path
+
 from PySide6.QtCore import QUrl, Qt
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import (QButtonGroup, QCheckBox, QHBoxLayout, QLineEdit, QListWidget, QListWidgetItem, QMenu,
@@ -198,6 +200,25 @@ class SettingsPage(QWidget):
         self.accent_group.addButton(self.accent_custom)
         lg.addWidget(label(tr("Akzentfarbe")), 3, 0)
         lg.addLayout(accent_row, 3, 1, 1, 2)
+        bg_row = QHBoxLayout()
+        theme.track_spacing(bg_row, 6)
+        pick_bg = QPushButton(tr("Bild wählen …"))
+        pick_bg.clicked.connect(self._pick_background)
+        self.bg_remove = QPushButton(tr("Entfernen"))
+        self.bg_remove.clicked.connect(lambda: self.main.set_appearance(background="") or self._sync_look(
+            self.main.engine.settings))
+        self.bg_dim = SpinBox()
+        self.bg_dim.setRange(0, 95)
+        self.bg_dim.setSingleStep(5)
+        self.bg_dim.setSuffix(" %")
+        self.bg_dim.setPrefix(tr("Abdunkeln "))
+        self.bg_dim.setKeyboardTracking(False)
+        self.bg_dim.valueChanged.connect(lambda v: self.main.set_appearance(background_dim=v))
+        for w in (pick_bg, self.bg_remove, self.bg_dim):
+            bg_row.addWidget(w)
+        bg_row.addStretch(1)
+        lg.addWidget(label(tr("Hintergrund")), 4, 0)
+        lg.addLayout(bg_row, 4, 1, 1, 2)
         look.body.addLayout(lg)
         self.auto_fit = QCheckBox(tr("Zusätzlich an die Fenstergröße anpassen"))
         self.auto_fit.toggled.connect(lambda on: self.main.set_appearance(fit=on))
@@ -464,6 +485,21 @@ class SettingsPage(QWidget):
         self.accent_group.addButton(btn)
         return btn
 
+    def _pick_background(self) -> None:
+        from PySide6.QtWidgets import QFileDialog
+        from .backdrop import import_image
+        path, _ = QFileDialog.getOpenFileName(self, tr("Hintergrundbild wählen"), str(Path.home() / "Pictures"),
+                                              tr("Bilder (*.png *.jpg *.jpeg *.webp *.bmp)"))
+        if not path:
+            return
+        try:
+            name = import_image(path)
+        except (OSError, ValueError) as exc:
+            QMessageBox.warning(self, tr("Hintergrund"), tr("Das Bild konnte nicht geladen werden: {error}", error=exc))
+            return
+        self.main.set_appearance(background=name)
+        self._sync_look(self.main.engine.settings)
+
     def _pick_accent(self) -> None:
         from PySide6.QtGui import QColor
         from PySide6.QtWidgets import QColorDialog
@@ -479,7 +515,7 @@ class SettingsPage(QWidget):
 
     def _sync_look(self, s) -> None:
         """Bedienelemente der Darstellung auf den gespeicherten Stand setzen (ohne erneut auszulösen)."""
-        widgets = [self.design, self.zoom, self.auto_fit, self.reduce_motion, self.intro] + [b for _p, b in self.zoom_buttons]
+        widgets = [self.design, self.zoom, self.auto_fit, self.reduce_motion, self.intro, self.bg_dim] + [b for _p, b in self.zoom_buttons]
         widgets += self.mode_group.buttons() + self.accent_group.buttons()
         for w in widgets:
             w.blockSignals(True)
@@ -488,6 +524,9 @@ class SettingsPage(QWidget):
         self.auto_fit.setChecked(s.ui_auto_fit)
         self.reduce_motion.setChecked(s.ui_reduce_motion)
         self.intro.setChecked(s.ui_intro)
+        self.bg_dim.setValue(s.ui_background_dim)
+        self.bg_dim.setEnabled(bool(s.ui_background))
+        self.bg_remove.setEnabled(bool(s.ui_background))
         self.intro.setEnabled(not s.ui_reduce_motion)
         for pct, btn in self.zoom_buttons:
             btn.setChecked(pct == s.ui_zoom)

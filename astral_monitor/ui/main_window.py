@@ -204,7 +204,13 @@ class MainWindow(QMainWindow):
         side.addLayout(bottom)
 
         root.addWidget(sidebar)
-        root.addWidget(self.stack, 1)
+        from .backdrop import Backdrop, mark_glass
+        for page in self.pages:
+            page.setProperty("page", True)
+        self.backdrop = Backdrop(self.stack)
+        root.addWidget(self.backdrop, 1)
+        mark_glass(self.stack)
+        self.backdrop.set_image(engine.settings.ui_background, engine.settings.ui_background_dim)
         self.setCentralWidget(central)
 
         for page in self.pages:
@@ -532,7 +538,8 @@ class MainWindow(QMainWindow):
     def set_appearance(self, design: Optional[str] = None, mode: Optional[str] = None,
                        zoom: Optional[int] = None, fit: Optional[bool] = None,
                        reduce_motion: Optional[bool] = None, accent: Optional[str] = None,
-                       intro: Optional[bool] = None) -> None:
+                       intro: Optional[bool] = None, background: Optional[str] = None,
+                       background_dim: Optional[int] = None) -> None:
         """Design, Farbschema und UI-Größe – sofort sichtbar und gespeichert (ohne Speichern-Leiste)."""
         s = self.engine.settings
         if design is not None:
@@ -543,6 +550,12 @@ class MainWindow(QMainWindow):
             s.ui_zoom = min(theme.ZOOM_MAX, max(theme.ZOOM_MIN, int(zoom)))
         if fit is not None:
             s.ui_auto_fit = fit
+        if background is not None or background_dim is not None:
+            if background is not None:
+                s.ui_background = background
+            if background_dim is not None:
+                s.ui_background_dim = int(background_dim)
+            self.backdrop.set_image(s.ui_background, s.ui_background_dim)
         if intro is not None:
             s.ui_intro = intro
         if accent is not None:
