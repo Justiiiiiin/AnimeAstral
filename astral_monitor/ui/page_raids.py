@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import cv2
-from PySide6.QtCore import QSize, Qt
+from PySide6.QtCore import QSize, Qt, QTimer
 from PySide6.QtGui import QIcon, QPixmap
 from pathlib import Path
 
@@ -38,10 +38,10 @@ class RaidsPage(QWidget):
 
         left = Card(tr("Meine Raids"))
         self.profiles = QListWidget()
-        theme.track_min_height(self.profiles, 170)
         smooth(self.profiles)
         self.profiles.currentRowChanged.connect(lambda _row: self._refresh_images())
-        left.body.addWidget(self.profiles, 1)
+        left.body.addWidget(self.profiles)          # höchstens 8 Zeilen hoch (siehe _fit_list), Knöpfe direkt darunter
+        theme.track(self.profiles, lambda _o, _f: self._fit_list())
         row = QHBoxLayout()
         add = QPushButton(tr("Neu …"))
         add.clicked.connect(self._new_profile)
@@ -65,7 +65,7 @@ class RaidsPage(QWidget):
         left.body.addWidget(export_all)
         left.body.addWidget(label(tr("Ein Paket (.astralpack) enthält alle Raids – Freunde importieren es einmal. "
                                   "Raids, die schon vorhanden sind, werden dabei übersprungen."), "small", wrap=True))
-        body.addWidget(left, 2)
+        body.addWidget(left, 2, Qt.AlignmentFlag.AlignTop)   # nicht auf die Höhe der rechten Spalte strecken
 
         right_col = QVBoxLayout()
         theme.track_spacing(right_col, 14)
@@ -190,6 +190,21 @@ class RaidsPage(QWidget):
         item = self.profiles.currentItem()
         return item.data(Qt.ItemDataRole.UserRole) if item else ""
 
+    VISIBLE_RAIDS = 8                              # so viele Raids ohne Scrollen, darüber scrollt die Liste
+
+    def _fit_list(self) -> None:
+        """Liste so hoch wie ihre Einträge, höchstens VISIBLE_RAIDS Zeilen."""
+        rows = max(1, min(self.profiles.count(), self.VISIBLE_RAIDS))
+        frame = self.profiles.frameWidth() * 2 + theme.px(4)
+        span = 0
+        if self.profiles.count():                  # echter Abstand erste bis letzte sichtbare Zeile (inkl. Trennlinien)
+            first = self.profiles.visualItemRect(self.profiles.item(0))
+            last = self.profiles.visualItemRect(self.profiles.item(rows - 1))
+            span = last.bottom() - first.top() + 1 if last.height() > 0 else 0
+        if span <= 0:                              # noch nicht gezeichnet: geschätzt
+            span = rows * (self.profiles.sizeHintForRow(0) + 1 if self.profiles.count() else theme.px(44))
+        self.profiles.setFixedHeight(max(theme.px(120), span + frame))   # fest: sonst gilt die Standardhöhe
+
     def _refresh_profiles(self, select: str = "") -> None:
         keep = select or self._current()
         self.profiles.blockSignals(True)
@@ -203,6 +218,12 @@ class RaidsPage(QWidget):
         if self.profiles.currentItem() is None and self.profiles.count():
             self.profiles.setCurrentRow(0)
         self.profiles.blockSignals(False)
+        self._fit_list()
+        QTimer.singleShot(0, self._fit_list)        # nach dem Zeichnen mit der echten Zeilenhöhe nachmessen
+
+    def showEvent(self, event) -> None:
+        super().showEvent(event)
+        QTimer.singleShot(0, self._fit_list)
         self._refresh_images()
 
     def _refresh_images(self) -> None:
