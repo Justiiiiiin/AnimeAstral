@@ -1,14 +1,19 @@
-"""Tesseract-Anbindung (ein Prozessaufruf pro Lesung, daher sparsam einsetzen)."""
+"""Tesseract-Anbindung: bevorzugt direkt über libtesseract (Modell bleibt geladen), sonst ein Prozess pro Lesung."""
 from __future__ import annotations
 
+import ctypes
+import logging
 import os
 import shutil
 import sys
+import threading
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
 import numpy as np
+
+log = logging.getLogger("ocr")
 
 
 class OcrError(RuntimeError):
@@ -33,6 +38,84 @@ class OcrLine:
 
 
 _EXE_NAMES = ("tesseract.exe", "tesseract")
+_TSV_KEYS = ("level", "page_num", "block_num", "par_num", "line_num", "word_num",
+             "left", "top", "width", "height", "conf", "text")
+
+
+class _TessLib:
+    """libtesseract direkt per ctypes: kein Prozessstart und kein erneutes Laden des Modells je Lesung
+    (gemessen ~5 statt ~65 ms pro Zählerlesung). Eine Instanz, durch eine Sperre threadsicher."""
+
+    def __init__(self, folder: Path) -> None:
+        dll = next(iter(sorted(folder.glob("libtesseract*.dll"))), None)
+        tessdata = folder / "tessdata"
+        if dll is None or not (tessdata / "eng.traineddata").is_file():
+            raise OSError("libtesseract oder eng.traineddata fehlt")
+        if hasattr(os, "add_dll_directory"):
+            self._dll_dir = os.add_dll_directory(str(folder))      # abhängige DLLs liegen daneben
+        lib = ctypes.CDLL(str(dll))
+        vp, ci, cp = ctypes.c_void_p, ctypes.c_int, ctypes.c_char_p
+        lib.TessBaseAPICreate.restype = vp
+        lib.TessBaseAPIInit3.argtypes = [vp, cp, cp]
+        lib.TessBaseAPISetPageSegMode.argtypes = [vp, ci]
+        lib.TessBaseAPISetVariable.argtypes = [vp, cp, cp]
+        lib.TessBaseAPISetImage.argtypes = [vp, vp, ci, ci, ci, ci]
+        lib.TessBaseAPISetSourceResolution.argtypes = [vp, ci]
+        lib.TessBaseAPIGetUTF8Text.argtypes = [vp]
+        lib.TessBaseAPIGetUTF8Text.restype = vp
+        lib.TessBaseAPIGetTsvText.argtypes = [vp, ci]
+        lib.TessBaseAPIGetTsvText.restype = vp
+        lib.TessBaseAPIClear.argtypes = [vp]
+        lib.TessDeleteText.argtypes = [vp]
+        lib.TessVersion.restype = cp
+        api = lib.TessBaseAPICreate()
+        # Tesseract öffnet den Pfad mit der ANSI-Codepage; UTF-8 als zweiter Versuch (Umlaute im Benutzernamen)
+        for encoding in ("mbcs" if sys.platform == "win32" else "utf-8", "utf-8"):
+            try:
+                path = str(tessdata).encode(encoding)
+            except UnicodeEncodeError:
+                continue
+            if lib.TessBaseAPIInit3(api, path, b"eng") == 0:
+                break
+        else:
+            raise OSError("Tesseract-Modell konnte nicht geladen werden")
+        self._lib, self._api = lib, api
+        self._lock = threading.Lock()
+        self.version = lib.TessVersion().decode("ascii", "replace")
+
+    def run(self, image: np.ndarray, psm: int, whitelist: str = "", tsv: bool = False) -> str:
+        img = np.ascontiguousarray(image)
+        channels = 1 if img.ndim == 2 else img.shape[2]
+        lib, api = self._lib, self._api
+        with self._lock:
+            lib.TessBaseAPISetPageSegMode(api, psm)
+            lib.TessBaseAPISetVariable(api, b"tessedit_char_whitelist", whitelist.encode("ascii"))
+            lib.TessBaseAPISetImage(api, img.ctypes.data, img.shape[1], img.shape[0], channels, img.strides[0])
+            lib.TessBaseAPISetSourceResolution(api, 70)       # wie der Prozessaufruf ohne DPI-Angabe
+            ptr = lib.TessBaseAPIGetTsvText(api, 0) if tsv else lib.TessBaseAPIGetUTF8Text(api)
+            try:
+                return ctypes.string_at(ptr).decode("utf-8", "replace") if ptr else ""
+            finally:
+                if ptr:
+                    lib.TessDeleteText(ptr)
+                lib.TessBaseAPIClear(api)
+
+
+def _parse_tsv(text: str) -> dict[str, list]:
+    """TSV von libtesseract -> dieselbe Form wie pytesseract.image_to_data(..., Output.DICT)."""
+    data: dict[str, list] = {key: [] for key in _TSV_KEYS}
+    for row in text.splitlines():
+        cols = row.split("\t")
+        if len(cols) < 11 or not cols[0].isdigit():
+            continue
+        cols += [""] * (12 - len(cols))
+        for key, value in zip(_TSV_KEYS[:11], cols[:11]):
+            try:
+                data[key].append(float(value) if key == "conf" else int(value))
+            except ValueError:
+                data[key].append(-1)
+        data["text"].append(cols[11])
+    return data
 
 
 def bundled_dir() -> Optional[Path]:
@@ -89,22 +172,43 @@ class OcrEngine:
         if bundled is not None and Path(cmd).resolve().parent == bundled.resolve():
             os.environ.pop("TESSDATA_PREFIX", None)       # mitgeliefertes Tesseract findet seine Daten neben sich selbst
         self.bundled = bundled is not None and Path(cmd).resolve().parent == bundled.resolve()
+        self._pt = pytesseract
+        self.cmd = cmd
+        self._lib: Optional[_TessLib] = None
+        if sys.platform == "win32":
+            try:
+                self._lib = _TessLib(Path(cmd).resolve().parent)
+            except (OSError, AttributeError) as exc:
+                log.info("Tesseract direkt nicht nutzbar (%s) – nutze tesseract.exe je Lesung.", exc)
+        if self._lib is not None:
+            self.version = self._lib.version
+            log.info("Tesseract %s direkt geladen (ohne Prozessstarts).", self.version)
+            return
         try:
             self.version = str(pytesseract.get_tesseract_version())
         except Exception as exc:
             raise OcrError(f"Tesseract lässt sich nicht starten ({cmd}): {exc}") from exc
-        self._pt = pytesseract
-        self.cmd = cmd
+
+    @property
+    def backend(self) -> str:
+        return "libtesseract" if self._lib is not None else "tesseract.exe"
 
     def line(self, image: np.ndarray, psm: int = 7, whitelist: str | None = None) -> str:
+        if self._lib is not None:
+            return self._lib.run(image, psm, whitelist or "").strip()
         config = f"--psm {psm}"
         if whitelist:
             config += f" -c tessedit_char_whitelist={whitelist}"
         return self._pt.image_to_string(image, config=config).strip()
 
+    def _data(self, image: np.ndarray, psm: int) -> dict:
+        if self._lib is not None:
+            return _parse_tsv(self._lib.run(image, psm, tsv=True))
+        return self._pt.image_to_data(image, config=f"--psm {psm}", output_type=self._pt.Output.DICT)
+
     def words(self, image: np.ndarray, psm: int = 6) -> list[OcrWord]:
         """Alle erkannten Wörter mit Position (Pixel im übergebenen Bild)."""
-        data = self._pt.image_to_data(image, config=f"--psm {psm}", output_type=self._pt.Output.DICT)
+        data = self._data(image, psm)
         out: list[OcrWord] = []
         for i, text in enumerate(data["text"]):
             text = (text or "").strip()
@@ -118,8 +222,7 @@ class OcrEngine:
         return out
 
     def lines(self, image: np.ndarray, psm: int = 6) -> list[OcrLine]:
-        data = self._pt.image_to_data(image, config=f"--psm {psm}",
-                                      output_type=self._pt.Output.DICT)
+        data = self._data(image, psm)
         groups: dict[tuple, list] = {}
         for i, text in enumerate(data["text"]):
             text = (text or "").strip()

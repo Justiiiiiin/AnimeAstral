@@ -58,8 +58,11 @@ class WgcSource(FrameSource):
 
     name = "Fenster-Capture (WGC)"
 
-    def __init__(self, title: str) -> None:
+    def __init__(self, title: str, min_interval_ms: int = 125) -> None:
         self._title = title
+        # Ohne Drosselung liefert Windows jedes Spielbild (bis 60/s) und die Bibliothek kopiert jedes davon in den
+        # Arbeitsspeicher – gemessen ~7 % eines Kerns. Mit 125 ms sind es ~8 Bilder/s und ~0,8 %.
+        self._min_interval_ms = int(min_interval_ms)
         self._control = None
         self._pending: Optional[_Request] = None
         self._lock = threading.Lock()
@@ -78,6 +81,8 @@ class WgcSource(FrameSource):
 
         # Parameternamen unterscheiden sich je nach Version der Bibliothek -> der Reihe nach probieren
         attempts = [
+            dict(window_hwnd=hwnd, cursor_capture=False, draw_border=False,
+                 minimum_update_interval=self._min_interval_ms),
             dict(window_hwnd=hwnd, cursor_capture=False, draw_border=False),
             dict(window_name=self._title, cursor_capture=False, draw_border=False),
             dict(window_name=self._title, capture_cursor=False, draw_border=False),
@@ -179,14 +184,14 @@ class ScreenSource(FrameSource):
         return GrabResult(crops, shot(0, 0, w, h) if full else None, (w, h))
 
 
-def create_source(mode: str, title: str) -> FrameSource:
+def create_source(mode: str, title: str, min_interval_ms: int = 125) -> FrameSource:
     """mode: auto | wgc | screen. Bei „auto“ erst WGC, sonst Bildschirm."""
     if mode == "screen":
         source: FrameSource = ScreenSource(title)
         source.start()
         return source
     try:
-        source = WgcSource(title)
+        source = WgcSource(title, min_interval_ms)
         source.start()
         return source
     except CaptureError as exc:

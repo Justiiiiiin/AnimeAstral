@@ -99,7 +99,7 @@ def setup_logging(events: "queue.Queue") -> None:
 
 class Engine:
     def __init__(self, settings: Settings,
-                 source_factory: Callable[[str, str], FrameSource] = create_source) -> None:
+                 source_factory: Callable[..., FrameSource] = create_source) -> None:
         self.settings = settings
         self._source_factory = source_factory
         self.events: "queue.Queue" = queue.Queue(maxsize=1000)
@@ -158,7 +158,7 @@ class Engine:
             raise EngineError(error)
         ocr = self.get_ocr()
         try:
-            source = self._source_factory(s.capture_mode, s.window_title)
+            source = self._source_factory(s.capture_mode, s.window_title, min_interval_ms=self._frame_interval_ms())
         except CaptureError as exc:
             raise EngineError(str(exc)) from exc
 
@@ -460,6 +460,10 @@ class Engine:
                 next_tick = time.monotonic() + interval
             self._halt.wait(max(0.0, next_tick - time.monotonic()))
 
+    def _frame_interval_ms(self) -> int:
+        """Bildabstand der Fenster-Aufnahme: halber „heißer“ Takt, damit kurz vor Raid-Ende kein Bild fehlt."""
+        return int(min(250, max(50, self.settings.preset()["hot"] * 1000 / 2)))
+
     def _interval(self) -> float:
         preset = self.settings.preset()
         value = self.tracker.last_value
@@ -518,7 +522,8 @@ class Engine:
             self._last_restart = now
             try:
                 self._source.stop()
-                self._source = self._source_factory(self.settings.capture_mode, self.settings.window_title)
+                self._source = self._source_factory(self.settings.capture_mode, self.settings.window_title,
+                                                    min_interval_ms=self._frame_interval_ms())
                 self.state.source_info = self._source.name
                 log.info("Bildquelle neu verbunden.")
             except CaptureError:

@@ -330,6 +330,9 @@ class MainWindow(QMainWindow):
                 break
         if refresh_stats:
             self.pages[1].mark_dirty()
+        if self.isMinimized() or not self.isVisible():
+            self._status_key = None                 # nach dem Wiederherstellen alles neu zeichnen
+            return                                  # minimiert: nichts zeichnen (spart CPU)
 
         st = self.engine.state
         key = "paused" if (st.running and st.paused) else ("on" if st.running else "off")

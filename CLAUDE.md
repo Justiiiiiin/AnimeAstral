@@ -63,8 +63,16 @@ Wichtige Entwurfsentscheidungen:
   „geschätzt“, Anzeige mit `~`) fließen nicht ein.
 - **Wellenzähler-Suchbereich ist groß** (Standard obere Mitte), das Programm findet den Zähler selbst. Frühere enge Bereiche
   funktionierten im Fenstermodus (Titelleiste) nicht.
-- **Performance ist Absicht:** kein OCR ohne Bildänderung, Zwischenspeicher, adaptiver Takt, Tesseract mit einem Thread,
-  niedrige Prozesspriorität. Leerlauf-Last in Messungen etwa 1–4 % eines Kerns. Nicht verschlechtern.
+- **Performance ist Absicht** (Ziel: auch schwache PCs): kein OCR ohne Bildänderung, Zwischenspeicher, adaptiver Takt,
+  niedrige Prozesspriorität. Gemessen 06.10.2026 mit echtem Roblox (Raid läuft): **~1,6 % eines Kerns, ~120 MB privat**
+  (vorher 6,6 % + Tesseract-Prozesse, 706 MB). Die Hebel – nicht zurückbauen:
+  - WGC mit `minimum_update_interval` (halber „heißer“ Takt): ungedrosselt liefert Windows bis 60 Bilder/s, die Bibliothek
+    kopiert jedes in den RAM (~7 % CPU allein dafür).
+  - Tesseract **direkt über `libtesseract`** (ctypes, `ocr._TessLib`), Modell bleibt geladen: ~5 statt ~65 ms je Lesung,
+    keine Prozessstarts. Fallback `tesseract.exe` über pytesseract, falls die DLL nicht ladbar ist.
+  - `astral_monitor/__init__.py` setzt `OPENBLAS_NUM_THREADS=1` usw. **vor** dem numpy-Import (OpenBLAS legt sonst je Kern
+    Puffer an: 257 statt 32 MB), `cv2.setNumThreads(1)`.
+  - Oberfläche zeichnet nicht, solange das Fenster minimiert ist.
 - **Raid-Statistik je Raid oder gesamt** (Auswahlfeld „Alle Raids (gesamt)“). Der Eigentümer will **keine vielen
   Einzelprofile**, nur je gespieltem Raid einen Eintrag mit Referenzbildern.
 - **Zeitangaben:** Die Engine nutzt `time.monotonic()` für Takt/Dauer; in Tests wird die Uhr teils künstlich gesetzt.
@@ -102,8 +110,7 @@ Stand 06.10.2026 (Claude Code unter Windows): Punkte 1, 3 und 5 erledigt, 2 und 
    Windows 11 25H2 aber ignoriert). Kein Code-Fehler; Windows erlaubt das Ausblenden nur per Datenschutz-Einstellung.
    Rahmen ist nur optisch, nicht in den Bildern.
 3. ~~**GitHub-Bau**~~ – Lauf vom 05.10.2026 erfolgreich, Release `v0.5.0` mit Installer + `SHA256SUMS.txt`.
-4. **Installer:** Kompiliert und installiert (v0.5.0 läuft). Noch offen: echtes Update über die App auf eine neuere
-   Version inkl. `/relaunch=1`.
+4. ~~**Installer**~~ – Update 0.5.0 → 0.5.1 über die App inkl. automatischem Neustart erfolgreich (06.10.2026).
 5. ~~**Mitgeliefertes Tesseract**~~ – findet `tessdata` neben sich ohne `TESSDATA_PREFIX`, TSV-Ausgabe funktioniert.
 6. **Discord-Profilstatus (`presence.py`):** Jeder Nutzer trägt seine **eigene** Anwendungs-ID in den Einstellungen ein.
    **Keine persönlichen IDs/Nummern ins Repository oder in den Build** (Wunsch des Eigentümers; das Repo ist öffentlich und

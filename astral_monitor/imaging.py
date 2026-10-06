@@ -6,6 +6,8 @@ import numpy as np
 
 from .settings import Roi
 
+cv2.setNumThreads(1)        # kleine Ausschnitte: Mehrkern-Verteilung kostet mehr als sie bringt
+
 PAD = 12  # Rand um OCR-Bilder (Pixel, nach Skalierung)
 
 
