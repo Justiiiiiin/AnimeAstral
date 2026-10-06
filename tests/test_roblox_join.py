@@ -44,6 +44,16 @@ class JoinTests(unittest.TestCase):
 
 
 class FavoriteTests(unittest.TestCase):
+    def test_share_code_roundtrip(self):
+        from astral_monitor.roblox_join import parse_share_code, share_code
+        link = "https://www.roblox.com/share?code=0123456789abcdef0123456789abcdef&type=Server"
+        code = share_code("Server von Max ✨", link)
+        self.assertTrue(code.startswith("astral-server:"))
+        self.assertEqual(parse_share_code(f"  {code}\n"), ("Server von Max ✨", link))
+        self.assertIsNone(parse_share_code(link))                                  # normaler Link: kein Code
+        self.assertIsNone(parse_share_code("astral-server:kaputt!!"))
+        self.assertIsNone(parse_share_code(share_code("X", "https://evil.example/share?code=1&type=Server")))
+
     def test_migration_and_cleaning(self):
         from astral_monitor.settings import Settings, clean_favorites
         link = "https://www.roblox.com/share?code=0123456789abcdef0123456789abcdef&type=Server"

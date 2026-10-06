@@ -36,8 +36,9 @@ class ServerDialog(QDialog):
         root.addLayout(grid)
         self.state = label("", "small", wrap=True)
         root.addWidget(self.state)
-        root.addWidget(label(tr("Teilen-Link aus Roblox („Teilen“ → Link kopieren) oder klassischer Link mit "
-                                "„privateServerLinkCode“. Der Link bleibt nur auf diesem PC."), "small", wrap=True))
+        root.addWidget(label(tr("Teilen-Link aus Roblox („Teilen“ → Link kopieren), klassischer Link mit "
+                                "„privateServerLinkCode“ oder ein Server-Code von Freunden. Der Link bleibt nur auf "
+                                "diesem PC."), "small", wrap=True))
         row = QHBoxLayout()
         row.addStretch(1)
         cancel = QPushButton(tr("Abbrechen"))
@@ -50,6 +51,7 @@ class ServerDialog(QDialog):
         row.addWidget(self.ok)
         root.addLayout(row)
         self.name.textChanged.connect(self._check)
+        self.link.textChanged.connect(self._from_code)
         self.link.textChanged.connect(self._check)
         self._check()
         (self.link if name else self.name).setFocus()
@@ -63,6 +65,16 @@ class ServerDialog(QDialog):
         if not roblox_join.deep_link(self.link.text()):
             return roblox_join.explain(self.link.text())
         return None
+
+    def _from_code(self, text: str) -> None:
+        """Geteilten Code eingefügt: Name und Link übernehmen (Name nur, wenn noch leer)."""
+        shared = roblox_join.parse_share_code(text)
+        if not shared:
+            return
+        name, link = shared
+        if not self.name.text().strip():
+            self.name.setText(name)
+        self.link.setText(link)
 
     def _check(self) -> None:
         problem = self._problem()

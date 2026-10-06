@@ -598,10 +598,13 @@ EN: dict[str, str] = {
     "Diesen Namen gibt es schon.": "This name already exists.",
     "Name": "Name",
     "Link": "Link",
-    "Teilen-Link aus Roblox („Teilen“ → Link kopieren) oder klassischer Link mit „privateServerLinkCode“. Der Link "
-    "bleibt nur auf diesem PC.":
-        "Share link from Roblox (“Share” → copy link) or a classic link with “privateServerLinkCode”. The link stays "
-        "on this PC only.",
+    "Teilen-Link aus Roblox („Teilen“ → Link kopieren), klassischer Link mit „privateServerLinkCode“ oder ein "
+    "Server-Code von Freunden. Der Link bleibt nur auf diesem PC.":
+        "Share link from Roblox (“Share” → copy link), a classic link with “privateServerLinkCode” or a server code "
+        "from friends. The link stays on this PC only.",
+    "Code zum Teilen kopieren": "Copy code to share",
+    "Code kopiert – Freunde fügen ihn unter „Server hinzufügen“ als Link ein. Wer ihn hat, kann beitreten.":
+        "Code copied – friends paste it as the link under “Add server”. Anyone who has it can join.",
     # Statistik vereinfacht (0.6.5)
     "Dauer-Werte nutzen nur gemessene Zeiten; geschätzte (mit ~) fließen nicht ein.":
         "Durations only use measured times; estimates (marked ~) are not included.",

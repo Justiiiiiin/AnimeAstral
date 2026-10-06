@@ -90,3 +90,34 @@ def join(text: str) -> tuple[bool, str]:
     except OSError as exc:
         return False, tr("Roblox konnte nicht gestartet werden ({error}). Ist Roblox installiert?", error=exc)
     return True, tr("Roblox wird gestartet und tritt dem privaten Server bei …")
+
+
+# ------------------------------------------------------------------ Favoriten teilen
+SHARE_PREFIX = "astral-server:"
+
+
+def share_code(name: str, link: str) -> str:
+    """Ein Favorit als eine Zeile zum Weitergeben (Name + Link). Kein Geheimnis – wer den Code hat, kann beitreten."""
+    import base64
+    import json
+    raw = json.dumps({"n": name, "l": link}, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+    return SHARE_PREFIX + base64.urlsafe_b64encode(raw).decode("ascii").rstrip("=")
+
+
+def parse_share_code(text: str) -> Optional[tuple[str, str]]:
+    """(Name, Link) aus einem geteilten Code; None = kein gültiger Code."""
+    import base64
+    import binascii
+    import json
+    text = (text or "").strip()
+    if not text.lower().startswith(SHARE_PREFIX):
+        return None
+    body = text[len(SHARE_PREFIX):].strip()
+    try:
+        data = json.loads(base64.urlsafe_b64decode(body + "=" * (-len(body) % 4)).decode("utf-8"))
+    except (binascii.Error, ValueError, UnicodeDecodeError):
+        return None
+    if not isinstance(data, dict):
+        return None
+    name, link = " ".join(str(data.get("n", "")).split())[:40], str(data.get("l", "")).strip()
+    return (name, link) if name and deep_link(link) else None

@@ -425,9 +425,20 @@ class SettingsPage(QWidget):
         menu = QMenu(self)
         menu.addAction(tr("Beitreten"), self._join_selected)
         menu.addAction(tr("Ändern …"), self._edit_server)
+        menu.addAction(tr("Code zum Teilen kopieren"), self._share_server)
         menu.addSeparator()
         menu.addAction(tr("Löschen"), self._delete_server)
         menu.exec(self.servers.viewport().mapToGlobal(pos))
+
+    def _share_server(self) -> None:
+        from PySide6.QtWidgets import QApplication
+        i = self._selected()
+        if i < 0:
+            return
+        fav = self.main.engine.settings.server_favorites[i]
+        QApplication.clipboard().setText(roblox_join.share_code(fav["name"], fav["link"]))
+        self.main.show_toast(tr("Code kopiert – Freunde fügen ihn unter „Server hinzufügen“ als Link ein. Wer ihn "
+                                "hat, kann beitreten."))
 
     def _versions(self) -> None:
         from .versions_dialog import VersionsDialog
