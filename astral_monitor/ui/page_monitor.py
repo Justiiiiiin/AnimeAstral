@@ -13,7 +13,7 @@ from ..i18n import dec, tr
 from . import theme
 from .widgets import Card, ComboBox, QuestRow, StatCard, bgr_to_pixmap, label, smooth
 
-LEVEL_COLORS = {"ok": "#3DD6B5", "warn": "#F5A524", "error": "#FF9A9A", "info": "#E6EAF0"}
+LEVEL_TOKENS = {"ok": "accent", "warn": "warn", "error": "danger", "info": "info"}
 
 
 class MonitorPage(QWidget):
@@ -146,6 +146,13 @@ class MonitorPage(QWidget):
             return
         self.main.select_raid(name)
 
+    def recolor(self) -> None:
+        """Nach Design-/Farbwechsel: Ereignisse in den neuen Farben."""
+        for i in range(self.events.count()):
+            item = self.events.item(i)
+            token = LEVEL_TOKENS.get(item.data(Qt.ItemDataRole.UserRole) or "info", "info")
+            item.setForeground(QColor(theme.color(token)))
+
     def reload_raids(self) -> None:
         """Auswahlliste neu füllen (nach Anlegen/Umbenennen/Löschen) und den gewählten Raid markieren."""
         current = self.engine.settings.current_raid
@@ -164,7 +171,8 @@ class MonitorPage(QWidget):
     def add_event(self, data: dict) -> None:
         stamp = time.strftime("%H:%M:%S", time.localtime(data.get("ts", time.time())))
         item = QListWidgetItem(f"{stamp}   {data['text']}")
-        item.setForeground(QColor(LEVEL_COLORS.get(data.get("level", "info"), "#E6EAF0")))
+        item.setData(Qt.ItemDataRole.UserRole, data.get("level", "info"))
+        item.setForeground(QColor(theme.color(LEVEL_TOKENS.get(data.get("level", "info"), "info"))))
         self.events.insertItem(0, item)
         self.events_empty.setVisible(False)
         while self.events.count() > 200:

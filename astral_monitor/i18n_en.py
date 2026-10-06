@@ -686,4 +686,20 @@ EN: dict[str, str] = {
     "insgesamt":
         "Avg. {dur} per attempt  ·  {spw} per wave  ·  {aph} attempts/h  ·  {done}× to the end  ·  {all} attempts "
         "in total",
+    # Design „Astral“, Darstellung (0.6.5)
+    "Darstellung": "Appearance",
+    "Eigener Wert von {min} bis {max} %": "Custom value from {min} to {max} %",
+    "Zusätzlich an die Fenstergröße anpassen": "Also adapt to the window size",
+    "{name} (seit Version {version})": "{name} (since version {version})",
+    "Design": "Design",
+    "Dunkel": "Dark",
+    "Hell": "Light",
+    "Wie Windows": "Like Windows",
+    "Farbschema": "Color scheme",
+    "UI-Größe": "UI size",
+    "Kleiner = mehr pro Seite sichtbar. Änderungen gelten sofort; ältere Designs bleiben hier auswählbar.":
+        "Smaller = more visible per page. Changes apply immediately; older designs stay selectable here.",
+    "Das Design „{name}“ gibt es nur dunkel.": "The “{name}” design is only available in dark.",
+    "Astral": "Astral",
+    "Klassisch": "Classic",
 }

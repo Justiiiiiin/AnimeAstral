@@ -1,141 +1,370 @@
-"""Dunkles Theme (QSS)."""
+"""Designs (QSS) mit Farbschemata, Skalierung und Symbolen.
+
+Designs sind wählbar (Einstellungen → Darstellung) und tragen die Version, mit der sie eingeführt wurden. Alte Designs
+bleiben erhalten; ein neues Design = neuer Eintrag in DESIGNS + Vorlage + Paletten. Farben stehen als @token in den
+Vorlagen und kommen aus der Palette – Code, der selbst zeichnet, holt sie über color("token")."""
 from __future__ import annotations
 
 import re
 import weakref
+from typing import Callable
 
-from PySide6.QtGui import QColor, QFont, QPalette
+from PySide6.QtCore import QPointF, QRectF, Qt
+from PySide6.QtGui import QColor, QFont, QIcon, QPainter, QPalette, QPixmap, QPolygonF
 from PySide6.QtWidgets import QApplication
 
-BG = "#0F1419"
-SIDEBAR = "#0B0F14"
-CARD = "#151B23"
-BORDER = "#222B36"
-TEXT = "#E6EAF0"
-MUTED = "#8B97A8"
-ACCENT = "#3DD6B5"
-WARN = "#F5A524"
-DANGER = "#FF9A9A"
-OK_BG = "#12201E"
-OK_BORDER = "#1F4A42"
+from ..i18n import N_
 
-STYLE = f"""
-QWidget {{ background: {BG}; color: {TEXT}; font-family: "Segoe UI"; font-size: 10pt; }}
-QMainWindow, QStackedWidget {{ background: {BG}; }}
-QFrame#sidebar {{ background: {SIDEBAR}; border-right: 1px solid #1E2630; }}
-QFrame#topbar {{ background: {SIDEBAR}; border-bottom: 1px solid #1E2630; }}
-QFrame#topbar QWidget {{ background: transparent; }}
-QFrame#topbar QPushButton#slim {{ background: #18212B; min-height: 28px; padding: 0 12px; border-radius: 7px; }}
-QFrame#topbar QPushButton#slim:hover {{ background: #1E2A37; }}
-QFrame#topbar QToolButton#slim {{ background: #18212B; min-height: 28px; padding: 0 30px 0 12px; border-radius: 7px; }}
-QFrame#topbar QToolButton#slim:hover {{ background: #1E2A37; }}
-QFrame#topbar QToolButton#slim::menu-button {{ border: none; border-left: 1px solid #2B3644; width: 22px; }}
-QFrame#topbar QToolButton#slim::menu-arrow {{ image: url("{{ARROW}}"); width: 9px; height: 6px; }}
-QFrame#sidebar QWidget {{ background: transparent; }}
-QFrame#card {{ background: {CARD}; border: 1px solid {BORDER}; border-radius: 10px; }}
-QFrame#card QWidget {{ background: transparent; }}
-QFrame#statusbox {{ background: {OK_BG}; border: 1px solid {OK_BORDER}; border-radius: 8px; }}
-QFrame#statusbox[state="off"] {{ background: {CARD}; border: 1px solid {BORDER}; }}
-QLabel#h1 {{ font-size: 17pt; font-weight: 600; }}
-QLabel#h2 {{ font-size: 11pt; font-weight: 600; }}
-QLabel#muted {{ color: {MUTED}; }}
-QLabel#small {{ color: {MUTED}; font-size: 9pt; }}
-QLabel#kpi {{ font-family: Consolas; font-size: 20pt; font-weight: 600; }}
-QLabel#wave {{ font-family: Consolas; font-size: 34pt; font-weight: 600; }}
-QLabel#preview {{ background: {SIDEBAR}; border: 1px solid {BORDER}; border-radius: 8px; color: #5B6676;
-  padding: 8px; }}
-QLabel#good {{ color: {ACCENT}; }}
-QLabel#bad {{ color: {DANGER}; }}
-QLabel#warn {{ color: {WARN}; }}
-QLabel#chip {{ background: #18212B; border: 1px solid #2B3644; border-radius: 12px; padding: 5px 14px; color: {MUTED}; }}
-QLabel#chip[state="ok"] {{ background: {OK_BG}; border: 1px solid {OK_BORDER}; color: {ACCENT}; }}
-QLabel#chip[state="bad"] {{ background: #2A1519; border: 1px solid #6B3038; color: {DANGER}; }}
-QLabel#stepdot {{ background: #26303C; border-radius: 5px; min-width: 10px; max-width: 10px; min-height: 10px; max-height: 10px; }}
-QLabel#stepdot[state="active"] {{ background: {ACCENT}; min-width: 28px; max-width: 28px; border-radius: 5px; }}
-QLabel#stepdot[state="done"] {{ background: #2B6B60; }}
-QLabel#hero {{ font-size: 24pt; font-weight: 600; }}
-QLabel#section {{ color: #6F7D90; font-size: 8.5pt; font-weight: 700; padding-top: 6px; }}
-QLabel#empty {{ color: #5B6676; }}
-QFrame#savebar {{ background: {SIDEBAR}; border-top: 1px solid #1E2630; }}
-QFrame#savebar QWidget {{ background: transparent; }}
-QFrame#savebar QPushButton#primary {{ background: {ACCENT}; }}
-QFrame#savebar QPushButton#primary:hover {{ background: #52E0C1; }}
-QPushButton {{ background: #18212B; border: 1px solid #2B3644; border-radius: 8px;
-  padding: 0 18px; min-height: 40px; font-weight: 500; }}
-QPushButton:hover {{ background: #1E2A37; }}
-QPushButton:disabled {{ color: #5B6676; }}
-QPushButton#primary {{ background: {ACCENT}; color: #06201A; border: 1px solid {ACCENT}; font-weight: 600; }}
-QPushButton#primary:hover {{ background: #52E0C1; }}
-QPushButton#danger {{ background: #2A1519; color: {DANGER}; border: 1px solid #6B3038; font-weight: 600; }}
-QPushButton#danger:hover {{ background: #351B20; }}
-QFrame#card QPushButton {{ background: #18212B; }}
-QFrame#card QPushButton:hover {{ background: #1E2A37; }}
-QFrame#card QPushButton#primary {{ background: {ACCENT}; }}
-QFrame#card QPushButton#primary:hover {{ background: #52E0C1; }}
-QFrame#card QPushButton#danger {{ background: #2A1519; }}
-QFrame#card QPushButton#danger:hover {{ background: #351B20; }}
-QFrame#card QPushButton#nav {{ background: transparent; }}
-QFrame#card QPushButton#nav:hover {{ background: #121A22; }}
-QFrame#card QPushButton#nav:checked {{ background: #18212B; }}
-QPushButton#nav {{ background: transparent; border: none; text-align: left; padding: 0 14px;
-  color: {MUTED}; min-height: 42px; border-radius: 8px; }}
-QPushButton#nav:hover {{ background: #121A22; }}
-QPushButton#nav:checked {{ background: #18212B; color: {TEXT}; }}
-QLineEdit, QSpinBox, QDoubleSpinBox, QComboBox, QPlainTextEdit, QTextBrowser {{ background: {SIDEBAR};
-  border: 1px solid #2B3644; border-radius: 8px; padding: 6px 10px; min-height: 28px;
-  selection-background-color: #25405A; }}
-QLineEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus, QComboBox:focus {{ border: 1px solid {ACCENT}; }}
-QLineEdit:disabled, QSpinBox:disabled, QDoubleSpinBox:disabled, QCheckBox:disabled, QLabel:disabled {{ color: #5B6676; }}
-QCheckBox::indicator:disabled {{ background: #10161D; border: 1px solid #222B36; }}
-QComboBox {{ padding-right: 28px; }}
-QComboBox::drop-down {{ subcontrol-origin: padding; subcontrol-position: center right; width: 26px; border: none;
-  background: transparent; }}
-QComboBox::down-arrow {{ image: url("{{ARROW}}"); width: 10px; height: 6px; }}
-QComboBox QAbstractItemView {{ background: {CARD}; border: 1px solid #2B3644; selection-background-color: #25405A; }}
-QCheckBox {{ spacing: 8px; }}
-QCheckBox::indicator {{ width: 18px; height: 18px; border-radius: 4px; border: 1px solid #3A4656; background: {SIDEBAR}; }}
-QCheckBox::indicator:checked {{ background: {ACCENT}; border: 1px solid {ACCENT}; }}
-QProgressBar {{ background: #1E2630; border: none; border-radius: 4px; max-height: 8px; min-height: 8px; text-align: center; color: transparent; }}
-QProgressBar::chunk {{ background: {ACCENT}; border-radius: 4px; }}
-QTableWidget {{ background: transparent; border: none; gridline-color: transparent; }}
-QTableWidget::item {{ padding: 6px 4px; border-bottom: 1px solid #1E2630; }}
-QHeaderView::section {{ background: transparent; color: {MUTED}; border: none; border-bottom: 1px solid {BORDER};
-  border-right: 1px solid #1B232D; padding: 8px 10px; font-weight: 500; }}
-QHeaderView::section:hover {{ color: {TEXT}; background: #18212B; }}
-QTableWidget::item {{ padding: 4px 10px; }}
-QListWidget {{ background: transparent; border: none; outline: none; }}
-QListWidget::item {{ padding: 7px 4px; border-bottom: 1px solid #1E2630; }}
-QScrollArea {{ border: none; background: transparent; }}
-QScrollBar:vertical {{ background: transparent; width: 14px; margin: 4px 3px 4px 3px; }}
-QScrollBar:horizontal {{ background: transparent; height: 14px; margin: 3px 4px 3px 4px; }}
-QScrollBar::handle:vertical {{ background: #2B3644; border-radius: 4px; min-height: 44px; }}
-QScrollBar::handle:horizontal {{ background: #2B3644; border-radius: 4px; min-width: 44px; }}
-QScrollBar::handle:vertical:hover, QScrollBar::handle:horizontal:hover {{ background: #3D4D62; }}
-QScrollBar::handle:vertical:pressed, QScrollBar::handle:horizontal:pressed {{ background: {ACCENT}; }}
-QScrollBar::add-line, QScrollBar::sub-line {{ width: 0; height: 0; background: none; border: none; }}
-QScrollBar::add-page, QScrollBar::sub-page {{ background: none; }}
-QAbstractScrollArea::corner {{ background: transparent; }}
-QToolButton {{ background: #18212B; border: 1px solid #2B3644; border-radius: 8px; padding: 0 14px;
-  min-height: 40px; min-width: 40px; font-weight: 500; }}
-QToolButton:hover {{ background: #1E2A37; }}
-QToolButton::menu-indicator {{ image: none; width: 0; }}
-QMenu {{ background: {CARD}; border: 1px solid #2B3644; border-radius: 8px; padding: 6px; }}
-QMenu::item {{ padding: 8px 18px; border-radius: 6px; }}
-QMenu::item:selected {{ background: #25405A; }}
-QMenu::separator {{ height: 1px; background: {BORDER}; margin: 6px 4px; }}
-QToolTip {{ background: {CARD}; color: {TEXT}; border: 1px solid #2B3644; }}
-QDialog {{ background: {BG}; }}
+# ------------------------------------------------------------------ Paletten
+_CLASSIC_DARK = {
+    "bg": "#0F1419", "sidebar": "#0B0F14", "topbar": "#0B0F14", "card": "#151B23", "border": "#222B36",
+    "text": "#E6EAF0", "muted": "#8B97A8", "accent": "#3DD6B5", "accent2": "#3DD6B5", "accentHover": "#52E0C1",
+    "accent2Hover": "#52E0C1", "onAccent": "#06201A", "warn": "#F5A524", "danger": "#FF9A9A", "okBg": "#12201E",
+    "okBorder": "#1F4A42", "line": "#1E2630", "field": "#0B0F14", "control": "#18212B", "controlHover": "#1E2A37",
+    "controlBorder": "#2B3644", "checkBorder": "#3A4656", "navHover": "#121A22", "navActive": "#18212B",
+    "select": "#25405A", "dangerBg": "#2A1519", "dangerBorder": "#6B3038", "dangerHover": "#351B20",
+    "disabled": "#5B6676", "disabledBg": "#10161D", "section": "#6F7D90", "scroll": "#2B3644", "scrollHover": "#3D4D62",
+    "headerLine": "#1B232D", "stepdot": "#26303C", "stepDone": "#2B6B60", "bar": "#2B6B60", "barEmpty": "#1E2630",
+    "trackOff": "#2B3644", "knobOff": "#8B97A8", "knobOn": "#06201A", "info": "#E6EAF0",
+}
+_ASTRAL_DARK = {
+    "bg": "#0A0D13", "sidebar": "#0D1119", "topbar": "#0A0D13", "card": "#121722", "border": "#1C2331",
+    "text": "#ECEFF5", "muted": "#8A94A7", "accent": "#45E0BF", "accent2": "#7B8CFF", "accentHover": "#62EACB",
+    "accent2Hover": "#93A0FF", "onAccent": "#051B16", "warn": "#FFB547", "danger": "#FF8A8A", "okBg": "#0F1F1D",
+    "okBorder": "#1D4A41", "line": "#181E2A", "field": "#0D121B", "control": "#181F2C", "controlHover": "#202939",
+    "controlBorder": "#263043", "checkBorder": "#36425A", "navHover": "#141B27", "navActive": "#17263A",
+    "select": "#24365A", "dangerBg": "#2A1419", "dangerBorder": "#6B3038", "dangerHover": "#36191F",
+    "disabled": "#566175", "disabledBg": "#0F141D", "section": "#6C7891", "scroll": "#252E40", "scrollHover": "#36435C",
+    "headerLine": "#1A2130", "stepdot": "#232C3B", "stepDone": "#2A6E61", "bar": "#2A6E61", "barEmpty": "#1A2130",
+    "trackOff": "#283246", "knobOff": "#8A94A7", "knobOn": "#051B16", "info": "#ECEFF5",
+}
+_ASTRAL_LIGHT = {
+    "bg": "#F3F5F9", "sidebar": "#FFFFFF", "topbar": "#F3F5F9", "card": "#FFFFFF", "border": "#E1E6EE",
+    "text": "#151A23", "muted": "#5E6879", "accent": "#0EA585", "accent2": "#5566F2", "accentHover": "#11B793",
+    "accent2Hover": "#6575FF", "onAccent": "#FFFFFF", "warn": "#B26A00", "danger": "#C9302C", "okBg": "#E7F7F2",
+    "okBorder": "#A6DDCF", "line": "#E9EDF3", "field": "#F8FAFC", "control": "#EEF1F6", "controlHover": "#E3E8F0",
+    "controlBorder": "#D4DAE4", "checkBorder": "#B9C2D0", "navHover": "#EEF2F7", "navActive": "#E3F4EF",
+    "select": "#CDEBE3", "dangerBg": "#FDECEC", "dangerBorder": "#F0B6B6", "dangerHover": "#FADADA",
+    "disabled": "#A2ABB9", "disabledBg": "#F0F2F6", "section": "#7A8496", "scroll": "#CDD4DF", "scrollHover": "#B4BDCB",
+    "headerLine": "#E6EAF1", "stepdot": "#D8DEE8", "stepDone": "#8FD3C3", "bar": "#9AD9CA", "barEmpty": "#E6EAF0",
+    "trackOff": "#CDD3DD", "knobOff": "#FFFFFF", "knobOn": "#FFFFFF", "info": "#151A23",
+}
+
+# ------------------------------------------------------------------ Vorlagen
+_CLASSIC = """
+QWidget { background: @bg; color: @text; font-family: @font; font-size: 10pt; }
+QMainWindow, QStackedWidget { background: @bg; }
+QFrame#sidebar { background: @sidebar; border-right: 1px solid @line; }
+QFrame#topbar { background: @topbar; border-bottom: 1px solid @line; }
+QFrame#topbar QWidget { background: transparent; }
+QFrame#topbar QToolButton#slim { background: @control; min-height: 28px; padding: 0 30px 0 12px; border-radius: 7px; }
+QFrame#topbar QToolButton#slim:hover { background: @controlHover; }
+QFrame#topbar QToolButton#slim::menu-button { border: none; border-left: 1px solid @controlBorder; width: 22px; }
+QFrame#topbar QToolButton#slim::menu-arrow { image: url("@arrow"); width: 9px; height: 6px; }
+QFrame#sidebar QWidget { background: transparent; }
+QFrame#card { background: @card; border: 1px solid @border; border-radius: 10px; }
+QFrame#card QWidget { background: transparent; }
+QFrame#statusbox { background: @okBg; border: 1px solid @okBorder; border-radius: 8px; }
+QFrame#statusbox[state="off"] { background: @card; border: 1px solid @border; }
+QLabel#h1 { font-size: 17pt; font-weight: 600; }
+QLabel#h2 { font-size: 11pt; font-weight: 600; }
+QLabel#brand { font-size: 11pt; font-weight: 600; }
+QLabel#muted { color: @muted; }
+QLabel#small { color: @muted; font-size: 9pt; }
+QLabel#kpi { font-family: Consolas; font-size: 20pt; font-weight: 600; }
+QLabel#wave { font-family: Consolas; font-size: 34pt; font-weight: 600; }
+QLabel#preview { background: @sidebar; border: 1px solid @border; border-radius: 8px; color: @disabled; padding: 8px; }
+QLabel#good { color: @accent; }
+QLabel#bad { color: @danger; }
+QLabel#warn { color: @warn; }
+QLabel#chip { background: @control; border: 1px solid @controlBorder; border-radius: 12px; padding: 5px 14px; color: @muted; }
+QLabel#chip[state="ok"] { background: @okBg; border: 1px solid @okBorder; color: @accent; }
+QLabel#chip[state="bad"] { background: @dangerBg; border: 1px solid @dangerBorder; color: @danger; }
+QLabel#stepdot { background: @stepdot; border-radius: 5px; min-width: 10px; max-width: 10px; min-height: 10px; max-height: 10px; }
+QLabel#stepdot[state="active"] { background: @accent; min-width: 28px; max-width: 28px; border-radius: 5px; }
+QLabel#stepdot[state="done"] { background: @stepDone; }
+QLabel#hero { font-size: 24pt; font-weight: 600; }
+QLabel#section { color: @section; font-size: 8.5pt; font-weight: 700; padding-top: 6px; }
+QLabel#empty { color: @disabled; }
+QFrame#savebar { background: @sidebar; border-top: 1px solid @line; }
+QFrame#savebar QWidget { background: transparent; }
+QFrame#savebar QPushButton#primary { background: @accent; }
+QFrame#savebar QPushButton#primary:hover { background: @accentHover; }
+QPushButton { background: @control; border: 1px solid @controlBorder; border-radius: 8px;
+  padding: 0 18px; min-height: 40px; font-weight: 500; }
+QPushButton:hover { background: @controlHover; }
+QPushButton:disabled { color: @disabled; }
+QPushButton#primary { background: @accent; color: @onAccent; border: 1px solid @accent; font-weight: 600; }
+QPushButton#primary:hover { background: @accentHover; }
+QPushButton#primary:disabled { background: @control; color: @disabled; border: 1px solid @controlBorder; }
+QPushButton#danger { background: @dangerBg; color: @danger; border: 1px solid @dangerBorder; font-weight: 600; }
+QPushButton#danger:hover { background: @dangerHover; }
+QPushButton#chipbtn { min-height: 30px; padding: 0 12px; border-radius: 15px; }
+QPushButton#chipbtn:checked { background: @navActive; border: 1px solid @accent; color: @accent; }
+QFrame#card QPushButton { background: @control; }
+QFrame#card QPushButton:hover { background: @controlHover; }
+QFrame#card QPushButton#primary { background: @accent; }
+QFrame#card QPushButton#primary:hover { background: @accentHover; }
+QFrame#card QPushButton#danger { background: @dangerBg; }
+QFrame#card QPushButton#danger:hover { background: @dangerHover; }
+QFrame#card QPushButton#nav, QFrame#card QPushButton#tab { background: transparent; }
+QFrame#card QPushButton#nav:hover, QFrame#card QPushButton#tab:hover { background: @navHover; }
+QFrame#card QPushButton#nav:checked, QFrame#card QPushButton#tab:checked { background: @navActive; }
+QFrame#card QPushButton#chipbtn:checked { background: @navActive; }
+QPushButton#nav, QPushButton#tab { background: transparent; border: none; text-align: left; padding: 0 14px;
+  color: @muted; min-height: 42px; border-radius: 8px; }
+QPushButton#nav:hover, QPushButton#tab:hover { background: @navHover; }
+QPushButton#nav:checked, QPushButton#tab:checked { background: @navActive; color: @text; }
+QToolButton#gear { background: transparent; border: none; border-radius: 8px; min-height: 40px; min-width: 40px; }
+QToolButton#gear:hover { background: @navHover; }
+QToolButton#gear:checked { background: @navActive; }
+QLineEdit, QSpinBox, QDoubleSpinBox, QComboBox, QPlainTextEdit, QTextBrowser { background: @field;
+  border: 1px solid @controlBorder; border-radius: 8px; padding: 6px 10px; min-height: 28px;
+  selection-background-color: @select; }
+QLineEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus, QComboBox:focus { border: 1px solid @accent; }
+QLineEdit:disabled, QSpinBox:disabled, QDoubleSpinBox:disabled, QComboBox:disabled, QCheckBox:disabled, QLabel:disabled { color: @disabled; }
+QCheckBox::indicator:disabled { background: @disabledBg; border: 1px solid @border; }
+QComboBox { padding-right: 28px; }
+QComboBox::drop-down { subcontrol-origin: padding; subcontrol-position: center right; width: 26px; border: none;
+  background: transparent; }
+QComboBox::down-arrow { image: url("@arrow"); width: 10px; height: 6px; }
+QComboBox QAbstractItemView { background: @card; border: 1px solid @controlBorder; selection-background-color: @select; }
+QCheckBox { spacing: 8px; }
+QCheckBox::indicator { width: 18px; height: 18px; border-radius: 4px; border: 1px solid @checkBorder; background: @field; }
+QCheckBox::indicator:checked { background: @accent; border: 1px solid @accent; }
+QProgressBar { background: @line; border: none; border-radius: 4px; max-height: 8px; min-height: 8px; text-align: center; color: transparent; }
+QProgressBar::chunk { background: @accent; border-radius: 4px; }
+QTableWidget { background: transparent; border: none; gridline-color: transparent; }
+QHeaderView::section { background: transparent; color: @muted; border: none; border-bottom: 1px solid @border;
+  border-right: 1px solid @headerLine; padding: 8px 10px; font-weight: 500; }
+QHeaderView::section:hover { color: @text; background: @control; }
+QTableWidget::item { padding: 4px 10px; border-bottom: 1px solid @line; }
+QTableWidget::item:selected { background: @select; color: @text; }
+QListWidget { background: transparent; border: none; outline: none; }
+QListWidget::item { padding: 7px 4px; border-bottom: 1px solid @line; }
+QListWidget::item:selected { background: @select; color: @text; border-radius: 6px; }
+QScrollArea { border: none; background: transparent; }
+QScrollBar:vertical { background: transparent; width: 14px; margin: 4px 3px 4px 3px; }
+QScrollBar:horizontal { background: transparent; height: 14px; margin: 3px 4px 3px 4px; }
+QScrollBar::handle:vertical { background: @scroll; border-radius: 4px; min-height: 44px; }
+QScrollBar::handle:horizontal { background: @scroll; border-radius: 4px; min-width: 44px; }
+QScrollBar::handle:vertical:hover, QScrollBar::handle:horizontal:hover { background: @scrollHover; }
+QScrollBar::handle:vertical:pressed, QScrollBar::handle:horizontal:pressed { background: @accent; }
+QScrollBar::add-line, QScrollBar::sub-line { width: 0; height: 0; background: none; border: none; }
+QScrollBar::add-page, QScrollBar::sub-page { background: none; }
+QAbstractScrollArea::corner { background: transparent; }
+QToolButton { background: @control; border: 1px solid @controlBorder; border-radius: 8px; padding: 0 14px;
+  min-height: 40px; min-width: 40px; font-weight: 500; }
+QToolButton:hover { background: @controlHover; }
+QToolButton::menu-indicator { image: none; width: 0; }
+QMenu { background: @card; border: 1px solid @controlBorder; border-radius: 8px; padding: 6px; }
+QMenu::item { padding: 8px 18px; border-radius: 6px; }
+QMenu::item:selected { background: @select; }
+QMenu::separator { height: 1px; background: @border; margin: 6px 4px; }
+QToolTip { background: @card; color: @text; border: 1px solid @controlBorder; }
+QDialog { background: @bg; }
 """
 
+# Astral (0.6.5): weichere Flächen, größere Rundungen, Verlauf auf Hauptknöpfen, Symbole in der Navigation,
+# Einstellungen als Zahnrad unten links, schmale Bildlaufleisten. Hell und Dunkel aus derselben Vorlage.
+_ASTRAL = """
+QWidget { background: @bg; color: @text; font-family: @font; font-size: 10pt; }
+QMainWindow, QStackedWidget { background: @bg; }
+QFrame#sidebar { background: @sidebar; border-right: 1px solid @line; }
+QFrame#topbar { background: @topbar; border-bottom: 1px solid @line; }
+QFrame#topbar QWidget, QFrame#sidebar QWidget { background: transparent; }
+QFrame#topbar QToolButton#slim { background: @control; border: 1px solid @controlBorder; min-height: 30px;
+  padding: 0 32px 0 14px; border-radius: 15px; font-weight: 600; }
+QFrame#topbar QToolButton#slim:hover { background: @controlHover; }
+QFrame#topbar QToolButton#slim::menu-button { border: none; border-left: 1px solid @controlBorder; width: 24px;
+  border-top-right-radius: 15px; border-bottom-right-radius: 15px; }
+QFrame#topbar QToolButton#slim::menu-button:hover { background: @controlHover; }
+QFrame#topbar QToolButton#slim::menu-arrow { image: url("@arrow"); width: 9px; height: 6px; }
+QFrame#card { background: @card; border: 1px solid @border; border-radius: 14px; }
+QFrame#card QWidget { background: transparent; }
+QFrame#statusbox { background: @okBg; border: 1px solid @okBorder; border-radius: 12px; }
+QFrame#statusbox[state="off"] { background: @card; border: 1px solid @border; }
+QLabel#h1 { font-size: 19pt; font-weight: 700; }
+QLabel#h2 { font-size: 11pt; font-weight: 600; }
+QLabel#brand { font-size: 12pt; font-weight: 700; color: @text; }
+QFrame#topbar QLabel#brandmark { background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 @accent, stop:1 @accent2);
+  border-radius: 7px; min-width: 14px; max-width: 14px; min-height: 14px; max-height: 14px; }
+QLabel#muted { color: @muted; }
+QLabel#small { color: @muted; font-size: 9pt; }
+QLabel#kpi { font-family: "Segoe UI Variable Display", "Segoe UI"; font-size: 21pt; font-weight: 700; }
+QLabel#wave { font-family: "Segoe UI Variable Display", "Segoe UI"; font-size: 38pt; font-weight: 700; }
+QLabel#preview { background: @field; border: 1px dashed @controlBorder; border-radius: 12px; color: @disabled;
+  padding: 10px; }
+QLabel#good { color: @accent; }
+QLabel#bad { color: @danger; }
+QLabel#warn { color: @warn; }
+QLabel#chip { background: @control; border: 1px solid @controlBorder; border-radius: 13px; padding: 5px 14px; color: @muted; }
+QLabel#chip[state="ok"] { background: @okBg; border: 1px solid @okBorder; color: @accent; }
+QLabel#chip[state="bad"] { background: @dangerBg; border: 1px solid @dangerBorder; color: @danger; }
+QLabel#stepdot { background: @stepdot; border-radius: 5px; min-width: 10px; max-width: 10px; min-height: 10px; max-height: 10px; }
+QLabel#stepdot[state="active"] { background: @accent; min-width: 28px; max-width: 28px; border-radius: 5px; }
+QLabel#stepdot[state="done"] { background: @stepDone; }
+QLabel#hero { font-size: 25pt; font-weight: 700; }
+QLabel#section { color: @section; font-size: 8.5pt; font-weight: 700; padding-top: 8px; }
+QLabel#empty { color: @disabled; }
+QFrame#savebar { background: @sidebar; border-top: 1px solid @line; }
+QFrame#savebar QWidget { background: transparent; }
+QPushButton { background: @control; border: 1px solid @controlBorder; border-radius: 10px;
+  padding: 0 18px; min-height: 38px; font-weight: 600; }
+QPushButton:hover { background: @controlHover; }
+QPushButton:pressed { background: @control; padding-top: 1px; }
+QPushButton:disabled { color: @disabled; }
+QPushButton#primary, QFrame#card QPushButton#primary, QFrame#savebar QPushButton#primary {
+  background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 @accent, stop:1 @accent2);
+  color: @onAccent; border: none; font-weight: 700; }
+QPushButton#primary:hover, QFrame#card QPushButton#primary:hover, QFrame#savebar QPushButton#primary:hover {
+  background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 @accentHover, stop:1 @accent2Hover); }
+QPushButton#primary:disabled, QFrame#card QPushButton#primary:disabled { background: @control; color: @disabled; }
+QPushButton#danger, QFrame#card QPushButton#danger { background: @dangerBg; color: @danger;
+  border: 1px solid @dangerBorder; font-weight: 700; }
+QPushButton#danger:hover, QFrame#card QPushButton#danger:hover { background: @dangerHover; }
+QFrame#card QPushButton { background: @control; }
+QFrame#card QPushButton:hover { background: @controlHover; }
+QPushButton#chipbtn { min-height: 30px; padding: 0 12px; border-radius: 15px; font-weight: 600; }
+QPushButton#chipbtn:checked, QFrame#card QPushButton#chipbtn:checked { background: @navActive;
+  border: 1px solid @accent; color: @accent; }
+QPushButton#nav { background: transparent; border: none; text-align: left; padding: 0 12px;
+  color: @muted; min-height: 40px; border-radius: 10px; font-weight: 600; }
+QPushButton#nav:hover { background: @navHover; color: @text; }
+QPushButton#nav:checked { background: @navActive; color: @text; }
+QPushButton#tab, QFrame#card QPushButton#tab { background: transparent; border: none; padding: 0 14px; color: @muted;
+  min-height: 32px; border-radius: 16px; font-weight: 600; }
+QPushButton#tab:hover, QFrame#card QPushButton#tab:hover { background: @navHover; color: @text; }
+QPushButton#tab:checked, QFrame#card QPushButton#tab:checked { background: @navActive; color: @accent; }
+QToolButton#gear { background: transparent; border: none; border-radius: 12px; min-height: 44px; min-width: 44px;
+  padding: 0; }
+QToolButton#gear:hover { background: @navHover; }
+QToolButton#gear:checked { background: @navActive; }
+QLineEdit, QSpinBox, QDoubleSpinBox, QComboBox, QPlainTextEdit, QTextBrowser { background: @field;
+  border: 1px solid @controlBorder; border-radius: 10px; padding: 6px 12px; min-height: 26px;
+  selection-background-color: @select; selection-color: @text; }
+QLineEdit:hover, QSpinBox:hover, QDoubleSpinBox:hover, QComboBox:hover { border: 1px solid @checkBorder; }
+QLineEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus, QComboBox:focus { border: 1px solid @accent; }
+QLineEdit:disabled, QSpinBox:disabled, QDoubleSpinBox:disabled, QComboBox:disabled, QCheckBox:disabled, QLabel:disabled { color: @disabled; }
+QCheckBox::indicator:disabled { background: @disabledBg; border: 1px solid @border; }
+QSpinBox::up-button, QSpinBox::down-button, QDoubleSpinBox::up-button, QDoubleSpinBox::down-button { width: 0; border: none; }
+QComboBox { padding-right: 30px; }
+QComboBox::drop-down { subcontrol-origin: padding; subcontrol-position: center right; width: 28px; border: none;
+  background: transparent; }
+QComboBox::down-arrow { image: url("@arrow"); width: 10px; height: 6px; }
+QComboBox QAbstractItemView { background: @card; border: 1px solid @controlBorder; border-radius: 10px; padding: 4px;
+  selection-background-color: @select; selection-color: @text; outline: none; }
+QCheckBox { spacing: 10px; }
+QCheckBox::indicator { width: 18px; height: 18px; border-radius: 6px; border: 1px solid @checkBorder; background: @field; }
+QCheckBox::indicator:hover { border: 1px solid @accent; }
+QCheckBox::indicator:checked { background: @accent; border: 1px solid @accent; image: url("@check"); }
+QProgressBar { background: @line; border: none; border-radius: 4px; max-height: 8px; min-height: 8px; text-align: center; color: transparent; }
+QProgressBar::chunk { background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 @accent, stop:1 @accent2); border-radius: 4px; }
+QTableWidget { background: transparent; border: none; gridline-color: transparent; }
+QHeaderView::section { background: transparent; color: @muted; border: none; border-bottom: 1px solid @border;
+  padding: 8px 10px; font-weight: 600; }
+QHeaderView::section:hover { color: @text; }
+QTableWidget::item { padding: 4px 10px; border-bottom: 1px solid @line; }
+QTableWidget::item:selected { background: @select; color: @text; }
+QListWidget { background: transparent; border: none; outline: none; }
+QListWidget::item { padding: 8px 6px; border-bottom: 1px solid @line; }
+QListWidget::item:hover { background: @navHover; border-radius: 8px; }
+QListWidget::item:selected { background: @navActive; color: @text; border-radius: 8px; }
+QScrollArea { border: none; background: transparent; }
+QScrollBar:vertical { background: transparent; width: 10px; margin: 6px 2px 6px 2px; }
+QScrollBar:horizontal { background: transparent; height: 10px; margin: 2px 6px 2px 6px; }
+QScrollBar::handle:vertical { background: @scroll; border-radius: 3px; min-height: 40px; }
+QScrollBar::handle:horizontal { background: @scroll; border-radius: 3px; min-width: 40px; }
+QScrollBar::handle:vertical:hover, QScrollBar::handle:horizontal:hover { background: @scrollHover; }
+QScrollBar::handle:vertical:pressed, QScrollBar::handle:horizontal:pressed { background: @accent; }
+QScrollBar::add-line, QScrollBar::sub-line { width: 0; height: 0; background: none; border: none; }
+QScrollBar::add-page, QScrollBar::sub-page { background: none; }
+QAbstractScrollArea::corner { background: transparent; }
+QToolButton { background: @control; border: 1px solid @controlBorder; border-radius: 10px; padding: 0 14px;
+  min-height: 38px; min-width: 38px; font-weight: 600; }
+QToolButton:hover { background: @controlHover; }
+QToolButton::menu-indicator { image: none; width: 0; }
+QMenu { background: @card; border: 1px solid @controlBorder; border-radius: 12px; padding: 6px; }
+QMenu::item { padding: 8px 20px; border-radius: 8px; }
+QMenu::item:selected { background: @navActive; }
+QMenu::separator { height: 1px; background: @border; margin: 6px 6px; }
+QMenu::indicator { width: 14px; height: 14px; }
+QToolTip { background: @card; color: @text; border: 1px solid @controlBorder; padding: 4px 6px; }
+QDialog { background: @bg; }
+"""
 
-# ------------------------------------------------------------------ Skalierung mit der Fenstergröße
-# Alles ist für 1180 × 800 entworfen (Faktor 1). Das Hauptfenster setzt den Faktor beim Größenändern (0,7–1,3); Schrift,
-# Abstände und Knopfhöhen im Stylesheet sowie per track() angemeldete feste Größen im Code werden umgerechnet.
+DESIGNS: dict[str, dict] = {
+    # Schlüssel: Anzeigename, eingeführt in Version, Vorlage, Paletten je Farbschema (fehlt eines: Dunkel)
+    "astral": {"name": N_("Astral"), "since": "0.6.5", "template": _ASTRAL, "icons": True, "gear": True,
+               "animate": True, "font": ["Segoe UI Variable Text", "Segoe UI"],
+               "palettes": {"dark": _ASTRAL_DARK, "light": _ASTRAL_LIGHT}},
+    "classic": {"name": N_("Klassisch"), "since": "0.5.0", "template": _CLASSIC, "icons": False, "gear": False,
+                "animate": False, "font": ["Segoe UI"], "palettes": {"dark": _CLASSIC_DARK}},
+}
+DEFAULT_DESIGN = "astral"
+MODES = ("dark", "light", "system")
+
+_design = DEFAULT_DESIGN
+_mode = "dark"
+_palette = _ASTRAL_DARK
+_listeners: list = []                          # Rückrufe bei Design-/Farbwechsel (schwache Referenzen)
+
+# Abwärtskompatibel für Code, der noch Konstanten liest (immer die aktuelle Palette über color() bevorzugen)
+ACCENT = _ASTRAL_DARK["accent"]
+
+
+def design() -> str:
+    return _design
+
+
+def design_info(key: str | None = None) -> dict:
+    return DESIGNS.get(key or _design, DESIGNS[DEFAULT_DESIGN])
+
+
+def has_mode(design_key: str, mode: str) -> bool:
+    return mode in design_info(design_key)["palettes"]
+
+
+def color(token: str) -> str:
+    return _palette.get(token, "#FF00FF")
+
+
+def is_dark() -> bool:
+    return QColor(_palette["bg"]).lightness() < 128
+
+
+def on_change(callback: Callable[[], None]) -> None:
+    """callback() nach jedem Design-/Farbwechsel (z. B. Symbole neu einfärben)."""
+    ref = weakref.WeakMethod(callback) if hasattr(callback, "__self__") else (lambda cb=callback: cb)
+    _listeners.append(ref)
+
+
+def _system_mode() -> str:
+    try:
+        hints = QApplication.styleHints()
+        return "light" if hints.colorScheme() == Qt.ColorScheme.Light else "dark"
+    except Exception:
+        return "dark"
+
+
+def _resolve(design_key: str, mode: str) -> tuple[str, dict]:
+    info = design_info(design_key)
+    effective = _system_mode() if mode == "system" else mode
+    palettes = info["palettes"]
+    return effective, palettes.get(effective, palettes["dark"])
+
+
+# ------------------------------------------------------------------ Skalierung
+# Entworfen für 1180 × 800 (Faktor 1). Faktor = Zoom (50–200 %, Einstellungen) × optional Anpassung an die
+# Fenstergröße (0,7–1,3). Schrift, Abstände und Knopfhöhen im Stylesheet sowie per track() angemeldete feste Größen im
+# Code werden umgerechnet.
 DESIGN_SIZE = (1180, 800)
-SCALE_MIN, SCALE_MAX = 0.7, 1.3
+SCALE_MIN, SCALE_MAX = 0.7, 1.3                # nur der Anteil „an Fenstergröße anpassen“
+ZOOM_MIN, ZOOM_MAX = 50, 200
 _scale = 1.0
-_tracked: list = []                             # (schwache Referenz, Funktion(objekt, faktor))
+_tracked: list = []                            # (schwache Referenz, Funktion(objekt, faktor))
 _SIZE_RE = re.compile(r"(\d+(?:\.\d+)?)(px|pt)")
+_TOKEN_RE = re.compile(r"@([A-Za-z][A-Za-z0-9]*)")
 
 
 def scale() -> float:
@@ -181,49 +410,81 @@ def track_fixed_height(widget, value: int) -> None:
     track(widget, lambda o, f: o.setFixedHeight(_s(value, f)))
 
 
-_arrow_path = ""
+def factor_for(width: int, height: int, zoom: int = 100, fit: bool = True) -> float:
+    """Gesamtfaktor: Zoom in Prozent × (Fensteranpassung 0,7–1,3, falls an); gerundet auf 0,05."""
+    fitted = min(SCALE_MAX, max(SCALE_MIN, min(width / DESIGN_SIZE[0], height / DESIGN_SIZE[1]))) if fit else 1.0
+    zoom = min(ZOOM_MAX, max(ZOOM_MIN, int(zoom)))
+    return max(0.35, round(fitted * zoom / 100 * 20) / 20)
 
 
-def _arrow() -> str:
-    """Kleiner Pfeil für Auswahllisten (Qt-Stylesheets brauchen dafür eine Bilddatei)."""
-    global _arrow_path
-    if _arrow_path:
-        return _arrow_path
+# ------------------------------------------------------------------ Bilder für das Stylesheet
+_images: dict[str, str] = {}
+
+
+def _image(kind: str, rgb: str) -> str:
+    """Kleine Hilfsbilder (Pfeil, Haken) in der Palettenfarbe – Qt-Stylesheets brauchen dafür Dateien."""
+    key = f"{kind}_{rgb.lstrip('#')}"
+    if key in _images:
+        return _images[key]
     import tempfile
     from pathlib import Path
 
-    from PySide6.QtCore import QPointF, Qt
-    from PySide6.QtGui import QPainter, QPixmap, QPolygonF
-    path = Path(tempfile.gettempdir()) / "anime_astral_arrow.png"
+    path = Path(tempfile.gettempdir()) / f"anime_astral_{key}.png"
     try:
-        pix = QPixmap(30, 18)
+        pix = QPixmap(32, 32 if kind == "check" else 18)
         pix.fill(Qt.GlobalColor.transparent)
         p = QPainter(pix)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
-        p.setPen(Qt.PenStyle.NoPen)
-        p.setBrush(QColor(MUTED))
-        p.drawPolygon(QPolygonF([QPointF(2, 3), QPointF(28, 3), QPointF(15, 16)]))
+        if kind == "arrow":
+            p.setPen(Qt.PenStyle.NoPen)
+            p.setBrush(QColor(rgb))
+            p.drawPolygon(QPolygonF([QPointF(2, 3), QPointF(30, 3), QPointF(16, 16)]))
+        else:
+            from PySide6.QtGui import QPen
+            p.setPen(QPen(QColor(rgb), 4.2, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
+            p.drawPolyline(QPolygonF([QPointF(7, 17), QPointF(13, 23), QPointF(25, 10)]))
         p.end()
         pix.save(str(path), "PNG")
-        _arrow_path = path.as_posix()
+        _images[key] = path.as_posix()
     except Exception:
-        _arrow_path = ""
-    return _arrow_path
+        _images[key] = ""
+    return _images[key]
 
 
 def style(factor: float) -> str:
+    info = design_info()
+    pal = dict(_palette)
+    pal["arrow"] = _image("arrow", pal["muted"])
+    pal["check"] = _image("check", pal["onAccent"])
+    pal["font"] = ", ".join(f'"{f}"' for f in info["font"])
+    text = _TOKEN_RE.sub(lambda m: pal.get(m.group(1), m.group(0)), info["template"])
+
     def repl(m: re.Match) -> str:
         value = float(m.group(1))
         if m.group(2) == "pt":
             return f"{value * factor:.1f}pt"
         return f"{max(1, round(value * factor)) if value else 0}px"
-    return _SIZE_RE.sub(repl, STYLE).replace("{ARROW}", _arrow())
+    return _SIZE_RE.sub(repl, text)
 
 
-def factor_for(width: int, height: int) -> float:
-    """Faktor für eine Fenstergröße: proportional, gerundet auf 0,05 (weniger Neuberechnungen)."""
-    raw = min(width / DESIGN_SIZE[0], height / DESIGN_SIZE[1])
-    return round(min(SCALE_MAX, max(SCALE_MIN, raw)) * 20) / 20
+def _font(factor: float) -> QFont:
+    font = QFont()
+    font.setFamilies(design_info()["font"])
+    font.setPointSizeF(10 * factor)
+    return font
+
+
+def _apply_palette(app: QApplication) -> None:
+    palette = app.palette()
+    for role, token in ((QPalette.ColorRole.Window, "bg"), (QPalette.ColorRole.WindowText, "text"),
+                        (QPalette.ColorRole.Base, "field"), (QPalette.ColorRole.Text, "text"),
+                        (QPalette.ColorRole.Button, "control"), (QPalette.ColorRole.ButtonText, "text"),
+                        (QPalette.ColorRole.Highlight, "select"), (QPalette.ColorRole.HighlightedText, "text"),
+                        (QPalette.ColorRole.Link, "accent"), (QPalette.ColorRole.LinkVisited, "accent"),
+                        (QPalette.ColorRole.ToolTipBase, "card"), (QPalette.ColorRole.ToolTipText, "text"),
+                        (QPalette.ColorRole.PlaceholderText, "disabled")):
+        palette.setColor(role, QColor(color(token)))
+    app.setPalette(palette)
 
 
 def set_scale(app: QApplication, factor: float) -> bool:
@@ -231,9 +492,7 @@ def set_scale(app: QApplication, factor: float) -> bool:
     if abs(factor - _scale) < 0.001:
         return False
     _scale = factor
-    font = QFont("Segoe UI")
-    font.setPointSizeF(10 * factor)
-    app.setFont(font)
+    app.setFont(_font(factor))
     app.setStyleSheet(style(factor))
     alive = []
     for ref, fn in _tracked:
@@ -249,12 +508,76 @@ def set_scale(app: QApplication, factor: float) -> bool:
     return True
 
 
-def apply(app: QApplication) -> None:
-    font = QFont("Segoe UI")
-    font.setPointSizeF(10 * _scale)
-    app.setFont(font)
-    palette = app.palette()                     # Links (z. B. Versionshinweise): Standardblau ist auf Dunkel kaum lesbar
-    palette.setColor(QPalette.ColorRole.Link, QColor(ACCENT))
-    palette.setColor(QPalette.ColorRole.LinkVisited, QColor(ACCENT))
-    app.setPalette(palette)
+def set_appearance(app: QApplication, design_key: str, mode: str) -> bool:
+    """Design und Farbschema wechseln (sofort, ohne Neustart). Rückgabe: geändert?"""
+    global _design, _mode, _palette, ACCENT
+    design_key = design_key if design_key in DESIGNS else DEFAULT_DESIGN
+    mode = mode if mode in MODES else "dark"
+    _effective, palette = _resolve(design_key, mode)
+    if design_key == _design and mode == _mode and palette is _palette:
+        return False
+    _design, _mode, _palette = design_key, mode, palette
+    ACCENT = palette["accent"]
+    app.setFont(_font(_scale))
+    _apply_palette(app)
     app.setStyleSheet(style(_scale))
+    alive = []
+    for ref in _listeners:
+        cb = ref()
+        if cb is None:
+            continue
+        try:
+            cb()
+            alive.append(ref)
+        except RuntimeError:
+            pass
+    _listeners[:] = alive
+    return True
+
+
+def apply(app: QApplication, design_key: str = DEFAULT_DESIGN, mode: str = "dark") -> None:
+    global _design, _mode, _palette, ACCENT
+    _design = design_key if design_key in DESIGNS else DEFAULT_DESIGN
+    _mode = mode if mode in MODES else "dark"
+    _effective, _palette = _resolve(_design, _mode)
+    ACCENT = _palette["accent"]
+    app.setFont(_font(_scale))
+    _apply_palette(app)
+    app.setStyleSheet(style(_scale))
+
+
+# ------------------------------------------------------------------ Symbole (Windows-Symbolschrift)
+ICON_FONTS = ("Segoe Fluent Icons", "Segoe MDL2 Assets")
+GLYPHS = {"monitor": "", "stats": "", "alerts": "", "raids": "", "detect": "",
+          "settings": ""}
+
+
+def glyph_icon(name: str, size: int = 18) -> QIcon:
+    """Symbol aus der Windows-Symbolschrift, normal in „muted“, aktiv/ausgewählt in „text“ bzw. „accent“."""
+    glyph = GLYPHS.get(name, "")
+    icon = QIcon()
+    if not glyph:
+        return icon
+    for state, token in ((QIcon.State.Off, "muted"), (QIcon.State.On, "accent")):
+        for mode in (QIcon.Mode.Normal, QIcon.Mode.Active, QIcon.Mode.Selected):
+            icon.addPixmap(_glyph_pixmap(glyph, color("text") if mode == QIcon.Mode.Active and state == QIcon.State.Off
+                                         else color(token), size), mode, state)
+    return icon
+
+
+def _glyph_pixmap(glyph: str, rgb: str, size: int) -> QPixmap:
+    ratio = 2.0                                     # scharf auch bei 150–200 % Windows-Skalierung
+    pix = QPixmap(int(size * ratio), int(size * ratio))
+    pix.setDevicePixelRatio(ratio)
+    pix.fill(Qt.GlobalColor.transparent)
+    p = QPainter(pix)
+    p.setRenderHint(QPainter.RenderHint.Antialiasing)
+    p.setRenderHint(QPainter.RenderHint.TextAntialiasing)
+    font = QFont()
+    font.setFamilies(list(ICON_FONTS))
+    font.setPixelSize(int(size * 0.9))
+    p.setFont(font)
+    p.setPen(QColor(rgb))
+    p.drawText(QRectF(0, 0, size, size), Qt.AlignmentFlag.AlignCenter, glyph)
+    p.end()
+    return pix

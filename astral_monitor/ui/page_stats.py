@@ -123,7 +123,7 @@ class StatsPage(QWidget):
         for i, text in enumerate((tr("Endwellen"), tr("Trend"), tr("Wellen pro Stunde"))):
             btn = QPushButton(text)
             btn.setCheckable(True)
-            btn.setObjectName("nav")
+            btn.setObjectName("tab")
             self.chart_group.addButton(btn, i)
             tabs.addWidget(btn)
         self.chart_group.button(0).setChecked(True)

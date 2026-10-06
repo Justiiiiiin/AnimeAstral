@@ -9,11 +9,12 @@ import threading
 import time
 from typing import Callable, Optional
 
-from PySide6.QtCore import QEvent, QLibraryInfo, QLockFile, QProcess, Qt, QTimer, QTranslator
+from PySide6.QtCore import (QEasingCurve, QEvent, QLibraryInfo, QLockFile, QProcess, QPropertyAnimation, QSize,
+                            Qt, QTimer, QTranslator)
 from PySide6.QtGui import QIcon
-from PySide6.QtWidgets import (QApplication, QButtonGroup, QFrame, QHBoxLayout, QMainWindow, QMenu,
-                               QMessageBox, QPushButton, QStackedWidget, QSystemTrayIcon, QToolButton, QVBoxLayout,
-                               QWidget)
+from PySide6.QtWidgets import (QApplication, QButtonGroup, QFrame, QGraphicsOpacityEffect, QHBoxLayout,
+                               QMainWindow, QMenu, QMessageBox, QPushButton, QSizePolicy, QStackedWidget,
+                               QSystemTrayIcon, QToolButton, QVBoxLayout, QWidget)
 
 from .. import app_paths, i18n, messages, roblox_join, winapi
 from ..i18n import tr
@@ -58,7 +59,12 @@ class MainWindow(QMainWindow):
         top = QHBoxLayout(topbar)
         theme.track_margins(top, 16, 8, 16, 8)
         theme.track_spacing(top, 10)
-        top.addWidget(label(tr("Anime Astral Monitor"), "h2"))
+        self.brandmark = label("", "brandmark")
+        top.addWidget(self.brandmark)
+        brand = label(tr("Anime Astral Monitor"), "brand")
+        brand.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)   # bei Platzmangel kürzen,
+        brand.setMinimumWidth(theme.px(40))                                    # nicht die Knöpfe
+        top.addWidget(brand, 1)
         top.addStretch(1)
         afk_label = label(tr("Anti-AFK"), "muted")
         afk_label.setToolTip(tr("Wechselt alle paar Minuten kurz zu Roblox, drückt einmal die Leertaste und wechselt "
@@ -117,19 +123,25 @@ class MainWindow(QMainWindow):
         names = [tr("Überwachung"), tr("Statistik"), tr("Meldungen"), tr("Raids"), tr("Erkennung"), tr("Einstellungen")]
         self.nav = QButtonGroup(self)
         self.nav.setExclusive(True)
+        self._nav_icons = ["monitor", "stats", "alerts", "raids", "detect", "settings"]
         for i, (name, page) in enumerate(zip(names, self.pages)):
             btn = QPushButton(name)
             btn.setObjectName("nav")
             btn.setCheckable(True)
+            btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            theme.track(btn, lambda o, f: o.setIconSize(QSize(round(18 * f), round(18 * f))))
             self.nav.addButton(btn, i)
             side.addWidget(btn)
             self.stack.addWidget(self._with_savebar(page) if getattr(page, "SAVES", False) else scroll_page(page))
         self.nav.button(0).setChecked(True)
-        self.nav.idClicked.connect(self.stack.setCurrentIndex)
+        self.nav.idClicked.connect(self._go)
+        self._fade = None
         side.addStretch(1)
 
         self.toast = label("", "small", wrap=True)
         side.addWidget(self.toast)
+        bottom = QHBoxLayout()
+        theme.track_spacing(bottom, 6)
         self.status_box = QFrame()
         self.status_box.setObjectName("statusbox")
         box = QVBoxLayout(self.status_box)
@@ -139,7 +151,16 @@ class MainWindow(QMainWindow):
         self.status_sub = label("", "small")
         box.addWidget(self.status_title)
         box.addWidget(self.status_sub)
-        side.addWidget(self.status_box)
+        bottom.addWidget(self.status_box, 1)
+        self.gear = QToolButton()                      # Design „Astral“: Einstellungen als Zahnrad unten links
+        self.gear.setObjectName("gear")
+        self.gear.setCheckable(True)
+        self.gear.setToolTip(tr("Einstellungen"))
+        self.gear.setCursor(Qt.CursorShape.PointingHandCursor)
+        theme.track(self.gear, lambda o, f: o.setIconSize(QSize(round(22 * f), round(22 * f))))
+        self.gear.clicked.connect(lambda: self.nav.button(5).click())
+        bottom.addWidget(self.gear, 0, Qt.AlignmentFlag.AlignBottom)
+        side.addLayout(bottom)
 
         root.addWidget(sidebar)
         root.addWidget(self.stack, 1)
@@ -148,6 +169,12 @@ class MainWindow(QMainWindow):
         for page in self.pages:
             page.load(engine.settings)
         self._update_join_btn()
+        theme.on_change(self._apply_design)
+        self._apply_design()
+        try:                                       # „Wie Windows“: Wechsel hell/dunkel sofort übernehmen
+            QApplication.styleHints().colorSchemeChanged.connect(lambda _s: self._follow_system())
+        except Exception:
+            pass
 
         self._hotkeys: Optional[HotkeyListener] = None
         self._hotkey_sig = None
@@ -382,11 +409,80 @@ class MainWindow(QMainWindow):
         self._scale_timer.start()
 
     def _apply_scale(self) -> None:
-        """Schrift, Abstände und feste Größen passend zur Fenstergröße (0,7–1,3 des Entwurfs 1180 × 800)."""
+        """Schrift, Abstände und feste Größen: UI-Größe (50–200 %) × optional Anpassung an die Fenstergröße."""
         if self.isMinimized():
             return
-        if theme.set_scale(QApplication.instance(), theme.factor_for(self.width(), self.height())):
+        s = self.engine.settings
+        if theme.set_scale(QApplication.instance(),
+                           theme.factor_for(self.width(), self.height(), s.ui_zoom, s.ui_auto_fit)):
             self._status_key = None                 # Statusfeld neu zeichnen
+
+    # --------------------------------------------------------------- Darstellung
+    def _go(self, index: int) -> None:
+        """Seitenwechsel; im Design „Astral“ mit kurzer Überblendung (danach ohne Effekt – kostet sonst Leistung)."""
+        self.stack.setCurrentIndex(index)
+        self.gear.setChecked(index == 5)
+        if not theme.design_info()["animate"]:
+            return
+        widget = self.stack.currentWidget()
+        if self._fade is not None:
+            self._fade.stop()
+        effect = QGraphicsOpacityEffect(widget)
+        widget.setGraphicsEffect(effect)
+        anim = QPropertyAnimation(effect, b"opacity", self)
+        anim.setDuration(150)
+        anim.setStartValue(0.0)
+        anim.setEndValue(1.0)
+        anim.setEasingCurve(QEasingCurve.Type.OutCubic)
+        anim.finished.connect(lambda w=widget: w.setGraphicsEffect(None))
+        self._fade = anim
+        anim.start()
+
+    def _apply_design(self) -> None:
+        """Teile, die das Stylesheet nicht abdeckt: Symbole, Zahnrad, Titelleiste, Farben gezeichneter Inhalte."""
+        info = theme.design_info()
+        for i, key in enumerate(self._nav_icons):
+            self.nav.button(i).setIcon(theme.glyph_icon(key) if info["icons"] else QIcon())
+        self.nav.button(5).setVisible(not info["gear"])
+        self.gear.setVisible(info["gear"])
+        self.gear.setIcon(theme.glyph_icon("settings", 22))
+        self.gear.setChecked(self.stack.currentIndex() == 5)
+        self.brandmark.setVisible(info["icons"])
+        self.pages[0].recolor()
+        for page in self.pages:
+            page.update()
+        self._status_key = None
+        winapi.set_titlebar(int(self.winId()), theme.is_dark(), theme.color("topbar"))
+
+    def set_appearance(self, design: Optional[str] = None, mode: Optional[str] = None,
+                       zoom: Optional[int] = None, fit: Optional[bool] = None) -> None:
+        """Design, Farbschema und UI-Größe – sofort sichtbar und gespeichert (ohne Speichern-Leiste)."""
+        s = self.engine.settings
+        if design is not None:
+            s.ui_design = design
+        if mode is not None:
+            s.ui_mode = mode
+        if zoom is not None:
+            s.ui_zoom = min(theme.ZOOM_MAX, max(theme.ZOOM_MIN, int(zoom)))
+        if fit is not None:
+            s.ui_auto_fit = fit
+        try:
+            s.save()
+        except OSError:
+            pass
+        theme.set_appearance(QApplication.instance(), s.ui_design, s.ui_mode)
+        self._apply_scale()
+
+    def _follow_system(self) -> None:
+        s = self.engine.settings
+        if s.ui_mode == "system":
+            theme._mode = ""                          # erzwingt Neuberechnung der Palette
+            theme.set_appearance(QApplication.instance(), s.ui_design, s.ui_mode)
+
+    def showEvent(self, event) -> None:
+        super().showEvent(event)
+        self._apply_scale()
+        winapi.set_titlebar(int(self.winId()), theme.is_dark(), theme.color("topbar"))
 
     def changeEvent(self, event) -> None:
         super().changeEvent(event)
@@ -768,7 +864,7 @@ def run() -> int:
         settings = Settings()
     i18n.set_language(settings.language)            # vor dem Aufbau der Oberfläche
     _install_qt_translation(app, settings.language)
-    theme.apply(app)
+    theme.apply(app, settings.ui_design, settings.ui_mode)
 
     lock = QLockFile(str(app_paths.data_dir() / "app.lock"))       # nur eine Instanz gleichzeitig
     if not lock.tryLock(10_000 if "--restart" in sys.argv else 300):   # bei Neustart: auf die alte Instanz warten

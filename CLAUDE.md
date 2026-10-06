@@ -82,6 +82,14 @@ Wichtige Entwurfsentscheidungen:
 - **Oberfläche skaliert mit der Fenstergröße** (Entwurf 1180 × 800 = Faktor 1, 0,7–1,3): `theme.set_scale()` rechnet
   alle px/pt im Stylesheet um; feste Größen im Code nur über `theme.track_margins/_spacing/_min_height/_fixed_width …`
   (nie direkt `setMinimumHeight(320)` o. Ä.). Das Hauptfenster setzt den Faktor 150 ms nach dem Größenändern.
+  Faktor = **UI-Größe** (`ui_zoom` 50–200 %) × optional Fensteranpassung (`ui_auto_fit`), siehe `theme.factor_for`.
+- **Designs** (`theme.DESIGNS`, Einstellungen → Darstellung, `ui_design`/`ui_mode`): „Astral“ (seit 0.6.5, Standard:
+  Symbole aus der Windows-Symbolschrift, Zahnrad unten links, Überblendung beim Seitenwechsel, Hell/Dunkel/Wie Windows)
+  und „Klassisch“ (seit 0.5.0, nur dunkel, unverändert). **Alte Designs nie löschen** – neues Design = neuer Eintrag mit
+  `since`-Version. Farben nur als `@token` in den Vorlagen bzw. `theme.color("token")` im Code (keine festen Hex-Werte in
+  den Seiten), sonst stimmen Hell-Modus und Designwechsel nicht. Umschalten wirkt sofort (`MainWindow.set_appearance`,
+  `theme.on_change` für gezeichnete Inhalte). Prüfbilder aller Varianten: `_shots/shots.ps1`, Umschalt-Test:
+  `_shots/look_test.py`.
 - **Infobereich (Tray):** Fenster schließen = im Hintergrund weiterlaufen (Einstellung `close_to_tray`), Beenden über
   das Tray-Menü. Ein zweiter Programmstart schreibt `show.request` in den Datenordner und beendet sich; die laufende
   Instanz zeigt dann ihr Fenster. Kein Autostart (Wunsch des Eigentümers).

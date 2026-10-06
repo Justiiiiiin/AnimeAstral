@@ -7,7 +7,7 @@ import cv2
 import numpy as np
 import json
 
-from PySide6.QtCore import QByteArray, QRectF, QSize, Qt
+from PySide6.QtCore import Property, QByteArray, QEasingCurve, QPropertyAnimation, QRectF, QSize, Qt
 from PySide6.QtGui import QColor, QImage, QPainter, QPixmap, QTextOption
 from PySide6.QtWidgets import (QAbstractButton, QAbstractItemView, QComboBox, QDoubleSpinBox, QFrame, QHBoxLayout, QHeaderView,
                                QLabel, QProgressBar, QScrollArea, QSizePolicy, QSpinBox, QTableWidget,
@@ -153,7 +153,7 @@ def scroll_page(page: QWidget) -> QScrollArea:
     area = QScrollArea()
     area.setWidgetResizable(True)
     area.setFrameShape(QFrame.Shape.NoFrame)
-    area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+    area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)   # nur bei großer UI-Größe nötig
     area.verticalScrollBar().setSingleStep(24)
     area.setWidget(page)
     return area
@@ -260,6 +260,29 @@ class ToggleSwitch(QAbstractButton):
         super().__init__(parent)
         self.setCheckable(True)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._pos = 0.0                                 # 0 = aus, 1 = an (animiert)
+        self._anim = QPropertyAnimation(self, b"knob", self)
+        self._anim.setDuration(140)
+        self._anim.setEasingCurve(QEasingCurve.Type.OutCubic)
+        self.toggled.connect(self._animate)
+
+    def _get_knob(self) -> float:
+        return self._pos
+
+    def _set_knob(self, value: float) -> None:
+        self._pos = value
+        self.update()
+
+    knob = Property(float, _get_knob, _set_knob)
+
+    def _animate(self, on: bool) -> None:
+        if not self.isVisible():                       # unsichtbar (z. B. beim Laden): ohne Animation
+            self._set_knob(1.0 if on else 0.0)
+            return
+        self._anim.stop()
+        self._anim.setStartValue(self._pos)
+        self._anim.setEndValue(1.0 if on else 0.0)
+        self._anim.start()
 
     def sizeHint(self) -> QSize:
         return QSize(theme.px(42), theme.px(24))
@@ -270,12 +293,16 @@ class ToggleSwitch(QAbstractButton):
         w, h = self.width(), self.height()
         track_h = min(h, theme.px(22))
         top = (h - track_h) / 2
+        t = self._pos
+        off, on = QColor(theme.color("trackOff")), QColor(theme.color("accent"))
+        mix = QColor.fromRgbF(off.redF() + (on.redF() - off.redF()) * t, off.greenF() + (on.greenF() - off.greenF()) * t,
+                              off.blueF() + (on.blueF() - off.blueF()) * t)
         p.setPen(Qt.PenStyle.NoPen)
-        p.setBrush(QColor(theme.ACCENT if self.isChecked() else "#2B3644"))
+        p.setBrush(mix)
         p.drawRoundedRect(QRectF(0, top, w, track_h), track_h / 2, track_h / 2)
         knob = track_h - theme.px(6)
-        x = w - knob - theme.px(3) if self.isChecked() else theme.px(3)
-        p.setBrush(QColor("#06201A" if self.isChecked() else "#8B97A8"))
+        x = theme.px(3) + (w - knob - 2 * theme.px(3)) * t
+        p.setBrush(QColor(theme.color("knobOn" if t > 0.5 else "knobOff")))
         p.drawEllipse(QRectF(x, top + theme.px(3), knob, knob))
         p.end()
 
@@ -314,12 +341,12 @@ class BarChart(QWidget):
             x = i * (bw + gap)
             bh = (h - top_pad - bottom_pad) * value / max_v
             p.setPen(Qt.PenStyle.NoPen)
-            p.setBrush(QColor("#3DD6B5" if i == best and value else "#2B6B60" if value else "#1E2630"))
+            p.setBrush(QColor(theme.color("accent" if i == best and value else "bar" if value else "barEmpty")))
             p.drawRoundedRect(QRectF(x, h - bottom_pad - max(bh, 2), bw, max(bh, 2)), 3, 3)
-            p.setPen(QColor("#8B97A8"))
+            p.setPen(QColor(theme.color("muted")))
             if i % step == 0:
                 p.drawText(QRectF(x - gap, h - bottom_pad + 4, bw + 2 * gap, line), name, center)
             if value:                                   # keine „0“ über leeren Balken
-                p.setPen(QColor("#E6EAF0"))
+                p.setPen(QColor(theme.color("text")))
                 p.drawText(QRectF(x - gap, h - bottom_pad - bh - line - 2, bw + 2 * gap, line), str(value), center)
         p.end()

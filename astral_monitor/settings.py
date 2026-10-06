@@ -151,6 +151,10 @@ class Settings:
     # Oberfläche
     language: str = "de"                # de | en (gilt nach Neustart)
     close_to_tray: bool = True          # Fenster schließen = im Infobereich weiterlaufen
+    ui_design: str = "astral"           # theme.DESIGNS (alte Designs bleiben wählbar)
+    ui_mode: str = "dark"               # dark | light | system
+    ui_zoom: int = 100                  # 50–200 % (mehr pro Seite sehen = kleiner)
+    ui_auto_fit: bool = True            # zusätzlich an die Fenstergröße anpassen (0,7–1,3)
     anti_afk_enabled: bool = False      # alle N Minuten kurz zu Roblox, Leertaste, zurück (antiafk.py)
     anti_afk_minutes: int = 10
     auto_rejoin_enabled: bool = False   # nach Disconnect/Kick/Absturz neu beitreten (rejoin.py)
@@ -263,6 +267,12 @@ class Settings:
             s.events["raid_aborted"]["send"] = False
             s.settings_version = 3
         s.server_favorites = clean_favorites(s.server_favorites)
+        try:
+            s.ui_zoom = min(200, max(50, int(s.ui_zoom)))
+        except (TypeError, ValueError):
+            s.ui_zoom = 100
+        if s.ui_mode not in ("dark", "light", "system"):
+            s.ui_mode = "dark"
         if not s.server_favorites and s.private_server_link:
             s.server_favorites = [{"name": "Server 1", "link": s.private_server_link}]   # Link aus 0.6.2/0.6.3
         s.settings_version = max(s.settings_version, cls.settings_version)    # nach allen Schritten: aktueller Stand

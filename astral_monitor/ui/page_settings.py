@@ -3,8 +3,8 @@ from __future__ import annotations
 
 from PySide6.QtCore import QUrl, Qt
 from PySide6.QtGui import QDesktopServices
-from PySide6.QtWidgets import (QCheckBox, QHBoxLayout, QLineEdit, QListWidget, QListWidgetItem, QMenu, QMessageBox,
-                               QPushButton, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QButtonGroup, QCheckBox, QHBoxLayout, QLineEdit, QListWidget, QListWidgetItem, QMenu,
+                               QMessageBox, QPushButton, QVBoxLayout, QWidget)
 
 from .. import app_paths, roblox_join
 from ..i18n import LANGUAGES, tr
@@ -129,6 +129,60 @@ class SettingsPage(QWidget):
 
         # ------------------------------------------------------------------ Programm
         root.addWidget(section(tr("Programm")))
+        look = Card(tr("Darstellung"))
+        lg = form_grid()
+        self.design = ComboBox()
+        for key, info in theme.DESIGNS.items():
+            self.design.addItem(tr("{name} (seit Version {version})", name=tr(info["name"]), version=info["since"]),
+                                key)
+        self.design.activated.connect(lambda _i: self.main.set_appearance(design=self.design.currentData()))
+        lg.addWidget(label(tr("Design")), 0, 0)
+        lg.addWidget(self.design, 0, 1)
+        mode_row = QHBoxLayout()
+        theme.track_spacing(mode_row, 6)
+        self.mode_group = QButtonGroup(self)
+        self.mode_group.setExclusive(True)
+        for mode, text in (("dark", tr("Dunkel")), ("light", tr("Hell")), ("system", tr("Wie Windows"))):
+            btn = QPushButton(text)
+            btn.setObjectName("chipbtn")
+            btn.setCheckable(True)
+            btn.setProperty("mode", mode)
+            self.mode_group.addButton(btn)
+            mode_row.addWidget(btn)
+        mode_row.addStretch(1)
+        self.mode_group.buttonClicked.connect(lambda b: self.main.set_appearance(mode=b.property("mode")))
+        lg.addWidget(label(tr("Farbschema")), 1, 0)
+        lg.addLayout(mode_row, 1, 1, 1, 2)
+        zoom_row = QHBoxLayout()
+        theme.track_spacing(zoom_row, 6)
+        self.zoom_buttons = []
+        for pct in (50, 75, 100, 125, 150):
+            btn = QPushButton(f"{pct} %")
+            btn.setObjectName("chipbtn")
+            btn.setCheckable(True)
+            btn.clicked.connect(lambda _c, v=pct: self._set_zoom(v))
+            self.zoom_buttons.append((pct, btn))
+            zoom_row.addWidget(btn)
+        self.zoom = SpinBox()
+        self.zoom.setRange(theme.ZOOM_MIN, theme.ZOOM_MAX)
+        self.zoom.setSuffix(" %")
+        self.zoom.setSingleStep(5)
+        self.zoom.setKeyboardTracking(False)              # erst nach Enter/Verlassen anwenden, nicht bei jeder Ziffer
+        self.zoom.setToolTip(tr("Eigener Wert von {min} bis {max} %", min=theme.ZOOM_MIN, max=theme.ZOOM_MAX))
+        self.zoom.valueChanged.connect(self._set_zoom)
+        zoom_row.addWidget(self.zoom)
+        zoom_row.addStretch(1)
+        lg.addWidget(label(tr("UI-Größe")), 2, 0)
+        lg.addLayout(zoom_row, 2, 1, 1, 2)
+        look.body.addLayout(lg)
+        self.auto_fit = QCheckBox(tr("Zusätzlich an die Fenstergröße anpassen"))
+        self.auto_fit.toggled.connect(lambda on: self.main.set_appearance(fit=on))
+        look.body.addWidget(self.auto_fit)
+        self.mode_hint = label("", "small", wrap=True)
+        look.body.addWidget(self.mode_hint)
+        look.body.addWidget(label(tr("Kleiner = mehr pro Seite sichtbar. Änderungen gelten sofort; ältere Designs "
+                                     "bleiben hier auswählbar."), "small", wrap=True))
+        root.addWidget(look)
         ui = Card(tr("Oberfläche"))
         ug = form_grid()
         self.language = ComboBox()
@@ -303,12 +357,39 @@ class SettingsPage(QWidget):
         menu.addAction(tr("Löschen"), self._delete_server)
         menu.exec(self.servers.viewport().mapToGlobal(pos))
 
+    # ------------------------------------------------------------------ Darstellung
+    def _set_zoom(self, value: int) -> None:
+        self.main.set_appearance(zoom=value)
+        self._sync_look(self.main.engine.settings)
+
+    def _sync_look(self, s) -> None:
+        """Bedienelemente der Darstellung auf den gespeicherten Stand setzen (ohne erneut auszulösen)."""
+        widgets = [self.design, self.zoom, self.auto_fit] + [b for _p, b in self.zoom_buttons] + self.mode_group.buttons()
+        for w in widgets:
+            w.blockSignals(True)
+        self.design.setCurrentIndex(max(0, self.design.findData(s.ui_design)))
+        self.zoom.setValue(s.ui_zoom)
+        self.auto_fit.setChecked(s.ui_auto_fit)
+        for pct, btn in self.zoom_buttons:
+            btn.setChecked(pct == s.ui_zoom)
+        light_ok = theme.has_mode(s.ui_design, "light")
+        for btn in self.mode_group.buttons():
+            mode = btn.property("mode")
+            btn.setEnabled(light_ok or mode == "dark")
+            btn.setChecked(mode == (s.ui_mode if light_ok else "dark"))
+        self.mode_hint.setText("" if light_ok else tr("Das Design „{name}“ gibt es nur dunkel.",
+                                                      name=tr(theme.design_info(s.ui_design)["name"])))
+        self.mode_hint.setVisible(not light_ok)
+        for w in widgets:
+            w.blockSignals(False)
+
     def _show_preset(self) -> None:
         preset = PRESETS.get(self.perf.currentData(), PRESETS["balanced"])
         self.perf_info.setText(tr("Ruhig alle {idle} s, kurz vor Raid-Ende alle {hot} s, Quests alle {quest} s.",
                                   idle=f"{preset['idle']:g}", hot=f"{preset['hot']:g}", quest=f"{preset['quest']:g}"))
 
     def load(self, s) -> None:
+        self._sync_look(s)
         self.language.setCurrentIndex(max(0, self.language.findData(s.language)))
         self.close_to_tray.setChecked(s.close_to_tray)
         self.afk_minutes.setValue(s.anti_afk_minutes)

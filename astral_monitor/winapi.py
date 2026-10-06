@@ -69,3 +69,23 @@ def client_rect(hwnd: int) -> Optional[tuple[int, int, int, int]]:
     if not _user32.ClientToScreen(hwnd, ctypes.byref(origin)):
         return None
     return origin.x, origin.y, origin.x + rect.right, origin.y + rect.bottom
+
+
+def set_titlebar(hwnd: int, dark: bool, caption_hex: str = "") -> None:
+    """Windows-Titelleiste passend zum Design: dunkel/hell und (Windows 11) in der Farbe der Kopfzeile."""
+    if sys.platform != "win32" or not hwnd:
+        return
+    try:
+        import ctypes
+        from ctypes import wintypes
+        dwm = ctypes.windll.dwmapi
+        value = ctypes.c_int(1 if dark else 0)
+        for attr in (20, 19):                      # DWMWA_USE_IMMERSIVE_DARK_MODE (neu / ältere Windows-10-Builds)
+            if dwm.DwmSetWindowAttribute(wintypes.HWND(hwnd), attr, ctypes.byref(value), ctypes.sizeof(value)) == 0:
+                break
+        if caption_hex.startswith("#") and len(caption_hex) == 7:
+            r, g, b = (int(caption_hex[i:i + 2], 16) for i in (1, 3, 5))
+            colorref = ctypes.c_uint(r | (g << 8) | (b << 16))
+            dwm.DwmSetWindowAttribute(wintypes.HWND(hwnd), 35, ctypes.byref(colorref), ctypes.sizeof(colorref))  # Win 11
+    except Exception:
+        pass
