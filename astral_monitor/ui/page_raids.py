@@ -64,7 +64,9 @@ class RaidsPage(QWidget):
         right_col.setSpacing(14)
         refs = Card("Referenzbilder")
         refs.body.addWidget(label("Starte den Raid, warte bis „Wave“ sichtbar ist und nimm 3 bis 5 Bilder auf "
-                                  "(am besten zu verschiedenen Zeitpunkten).", "small", wrap=True))
+                                  "(am besten zu verschiedenen Zeitpunkten). Verglichen wird nur die Umgebung – die "
+                                  "eigene Armee in der Bildmitte und alles, was in jedem Raid gleich aussieht, wird "
+                                  "ignoriert. Pro Raid nur ein Profil anlegen.", "small", wrap=True))
         self.images = QListWidget()
         self.images.setViewMode(QListWidget.ViewMode.IconMode)
         self.images.setIconSize(QSize(176, 100))
@@ -320,6 +322,9 @@ class RaidsPage(QWidget):
         lines = [f"{'✅' if name == result['decision'] else '•'} {name}: {score}" for name, score in ranked]
         verdict = (f"Erkannt: {result['decision']}" if result["decision"]
                    else "Kein eindeutiger Treffer (zu wenig oder zu ähnliche Übereinstimmung)")
+        if result.get("warnings"):
+            lines.append("⚠️ Fast gleich wie ein anderes Profil (derselbe Raid doppelt angelegt?): "
+                         + ", ".join(result["warnings"]) + " – doppeltes Profil löschen.")
         self.result.setText(f"{verdict}  ({result['ms']:.0f} ms)\n" + "\n".join(lines))
         self.preview.setPixmap(bgr_to_pixmap(result["crop"], 420))
         self.preview.setVisible(True)

@@ -7,12 +7,29 @@ import cv2
 import numpy as np
 
 import _env
-from astral_monitor.profiles import ProfileStore
+from astral_monitor.profiles import ProfileStore, RaidMatcher
 
 
 def image():
     rng = np.random.default_rng(1)
     return rng.integers(0, 255, (240, 400, 3), dtype=np.uint8)
+
+
+def texture(seed, h, w, block, lo, hi):
+    """Blockmuster (statt Pixelrauschen, damit ORB stabile Merkmale findet)."""
+    rng = np.random.default_rng(seed)
+    small = rng.integers(lo, hi, (h // block, w // block, 3), dtype=np.uint8)
+    return cv2.resize(small, (w, h), interpolation=cv2.INTER_NEAREST)
+
+
+def scene(map_seed, army_seed, army_w=0.36):
+    """Wie im Spiel: kontrastarmer Boden als Map, detailreiche Armee unten in der Mitte. Ohne Ausblenden/Filtern
+    findet der Vergleich fast nur die Armee (geprüft: alte Methode entscheidet hier nicht oder falsch)."""
+    img = texture(map_seed, 480, 960, 24, 90, 140)
+    h, w = img.shape[:2]
+    x0, x1 = int((0.5 - army_w / 2) * w), int((0.5 + army_w / 2) * w)
+    img[int(0.35 * h):, x0:x1] = texture(army_seed, h - int(0.35 * h), x1 - x0, 6, 0, 255)
+    return img
 
 
 class ProfileTests(unittest.TestCase):
@@ -45,6 +62,29 @@ class ProfileTests(unittest.TestCase):
             with self.assertRaises(ValueError, msg=label):
                 self.b.import_zip(path)
         self.assertEqual(self.b.names(), [])
+
+    def test_same_army_on_different_maps_is_not_confused(self):
+        # Referenzbilder: zwei Maps, beide mit DERSELBEN Armee (so entstanden „Alvarez War“/„Holy Grail War“-Verwechslungen)
+        store = ProfileStore(Path(_env.DATA) / "maps")
+        for name, map_seed in (("Alvarez War", 10), ("Holy Grail War", 20)):
+            store.create(name)
+            store.add_image(name, scene(map_seed, army_seed=99))
+        m = RaidMatcher(store, 14)
+        self.assertEqual(m.decide(m.score(scene(10, army_seed=99))), "Alvarez War")
+        # Freund mit anderer, größerer Armee
+        scores = m.score(scene(20, army_seed=7, army_w=0.55))
+        self.assertEqual(m.decide(scores), "Holy Grail War", scores)
+
+    def test_reload_async_keeps_old_state_until_done(self):
+        m = RaidMatcher(self.a, 14, load=False)
+        self.assertFalse(m.has_profiles)
+        m.reload_async()
+        for _ in range(100):
+            if not m.loading:
+                break
+            import time
+            time.sleep(0.05)
+        self.assertTrue(m.has_profiles)
 
     def test_not_a_zip(self):
         path = Path(_env.DATA) / "kein.zip"

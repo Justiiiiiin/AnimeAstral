@@ -5,6 +5,7 @@ import json
 import logging
 import re
 import shutil
+import threading
 import zipfile
 from pathlib import Path
 from typing import Optional
@@ -18,6 +19,15 @@ WORK_WIDTH = 640           # Vergleichsbreite (klein = schnell)
 RATIO = 0.75               # Lowe-Verhältnis für gute Treffer
 MARGIN = 1.5               # bester Raid muss so viel besser sein als der zweitbeste
 MIN_KEYPOINTS = 15
+# Die eigene Armee steht in jedem Raid unten in der Bildmitte und sieht überall gleich aus – sie erzeugte die meisten
+# Übereinstimmungen und damit Verwechslungen. Bereich (relativ zum Szenen-Ausschnitt) wird ignoriert – nach Ort, nicht
+# nach Figuren, gilt also für jede Armee. Großzügig (~1,7× der heutigen Armee) für größere Armeen anderer Spieler;
+# gemessen: selbst 70 % Breite × volle Höhe trennen die Raids noch sicher (richtig ≥ 53, falsch ≤ 13 Treffer).
+ARMY_BOX = (0.20, 0.10, 0.80, 1.0)         # x0, y0, x1, y1
+# Merkmale, die (fast gleich) auch in Bildern anderer Raids vorkommen (Leisten, Knöpfe, Figuren), werden verworfen.
+COMMON_DIST = 40
+# Gemessen 06.10.2026 an 7 echten Profilen + Live-Bildern (mit ARMY_BOX): richtiger Raid ≥ 51 Treffer, falscher ≤ 12
+# (vorher: falscher bis 504, Verwechslung „Alvarez War“/„Holy Grail War“).
 PROFILE_FORMAT = "astral-profile-1"
 PROFILE_SUFFIX = ".astralprofile"
 MAX_IMPORT_IMAGES = 30
@@ -149,15 +159,32 @@ class ProfileStore:
 
 
 class RaidMatcher:
-    def __init__(self, store: ProfileStore, min_inliers: int = 14) -> None:
+    def __init__(self, store: ProfileStore, min_inliers: int = 14, load: bool = True) -> None:
         self.store = store
         self.min_inliers = min_inliers
         self._orb = cv2.ORB_create(nfeatures=1000, fastThreshold=10)
         self._bf = cv2.BFMatcher(cv2.NORM_HAMMING)
         self._refs: dict[str, list[tuple[np.ndarray, np.ndarray]]] = {}
-        self.reload()
+        self._lock = threading.Lock()
+        self.loading = False
+        self.warnings: list[str] = []              # Profile, die einem anderen fast gleichen (doppelt angelegt?)
+        if load:
+            self.reload()
+
+    def reload_async(self) -> None:
+        """Lädt im Hintergrund (mit vielen Profilen ~1–2 s); bis dahin gilt der bisherige Stand."""
+        self.loading = True
+        threading.Thread(target=self.reload, name="profiles", daemon=True).start()
 
     def reload(self) -> None:
+        with self._lock:                           # nur ein Ladevorgang zugleich
+            self.loading = True
+            try:
+                self._reload()
+            finally:
+                self.loading = False
+
+    def _reload(self) -> None:
         new_refs: dict[str, list[tuple[np.ndarray, np.ndarray]]] = {}
         for name in self.store.names():
             entries = []
@@ -170,14 +197,42 @@ class RaidMatcher:
                     entries.append(feat)
             if entries:
                 new_refs[name] = entries
-        self._refs = new_refs                      # atomar austauschen (Überwachung läuft parallel)
+        self._refs = self._distinctive(new_refs)  # atomar austauschen (Überwachung läuft parallel)
+
+    def _distinctive(self, refs: dict) -> dict:
+        """Entfernt je Profil die Merkmale, die auch in Referenzbildern anderer Raids vorkommen."""
+        if len(refs) < 2:
+            return refs
+        out = {}
+        self.warnings: list[str] = []
+        for name, entries in refs.items():
+            others = np.vstack([desc for other, lst in refs.items() if other != name for _pts, desc in lst])
+            kept, total, left = [], 0, 0
+            for pts, desc in entries:
+                nearest = self._bf.knnMatch(desc, others, k=1)
+                keep = np.array([bool(m) and m[0].distance >= COMMON_DIST for m in nearest])
+                total, left = total + len(keep), left + int(keep.sum())
+                if keep.sum() >= 8:
+                    kept.append((pts[keep], desc[keep]))
+            if kept:
+                out[name] = kept
+            if total and left / total < 0.15:
+                # fast alles kommt auch in einem anderen Profil vor: vermutlich derselbe Raid doppelt angelegt
+                self.warnings.append(name)
+                log.warning("Profil „%s“ ähnelt einem anderen Profil fast vollständig (nur %d %% eigene Merkmale) – "
+                            "derselbe Raid doppelt angelegt?", name, left * 100 // total)
+        return out
 
     @property
     def has_profiles(self) -> bool:
         return bool(self._refs)
 
     def _features(self, gray: np.ndarray):
-        kps, desc = self._orb.detectAndCompute(gray, None)
+        h, w = gray.shape[:2]
+        mask = np.full((h, w), 255, np.uint8)
+        x0, y0, x1, y1 = ARMY_BOX
+        mask[int(y0 * h):int(y1 * h), int(x0 * w):int(x1 * w)] = 0
+        kps, desc = self._orb.detectAndCompute(gray, mask)
         if desc is None or len(kps) < MIN_KEYPOINTS:
             return None
         return np.float32([k.pt for k in kps]), desc

@@ -167,7 +167,7 @@ class Engine:
         self.quest_reader = QuestReader(ocr)
         self.tracker = WaveTracker(s.trigger_offset, s.cooldown_seconds)
         self.quest_tracker = QuestTracker()
-        self.matcher = RaidMatcher(self.profile_store, s.profile_min_inliers)
+        self.get_matcher().min_inliers = s.profile_min_inliers
         self._reset_runtime()
         self.stats.begin_session()
         if s.low_priority:
@@ -337,21 +337,29 @@ class Engine:
         path = self.profile_store.add_image(name, res.crops[1])
         return str(path)
 
+    def get_matcher(self) -> RaidMatcher:
+        """Ein Vergleicher für Überwachung und Test; lädt beim ersten Mal im Hintergrund."""
+        if self.matcher is None:
+            self.matcher = RaidMatcher(self.profile_store, self.settings.profile_min_inliers, load=False)
+            self.matcher.reload_async()
+        return self.matcher
+
     def reload_profiles(self) -> None:
-        if self.matcher is not None:
-            self.matcher.reload()
+        self.get_matcher().reload_async()
 
     def test_scene(self) -> dict:
         res = self.grab_for_ui(with_scene=True)
         if res is None:
             return {"ok": False, "error": "Kein Bild vom Roblox-Fenster erhalten."}
-        matcher = RaidMatcher(self.profile_store, self.settings.profile_min_inliers)
+        matcher = self.get_matcher()
+        matcher.min_inliers = self.settings.profile_min_inliers
         if not matcher.has_profiles:
-            return {"ok": False, "error": "Noch keine Referenzbilder vorhanden."}
+            return {"ok": False, "error": "Die Referenzbilder werden noch geladen – gleich noch einmal testen."
+                    if matcher.loading else "Noch keine Referenzbilder vorhanden."}
         t0 = time.perf_counter()
         scores = matcher.score(res.crops[1])
         return {"ok": True, "crop": res.crops[1], "scores": scores, "decision": matcher.decide(scores),
-                "ms": (time.perf_counter() - t0) * 1000}
+                "ms": (time.perf_counter() - t0) * 1000, "warnings": list(matcher.warnings)}
 
     # ------------------------------------------------------------------ Intern
     def _reset_runtime(self) -> None:

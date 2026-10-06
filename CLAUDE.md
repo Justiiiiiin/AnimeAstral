@@ -137,7 +137,14 @@ Stand 06.10.2026 (Claude Code unter Windows): Punkte 1, 3 und 5 erledigt, 2 und 
   **Defense-Modi und andere Raids** könnten ein anderes Format haben – der Eigentümer liefert Screenshots; dann Parser/Suche erweitern.
 - Plausibilitätsfilter im Tracker: erlaubter Sprung `UP_BASE + UP_PER_SECOND * Sekunden` (4 + 1,5/s). Passt zu etwa einer Welle alle
   3,7 s. Schnellere Modi könnten Anpassung brauchen (Simulationen setzen `UP_BASE` hoch, weil sie 100× schneller laufen).
-- Raid-Erkennung per Referenzbild vertrug in Tests andere Auflösungen, aber nur mit **einer** echten Map. Mit mehreren echten Raids prüfen.
+- **Raid-Erkennung per Referenzbild** (geprüft 06.10.2026 mit 7 echten Profilen): Die eigene Armee steht in jeder Map
+  unten mittig und erzeugte die meisten Übereinstimmungen – „Alvarez War“ und „Holy Grail War“ wurden verwechselt bzw.
+  nicht entschieden. Lösung in `profiles.py`: Bereich `ARMY_BOX` (nach Ort, gilt für jede Armee, großzügig für größere
+  Armeen) wird ignoriert, und Merkmale, die auch in Bildern anderer Profile vorkommen, werden beim Laden verworfen
+  (`_distinctive`). Ergebnis: richtiger Raid ≥ 51 Treffer, falscher ≤ 12; vorher falscher bis 504. Gegnernamen über der
+  Lebensleiste sind keine Alternative (Gegner sterben zu schnell). Laden dauert mit vielen Profilen 1–2 s → im
+  Hintergrund (`reload_async`), ein gemeinsamer Vergleicher (`Engine.get_matcher`). Zwei Profile für denselben Raid
+  löschen sich gegenseitig die Merkmale → Warnung (`RaidMatcher.warnings`). Prüfhilfen: `_shots/eval_methods.py`.
 - **Geplant für Version 1.0** (Vorschläge, noch nicht gebaut; Reihenfolge nach Wunsch des Eigentümers klären):
   Dauerlauf-Test (Nacht) und Absturz-Neustart, Tray-Symbol + Autostart, Hilfe-Seite im Programm, Push per ntfy, Lizenz/„Über“-Seite,
   Browser-Ansicht im Heimnetz (Handy), Deutsch/Englisch, Tages-/Wochenziele, Zeitraum-Vergleich, Excel-Export/Backup,
