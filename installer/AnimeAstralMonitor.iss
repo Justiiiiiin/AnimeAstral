@@ -24,7 +24,7 @@ OutputDir=..\dist
 OutputBaseFilename=AnimeAstralMonitor-Setup-{#AppVersion}
 SetupIconFile=..\assets\app.ico
 UninstallDisplayIcon={app}\{#AppExe}
-Compression=lzma2
+Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern
 CloseApplications=yes
@@ -39,6 +39,11 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Files]
 Source: "..\dist\AnimeAstralMonitor\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+
+[UninstallDelete]
+; Kleine Updates tauschen Dateien ohne Installer aus – beim Deinstallieren den ganzen Programmordner entfernen
+; (Einstellungen und Statistik liegen in %APPDATA% und bleiben erhalten)
+Type: filesandordirs; Name: "{app}"
 
 [Icons]
 Name: "{autoprograms}\{#AppName}"; Filename: "{app}\{#AppExe}"

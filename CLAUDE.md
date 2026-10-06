@@ -85,9 +85,17 @@ Wichtige Entwurfsentscheidungen:
    Tests, `tools/write_build_info.py` (schreibt Version, `GITHUB_REPO`, `RPC_CLIENT_ID` aus Repository-Variable),
    PyInstaller (`build_exe.py --no-zip`, bündelt Tesseract), **Inno Setup** (`installer/AnimeAstralMonitor.iss`),
    SHA256-Datei, Veröffentlichung per `softprops/action-gh-release`.
-4. Ergebnis: `AnimeAstralMonitor-Setup-X.Y.Z.exe` + `SHA256SUMS.txt` am Release. Installierte Programme prüfen beim Start
-   (nach ~6 s, höchstens alle 6 h) `releases/latest` und aktualisieren sich leise (`/SILENT … /relaunch=1`).
-   Nur Installer-Builds haben eine Update-Quelle (`build_info.GITHUB_REPO` leer = keine Prüfung).
+4. Ergebnis am Release: `AnimeAstralMonitor-Setup-X.Y.Z.exe`, `files-X.Y.Z.json` (Prüfsumme jeder Programmdatei),
+   `AnimeAstralMonitor-Update-X.Y.Z.zip` (nur die seit der vorigen Version geänderten Dateien, `tools/make_patch.py`)
+   und `SHA256SUMS.txt` über alle. Installierte Programme prüfen beim Start (nach ~6 s, höchstens alle 6 h)
+   `releases/latest`. **Kleines Update:** passt das Paket zum installierten Stand (`files.json` im Programmordner,
+   `updater.plan_patch`), werden nur diese Dateien geladen, einzeln per Prüfsumme kontrolliert und nach dem Beenden von
+   einem PowerShell-Skript ausgetauscht (`updater.APPLY_SCRIPT`: sichert vorher, stellt bei Fehler alles wieder her,
+   startet neu). Sonst (Version übersprungen, Ordner nicht beschreibbar …) der komplette Installer leise
+   (`/SILENT … /relaunch=1`). Nur Installer-Builds haben eine Update-Quelle (`build_info.GITHUB_REPO` leer = keine Prüfung).
+   Damit Pakete klein bleiben, baut CI mit **festen Versionen** aus `requirements-build.txt` (bewusst anheben).
+   Programmgröße: `build_exe.py` packt von Tesseract nur die tatsächlich geladenen DLLs ein und entfernt unbenutzte
+   Qt-/OpenCV-/Pillow-Teile (`PRUNE`, mit Prüfung, dass keine verbleibende Datei sie braucht): 380 → 228 MB installiert.
 
 Die Versionsnummer steht in `astral_monitor/version.py` und wird vom Build aus dem Tag überschrieben. Aufwärts zählen.
 `update.py`/`update.bat` sind ein **veralteter lokaler Updater** (ZIP-Weg) und können entfernt werden, sobald der

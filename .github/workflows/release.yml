@@ -28,7 +28,7 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-          cache-dependency-path: requirements.txt
+          cache-dependency-path: requirements-build.txt
 
       - name: Version bestimmen
         shell: pwsh
@@ -40,7 +40,7 @@ jobs:
           Write-Host "Version: $v"
 
       - name: Pakete installieren
-        run: python -m pip install -r requirements.txt pyinstaller
+        run: python -m pip install -r requirements-build.txt     # feste Versionen = kleine Update-Pakete
 
       - name: Tesseract installieren (wird ins Programm gepackt)
         shell: pwsh
@@ -54,7 +54,7 @@ jobs:
         run: python -m unittest discover -s tests -v
 
       - name: Build-Angaben schreiben
-        run: python tools/write_build_info.py "$env:VERSION" "${{ github.repository }}" "${{ vars.RPC_CLIENT_ID }}"
+        run: python tools/write_build_info.py "$env:VERSION" "${{ github.repository }}"     # keine persönlichen IDs im Build
 
       - name: Programm bauen (PyInstaller)
         run: python build_exe.py --no-zip
@@ -70,13 +70,26 @@ jobs:
           & $iscc "/DAppVersion=$env:VERSION" "installer\AnimeAstralMonitor.iss"
           if ($LASTEXITCODE -ne 0) { throw "Installer-Bau fehlgeschlagen" }
 
-      - name: Prüfsumme erzeugen
+      - name: Update-Paket (nur geänderte Dateien seit der vorigen Version)
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          New-Item -ItemType Directory -Force prev | Out-Null
+          # neueste bisherige Veröffentlichung (dieser Release existiert erst nach dem letzten Schritt)
+          gh release download --repo "${{ github.repository }}" --pattern "files-*.json" --dir prev 2>$null
+          $prev = Get-ChildItem prev\files-*.json -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($prev) { python tools/make_patch.py "$env:VERSION" dist\AnimeAstralMonitor dist $prev.FullName }
+          else { python tools/make_patch.py "$env:VERSION" dist\AnimeAstralMonitor dist }
+          if ($LASTEXITCODE -ne 0) { throw "Update-Paket fehlgeschlagen" }
+
+      - name: Prüfsummen erzeugen
         shell: pwsh
         run: |
-          $f = Get-ChildItem dist\AnimeAstralMonitor-Setup-*.exe | Select-Object -First 1
-          if (-not $f) { throw "Installer nicht gefunden" }
-          $h = (Get-FileHash $f.FullName -Algorithm SHA256).Hash.ToLower()
-          "$h  $($f.Name)" | Out-File -FilePath dist\SHA256SUMS.txt -Encoding ascii
+          $files = @(Get-ChildItem dist\AnimeAstralMonitor-Setup-*.exe, dist\AnimeAstralMonitor-Update-*.zip, dist\files-*.json -ErrorAction SilentlyContinue)
+          if (-not ($files | Where-Object Name -like 'AnimeAstralMonitor-Setup-*')) { throw "Installer nicht gefunden" }
+          $files | ForEach-Object { "$((Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower())  $($_.Name)" } |
+            Out-File -FilePath dist\SHA256SUMS.txt -Encoding ascii
           Get-Content dist\SHA256SUMS.txt
 
       - name: Veröffentlichen
@@ -87,4 +100,6 @@ jobs:
           generate_release_notes: true
           files: |
             dist/AnimeAstralMonitor-Setup-*.exe
+            dist/AnimeAstralMonitor-Update-*.zip
+            dist/files-*.json
             dist/SHA256SUMS.txt

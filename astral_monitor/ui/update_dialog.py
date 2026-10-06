@@ -59,6 +59,37 @@ class UpdateDialog(QDialog):
         self.timer.setInterval(150)
         self.timer.timeout.connect(self._poll)
 
+        # Passt das kleine Update-Paket (nur geänderte Dateien)? Prüfung im Hintergrund, dauert meist < 1 s.
+        self._plan = None
+        self._plan_state = {"done": False, "plan": None}
+        self.btn_go.setEnabled(False)
+        self.status.setText("Prüfe Download-Größe …")
+
+        def plan_work() -> None:
+            try:
+                self._plan_state["plan"] = updater.prepare_patch(info)
+            except Exception:
+                self._plan_state["plan"] = None
+            self._plan_state["done"] = True
+
+        threading.Thread(target=plan_work, daemon=True).start()
+        self._plan_timer = QTimer(self)
+        self._plan_timer.setInterval(100)
+        self._plan_timer.timeout.connect(self._plan_ready)
+        self._plan_timer.start()
+
+    def _plan_ready(self) -> None:
+        if not self._plan_state["done"]:
+            return
+        self._plan_timer.stop()
+        self._plan = self._plan_state["plan"]
+        if self._plan is not None:
+            self.status.setText(f"Download: {self.info.patch_size / 1048576:.1f} MB "
+                                f"(nur {len(self._plan.changed)} geänderte Dateien)")
+        else:
+            self.status.setText(f"Download: {self.info.size / 1048576:.0f} MB (kompletter Installer)")
+        self.btn_go.setEnabled(True)
+
     def _skip(self) -> None:
         self.main.skip_version(self.info.version)
         self.reject()
@@ -76,7 +107,8 @@ class UpdateDialog(QDialog):
         def work() -> None:
             try:
                 self._state["path"] = updater.download(
-                    self.info, lambda d, t: self._state.update(done=d, total=t), lambda: self._cancel)
+                    self.info, lambda d, t: self._state.update(done=d, total=t), lambda: self._cancel,
+                    patch=self._plan is not None)
             except Exception as exc:                    # UpdateError und alles Unerwartete
                 self._state["error"] = str(exc) or exc.__class__.__name__
             self._state["finished"] = True
@@ -103,8 +135,11 @@ class UpdateDialog(QDialog):
             return
         self.status.setText("Installiere … das Programm startet gleich neu.")
         try:
-            updater.launch_installer(self._state["path"], relaunch=True)
-        except OSError as exc:
+            if self._plan is not None:
+                updater.launch_patch(self._state["path"], self._plan, relaunch=True)
+            else:
+                updater.launch_installer(self._state["path"], relaunch=True)
+        except (OSError, updater.UpdateError) as exc:
             QMessageBox.warning(self, "Update", f"Der Installer konnte nicht gestartet werden:\n{exc}")
             self.reject()
             return
