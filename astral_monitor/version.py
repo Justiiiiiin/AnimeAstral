@@ -1,3 +1,3 @@
-"""Versionsnummer (eigene Datei, damit der Build sie ohne Import des Programms lesen kann)."""
+﻿"""Versionsnummer (eigene Datei, damit der Build sie ohne Import des Programms lesen kann)."""
 
-__version__ = "0.5.1"
+__version__ = "0.5.2"
