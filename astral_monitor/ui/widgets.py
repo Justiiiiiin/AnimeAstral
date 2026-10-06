@@ -41,16 +41,21 @@ class _NoWheelMixin:
             event.ignore()
 
 
+FIELD_WIDTH = 170                                  # Zahlenfelder nicht über die ganze Breite ziehen
+
+
 class SpinBox(_NoWheelMixin, QSpinBox):
     def __init__(self, *args) -> None:
         super().__init__(*args)
         self._init_nowheel()
+        theme.track(self, lambda o, f: o.setMaximumWidth(round(FIELD_WIDTH * f)))
 
 
 class DoubleSpinBox(_NoWheelMixin, QDoubleSpinBox):
     def __init__(self, *args) -> None:
         super().__init__(*args)
         self._init_nowheel()
+        theme.track(self, lambda o, f: o.setMaximumWidth(round(FIELD_WIDTH * f)))
 
 
 class ComboBox(_NoWheelMixin, QComboBox):
@@ -160,6 +165,37 @@ def label(text: str = "", name: str = "", wrap: bool = False) -> QLabel:
         lbl.setObjectName(name)
     lbl.setWordWrap(wrap)
     return lbl
+
+
+def section(text: str) -> QLabel:
+    """Zwischenüberschrift über einer Gruppe von Karten."""
+    lbl = QLabel(text.upper())
+    lbl.setObjectName("section")
+    return lbl
+
+
+def short_field(widget: QWidget, width: int = 260) -> QWidget:
+    """Eingabefeld für kurze Werte (Hotkeys, Zahlenlisten) auf eine sinnvolle Breite begrenzen."""
+    theme.track(widget, lambda o, f: o.setMaximumWidth(round(width * f)))
+    return widget
+
+
+def columns(*cards: QWidget, spacing: int = 14) -> QHBoxLayout:
+    """Karten nebeneinander, gleich breit und gleich hoch."""
+    row = QHBoxLayout()
+    theme.track_spacing(row, spacing)
+    for card in cards:
+        row.addWidget(card, 1)
+    return row
+
+
+def form_grid() -> "QGridLayout":
+    """Raster Beschriftung | Feld; die Felder behalten ihre eigene Breite."""
+    from PySide6.QtWidgets import QGridLayout
+    grid = QGridLayout()
+    grid.setColumnStretch(2, 1)
+    theme.track_spacing(grid, 10)
+    return grid
 
 
 class Card(QFrame):

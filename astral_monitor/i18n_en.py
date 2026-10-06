@@ -15,7 +15,6 @@ EN: dict[str, str] = {
     "Aktuell Welle {wave}.": "Currently wave {wave}.",
     "Aktuellen Raid und Fortschritt in meinem Discord-Profil anzeigen":
         "Show the current raid and progress in my Discord profile",
-    "Alarm, wenn kein Raid endet für": "Alert if no raid ends for",
     "Alle Dateien": "All files",
     "Alle Quests": "All quests",
     "Alle Raids (gesamt)": "All raids (total)",
@@ -35,14 +34,6 @@ EN: dict[str, str] = {
     "Anti-AFK: {reason}": "Anti-AFK: {reason}",
     "Der Anti-AFK-Abstand muss zwischen 1 und 19 Minuten liegen (Roblox trennt nach 20 Minuten).":
         "The anti-AFK interval must be between 1 and 19 minutes (Roblox disconnects after 20 minutes).",
-    "Ein- und ausschalten oben rechts in der Kopfzeile (oder im Tray-Menü). Das Programm holt Roblox kurz nach vorne, "
-    "drückt einmal die Leertaste und wechselt zu deinem Fenster zurück – Roblox nimmt Tasten nur im Vordergrund an. "
-    "Tippst oder klickst du gerade, wartet es, bis du 2 Sekunden nichts eingibst. Roblox darf nicht minimiert sein. "
-    "Hinweis: Makros sind laut Roblox-Regeln nicht erlaubt; Nutzung auf eigene Verantwortung.":
-        "Switch it on and off at the top right of the header (or in the tray menu). The program briefly brings Roblox "
-        "to the front, presses space once and switches back to your window – Roblox only accepts keys in the "
-        "foreground. If you are typing or clicking, it waits until you have not done anything for 2 seconds. Roblox "
-        "must not be minimized. Note: macros are not allowed by the Roblox rules; use at your own risk.",
     "Roblox ist minimiert": "Roblox is minimized",
     "Roblox ließ sich nicht nach vorne holen": "Roblox could not be brought to the front",
     "Roblox-Fenster nicht gefunden": "Roblox window not found",
@@ -53,17 +44,8 @@ EN: dict[str, str] = {
         "after 20 minutes. Interval: Settings → Anti-AFK.",
     "nächster Sprung in {time}": "next jump in {time}",
     "Anwendungs-ID": "Application ID",
-    "Anwendungs-ID: discord.com/developers/applications → New Application (der Name erscheint im Profil als „Spielt …“) → "
-    "Application ID kopieren. Kein Bot und keine Server-Einladung nötig. Die Discord-Desktop-App muss auf dem PC laufen, "
-    "und unter Discord → Einstellungen → Aktivitäts-Privatsphäre muss das Teilen der Aktivität an sein. Als Bild erscheint "
-    "das Thumbnail des Spiels; der Status wird höchstens alle 15 Sekunden aktualisiert.":
-        "Application ID: discord.com/developers/applications → New Application (its name appears in your profile as "
-        "“Playing …”) → copy the Application ID. No bot and no server invite needed. The Discord desktop app must be "
-        "running on this PC, and Discord → Settings → Activity Privacy must allow sharing your activity. The game "
-        "thumbnail is used as the image; the status updates at most every 15 seconds.",
     "Anzahl Versuche je Endwelle": "Attempts per final wave",
     "Anzeigename": "Display name",
-    "Astral Monitor": "Astral Monitor",
     "Astral-Paket": "Astral pack",
     "Astral-Profil": "Astral profile",
     "Astral-Profil oder -Paket": "Astral profile or pack",
@@ -104,16 +86,8 @@ EN: dict[str, str] = {
     "Spiel {place} · Code …{tail}": "Game {place} · code …{tail}",
     "Startet Roblox direkt in deinem privaten Server (Link unter Einstellungen → Privater Server).":
         "Starts Roblox directly in your private server (link under Settings → Private server).",
-    "Startet Roblox direkt in deinem privaten Server, ohne Browser (Knopf auch oben in der Kopfzeile und im Tray-Menü). "
-    "Funktioniert mit Teilen-Links („roblox.com/share?code=…“) und klassischen Links („…?privateServerLinkCode=…“). "
-    "Der Link bleibt nur auf diesem PC und ist im Diagnose-Paket nicht enthalten.":
-        "Starts Roblox directly in your private server, without a browser (button also in the header and the tray "
-        "menu). Works with share links (“roblox.com/share?code=…”) and classic links (“…?privateServerLinkCode=…”). "
-        "The link stays on this PC only and is not included in the diagnostics package.",
     "Beendet um": "Ended at",
     "Bei sehr langen Sitzungen hilft ein Neustart von Roblox.": "For very long sessions, restarting Roblox helps.",
-    "Beim Schließen im Infobereich (neben der Uhr) weiterlaufen":
-        "Keep running in the notification area (next to the clock) when closed",
     "Beim Stoppen eine Statistik-Karte senden": "Send a stats card when stopping",
     "Bereich auswählen": "Select area",
     "Bereich auswählen …": "Select area …",
@@ -177,30 +151,17 @@ EN: dict[str, str] = {
     "Daten": "Data",
     "Datenordner öffnen": "Open data folder",
     "Dauer": "Duration",
-    "Dauer-Werte nutzen nur gemessene Zeiten; geschätzte (mit ~, wenn der Start nicht zu sehen war) fließen nicht ein. "
-    "Tabellen: auf eine Überschrift klicken sortiert, Spaltenränder ziehen ändert die Breite, Überschriften lassen sich "
-    "verschieben.":
-        "Durations only use measured times; estimated ones (marked ~ when the start was not visible) are excluded. "
-        "Tables: click a header to sort, drag column borders to resize, headers can be moved.",
-    "Debug-Bilder bei Lesefehlern speichern (max. 40, Ordner siehe Statistik)":
-        "Save debug images on read errors (max. 40, folder see Statistics)",
     "Deine Discord-ID (nur Ziffern)": "Your Discord ID (digits only)",
-    "Der Abstürze-Alarm nutzt den Roblox-Prozess. Welche Alarme gesendet werden und ob es einen Ping gibt, stellst du "
-    "unter „Meldungen“ ein.":
-        "The crash alert uses the Roblox process. Which alerts are sent and whether there is a ping is set under “Alerts”.",
     "Der Anime Astral Monitor läuft bereits.": "Anime Astral Monitor is already running.",
     "Der Auslöser-Abstand muss zwischen 0 und 5 liegen.": "The trigger offset must be between 0 and 5.",
     "Der Bereich des Wellenzählers ist ungültig (Seite „Erkennung“).": "The wave counter area is invalid (page “Detection”).",
     "Der Installer konnte nicht gestartet werden:\n{error}": "The installer could not be started:\n{error}",
     "Der Quest-Bereich ist ungültig (Seite „Erkennung“).": "The quest area is invalid (page “Detection”).",
     "Der Roblox-Prozess läuft nicht mehr (Absturz oder geschlossen).": "The Roblox process is no longer running (crashed or closed).",
-    "Der Startwert wird zu den gespeicherten Raids addiert (z. B. dein bisheriger Zählerstand aus dem alten Programm).":
-        "The start value is added to the saved raids (e.g. your previous count from the old program).",
     "Der Szenen-Bereich ist ungültig (Seite „Raids“).": "The scene area is invalid (page “Raids”).",
     "Der Zähler steht seit {minutes} Min. bei Welle {wave}.": "The counter has been stuck at wave {wave} for {minutes} min.",
     "Details stehen in monitor.log ({path}).": "Details are in monitor.log ({path}).",
     "Diagnose": "Diagnostics",
-    "Diagnose-Paket erstellen": "Create diagnostics package",
     "Diagnose-Paket erstellt": "Diagnostics package created",
     "Die Anzahl der Bestätigungen muss zwischen 1 und 4 liegen.": "The number of confirmations must be between 1 and 4.",
     "Die Datei muss 1 bis {count} Referenzbilder enthalten.": "The file must contain 1 to {count} reference images.",
@@ -231,9 +192,6 @@ EN: dict[str, str] = {
     "Diesen Eintrag dauerhaft löschen?": "Delete this entry permanently?",
     "Dieses Programm: {ram} MB RAM · {cpu} % CPU": "This program: {ram} MB RAM · {cpu} % CPU",
     "Disconnect erkannt": "Disconnect detected",
-    "Disconnect-Meldung im Spiel erkannt": "Disconnect message detected in game",
-    "Disconnect-Meldung im Spiel erkennen (Texterkennung in der Fenstermitte)":
-        "Detect disconnect messages in game (text recognition in the window center)",
     "Discord": "Discord",
     "Discord akzeptiert die Anwendungs-ID nicht.": "Discord does not accept the application ID.",
     "Discord verbinden": "Connect Discord",
@@ -253,15 +211,8 @@ EN: dict[str, str] = {
     "Ein Paket (.astralpack) enthält alle Raids – Freunde importieren es einmal. Raids, die schon vorhanden sind, werden "
     "dabei übersprungen.":
         "A pack (.astralpack) contains all raids – friends import it once. Raids that already exist are skipped.",
-    "Eine Statusnachricht verwenden, die sich selbst aktualisiert (ersetzt die Uptime-Meldungen)":
-        "Use one status message that updates itself (replaces the uptime messages)",
     "Einrichtung": "Setup",
-    "Einrichtungsassistent": "Setup wizard",
     "Einstellungen": "Settings",
-    "Einstellungen (inkl. Webhook-URL) liegen unverschlüsselt in settings.json. Gib diese Datei nicht weiter. Das "
-    "Diagnose-Paket enthält die Webhook-URL nicht.":
-        "Settings (including the webhook URL) are stored unencrypted in settings.json. Do not share this file. The "
-        "diagnostics package does not contain the webhook URL.",
     "Eintrag löschen": "Delete entry",
     "Ende": "End",
     "Endwelle": "Final wave",
@@ -294,9 +245,6 @@ EN: dict[str, str] = {
     "Fenster: nicht geprüft": "Window: not checked",
     "Fenstertitel": "Window title",
     "Fertig": "Done",
-    "Format: Ctrl+Alt+S, Shift+F9 … (Modifier: Ctrl, Alt, Shift, Win). Vermeide einzelne F-Tasten, die Roblox selbst "
-    "nutzt.":
-        "Format: Ctrl+Alt+S, Shift+F9 … (modifiers: Ctrl, Alt, Shift, Win). Avoid single F keys that Roblox uses itself.",
     "Fortsetzen": "Resume",
     "Für das Update-Paket ist keine Prüfsumme veröffentlicht.": "No checksum is published for the update package.",
     "Gesamtbericht": "Overall report",
@@ -315,9 +263,7 @@ EN: dict[str, str] = {
     "Grenze": "Limit",
     "Hoher Speicherverbrauch": "High memory usage",
     "Hotkey {name}: {error}": "Hotkey {name}: {error}",
-    "Hotkeys (global, auch während des Spiels)": "Hotkeys (global, also while playing)",
     "Höchste Welle": "Highest wave",
-    "Im Spiel erscheint eine Verbindungs-Meldung:": "A connection message appears in the game:",
     "Im Update-Paket fehlt {file}.": "{file} is missing in the update package.",
     "Importieren": "Import",
     "Importieren …": "Import …",
@@ -366,7 +312,6 @@ EN: dict[str, str] = {
     "Leer = automatisch suchen": "Empty = search automatically",
     "Lege zuerst ein Profil an („Neu …“).": "Create a profile first (“New …”).",
     "Leistung": "Performance",
-    "Leistung, Wächter, Hotkeys und Daten.": "Performance, guard, hotkeys and data.",
     "Lesezeit: {ms} ms": "Read time: {ms} ms",
     "Letzte 12 Stunden": "Last 12 hours",
     "Letzte 24 Stunden": "Last 24 hours",
@@ -387,8 +332,6 @@ EN: dict[str, str] = {
     "Mit „Jetzt testen“ prüfst du, ob dein Raid erkannt wird.": "Use “Test now” to check whether your raid is recognized.",
     "Monitor beendet": "Monitor stopped",
     "Monitor gestartet": "Monitor started",
-    "Nach jeder Meldung des Programms automatisch ganz nach unten schieben":
-        "Automatically move it to the bottom after every message from the program",
     "Name des Raids (z. B. MaxTac Call):": "Name of the raid (e.g. MaxTac Call):",
     "Neu …": "New …",
     "Neuer Rekord (Welle)": "New record (wave)",
@@ -396,7 +339,6 @@ EN: dict[str, str] = {
     "Neues Profil": "New profile",
     "Nicht registriert: {keys}": "Not registered: {keys}",
     "Nichts Neues importiert.": "Nothing new imported.",
-    "Niedrige Prozesspriorität (das Spiel hat immer Vorrang)": "Low process priority (the game always comes first)",
     "Noch keine Profile erkannt – lege unter „Raids“ Referenzbilder an.":
         "No profiles recognized yet – add reference images under “Raids”.",
     "Noch keine Quests gelesen.": "No quests read yet.",
@@ -430,7 +372,6 @@ EN: dict[str, str] = {
     "Quest abgeschlossen": "Quest completed",
     "Quest abgeschlossen: {title}": "Quest completed: {title}",
     "Quest-Fortschritt": "Quest progress",
-    "Quest-Fortschritt in Raid- und Uptime-Meldungen anhängen": "Attach quest progress to raid and uptime messages",
     "Quest-Fortschritt nach Raid": "Quest progress after raid",
     "Quest: {title} · {old} → {new}/{total}": "Quest: {title} · {old} → {new}/{total}",
     "Quests": "Quests",
@@ -449,10 +390,6 @@ EN: dict[str, str] = {
     "Raids": "Raids",
     "Raids laufen wieder": "Raids are running again",
     "Raids pro Stunde": "Raids per hour",
-    "Rechtsklick auf das Symbol neben der Uhr: Öffnen, Starten/Stoppen, Pause, Beenden. Ein Sprachwechsel gilt nach einem "
-    "Neustart des Programms.":
-        "Right-click the icon next to the clock: open, start/stop, pause, quit. A language change applies after "
-        "restarting the program.",
     "Referenzbild": "Reference image",
     "Referenzbild aufnehmen": "Capture reference image",
     "Referenzbild gespeichert ✓": "Reference image saved ✓",
@@ -480,7 +417,6 @@ EN: dict[str, str] = {
     "Session-Bericht": "Session report",
     "Sparsam": "Economy",
     "Speicher-Warnung": "Memory warning",
-    "Speicher-Warnung ab (Roblox)": "Memory warning from (Roblox)",
     "Speichern": "Save",
     "Sperrzeit zwischen Raids": "Cooldown between raids",
     "Spiel-Link (für das Bild)": "Game link (for the image)",
@@ -506,17 +442,14 @@ EN: dict[str, str] = {
         "Start a raid until “Wave x/100” is visible at the top, then click “Search”.",
     "Starte …": "Starting …",
     "Starten": "Start",
-    "Startwert „Raids gesamt“": "Start value “raids total”",
     "Statistik": "Statistics",
     "Statistik als Bild (PNG) speichern – zum Teilen mit Freunden": "Save the stats as an image (PNG) – to share with friends",
     "Statistik-Karte speichern": "Save stats card",
     "Status": "Status",
     "Status neu senden": "Resend status",
-    "Status neu senden (nach unten)": "Resend status (to the bottom)",
     "Status wird neu gesendet …": "Resending status …",
     "Stillstand erkannt": "Stall detected",
     "Stillstand-Alarm": "Stall alert",
-    "Stillstand: Zähler unverändert für": "Stall: counter unchanged for",
     "Stoppen": "Stop",
     "Suchen": "Search",
     "Tagesbericht": "Daily report",
@@ -531,12 +464,6 @@ EN: dict[str, str] = {
     "Test-Nachricht gesendet ✅": "Test message sent ✅",
     "Test-Nachricht gesendet ✓": "Test message sent ✓",
     "Test-Nachricht senden": "Send test message",
-    "Texterkennung (Tesseract)": "Text recognition (Tesseract)",
-    "Tipp: Rechtsklick auf die Statusnachricht → „Anheften“. Eine angeheftete Nachricht bleibt angeheftet und wird nur "
-    "bearbeitet. Per Webhook lässt sie sich nicht automatisch anheften; „Neu senden“ erzeugt eine neue Nachricht (neu "
-    "anheften).":
-        "Tip: right-click the status message → “Pin”. A pinned message stays pinned and is only edited. Webhooks cannot "
-        "pin automatically; “Resend” creates a new message (pin it again).",
     "Trend": "Trend",
     "Unbekanntes Dateiformat (nicht von diesem Programm erstellt).": "Unknown file format (not created by this program).",
     "Unerwarteter Fehler": "Unexpected error",
@@ -548,11 +475,9 @@ EN: dict[str, str] = {
     "Updates": "Updates",
     "Uptime": "Uptime",
     "Uptime (nur ohne Live-Status)": "Uptime (only without live status)",
-    "Uptime-Meldung alle": "Uptime message every",
     "Verbindung zu Discord nicht möglich ({error}).": "Cannot connect to Discord ({error}).",
     "Verbindung zum Webhook funktioniert.": "Connection to the webhook works.",
     "Verbunden ✓ – wird in deinem Discord-Profil angezeigt.": "Connected ✓ – shown in your Discord profile.",
-    "Version {version}": "Version {version}",
     "Version {version} ist verfügbar": "Version {version} is available",
     "Version {version} ist verfügbar:\n{url}\n\nNur die installierte Version aktualisiert sich selbst.":
         "Version {version} is available:\n{url}\n\nOnly the installed version updates itself.",
@@ -603,8 +528,6 @@ EN: dict[str, str] = {
         "Where do attempts end? Count per final wave (grouped if the range is large).",
     "Wochenbericht": "Weekly report",
     "Wächter": "Guard",
-    "Wächter aktiv (Alarme bei Absturz, Disconnect, Stillstand, Speicher)":
-        "Guard active (alerts on crash, disconnect, stall, memory)",
     "Wächter-Werte dürfen nicht negativ sein.": "Guard values must not be negative.",
     "Wähle den Bereich großzügig (z. B. die ganze obere Mitte des Fensters). Das Programm findet „Wave x/100“ darin "
     "selbst, auch im Fenstermodus oder bei verschobenem Layout. Der Bereich muss den Zähler nur enthalten.":
@@ -614,7 +537,6 @@ EN: dict[str, str] = {
         "Choose the scenery (buildings, ground), but without menus, bars and the quest list.",
     "Wähle die ganze Quest-Liste (Titel und Fortschrittsbalken).": "Choose the whole quest list (titles and progress bars).",
     "Zeit/Welle": "Time/wave",
-    "Zeiten und Zähler": "Times and counters",
     "Ziehe ein Rechteck um den Wellenzähler („Wave 12/100“) – mit etwas Rand.":
         "Drag a rectangle around the wave counter (“Wave 12/100”) – with some margin.",
     "Ziehe ein Rechteck um die ganze Quest-Liste (Titel und Fortschrittsbalken).":
@@ -638,7 +560,6 @@ EN: dict[str, str] = {
     "unbekannter Modifier „{key}“ (erlaubt: Ctrl, Alt, Shift, Win)": "unknown modifier “{key}” (allowed: Ctrl, Alt, Shift, Win)",
     "wie global": "as global",
     "x {x0}–{x1}, y {y0}–{y1} des Fensters": "x {x0}–{x1}, y {y0}–{y1} of the window",
-    "z. B. 100  oder  100, 50": "e.g. 100  or  100, 50",
     "z. B. „Boss bei Welle 27“": "e.g. “Boss at wave 27”",
     "{attempts} Versuche · {waves} Wellen · Ø Welle {avg}": "{attempts} attempts · {waves} waves · avg. wave {avg}",
     "{count} Quests ({ms} ms)": "{count} quests ({ms} ms)",
@@ -648,8 +569,6 @@ EN: dict[str, str] = {
     "{h} Std. {m} Min.": "{h} h {m} min",
     "{minutes} Min.": "{minutes} min",
     "{name}   ({count} Bilder)": "{name}   ({count} images)",
-    "{name}  ·  ruhig {idle} s, kurz vor Raid-Ende {hot} s, Quests alle {quest} s":
-        "{name}  ·  calm {idle} s, close to raid end {hot} s, quests every {quest} s",
     "{name} ({key}) – evtl. von einem anderen Programm belegt": "{name} ({key}) – possibly used by another program",
     "Änderungen": "Changes",
     "Öffnen": "Open",
@@ -667,9 +586,6 @@ EN: dict[str, str] = {
     "Überwachung gestoppt": "Monitoring stopped",
     "Überwachung starten": "Start monitoring",
     "Überwachung stoppen": "Stop monitoring",
-    "„Ausgewogen“ passt für die meisten. Der Takt wird nur kurz vor dem Raid-Ende erhöht, damit 99/100 sicher erwischt wird.":
-        "“Balanced” suits most people. The rate is only increased close to the raid end so that 99/100 is caught "
-        "reliably.",
     "⚠️ Fast gleich wie ein anderes Profil (derselbe Raid doppelt angelegt?): {names} – doppeltes Profil löschen.":
         "⚠️ Almost identical to another profile (same raid added twice?): {names} – delete the duplicate profile.",
     "✅ Gelesen: {value}/{total}  ({ms} ms)": "✅ Read: {value}/{total}  ({ms} ms)",
@@ -715,13 +631,91 @@ EN: dict[str, str] = {
     "Privater Server).":
         "Auto-rejoin on – without a private server link you go to a public server (link under Settings → Private "
         "server).",
-    "Auto-Rejoin (Schalter oben in der Kopfzeile oder im Tray-Menü): Bei Verbindungsabbruch, Kick oder Absturz "
-    "beendet das Programm den hängenden Client und tritt nach 15 s erneut bei – bis zu 5 Versuche mit wachsender "
-    "Pause. Erkannt wird das über das Roblox-Protokoll (kaum Rechenzeit, auch ohne laufende Überwachung). Wer Roblox "
-    "selbst schließt oder das Spiel verlässt, wird nicht zurückgeholt. Ohne Link geht es in einen öffentlichen Server "
-    "desselben Spiels.":
-        "Auto-rejoin (switch in the header or the tray menu): after a disconnect, kick or crash the program closes the "
-        "stuck client and rejoins after 15 s – up to 5 attempts with growing pauses. Detection uses the Roblox log "
-        "(hardly any CPU, works without monitoring running). If you close Roblox or leave the game yourself, it does "
-        "not bring you back. Without a link you go to a public server of the same game.",
+    # Überarbeitete Oberfläche (0.6.4)
+    "Disconnect erkannt: {reason}": "Disconnect detected: {reason}",
+    "Auto-Rejoin tritt neu bei.": "Auto-rejoin is rejoining.",
+    "Änderungen gelten erst nach dem Speichern.": "Changes apply after saving.",
+    "Eine Statusnachricht verwenden, die sich selbst aktualisiert": "Use one status message that updates itself",
+    "Sonst Uptime-Meldung alle": "Otherwise uptime message every",
+    "Nach jeder Meldung automatisch wieder ganz nach unten schieben":
+        "Automatically move it back to the bottom after every message",
+    "Quest-Fortschritt an Raid- und Uptime-Meldungen anhängen": "Attach quest progress to raid and uptime messages",
+    "Tipp: Rechtsklick auf die Statusnachricht → „Anheften“. Sie wird danach nur noch bearbeitet. „Neu senden“ "
+    "erzeugt eine neue Nachricht, die du neu anheftest.":
+        "Tip: right-click the status message → “Pin”. From then on it is only edited. “Resend” creates a new message "
+        "that you pin again.",
+    "z. B. 100 oder 100, 50": "e.g. 100 or 100, 50",
+    "Texterkennung (erweitert)": "Text recognition (advanced)",
+    "Debug-Bilder bei Lesefehlern speichern (max. 40, im Datenordner)":
+        "Save debug images on read errors (max. 40, in the data folder)",
+    "Tesseract ist im Programm enthalten. Einen eigenen Pfad brauchst du nur, wenn „Prüfen“ einen Fehler meldet.":
+        "Tesseract is included in the program. You only need your own path if “Check” reports an error.",
+    "Hier erscheint nach dem Start der Wellenzähler aus dem Spiel.":
+        "The wave counter from the game appears here once monitoring starts.",
+    "Noch keine Ereignisse – Start, Raids, Alarme und Rejoins erscheinen hier.":
+        "No events yet – starts, raids, alerts and rejoins appear here.",
+    "Prüft das aktuelle Roblox-Bild und zeigt, welcher Raid erkannt wird.":
+        "Checks the current Roblox image and shows which raid is recognized.",
+    "Wie viele Bildmerkmale mindestens passen müssen. Höher = strenger, niedriger = erkennt auch bei kleinen "
+    "Änderungen.":
+        "How many image features must match at least. Higher = stricter, lower = also recognizes small changes.",
+    "Bild {n}": "Image {n}",
+    "Privater Server und Auto-Rejoin": "Private server and auto-rejoin",
+    "Niedrige Prozesspriorität (das Spiel hat Vorrang)": "Low process priority (the game comes first)",
+    "Wächter aktiv": "Guard active",
+    "Beim Schließen im Infobereich weiterlaufen": "Keep running in the tray when closed",
+    "Hotkeys": "Hotkeys",
+    "Ordner öffnen": "Open folder",
+    "Diagnose-Paket": "Diagnostics package",
+    "Protokoll, Wertverlauf und Einstellungen ohne Webhook und Links – für die Fehlersuche":
+        "Log, value history and settings without webhook and links – for troubleshooting",
+    "Assistent": "Wizard",
+    "Einrichtungsassistent erneut öffnen": "Open the setup wizard again",
+    "Ruhig alle {idle} s, kurz vor Raid-Ende alle {hot} s, Quests alle {quest} s.":
+        "Idle every {idle} s, close to the raid end every {hot} s, quests every {quest} s.",
+    "Roblox-Helfer, Überwachung und Programm.": "Roblox helpers, monitoring and program.",
+    "Startet Roblox ohne Browser direkt in deinem privaten Server. Teilen-Links („roblox.com/share?code=…“) und "
+    "klassische Links funktionieren. Der Link bleibt nur auf diesem PC.":
+        "Starts Roblox directly in your private server without a browser. Share links (“roblox.com/share?code=…”) "
+        "and classic links work. The link stays on this PC only.",
+    "Auto-Rejoin (Schalter in der Kopfzeile): Nach Verbindungsabbruch, Kick oder Absturz tritt das Programm nach "
+    "15 s wieder bei – bis zu 5 Versuche. Wer Roblox selbst schließt, wird nicht zurückgeholt.":
+        "Auto-rejoin (switch in the header): after a disconnect, kick or crash the program rejoins after 15 s – up "
+        "to 5 attempts. If you close Roblox yourself, it does not bring you back.",
+    "Schalter in der Kopfzeile. Holt Roblox kurz nach vorne, drückt die Leertaste und wechselt zurück. Während du "
+    "tippst oder klickst, wartet es. Roblox darf nicht minimiert sein.":
+        "Switch in the header. Briefly brings Roblox to the front, presses space and switches back. It waits while "
+        "you type or click. Roblox must not be minimized.",
+    "Hinweis: Makros sind laut Roblox-Regeln nicht erlaubt – Nutzung auf eigene Verantwortung.":
+        "Note: macros are not allowed by the Roblox rules – use at your own risk.",
+    "„Ausgewogen“ passt für die meisten. Kurz vor dem Raid-Ende wird schneller geprüft, damit 99/100 sicher erkannt "
+    "wird.":
+        "“Balanced” suits most people. Close to the raid end it checks faster so that 99/100 is reliably detected.",
+    "Stillstand nach": "Stall after",
+    "Kein Raid beendet seit": "No raid finished for",
+    "Roblox-Speicher über": "Roblox memory above",
+    "Abstürze erkennt der Wächter am Roblox-Prozess, Disconnects und Kicks am Roblox-Protokoll – ohne zusätzliche "
+    "Bilderkennung. Was gesendet wird, stellst du unter „Meldungen“ ein.":
+        "The guard detects crashes via the Roblox process, disconnects and kicks via the Roblox log – without extra "
+        "image recognition. What is sent is set under “Alerts”.",
+    "Programm": "Program",
+    "Rechtsklick auf das Symbol neben der Uhr: Öffnen, Start/Stopp, Pause, Server beitreten, Anti-AFK, Auto-Rejoin, "
+    "Beenden. Ein Sprachwechsel gilt nach einem Neustart.":
+        "Right-click the icon next to the clock: open, start/stop, pause, join server, anti-AFK, auto-rejoin, quit. "
+        "A language change applies after a restart.",
+    "Global, auch im Spiel. Format: Ctrl+Alt+S, Shift+F9 … – einzelne F-Tasten vermeiden, die Roblox selbst nutzt.":
+        "Global, also in-game. Format: Ctrl+Alt+S, Shift+F9 … – avoid single F keys that Roblox uses itself.",
+    "Anwendungs-ID: discord.com/developers/applications → New Application (der Name erscheint im Profil als "
+    "„Spielt …“) → Application ID kopieren. Die Discord-Desktop-App muss laufen und das Teilen der Aktivität an "
+    "sein (Discord → Einstellungen → Aktivitäts-Privatsphäre).":
+        "Application ID: discord.com/developers/applications → New Application (its name appears in your profile as "
+        "“Playing …”) → copy the Application ID. The Discord desktop app must be running and activity sharing must "
+        "be on (Discord → Settings → Activity Privacy).",
+    "settings.json enthält deine Webhook-URL unverschlüsselt – nicht weitergeben.":
+        "settings.json contains your webhook URL unencrypted – do not share it.",
+    "Weitere Aktionen": "More actions",
+    "Dauer-Werte nutzen nur gemessene Zeiten (geschätzte sind mit ~ markiert). Tabelle: Überschrift anklicken "
+    "sortiert, Spaltenränder ziehen ändert die Breite.":
+        "Durations only use measured times (estimates are marked with ~). Table: click a header to sort, drag column "
+        "borders to change the width.",
 }

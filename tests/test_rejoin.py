@@ -27,8 +27,8 @@ class FakeTail:
 
 
 class Rig:
-    def __init__(self, link=LINK):
-        self.s = SimpleNamespace(auto_rejoin_enabled=True, private_server_link=link)
+    def __init__(self, link=LINK, guard=False):
+        self.s = SimpleNamespace(auto_rejoin_enabled=True, private_server_link=link, guard_enabled=guard)
         self.tail, self.alive, self.started, self.kills = FakeTail(), True, [], 0
         self.events, self.notes = [], []
         self.now = 0.0
@@ -140,15 +140,38 @@ class FlowTests(unittest.TestCase):
         rig.step(1, JOIN)                                          # nächster Beitritt setzt zurück
         self.assertEqual((rig.r.status, rig.r.attempt), ("in_game", 0))
 
-    def test_ocr_signal_and_switch_off(self):
+    def test_switch_off(self):
         rig = Rig()
         rig.step(1, JOIN)
-        rig.r.external_lost()
-        rig.step(1)
+        rig.step(4, LOST)
         self.assertEqual(rig.r.status, "lost")
         rig.s.auto_rejoin_enabled = False
         rig.step(30)
         self.assertEqual((rig.r.status, rig.started), ("off", []))
+
+    def test_guard_alert_without_rejoin(self):
+        rig = Rig(guard=True)
+        rig.s.auto_rejoin_enabled = False
+        rig.step(1, JOIN)
+        rig.step(3, LOST)
+        rig.step(3, JOIN)                                          # Teleport: kein Alarm
+        self.assertEqual(rig.notes, [])
+        rig.step(1, LOST)
+        rig.step(rejoin.GRACE + 2)
+        self.assertEqual(rig.notes, [("roblox_down", "Disconnect erkannt")])
+        self.assertEqual((rig.r.status, rig.started), ("down", []))
+        rig.step(30)
+        self.assertEqual(len(rig.notes), 1)                        # nur einmal je Abbruch
+        rig.step(4, JOIN)
+        self.assertEqual(rig.r.status, "in_game")
+
+    def test_guard_alert_with_rejoin(self):
+        rig = Rig(guard=True)
+        rig.step(1, JOIN)
+        rig.step(1, LOST)
+        rig.step(rejoin.GRACE + 2)
+        self.assertEqual([n[0] for n in rig.notes], ["roblox_down", "rejoin"])
+        self.assertEqual(len(rig.started), 1)
 
 
 if __name__ == "__main__":

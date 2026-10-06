@@ -114,7 +114,6 @@ class Settings:
     guard_enabled: bool = True
     stall_minutes: int = 10
     no_raid_minutes: int = 0            # 0 = aus
-    disconnect_check: bool = True
     ram_alert_gb: float = 6.0           # 0 = aus
     # Live-Status (eine Nachricht, die sich selbst aktualisiert)
     status_enabled: bool = True

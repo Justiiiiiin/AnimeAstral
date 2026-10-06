@@ -18,7 +18,7 @@ from .rejoin import AutoRejoin
 from .i18n import N_, dec, tr
 from .capture import CaptureError, FrameSource, GrabResult, create_source
 from .discord_client import DiscordSender
-from .guard import DISCONNECT_ROI, Guard
+from .guard import Guard
 from .imaging import change_fraction, encode_jpeg, to_gray
 from .ocr import OcrEngine, OcrError
 from .profiles import ProfileStore, RaidMatcher
@@ -501,8 +501,6 @@ class Engine:
             request.append(("quest", s.quest_roi))
         if self._want_scene(now):
             request.append(("scene", s.scene_roi))
-        if guard.needs_center(now):
-            request.append(("center", DISCONNECT_ROI))
 
         result = self._source.grab([roi for _name, roi in request], False, 1.0)
         if result is None:
@@ -519,9 +517,6 @@ class Engine:
                 self._process_quests(crops["quest"], now)
             if "scene" in crops:
                 self._process_scene(crops["scene"], now)
-            if "center" in crops:
-                if guard.check_disconnect(crops["center"], now):
-                    self.rejoin.external_lost()        # Disconnect-Dialog per Texterkennung: zusätzlicher Auslöser
 
         guard.poll_process(now)
         guard.check_stall(now, self.tracker.run is not None)

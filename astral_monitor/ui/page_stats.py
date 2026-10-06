@@ -70,6 +70,7 @@ class StatsPage(QWidget):
         send_card.clicked.connect(self._send_card)
         more = QToolButton()
         more.setText("⋯")
+        more.setToolTip(tr("Weitere Aktionen"))
         more.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
         menu = QMenu(more)
         menu.addAction(tr("Ausgewählten Eintrag löschen"), self._delete_selected)
@@ -104,9 +105,8 @@ class StatsPage(QWidget):
         self.wall_label = label("", "warn", wrap=True)          # „Wand“ des gewählten Raids
         self.wall_label.setVisible(False)
         root.addWidget(self.wall_label)
-        root.addWidget(label(tr("Dauer-Werte nutzen nur gemessene Zeiten; geschätzte (mit ~, wenn der Start nicht zu sehen war) "
-                             "fließen nicht ein. Tabellen: auf eine Überschrift klicken sortiert, Spaltenränder ziehen ändert "
-                             "die Breite, Überschriften lassen sich verschieben."), "small", wrap=True))
+        root.addWidget(label(tr("Dauer-Werte nutzen nur gemessene Zeiten (geschätzte sind mit ~ markiert). Tabelle: "
+                             "Überschrift anklicken sortiert, Spaltenränder ziehen ändert die Breite."), "small", wrap=True))
 
         mid = QHBoxLayout()
         theme.track_spacing(mid, 16)

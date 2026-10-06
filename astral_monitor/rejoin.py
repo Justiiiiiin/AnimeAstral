@@ -1,4 +1,6 @@
-"""Auto-Rejoin (optional, Standard aus): nach Verbindungsabbruch, Kick oder Absturz wieder dem Server beitreten.
+"""Verbindungswächter und Auto-Rejoin (optional, Standard aus): nach Verbindungsabbruch, Kick oder Absturz wieder dem
+Server beitreten. Läuft, solange Auto-Rejoin oder der Wächter an ist; der Wächter bekommt hier seinen Disconnect-Alarm
+(früher per Texterkennung in der Fenstermitte – das Protokoll ist genauer und braucht keine Bildaufnahme).
 
 Erkennung über das Protokoll des Roblox-Clients (%LOCALAPPDATA%\\Roblox\\logs) statt über Bilderkennung: alle paar
 Sekunden werden nur die neu geschriebenen Zeilen gelesen – praktisch keine CPU, kein Bildschirmzugriff.
@@ -173,7 +175,7 @@ class AutoRejoin(threading.Thread):
 
     def _reset(self) -> None:
         self.tail: Optional[LogTail] = None
-        self.status = "off"         # off | idle | in_game | left | lost | rejoining | gave_up
+        self.status = "off"         # off | idle | in_game | left | lost | rejoining | gave_up | down (nur gemeldet)
         self.place: Optional[int] = None
         self.attempt = 0
         self.lost_at = 0.0
@@ -183,14 +185,10 @@ class AutoRejoin(threading.Thread):
         self._next_proc = 0.0
         self._gone_since: Optional[float] = None
         self._reason = 0
-        self._ocr_lost = False
+        self._alerted = False
 
     def stop(self) -> None:
         self._halt.set()
-
-    def external_lost(self) -> None:
-        """Disconnect-Dialog wurde per Texterkennung gesehen (Überwachung läuft). Wird im nächsten Durchlauf behandelt."""
-        self._ocr_lost = True
 
     def run(self) -> None:
         while not self._halt.wait(1.0):
@@ -214,9 +212,9 @@ class AutoRejoin(threading.Thread):
     def tick(self, now: float) -> None:
         """Ein Durchlauf (öffentlich für Tests)."""
         s = self._get()
-        if not s.auto_rejoin_enabled:
+        if not (s.auto_rejoin_enabled or s.guard_enabled):
             if self.status != "off":
-                self._reset()                       # aus: nichts lesen, nichts merken
+                self._reset()                       # beides aus: nichts lesen, nichts merken
             return
         if self.status == "off":
             self.status = "idle"
@@ -226,14 +224,15 @@ class AutoRejoin(threading.Thread):
             self._next_log = now + POLL_LOG_EVERY
             for line in self.tail.poll():
                 self._on_line(line, now)
-        if self._ocr_lost:
-            self._ocr_lost = False
-            if self.status in ("in_game", "idle"):
-                self._lost(now, 0, GRACE)
         if self.status == "in_game" and now >= self._next_proc:
             self._next_proc = now + POLL_PROCESS_EVERY
             self._check_process(now)
+        if not s.auto_rejoin_enabled and self.status in ("lost", "rejoining", "gave_up") and now >= self.next_try:
+            self._alert(s)
+            self.status = "down"                    # nur gemeldet; zurück auf „im Spiel“ beim nächsten Beitritt
+            return
         if self.status == "lost" and now >= self.next_try:
+            self._alert(s)
             self._rejoin(now, s)
         elif self.status == "rejoining" and now - self.launched_at >= JOIN_TIMEOUT:
             self._failed(now, tr("kein Beitritt innerhalb von {seconds} s", seconds=int(JOIN_TIMEOUT)))
@@ -269,13 +268,29 @@ class AutoRejoin(threading.Thread):
             if self.status == "in_game":
                 self._lost(now, -1, 0.0)
 
-    def _lost(self, now: float, reason: int, grace: float) -> None:
-        self.status, self._reason, self.lost_at = "lost", reason, now
-        self.next_try = now + grace
-        text = (tr("Roblox ist abgestürzt") if reason == -1 else
+    def _reason_text(self) -> str:
+        reason = self._reason
+        return (tr("Roblox ist abgestürzt") if reason == -1 else
                 tr("Verbindung verloren (Fehler {code})", code=reason) if reason else tr("Verbindung verloren"))
-        log.info("Auto-Rejoin: %s", text)
-        self._event(tr("Auto-Rejoin: {reason} – trete gleich neu bei", reason=text), "warn")
+
+    def _lost(self, now: float, reason: int, grace: float) -> None:
+        self.status, self._reason, self.lost_at, self._alerted = "lost", reason, now, False
+        self.next_try = now + grace
+        text = self._reason_text()
+        log.info("Verbindung: %s", text)
+        if self._get().auto_rejoin_enabled:
+            self._event(tr("Auto-Rejoin: {reason} – trete gleich neu bei", reason=text), "warn")
+
+    def _alert(self, s) -> None:
+        """Wächter-Alarm „Disconnect“ (einmal je Abbruch, erst nach der Wartezeit – Teleports lösen keinen aus).
+        Abstürze meldet der Wächter der Überwachung selbst über den Prozess."""
+        if self._alerted or not s.guard_enabled or self._reason == -1:
+            return
+        self._alerted = True
+        text = self._reason_text()
+        self._event(tr("Disconnect erkannt: {reason}", reason=text), "error")
+        self._notify("roblox_down", tr("Disconnect erkannt"), messages.COLOR_ERROR,
+                     description=text + (" – " + tr("Auto-Rejoin tritt neu bei.") if s.auto_rejoin_enabled else ""))
 
     def target(self, s) -> tuple[Optional[str], str]:
         """(roblox://-Link, Beschreibung) für den Beitritt."""

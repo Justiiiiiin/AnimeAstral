@@ -69,8 +69,9 @@ class MonitorPage(QWidget):
         theme.track_spacing(left, 16)
 
         live = Card(tr("Live-Erkennung"))
-        self.preview = label("", "preview")
+        self.preview = label(tr("Hier erscheint nach dem Start der Wellenzähler aus dem Spiel."), "preview")
         self.preview.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.preview.setWordWrap(True)
         theme.track_min_height(self.preview, 70)
         live.body.addWidget(self.preview)
         self.wave = label("–", "wave")
@@ -117,6 +118,9 @@ class MonitorPage(QWidget):
         mid.addLayout(left, 3)
 
         events = Card(tr("Ereignisse"))
+        self.events_empty = label(tr("Noch keine Ereignisse – Start, Raids, Alarme und Rejoins erscheinen hier."),
+                                  "empty", wrap=True)
+        events.body.addWidget(self.events_empty)
         self.events = QListWidget()
         smooth(self.events)
         events.body.addWidget(self.events, 1)
@@ -129,6 +133,7 @@ class MonitorPage(QWidget):
         item = QListWidgetItem(f"{stamp}   {data['text']}")
         item.setForeground(QColor(LEVEL_COLORS.get(data.get("level", "info"), "#E6EAF0")))
         self.events.insertItem(0, item)
+        self.events_empty.setVisible(False)
         while self.events.count() > 200:
             self.events.takeItem(self.events.count() - 1)
 

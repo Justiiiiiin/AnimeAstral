@@ -57,7 +57,7 @@ class MainWindow(QMainWindow):
         top = QHBoxLayout(topbar)
         theme.track_margins(top, 16, 8, 16, 8)
         theme.track_spacing(top, 10)
-        top.addWidget(label(tr("Astral Monitor"), "h2"))
+        top.addWidget(label(tr("Anime Astral Monitor"), "h2"))
         top.addStretch(1)
         afk_label = label(tr("Anti-AFK"), "muted")
         afk_label.setToolTip(tr("Wechselt alle paar Minuten kurz zu Roblox, drückt einmal die Leertaste und wechselt "
@@ -117,7 +117,7 @@ class MainWindow(QMainWindow):
             btn.setCheckable(True)
             self.nav.addButton(btn, i)
             side.addWidget(btn)
-            self.stack.addWidget(scroll_page(page))
+            self.stack.addWidget(self._with_savebar(page) if getattr(page, "SAVES", False) else scroll_page(page))
         self.nav.button(0).setChecked(True)
         self.nav.idClicked.connect(self.stack.setCurrentIndex)
         side.addStretch(1)
@@ -166,6 +166,29 @@ class MainWindow(QMainWindow):
         self._tray_hint_shown = False
         self.tray = self._setup_tray()
         show_request_file().unlink(missing_ok=True)          # Rest eines früheren Laufs
+
+    def _with_savebar(self, page: QWidget) -> QWidget:
+        """Seite mit Einstellungen: scrollt, die Speichern-Leiste bleibt unten immer sichtbar."""
+        box = QWidget()
+        lay = QVBoxLayout(box)
+        lay.setContentsMargins(0, 0, 0, 0)
+        lay.setSpacing(0)
+        area = scroll_page(page)
+        lay.addWidget(area, 1)
+        bar = QFrame()
+        bar.setObjectName("savebar")
+        row = QHBoxLayout(bar)
+        theme.track_margins(row, 28, 10, 28, 10)
+        row.addWidget(label(tr("Änderungen gelten erst nach dem Speichern."), "small"))
+        row.addStretch(1)
+        save = QPushButton(tr("Speichern"))
+        save.setObjectName("primary")
+        theme.track_min_width(save, 140)
+        save.clicked.connect(lambda: self.save_settings())
+        row.addWidget(save)
+        lay.addWidget(bar)
+        box.widget = lambda: page                  # wie QScrollArea.widget() (Prüfhilfen)
+        return box
 
     # --------------------------------------------------------------- Infobereich (Tray)
     def _setup_tray(self) -> Optional[QSystemTrayIcon]:

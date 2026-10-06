@@ -19,6 +19,8 @@ from .widgets import SpinBox, Card, bgr_to_pixmap, label, smooth
 
 
 class RaidsPage(QWidget):
+    SAVES = True                                   # Speichern-Leiste unten (main_window)
+
     def __init__(self, main) -> None:
         super().__init__()
         self.main = main
@@ -76,14 +78,15 @@ class RaidsPage(QWidget):
                                   "ignoriert. Pro Raid nur ein Profil anlegen."), "small", wrap=True))
         self.images = QListWidget()
         self.images.setViewMode(QListWidget.ViewMode.IconMode)
-        self.images.setIconSize(QSize(176, 100))
+        theme.track(self.images, lambda o, f: (o.setIconSize(QSize(round(160 * f), round(90 * f))),
+                                               o.setGridSize(QSize(round(172 * f), round(124 * f)))))
         self.images.setResizeMode(QListWidget.ResizeMode.Adjust)
         self.images.setMovement(QListWidget.Movement.Static)
         self.images.setWrapping(True)
         theme.track_spacing(self.images, 8)
         self.images.setUniformItemSizes(True)
         self.images.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        theme.track_min_height(self.images, 190)
+        theme.track_min_height(self.images, 280)            # zwei Bildreihen ohne Scrollen
         smooth(self.images)
         refs.body.addWidget(self.images, 1)
         row2 = QHBoxLayout()
@@ -127,7 +130,8 @@ class RaidsPage(QWidget):
         trow.addWidget(run)
         trow.addStretch(1)
         test.body.addLayout(trow)
-        self.result = label("", "muted", wrap=True)
+        self.result = label(tr("Prüft das aktuelle Roblox-Bild und zeigt, welcher Raid erkannt wird."), "small",
+                            wrap=True)
         test.body.addWidget(self.result)
         self.preview = label("", "preview")
         self.preview.setVisible(False)
@@ -152,20 +156,14 @@ class RaidsPage(QWidget):
         irow.addWidget(label(tr("Mindest-Übereinstimmung")))
         self.min_inliers = SpinBox()
         self.min_inliers.setRange(1, 200)
+        self.min_inliers.setToolTip(tr("Wie viele Bildmerkmale mindestens passen müssen. Höher = strenger, "
+                                       "niedriger = erkennt auch bei kleinen Änderungen."))
         irow.addWidget(self.min_inliers)
         irow.addStretch(1)
         area.body.addLayout(irow)
         right_col.addWidget(area, 0)
         body.addLayout(right_col, 5)
         root.addLayout(body, 1)
-
-        save = QPushButton(tr("Speichern"))
-        save.setObjectName("primary")
-        save.clicked.connect(lambda: self.main.save_settings())
-        srow = QHBoxLayout()
-        srow.addStretch(1)
-        srow.addWidget(save)
-        root.addLayout(srow)
         self._refresh_profiles()
 
     # ------------------------------------------------------------------ Einstellungen
@@ -236,7 +234,7 @@ class RaidsPage(QWidget):
             img = cv2.imread(str(path), cv2.IMREAD_COLOR)
             if img is None:
                 continue
-            item = QListWidgetItem(QIcon(bgr_to_pixmap(img, 176)), path.stem.replace("ref_", "Bild "))
+            item = QListWidgetItem(QIcon(bgr_to_pixmap(img, 160)), tr("Bild {n}", n=path.stem.replace("ref_", "")))
             item.setData(Qt.ItemDataRole.UserRole, str(path))
             self.images.addItem(item)
 
@@ -350,7 +348,6 @@ class RaidsPage(QWidget):
         item = self.images.currentItem()
         if item is None:
             return
-        from pathlib import Path
         self.store.remove_image(Path(item.data(Qt.ItemDataRole.UserRole)))
         self.engine.reload_profiles()
         self._refresh_profiles()

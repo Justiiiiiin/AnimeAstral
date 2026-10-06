@@ -21,9 +21,16 @@ nicht). Darüber hinaus keine Automatisierung (kein Klicken, kein Farmen) – di
 3 s nur neue Zeilen der Client-Protokolle (`%LOCALAPPDATA%\Roblox\logs\*_Player_*.log`): „! Joining game … place N“ =
 im Spiel; „Disconnection Notification. Reason: N“ u. ä. = verloren, außer 264/273/276/285 (selbst verlassen / anderes
 Gerät) – dann nie zurückholen; Prozess weg ohne „verlassen“ = Absturz. Nach 15 s (Teleports treten selbst neu bei)
-Client beenden und neu beitreten (Link, sonst öffentlich dieselbe Place), 5 Versuche mit Pausen. Die OCR-Disconnect-
-Erkennung der Überwachung ist zusätzlicher Auslöser (`external_lost`). Hinweis: Startet man einen Beitritt, während
-ein Client läuft, übernimmt der laufende Client den Beitritt (getestet).
+Client beenden und neu beitreten (Link, sonst öffentlich dieselbe Place), 5 Versuche mit Pausen. Derselbe Thread
+liefert den **Disconnect-Alarm des Wächters** (läuft, solange Wächter oder Auto-Rejoin an ist; Alarm erst nach der
+Wartezeit, einmal je Abbruch). Die frühere OCR-Suche nach dem Dialog in der Fenstermitte (`disconnect_check`) ist seit
+0.6.4 entfernt. Hinweis: Startet man einen Beitritt, während ein Client läuft, übernimmt der laufende Client den
+Beitritt (getestet).
+**Oberfläche:** Seiten mit Einstellungen setzen `SAVES = True` und bekommen von `main_window._with_savebar` eine feste
+Speichern-Leiste unten (keine eigenen Speichern-Knöpfe, keine verschachtelten Scrollbereiche). Bausteine in
+`widgets.py`: `section()`, `columns()` (Karten nebeneinander), `form_grid()`, `short_field()`; Zahlenfelder sind auf
+`FIELD_WIDTH` begrenzt. Uptime-Intervall steht unter „Meldungen“ (nur ohne Live-Status aktiv); `total_offset` wird
+weiter angewendet, hat aber kein Eingabefeld mehr.
 
 Benutzer ist der Eigentümer (Deutsch, Windows 11); Freunde sollen es später ebenfalls nutzen („full release 1.0.0“).
 **Oberfläche und Meldungen gibt es auf Deutsch und Englisch** (Einstellungen → Oberfläche, gilt nach Neustart):
@@ -58,7 +65,7 @@ nutzen das). Dort: `settings.json`, `raid_history.csv`, `monitor.log`, `profiles
 | `quests.py` | Quest-Liste (Titel + Fortschritt) per OCR, `QuestTracker` in `tracker.py` |
 | `stats.py` | `StatsStore` (CSV `raid_history.csv`), alle Kennzahlen, Verteilung, Trend, Rekorde |
 | `profiles.py` | Raid-Profile: Referenzbilder, ORB-Merkmalsvergleich zur **Raid-Erkennung**, Export/Import (`.astralprofile`) |
-| `guard.py` | Wächter: Roblox-Prozess, Disconnect-Dialog (OCR), Stillstand, RAM/CPU |
+| `guard.py` | Wächter: Roblox-Prozess, Stillstand, RAM/CPU (Disconnects: `rejoin.py`) |
 | `status.py` | **Live-Statusnachricht**: eine Discord-Nachricht, die per `PATCH` bearbeitet wird; „unten neu senden“ = `DELETE` + `POST` |
 | `discord_client.py`, `messages.py` | Versand (eigener Thread, Wiederholung bei 429) und Embeds |
 | `report_card.py` | Statistik-Karte als PNG (Pillow, kein Qt) |
@@ -159,8 +166,9 @@ Stand 06.10.2026 (Claude Code unter Windows): Punkte 1, 3 und 5 erledigt, 2 und 
    Profil des Eigentümers war die Aktivität beim ersten Test aber **nicht sichtbar** – Ursache noch offen.
 7. ~~**Formatierung der Statusnachricht**~~ – `##` und `-#` werden in Embeds korrekt dargestellt (Screenshot des Eigentümers).
 8. ~~**Hotkeys**~~ – funktionieren laut Eigentümer. Tray/Autostart gibt es weiterhin nicht.
-9. **Disconnect-Erkennung:** Alarm bei unlesbarem Zähler kommt an. Echte Roblox-Fehlerdialoge (277, 278 = 20 Min. inaktiv,
-   279, 288, 273, 267, 268) weiterhin nicht gezielt geprüft.
+9. **Disconnect-Erkennung** (seit 0.6.4 über das Roblox-Protokoll): Grund 276 („anderes Gerät“) und 285 (selbst
+   verlassen) an echten Protokollen geprüft. Echte Kicks (277, 278 = 20 Min. inaktiv, 279, 267, 268) noch nicht live
+   erlebt – sie landen als „verloren“ und lösen Alarm/Rejoin aus.
 
 ## Bekannte Schwächen / Ideen
 

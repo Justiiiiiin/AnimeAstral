@@ -6,7 +6,7 @@ import time
 import cv2
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (QCheckBox, QFileDialog, QGridLayout, QHBoxLayout, QLineEdit,
-                               QMessageBox, QPlainTextEdit, QPushButton, QScrollArea, QVBoxLayout, QWidget)
+                               QMessageBox, QPlainTextEdit, QPushButton, QVBoxLayout, QWidget)
 
 from ..engine import EngineError
 from ..i18n import tr
@@ -14,10 +14,12 @@ from . import theme
 from ..settings import DEFAULT_QUEST_ROI, DEFAULT_WAVE_ROI, Roi
 from ..tracker import QuestTracker
 from .region_dialog import RegionDialog
-from .widgets import SpinBox, ComboBox, Card, bgr_to_pixmap, label
+from .widgets import SpinBox, ComboBox, Card, bgr_to_pixmap, form_grid, label, short_field
 
 
 class DetectPage(QWidget):
+    SAVES = True                                   # Speichern-Leiste unten (main_window)
+
     def __init__(self, main) -> None:
         super().__init__()
         self.main = main
@@ -25,34 +27,16 @@ class DetectPage(QWidget):
         self.wave_roi = Roi(**vars(DEFAULT_WAVE_ROI))
         self.quest_roi = Roi(**vars(DEFAULT_QUEST_ROI))
 
-        outer = QVBoxLayout(self)
-        theme.track_margins(outer, 28, 24, 28, 24)
-        theme.track_spacing(outer, 12)
-        outer.addWidget(label(tr("Erkennung"), "h1"))
-        outer.addWidget(label(tr("Bereiche, Auslöser und Tests. Alles wird live am Roblox-Fenster geprüft."), "muted"))
-
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        inner = QWidget()
-        lay = QVBoxLayout(inner)
-        theme.track_margins(lay, 0, 0, 8, 0)
+        lay = QVBoxLayout(self)
+        theme.track_margins(lay, 28, 24, 28, 24)
         theme.track_spacing(lay, 14)
-        scroll.setWidget(inner)
-        outer.addWidget(scroll, 1)
-
+        lay.addWidget(label(tr("Erkennung"), "h1"))
+        lay.addWidget(label(tr("Bereiche, Auslöser und Tests. Alles wird live am Roblox-Fenster geprüft."), "muted"))
         lay.addWidget(self._capture_card())
         lay.addWidget(self._wave_card())
         lay.addWidget(self._quest_card())
         lay.addWidget(self._ocr_card())
         lay.addStretch(1)
-
-        save = QPushButton(tr("Speichern"))
-        save.setObjectName("primary")
-        save.clicked.connect(lambda: self.main.save_settings())
-        row = QHBoxLayout()
-        row.addStretch(1)
-        row.addWidget(save)
-        outer.addLayout(row)
 
     # ------------------------------------------------------------------ Karten
     def _capture_card(self) -> Card:
@@ -97,11 +81,9 @@ class DetectPage(QWidget):
         row.addWidget(reset)
         card.body.addLayout(row)
 
-        grid = QGridLayout()
-        grid.setColumnStretch(1, 1)
-        grid.setVerticalSpacing(8)
-        self.totals = QLineEdit()
-        self.totals.setPlaceholderText(tr("z. B. 100  oder  100, 50"))
+        grid = form_grid()
+        self.totals = short_field(QLineEdit())
+        self.totals.setPlaceholderText(tr("z. B. 100 oder 100, 50"))
         self.offset = SpinBox()
         self.offset.setRange(0, 5)
         self.confirm = SpinBox()
@@ -133,6 +115,7 @@ class DetectPage(QWidget):
         self.wave_preview = label("", "preview")
         self.wave_preview.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.wave_preview.setVisible(False)
+        self.wave_result.setVisible(False)                  # erst nach einem Test (sonst leerer Abstand)
         card.body.addWidget(self.wave_result)
         card.body.addWidget(self.wave_preview)
         return card
@@ -166,7 +149,9 @@ class DetectPage(QWidget):
         return card
 
     def _ocr_card(self) -> Card:
-        card = Card(tr("Texterkennung (Tesseract)"))
+        card = Card(tr("Texterkennung (erweitert)"))
+        card.body.addWidget(label(tr("Tesseract ist im Programm enthalten. Einen eigenen Pfad brauchst du nur, wenn "
+                                     "„Prüfen“ einen Fehler meldet."), "small", wrap=True))
         row = QHBoxLayout()
         self.tess = QLineEdit()
         self.tess.setPlaceholderText(tr("Leer = automatisch suchen"))
@@ -179,8 +164,9 @@ class DetectPage(QWidget):
         row.addWidget(check)
         card.body.addLayout(row)
         self.ocr_result = label("", "muted", wrap=True)
+        self.ocr_result.setVisible(False)
         card.body.addWidget(self.ocr_result)
-        self.debug = QCheckBox(tr("Debug-Bilder bei Lesefehlern speichern (max. 40, Ordner siehe Statistik)"))
+        self.debug = QCheckBox(tr("Debug-Bilder bei Lesefehlern speichern (max. 40, im Datenordner)"))
         card.body.addWidget(self.debug)
         return card
 
@@ -269,6 +255,7 @@ class DetectPage(QWidget):
         except EngineError as exc:
             QMessageBox.warning(self, tr("Test"), str(exc))
             return
+        self.wave_result.setVisible(True)
         if not result["ok"]:
             self.wave_result.setText(result["error"])
             return
@@ -309,6 +296,7 @@ class DetectPage(QWidget):
 
     def _check_ocr(self) -> None:
         self.main.apply_form()
+        self.ocr_result.setVisible(True)
         try:
             ocr = self.engine.get_ocr()
         except EngineError as exc:

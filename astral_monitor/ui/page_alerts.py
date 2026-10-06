@@ -3,18 +3,19 @@ from __future__ import annotations
 
 import threading
 
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (QCheckBox, QGridLayout, QHBoxLayout, QLineEdit, QMessageBox,
                                QPushButton, QVBoxLayout, QWidget)
 
-from .. import messages
 from ..i18n import tr
 from . import theme
-from ..discord_client import DiscordSender
 from ..settings import EVENT_DEFS, is_valid_webhook
-from .widgets import Card, SpinBox, label
+from .widgets import Card, SpinBox, form_grid, label
 
 
 class AlertsPage(QWidget):
+    SAVES = True                                   # Speichern-Leiste unten (main_window)
+
     def __init__(self, main) -> None:
         super().__init__()
         self.main = main
@@ -56,17 +57,23 @@ class AlertsPage(QWidget):
         root.addWidget(hook)
 
         live = Card(tr("Live-Status"))
-        self.status_enabled = QCheckBox(tr("Eine Statusnachricht verwenden, die sich selbst aktualisiert (ersetzt die Uptime-Meldungen)"))
+        self.status_enabled = QCheckBox(tr("Eine Statusnachricht verwenden, die sich selbst aktualisiert"))
+        self.status_enabled.toggled.connect(self._sync_uptime)
         live.body.addWidget(self.status_enabled)
-        lrow = QHBoxLayout()
-        lrow.addWidget(label(tr("Aktualisieren alle")))
+        lg = form_grid()
         self.status_interval = SpinBox()
         self.status_interval.setRange(20, 3600)
         self.status_interval.setSuffix(" s")
-        lrow.addWidget(self.status_interval)
-        lrow.addStretch(1)
-        live.body.addLayout(lrow)
-        self.status_bottom = QCheckBox(tr("Nach jeder Meldung des Programms automatisch ganz nach unten schieben"))
+        self.uptime = SpinBox()
+        self.uptime.setRange(1, 1440)
+        self.uptime.setSuffix(tr(" Min"))
+        lg.addWidget(label(tr("Aktualisieren alle")), 0, 0)
+        lg.addWidget(self.status_interval, 0, 1)
+        self.uptime_label = label(tr("Sonst Uptime-Meldung alle"))
+        lg.addWidget(self.uptime_label, 1, 0)
+        lg.addWidget(self.uptime, 1, 1)
+        live.body.addLayout(lg)
+        self.status_bottom = QCheckBox(tr("Nach jeder Meldung automatisch wieder ganz nach unten schieben"))
         live.body.addWidget(self.status_bottom)
         brow = QHBoxLayout()
         resend = QPushButton(tr("Jetzt unten neu senden"))
@@ -74,41 +81,41 @@ class AlertsPage(QWidget):
         brow.addWidget(resend)
         brow.addStretch(1)
         live.body.addLayout(brow)
-        live.body.addWidget(label(tr("Tipp: Rechtsklick auf die Statusnachricht → „Anheften“. Eine angeheftete Nachricht bleibt "
-                                  "angeheftet und wird nur bearbeitet. Per Webhook lässt sie sich nicht automatisch anheften; "
-                                  "„Neu senden“ erzeugt eine neue Nachricht (neu anheften)."), "small", wrap=True))
-        self.report_on_stop = QCheckBox(tr("Beim Stoppen eine Statistik-Karte senden"))
-        live.body.addWidget(self.report_on_stop)
+        live.body.addWidget(label(tr("Tipp: Rechtsklick auf die Statusnachricht → „Anheften“. Sie wird danach nur noch "
+                                     "bearbeitet. „Neu senden“ erzeugt eine neue Nachricht, die du neu anheftest."),
+                                  "small", wrap=True))
         root.addWidget(live)
 
         events = Card(tr("Ereignisse"))
         table = QGridLayout()
         table.setColumnStretch(0, 1)
-        table.setVerticalSpacing(6)
+        theme.track_spacing(table, 6)
+        center = Qt.AlignmentFlag.AlignCenter
         table.addWidget(label(tr("Ereignis"), "small"), 0, 0)
-        table.addWidget(label(tr("Senden"), "small"), 0, 1)
-        table.addWidget(label(tr("Ping"), "small"), 0, 2)
+        table.addWidget(label(tr("Senden"), "small"), 0, 1, center)
+        table.addWidget(label(tr("Ping"), "small"), 0, 2, center)
+        table.setColumnMinimumWidth(1, 64)
+        table.setColumnMinimumWidth(2, 64)
         self.send_boxes: dict[str, QCheckBox] = {}
         self.ping_boxes: dict[str, QCheckBox] = {}
         for i, (key, text, _s, _p) in enumerate(EVENT_DEFS, start=1):
             table.addWidget(label(tr(text)), i, 0)
             send, ping = QCheckBox(), QCheckBox()
+            send.toggled.connect(ping.setEnabled)             # Ping nur bei gesendeten Ereignissen
             self.send_boxes[key], self.ping_boxes[key] = send, ping
-            table.addWidget(send, i, 1)
-            table.addWidget(ping, i, 2)
+            table.addWidget(send, i, 1, center)
+            table.addWidget(ping, i, 2, center)
         events.body.addLayout(table)
-        self.attach = QCheckBox(tr("Quest-Fortschritt in Raid- und Uptime-Meldungen anhängen"))
+        self.attach = QCheckBox(tr("Quest-Fortschritt an Raid- und Uptime-Meldungen anhängen"))
         events.body.addWidget(self.attach)
+        self.report_on_stop = QCheckBox(tr("Beim Stoppen eine Statistik-Karte senden"))
+        events.body.addWidget(self.report_on_stop)
         root.addWidget(events)
-
-        save = QPushButton(tr("Speichern"))
-        save.setObjectName("primary")
-        save.clicked.connect(lambda: self.main.save_settings())
-        row2 = QHBoxLayout()
-        row2.addStretch(1)
-        row2.addWidget(save)
-        root.addLayout(row2)
         root.addStretch(1)
+
+    def _sync_uptime(self, live_on: bool) -> None:
+        self.uptime.setEnabled(not live_on)
+        self.uptime_label.setEnabled(not live_on)
 
     def load(self, s) -> None:
         self.url.setText(s.webhook_url)
@@ -118,9 +125,12 @@ class AlertsPage(QWidget):
             entry = s.events.get(key, {})
             self.send_boxes[key].setChecked(bool(entry.get("send")))
             self.ping_boxes[key].setChecked(bool(entry.get("ping")))
+            self.ping_boxes[key].setEnabled(bool(entry.get("send")))
         self.attach.setChecked(s.attach_quests)
         self.status_enabled.setChecked(s.status_enabled)
+        self._sync_uptime(s.status_enabled)
         self.status_interval.setValue(s.status_interval)
+        self.uptime.setValue(s.uptime_minutes)
         self.status_bottom.setChecked(s.status_auto_bottom)
         self.report_on_stop.setChecked(s.report_on_stop)
 
@@ -137,6 +147,7 @@ class AlertsPage(QWidget):
         s.attach_quests = self.attach.isChecked()
         s.status_enabled = self.status_enabled.isChecked()
         s.status_interval = self.status_interval.value()
+        s.uptime_minutes = self.uptime.value()
         s.status_auto_bottom = self.status_bottom.isChecked()
         s.report_on_stop = self.report_on_stop.isChecked()
 

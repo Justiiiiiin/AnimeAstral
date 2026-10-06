@@ -38,7 +38,8 @@ QLabel#muted {{ color: {MUTED}; }}
 QLabel#small {{ color: {MUTED}; font-size: 9pt; }}
 QLabel#kpi {{ font-family: Consolas; font-size: 20pt; font-weight: 600; }}
 QLabel#wave {{ font-family: Consolas; font-size: 34pt; font-weight: 600; }}
-QLabel#preview {{ background: {SIDEBAR}; border: 1px solid {BORDER}; border-radius: 8px; }}
+QLabel#preview {{ background: {SIDEBAR}; border: 1px solid {BORDER}; border-radius: 8px; color: #5B6676;
+  padding: 8px; }}
 QLabel#good {{ color: {ACCENT}; }}
 QLabel#bad {{ color: {DANGER}; }}
 QLabel#warn {{ color: {WARN}; }}
@@ -49,6 +50,12 @@ QLabel#stepdot {{ background: #26303C; border-radius: 5px; min-width: 10px; max-
 QLabel#stepdot[state="active"] {{ background: {ACCENT}; min-width: 28px; max-width: 28px; border-radius: 5px; }}
 QLabel#stepdot[state="done"] {{ background: #2B6B60; }}
 QLabel#hero {{ font-size: 24pt; font-weight: 600; }}
+QLabel#section {{ color: #6F7D90; font-size: 8.5pt; font-weight: 700; padding-top: 6px; }}
+QLabel#empty {{ color: #5B6676; }}
+QFrame#savebar {{ background: {SIDEBAR}; border-top: 1px solid #1E2630; }}
+QFrame#savebar QWidget {{ background: transparent; }}
+QFrame#savebar QPushButton#primary {{ background: {ACCENT}; }}
+QFrame#savebar QPushButton#primary:hover {{ background: #52E0C1; }}
 QPushButton {{ background: #18212B; border: 1px solid #2B3644; border-radius: 8px;
   padding: 0 18px; min-height: 40px; font-weight: 500; }}
 QPushButton:hover {{ background: #1E2A37; }}
@@ -70,9 +77,16 @@ QPushButton#nav {{ background: transparent; border: none; text-align: left; padd
   color: {MUTED}; min-height: 42px; border-radius: 8px; }}
 QPushButton#nav:hover {{ background: #121A22; }}
 QPushButton#nav:checked {{ background: #18212B; color: {TEXT}; }}
-QLineEdit, QSpinBox, QComboBox, QPlainTextEdit, QTextBrowser {{ background: {SIDEBAR}; border: 1px solid #2B3644;
-  border-radius: 8px; padding: 6px 10px; min-height: 28px; selection-background-color: #25405A; }}
-QLineEdit:focus, QSpinBox:focus, QComboBox:focus {{ border: 1px solid {ACCENT}; }}
+QLineEdit, QSpinBox, QDoubleSpinBox, QComboBox, QPlainTextEdit, QTextBrowser {{ background: {SIDEBAR};
+  border: 1px solid #2B3644; border-radius: 8px; padding: 6px 10px; min-height: 28px;
+  selection-background-color: #25405A; }}
+QLineEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus, QComboBox:focus {{ border: 1px solid {ACCENT}; }}
+QLineEdit:disabled, QSpinBox:disabled, QDoubleSpinBox:disabled, QCheckBox:disabled, QLabel:disabled {{ color: #5B6676; }}
+QCheckBox::indicator:disabled {{ background: #10161D; border: 1px solid #222B36; }}
+QComboBox {{ padding-right: 28px; }}
+QComboBox::drop-down {{ subcontrol-origin: padding; subcontrol-position: center right; width: 26px; border: none;
+  background: transparent; }}
+QComboBox::down-arrow {{ image: url("{{ARROW}}"); width: 10px; height: 6px; }}
 QComboBox QAbstractItemView {{ background: {CARD}; border: 1px solid #2B3644; selection-background-color: #25405A; }}
 QCheckBox {{ spacing: 8px; }}
 QCheckBox::indicator {{ width: 18px; height: 18px; border-radius: 4px; border: 1px solid #3A4656; background: {SIDEBAR}; }}
@@ -163,13 +177,43 @@ def track_fixed_height(widget, value: int) -> None:
     track(widget, lambda o, f: o.setFixedHeight(_s(value, f)))
 
 
+_arrow_path = ""
+
+
+def _arrow() -> str:
+    """Kleiner Pfeil für Auswahllisten (Qt-Stylesheets brauchen dafür eine Bilddatei)."""
+    global _arrow_path
+    if _arrow_path:
+        return _arrow_path
+    import tempfile
+    from pathlib import Path
+
+    from PySide6.QtCore import QPointF, Qt
+    from PySide6.QtGui import QPainter, QPixmap, QPolygonF
+    path = Path(tempfile.gettempdir()) / "anime_astral_arrow.png"
+    try:
+        pix = QPixmap(30, 18)
+        pix.fill(Qt.GlobalColor.transparent)
+        p = QPainter(pix)
+        p.setRenderHint(QPainter.RenderHint.Antialiasing)
+        p.setPen(Qt.PenStyle.NoPen)
+        p.setBrush(QColor(MUTED))
+        p.drawPolygon(QPolygonF([QPointF(2, 3), QPointF(28, 3), QPointF(15, 16)]))
+        p.end()
+        pix.save(str(path), "PNG")
+        _arrow_path = path.as_posix()
+    except Exception:
+        _arrow_path = ""
+    return _arrow_path
+
+
 def style(factor: float) -> str:
     def repl(m: re.Match) -> str:
         value = float(m.group(1))
         if m.group(2) == "pt":
             return f"{value * factor:.1f}pt"
         return f"{max(1, round(value * factor)) if value else 0}px"
-    return _SIZE_RE.sub(repl, STYLE)
+    return _SIZE_RE.sub(repl, STYLE).replace("{ARROW}", _arrow())
 
 
 def factor_for(width: int, height: int) -> float:

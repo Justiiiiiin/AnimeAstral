@@ -1,4 +1,4 @@
-"""Wächter: Roblox-Prozess, Disconnect, Stillstand, Speicher."""
+"""Wächter: Roblox-Prozess, Stillstand, Speicher. Disconnects erkennt rejoin.py über das Roblox-Protokoll."""
 from __future__ import annotations
 
 import logging
@@ -8,22 +8,16 @@ import numpy as np
 
 from . import messages
 from .i18n import tr
-from .imaging import near_white_mask, ocr_input_mask
 from .ocr import OcrEngine
-from .settings import Roi, Settings
+from .settings import Settings
 
 log = logging.getLogger("guard")
 
-DISCONNECT_ROI = Roi(0.20, 0.20, 0.80, 0.80)    # Mitte des Fensters (hier erscheint der Dialog)
-DISCONNECT_KEYWORDS = ("disconnected", "error code", "reconnect", "was kicked", "you were kicked",
-                       "connection lost", "lost connection")
 PROCESS_NAMES = ("robloxplayerbeta.exe", "robloxplayerbeta")
 
 POLL_PROCESS_EVERY = 5.0          # Sekunden
 PROCESS_DOWN_AFTER = 6.0
 NO_FRAMES_AFTER = 30.0
-DISCONNECT_WAIT = 15.0            # so lange ohne Wellenzähler, bevor nach dem Dialog gesucht wird
-DISCONNECT_EVERY = 20.0
 RAM_REPEAT_SECONDS = 1800.0
 
 
@@ -79,9 +73,6 @@ class Guard:
         self._wave_value: Optional[int] = None
         self._last_change = now
         self._stall_alerted = False
-        self._absent_since: Optional[float] = None
-        self._next_dc = 0.0
-        self._dc_alerted = False
         self._missing_since: Optional[float] = None
         self._missing_alerted = False
         self._ref_raid = now
@@ -112,12 +103,8 @@ class Guard:
 
     def on_wave(self, value: Optional[int], now: float) -> None:
         if value is None:
-            if self._absent_since is None:
-                self._absent_since = now
             self._wave_value = None          # ohne sichtbaren Zähler gibt es keinen Stillstand
             return
-        self._absent_since = None
-        self._dc_alerted = False
         if value != self._wave_value:
             self._wave_value = value
             self._last_change = now
@@ -210,22 +197,3 @@ class Guard:
             log.debug("Alarm-Screenshot fehlgeschlagen", exc_info=True)
             return None
 
-    # --------------------------------------------------------------- Disconnect
-    def needs_center(self, now: float) -> bool:
-        s = self._get()
-        return (s.guard_enabled and s.disconnect_check and self._absent_since is not None
-                and now - self._absent_since >= DISCONNECT_WAIT and now >= self._next_dc)
-
-    def check_disconnect(self, crop: np.ndarray, now: float) -> bool:
-        self._next_dc = now + DISCONNECT_EVERY
-        lines = self._get_ocr().lines(ocr_input_mask(near_white_mask(crop, 190, 45), 2), psm=6)
-        text = " ".join(ln.text for ln in lines).lower()
-        found = any(word in text for word in DISCONNECT_KEYWORDS)
-        if found and not self._dc_alerted:
-            self._dc_alerted = True
-            snippet = " ".join(text.split())[:300]
-            self._event(tr("Disconnect-Meldung im Spiel erkannt"), "error")
-            self._notify("roblox_down", tr("Disconnect erkannt"), messages.COLOR_ERROR,
-                         description=tr("Im Spiel erscheint eine Verbindungs-Meldung:") + f"\n`{snippet}`",
-                         image=self._screenshot())
-        return found
