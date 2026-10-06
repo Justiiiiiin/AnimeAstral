@@ -59,7 +59,7 @@ Schick ihnen den Link `https://github.com/<DEIN-NAME>/AnimeAstral/releases/lates
 
 ## 7. Discord-Profilstatus (optional)
 
-1. <https://discord.com/developers/applications> → **New Application** → Name z. B. „Anime Astral Monitor“.
+1. <https://discord.com/developers/applications> → **New Application** → Name z. B. „Anime Astral“ (erscheint im Profil als „Spielt Anime Astral“).
 2. **Application ID** kopieren (General Information).
 3. Im Programm: **Einstellungen → Discord-Profilstatus** die ID eintragen und aktivieren. Jeder Nutzer trägt seine **eigene**
    ID ein – im Repository und im Build ist absichtlich keine hinterlegt. Kein Bot, keine Server-Einladung nötig.

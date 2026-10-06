@@ -19,7 +19,7 @@ INTERVAL = 15.0           # Discord aktualisiert den Status höchstens alle 15 S
 RETRY = 30.0              # Pause nach einem Verbindungsfehler (Discord-App nicht gestartet o. Ä.)
 ICON_TTL = 24 * 3600      # Thumbnail höchstens einmal am Tag neu laden
 ICON_RETRY = 600          # bei Fehlschlag nach 10 Minuten erneut versuchen
-GAME_NAME = "Anime Astral Simulator"
+GAME_NAME = "Anime Astral"
 UNIVERSE_API = "https://apis.roblox.com/universes/v1/places/{id}/universe"
 ICON_API = ("https://thumbnails.roblox.com/v1/games/icons?universeIds={id}&returnPolicy=PlaceHolder"
             "&size=512x512&format=Png&isCircular=false")
