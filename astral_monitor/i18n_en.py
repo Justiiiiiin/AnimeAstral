@@ -905,6 +905,14 @@ EN: dict[str, str] = {
     "Bild wählen …": "Choose image …",
     "Abdunkeln ": "Dim ",
     "Entfernen": "Remove",
+    # Saison-Designs (0.7.2)
+    "Kürbisnacht": "Pumpkin Night",
+    "Frost": "Frost",
+    "Saison-Designs automatisch": "Seasonal designs automatically",
+    "Vom 15. Oktober bis 2. November erscheint „Kürbisnacht“, vom 1. Dezember bis 6. Januar „Frost“ – danach "
+    "automatisch wieder dein gewähltes Design. Beide gibt es auch jederzeit oben unter „Design“.":
+        "From October 15 to November 2 “Pumpkin Night” appears, from December 1 to January 6 “Frost” – afterwards "
+        "your chosen design returns automatically. Both are also available any time under “Design” above.",
     "Hintergrund": "Background",
     "Hintergrundbild wählen": "Choose background image",
     "Bilder (*.png *.jpg *.jpeg *.webp *.bmp)": "Images (*.png *.jpg *.jpeg *.webp *.bmp)",

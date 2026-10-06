@@ -167,6 +167,7 @@ class Settings:
     ui_zoom: int = 100                  # 50–200 % (mehr pro Seite sehen = kleiner)
     ui_auto_fit: bool = True            # zusätzlich an die Fenstergröße anpassen (0,7–1,3)
     ui_reduce_motion: bool = False      # keine Überblendungen/Schalter-Animationen (spart Leistung)
+    ui_seasonal: bool = False           # Saison-Designs automatisch (Kürbisnacht, Frost)
     ui_intro: bool = True               # Logo-Animation beim Start (entfällt bei „Animationen reduzieren“)
     ui_background: str = ""             # eigenes Hintergrundbild (Dateiname im Datenordner, leer = keins)
     ui_background_dim: int = 70         # Abdunkeln in % (Lesbarkeit)

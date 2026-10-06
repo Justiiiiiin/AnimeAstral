@@ -337,6 +337,31 @@ QFrame#card[kpi="true"] { border-top: 2px solid qlineargradient(x1:0, y1:0, x2:1
 QFrame#statusbox { border-radius: 14px; }
 """
 
+# Saison-Designs (0.7.2): Nebula-Aufbau mit eigenen Farben
+_HALLOWEEN_DARK = dict(_NEBULA_DARK, **{
+    "bg": "#0E0A12", "sidebar": "#120C17", "topbar": "#0E0A12", "card": "#17101D", "cardTop": "#1E1526",
+    "border": "#2A1D33", "borderA": "#4A2B5E", "borderB": "#2A1B33", "line": "#1C1424", "field": "#120D17",
+    "control": "#21162A", "controlHover": "#2B1D36", "controlBorder": "#382646", "navHover": "#1E1426",
+    "navActive": "#2A1834", "softA": "#3A2010", "softB": "#2B1640", "edge": "#6B3F8A", "select": "#3B2450",
+    "accent": "#FF8A2A", "accent2": "#A45BFF", "accentHover": "#FFA04F", "accent2Hover": "#B97BFF",
+    "onAccent": "#1A0D02", "knobOn": "#1A0D02", "okBg": "#1E140D", "okBorder": "#5A3415", "bar": "#8A4A1E",
+    "stepDone": "#8A4A1E", "section": "#A28AB8", "scroll": "#2E2238", "warn": "#FFD25A",
+})
+_WINTER_DARK = dict(_NEBULA_DARK, **{
+    "bg": "#070D16", "sidebar": "#0A1220", "topbar": "#070D16", "card": "#0E1726", "cardTop": "#132036",
+    "border": "#1B2A40", "borderA": "#2B4566", "borderB": "#19263A", "line": "#122033", "field": "#0A1321",
+    "control": "#132034", "controlHover": "#1A2A42", "controlBorder": "#24385A", "navHover": "#111D30",
+    "navActive": "#15273F", "softA": "#12324A", "softB": "#1B2A4D", "edge": "#3D6A99", "select": "#1F3B5E",
+    "accent": "#8FD8FF", "accent2": "#B7A8FF", "accentHover": "#AEE3FF", "accent2Hover": "#CABEFF",
+    "onAccent": "#05121D", "knobOn": "#05121D", "okBg": "#0B1E2B", "okBorder": "#1F4D6B", "bar": "#2E6E99",
+    "stepDone": "#2E6E99", "section": "#8AA6C8", "scroll": "#1C2D45",
+})
+_WINTER_LIGHT = dict(_NEBULA_LIGHT, **{
+    "bg": "#F2F7FC", "topbar": "#F2F7FC", "accent": "#1C8FD0", "accent2": "#6A7BFF", "accentHover": "#2AA0E0",
+    "accent2Hover": "#7D8CFF", "softA": "#DDF0FB", "softB": "#E5E8FD", "edge": "#A9CFEA", "bar": "#9CCBEA",
+    "select": "#CFE7F7", "okBg": "#E6F4FB", "okBorder": "#A9D4EC", "navActive": "#E3F0FA", "stepDone": "#9CCBEA",
+})
+
 DESIGNS: dict[str, dict] = {
     # Schlüssel: Anzeigename, eingeführt in Version, Vorlage, Paletten je Farbschema (fehlt eines: Dunkel)
     "nebula": {"name": N_("Nebula"), "since": "0.7.0", "template": _NEBULA, "icons": True, "gear": True,
@@ -345,10 +370,35 @@ DESIGNS: dict[str, dict] = {
     "astral": {"name": N_("Astral"), "since": "0.6.5", "template": _ASTRAL, "icons": True, "gear": True,
                "animate": True, "font": ["Segoe UI Variable Text", "Segoe UI"],
                "palettes": {"dark": _ASTRAL_DARK, "light": _ASTRAL_LIGHT}},
+    "halloween": {"name": N_("Kürbisnacht"), "since": "0.7.2", "template": _NEBULA, "icons": True, "gear": True,
+                  "animate": True, "rail": True, "font": ["Segoe UI Variable Text", "Segoe UI"],
+                  "palettes": {"dark": _HALLOWEEN_DARK}, "season": ((10, 15), (11, 2))},
+    "winter": {"name": N_("Frost"), "since": "0.7.2", "template": _NEBULA, "icons": True, "gear": True,
+               "animate": True, "rail": True, "font": ["Segoe UI Variable Text", "Segoe UI"],
+               "palettes": {"dark": _WINTER_DARK, "light": _WINTER_LIGHT}, "season": ((12, 1), (1, 6))},
     "classic": {"name": N_("Klassisch"), "since": "0.5.0", "template": _CLASSIC, "icons": False, "gear": False,
                 "animate": False, "font": ["Segoe UI"], "palettes": {"dark": _CLASSIC_DARK}},
 }
 DEFAULT_DESIGN = "nebula"
+
+
+def season_design(today=None) -> str:
+    """Saison-Design für ein Datum („“ = keine Saison): Kürbisnacht 15.10.–2.11., Frost 1.12.–6.1."""
+    from datetime import date
+    today = today or date.today()
+    md = (today.month, today.day)
+    for key, info in DESIGNS.items():
+        if "season" not in info:
+            continue
+        start, end = info["season"]
+        if (start <= md <= end) if start <= end else (md >= start or md <= end):
+            return key
+    return ""
+
+
+def effective_design(chosen: str, seasonal: bool, today=None) -> str:
+    """Gewähltes Design – oder während einer Saison das Saison-Design, wenn „automatisch“ an ist."""
+    return (season_design(today) or chosen) if seasonal else chosen
 MODES = ("dark", "light", "system")
 
 _design = DEFAULT_DESIGN

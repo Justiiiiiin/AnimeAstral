@@ -232,6 +232,16 @@ class SettingsPage(QWidget):
                                      "Spart etwas Leistung, z. B. wenn Roblox nebenher läuft.")))
         mrow.addStretch(1)
         look.body.addLayout(mrow)
+        srow = QHBoxLayout()
+        self.seasonal = QCheckBox(tr("Saison-Designs automatisch"))
+        self.seasonal.toggled.connect(lambda on: (self.main.set_appearance(seasonal=on),
+                                                  self._sync_look(self.main.engine.settings)))
+        srow.addWidget(self.seasonal)
+        srow.addWidget(InfoButton(tr("Vom 15. Oktober bis 2. November erscheint „Kürbisnacht“, vom 1. Dezember bis "
+                                     "6. Januar „Frost“ – danach automatisch wieder dein gewähltes Design. Beide "
+                                     "gibt es auch jederzeit oben unter „Design“.")))
+        srow.addStretch(1)
+        look.body.addLayout(srow)
         self.intro = QCheckBox(tr("Logo-Animation beim Start"))
         self.intro.toggled.connect(lambda on: self.main.set_appearance(intro=on))
         look.body.addWidget(self.intro)
@@ -515,7 +525,7 @@ class SettingsPage(QWidget):
 
     def _sync_look(self, s) -> None:
         """Bedienelemente der Darstellung auf den gespeicherten Stand setzen (ohne erneut auszulösen)."""
-        widgets = [self.design, self.zoom, self.auto_fit, self.reduce_motion, self.intro, self.bg_dim] + [b for _p, b in self.zoom_buttons]
+        widgets = [self.design, self.zoom, self.auto_fit, self.reduce_motion, self.intro, self.bg_dim, self.seasonal] + [b for _p, b in self.zoom_buttons]
         widgets += self.mode_group.buttons() + self.accent_group.buttons()
         for w in widgets:
             w.blockSignals(True)
@@ -524,6 +534,7 @@ class SettingsPage(QWidget):
         self.auto_fit.setChecked(s.ui_auto_fit)
         self.reduce_motion.setChecked(s.ui_reduce_motion)
         self.intro.setChecked(s.ui_intro)
+        self.seasonal.setChecked(s.ui_seasonal)
         self.bg_dim.setValue(s.ui_background_dim)
         self.bg_dim.setEnabled(bool(s.ui_background))
         self.bg_remove.setEnabled(bool(s.ui_background))
@@ -535,7 +546,7 @@ class SettingsPage(QWidget):
             btn.setChecked(btn.property("accent") == s.ui_accent if btn is not self.accent_custom
                            else s.ui_accent not in preset)
         self.accent_custom.setToolTip(s.ui_accent if s.ui_accent not in preset else tr("Eigene Farbe wählen"))
-        light_ok = theme.has_mode(s.ui_design, "light")
+        light_ok = theme.has_mode(theme.design(), "light")      # wirksames Design (evtl. Saison)
         for btn in self.mode_group.buttons():
             mode = btn.property("mode")
             btn.setEnabled(light_ok or mode == "dark")

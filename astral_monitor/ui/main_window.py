@@ -539,7 +539,7 @@ class MainWindow(QMainWindow):
                        zoom: Optional[int] = None, fit: Optional[bool] = None,
                        reduce_motion: Optional[bool] = None, accent: Optional[str] = None,
                        intro: Optional[bool] = None, background: Optional[str] = None,
-                       background_dim: Optional[int] = None) -> None:
+                       background_dim: Optional[int] = None, seasonal: Optional[bool] = None) -> None:
         """Design, Farbschema und UI-Größe – sofort sichtbar und gespeichert (ohne Speichern-Leiste)."""
         s = self.engine.settings
         if design is not None:
@@ -558,6 +558,8 @@ class MainWindow(QMainWindow):
             self.backdrop.set_image(s.ui_background, s.ui_background_dim)
         if intro is not None:
             s.ui_intro = intro
+        if seasonal is not None:
+            s.ui_seasonal = seasonal
         if accent is not None:
             s.ui_accent = accent
             theme.set_accent(accent)
@@ -569,14 +571,16 @@ class MainWindow(QMainWindow):
             s.save()
         except OSError:
             pass
-        theme.set_appearance(QApplication.instance(), s.ui_design, s.ui_mode)
+        theme.set_appearance(QApplication.instance(), theme.effective_design(s.ui_design, s.ui_seasonal),
+                             s.ui_mode)
         self._apply_scale()
 
     def _follow_system(self) -> None:
         s = self.engine.settings
         if s.ui_mode == "system":
             theme._mode = ""                          # erzwingt Neuberechnung der Palette
-            theme.set_appearance(QApplication.instance(), s.ui_design, s.ui_mode)
+            theme.set_appearance(QApplication.instance(), theme.effective_design(s.ui_design, s.ui_seasonal),
+                                 s.ui_mode)
 
     def showEvent(self, event) -> None:
         super().showEvent(event)
@@ -1119,7 +1123,7 @@ def run() -> int:
     i18n.set_language(settings.language)            # vor dem Aufbau der Oberfläche
     _install_qt_translation(app, settings.language)
     theme.set_accent(settings.ui_accent)
-    theme.apply(app, settings.ui_design, settings.ui_mode)
+    theme.apply(app, theme.effective_design(settings.ui_design, settings.ui_seasonal), settings.ui_mode)
     theme.set_motion(not settings.ui_reduce_motion)
 
     lock = QLockFile(str(app_paths.data_dir() / "app.lock"))       # nur eine Instanz gleichzeitig

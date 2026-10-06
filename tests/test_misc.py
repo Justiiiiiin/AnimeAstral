@@ -88,6 +88,20 @@ class AppearanceSettingsTests(unittest.TestCase):
         self.assertEqual((s.ui_background, s.ui_background_dim, s.ui_accent), ("background.jpg", 40, "#FF6FB5"))
 
 
+class SeasonTests(unittest.TestCase):
+    def test_season_dates(self):
+        from datetime import date
+        from astral_monitor.ui import theme
+        cases = {date(2026, 10, 14): "", date(2026, 10, 15): "halloween", date(2026, 11, 2): "halloween",
+                 date(2026, 11, 3): "", date(2026, 12, 24): "winter", date(2027, 1, 6): "winter",
+                 date(2027, 1, 7): ""}
+        for day, expected in cases.items():
+            self.assertEqual(theme.season_design(day), expected, day)
+        self.assertEqual(theme.effective_design("astral", True, date(2026, 12, 24)), "winter")
+        self.assertEqual(theme.effective_design("astral", False, date(2026, 12, 24)), "astral")
+        self.assertEqual(theme.effective_design("astral", True, date(2026, 6, 1)), "astral")
+
+
 class SafeStartTests(unittest.TestCase):
     def test_safe_mode_never_overwrites(self):
         own = Settings()
