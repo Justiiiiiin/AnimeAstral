@@ -247,6 +247,8 @@ def main() -> int:
         args += ["--collect-all", "windows_capture"]
     else:
         print("Hinweis: „windows-capture“ ist nicht installiert – die EXE nutzt dann nur die Bildschirm-Aufnahme.")
+    for module in ("cryptography.hazmat.primitives.ciphers.aead", "cryptography.hazmat.primitives.kdf.scrypt"):
+        args += ["--hidden-import", module]   # Export mit Passwort (secure.py) – erst beim Gebrauch importiert
     for module in ("tkinter", "matplotlib", "scipy", "pandas", "IPython", "PyQt5", "PyQt6", "PySide2"):
         args += ["--exclude-module", module]
 

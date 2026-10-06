@@ -83,6 +83,17 @@ Wichtige Entwurfsentscheidungen:
   alle px/pt im Stylesheet um; feste Größen im Code nur über `theme.track_margins/_spacing/_min_height/_fixed_width …`
   (nie direkt `setMinimumHeight(320)` o. Ä.). Das Hauptfenster setzt den Faktor 150 ms nach dem Größenändern.
   Faktor = **UI-Größe** (`ui_zoom` 50–200 %) × optional Fensteranpassung (`ui_auto_fit`), siehe `theme.factor_for`.
+- **Auto-Start** (`automonitor.py`, Schalter in der Kopfzeile, Standard aus): reine Entscheidungslogik
+  (`AutoMonitor.tick` → start/pause/resume/stop), Spielzustand aus `rejoin.py` (Log-Thread läuft auch nur für
+  Auto-Start). Nur **Übergänge** lösen aus: selbst gestoppt im Spiel → bleibt aus bis zum nächsten Betreten; selbst
+  gestartet außerhalb → wird nicht gestoppt; Disconnect → Pause (gleiche Session), Verlassen → Stopp nach 20 s.
+  Ausgeführt in `MainWindow._auto_tick` (läuft auch, wenn das Fenster im Tray ist).
+- **Geheimnisse** (`secure.py`): `settings.json` speichert `SECRET_FIELDS` und Favoriten-Links mit Windows-DPAPI
+  („dpapi:…“, `Settings.to_dict(protect=True)`); alte Klartext-Dateien laden weiter, auf fremdem PC werden die Werte
+  leer. PC-Wechsel: Export/Import als `.astralsettings` mit Passwort (AES-256-GCM, scrypt; `cryptography` gepinnt,
+  im Build als hidden import). Kein Server/Konto – bewusst.
+- **Erklärtexte gehören in ⓘ** (`Card(title, info)`, `InfoButton`, `with_info`), nicht als Fließtext auf die Seite;
+  auf den Seiten nur Bedienelemente und Statuszeilen (Wunsch des Eigentümers: weniger überladen).
 - **Designs** (`theme.DESIGNS`, Einstellungen → Darstellung, `ui_design`/`ui_mode`): „Astral“ (seit 0.6.5, Standard:
   Symbole aus der Windows-Symbolschrift, Zahnrad unten links, Überblendung beim Seitenwechsel, Hell/Dunkel/Wie Windows)
   und „Klassisch“ (seit 0.5.0, nur dunkel, unverändert). **Alte Designs nie löschen** – neues Design = neuer Eintrag mit

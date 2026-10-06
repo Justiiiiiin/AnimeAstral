@@ -48,8 +48,7 @@ class StatsPage(QWidget):
 
         # Titel und Bedienleiste in eigenen Zeilen, sonst wird die Seite bei kleinem Fenster zu breit
         root.addWidget(label(tr("Statistik"), "h1"))
-        root.addWidget(label(tr("Jeder Versuch zählt – auch wenn er nicht bis Welle 100 geht, denn jede Welle gibt "
-                             "Belohnungen. Wähle einen Raid oder „Alle Raids“."), "muted", wrap=True))
+        root.addWidget(label(tr("Jeder Versuch zählt – jede Welle gibt Belohnungen."), "muted", wrap=True))
         head = QHBoxLayout()
         theme.track_spacing(head, 8)
         self.profile = ComboBox()
@@ -116,7 +115,8 @@ class StatsPage(QWidget):
         runs.body.addWidget(self.table, 1)
         mid.addWidget(runs, 3)
 
-        chart_card = Card(tr("Auswertung"))
+        chart_card = Card(tr("Auswertung"), " ")
+        self.chart_info = chart_card.info
         tabs = QHBoxLayout()
         self.chart_group = QButtonGroup(self)
         self.chart_group.setExclusive(True)
@@ -129,8 +129,6 @@ class StatsPage(QWidget):
         self.chart_group.button(0).setChecked(True)
         tabs.addStretch(1)
         chart_card.body.addLayout(tabs)
-        self.chart_caption = label("", "small", wrap=True)
-        chart_card.body.addWidget(self.chart_caption)
         self.charts = QStackedWidget()
         self.chart_hist, self.chart_trend, self.chart_hour = BarChart(), BarChart(), BarChart()
         for chart in (self.chart_hist, self.chart_trend, self.chart_hour):
@@ -174,7 +172,7 @@ class StatsPage(QWidget):
 
     def _chart_changed(self, index: int) -> None:
         self.charts.setCurrentIndex(index)
-        self.chart_caption.setText(tr((N_("Wo enden die Versuche? Anzahl je Endwelle (Gruppen, wenn die Spanne groß ist)."),
+        self.chart_info.set_info(tr((N_("Wo enden die Versuche? Anzahl je Endwelle (Gruppen, wenn die Spanne groß ist)."),
                                     N_("Ø Endwelle je Stunde (bei langen Zeiträumen je Tag) – steigt sie, wirst du besser."),
                                     N_("Geschaffte Wellen der letzten 10 Stunden."))[index]))
 

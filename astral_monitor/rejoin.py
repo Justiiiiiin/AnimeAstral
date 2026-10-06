@@ -212,9 +212,9 @@ class AutoRejoin(threading.Thread):
     def tick(self, now: float) -> None:
         """Ein Durchlauf (öffentlich für Tests)."""
         s = self._get()
-        if not (s.auto_rejoin_enabled or s.guard_enabled):
+        if not (s.auto_rejoin_enabled or s.guard_enabled or getattr(s, "auto_monitor", False)):
             if self.status != "off":
-                self._reset()                       # beides aus: nichts lesen, nichts merken
+                self._reset()                       # alles aus: nichts lesen, nichts merken
             return
         if self.status == "off":
             self.status = "idle"

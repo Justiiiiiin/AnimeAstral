@@ -23,6 +23,7 @@ from ..engine import Engine, EngineError
 from ..hotkeys import HotkeyListener
 from .. import updater
 from ..discord_client import DiscordSender
+from ..automonitor import AutoMonitor, phase_of
 from ..settings import Settings, clean_favorites, is_valid_webhook
 from . import theme
 from .page_alerts import AlertsPage
@@ -102,6 +103,21 @@ class MainWindow(QMainWindow):
         top.addWidget(self.rejoin_info)
         top.addWidget(rejoin_label)
         top.addWidget(self.rejoin_switch)
+        top.addSpacing(theme.px(12))
+        auto_label = label(tr("Auto-Start"), "muted")
+        auto_label.setToolTip(tr("Startet die Überwachung, sobald du Anime Astral betrittst, pausiert bei "
+                                 "Verbindungsabbruch und stoppt, wenn du das Spiel verlässt. Selbst Starten/Stoppen hat "
+                                 "immer Vorrang."))
+        self.auto_info = label("", "small")
+        self.auto_switch = ToggleSwitch()
+        self.auto_switch.setToolTip(auto_label.toolTip())
+        self.auto_switch.setChecked(engine.settings.auto_monitor)
+        self.auto_switch.toggled.connect(self.set_auto_monitor)
+        top.addWidget(self.auto_info)
+        top.addWidget(auto_label)
+        top.addWidget(self.auto_switch)
+        self.auto = AutoMonitor()
+        self._auto_error = ""
         outer.addWidget(topbar)
 
         body = QWidget()
@@ -243,6 +259,9 @@ class MainWindow(QMainWindow):
         self.tray_rejoin = menu.addAction(tr("Auto-Rejoin"))
         self.tray_rejoin.setCheckable(True)
         self.tray_rejoin.toggled.connect(lambda on: self.rejoin_switch.setChecked(on))
+        self.tray_auto = menu.addAction(tr("Auto-Start"))
+        self.tray_auto.setCheckable(True)
+        self.tray_auto.toggled.connect(lambda on: self.auto_switch.setChecked(on))
         menu.addSeparator()
         menu.addAction(tr("Beenden"), self.quit_app)
         menu.aboutToShow.connect(self._update_tray_menu)
@@ -265,6 +284,9 @@ class MainWindow(QMainWindow):
         self.tray_rejoin.blockSignals(True)
         self.tray_rejoin.setChecked(self.rejoin_switch.isChecked())
         self.tray_rejoin.blockSignals(False)
+        self.tray_auto.blockSignals(True)
+        self.tray_auto.setChecked(self.auto_switch.isChecked())
+        self.tray_auto.blockSignals(False)
 
     # --------------------------------------------------------------- Privater Server
     def join_private_server(self) -> None:
@@ -562,6 +584,71 @@ class MainWindow(QMainWindow):
             page.set_hotkey_status(tr("Aktiv: {toggle} (Start/Stopp), {pause} (Pause), {status} (Status neu senden)",
                                       toggle=s.hotkey_toggle, pause=s.hotkey_pause, status=s.hotkey_status), True)
 
+    # --------------------------------------------------------------- Einstellungen übertragen
+    def export_settings(self) -> None:
+        """Alle Einstellungen als passwortgeschützte Datei (für einen neuen PC)."""
+        from pathlib import Path
+
+        from PySide6.QtWidgets import QFileDialog
+
+        from .. import secure
+        from .transfer_dialog import PasswordDialog
+        if not self.save_settings(show_message=False):   # aktuelle Eingaben zuerst übernehmen
+            return
+        dlg = PasswordDialog(self, export=True)
+        if not dlg.exec():
+            return
+        path, _ = QFileDialog.getSaveFileName(self, tr("Einstellungen exportieren"),
+                                              str(Path.home() / f"Anime-Astral-Einstellungen{secure.EXPORT_SUFFIX}"),
+                                              tr("Einstellungs-Datei") + f" (*{secure.EXPORT_SUFFIX})")
+        if not path:
+            return
+        self.setCursor(Qt.CursorShape.WaitCursor)
+        try:
+            target = secure.export_settings(self.engine.settings.to_dict(), dlg.value(), Path(path))
+        except (secure.SecureError, OSError) as exc:
+            QMessageBox.warning(self, tr("Einstellungen exportieren"), str(exc))
+            return
+        finally:
+            self.unsetCursor()
+        self.show_toast(tr("Exportiert: {name} ✓", name=target.name))
+
+    def import_settings(self) -> None:
+        """Passwortgeschützte Datei einlesen, Einstellungen ersetzen und das Programm neu starten."""
+        from pathlib import Path
+
+        from PySide6.QtWidgets import QFileDialog
+
+        from .. import secure
+        from .transfer_dialog import PasswordDialog
+        path, _ = QFileDialog.getOpenFileName(self, tr("Einstellungen importieren"), str(Path.home()),
+                                              tr("Einstellungs-Datei") + f" (*{secure.EXPORT_SUFFIX})")
+        if not path:
+            return
+        while True:
+            dlg = PasswordDialog(self, export=False)
+            if not dlg.exec():
+                return
+            self.setCursor(Qt.CursorShape.WaitCursor)
+            try:
+                data = secure.import_settings(Path(path), dlg.value())
+                break
+            except secure.SecureError as exc:
+                QMessageBox.warning(self, tr("Einstellungen importieren"), str(exc))
+            finally:
+                self.unsetCursor()
+        if self.engine.running:
+            self.engine.stop()
+        settings = Settings.from_dict(data)
+        try:
+            settings.save()
+        except OSError as exc:
+            QMessageBox.critical(self, tr("Speichern"), tr("Konnte nicht speichern: {error}", error=exc))
+            return
+        QMessageBox.information(self, tr("Einstellungen importieren"),
+                                tr("Einstellungen übernommen. Das Programm startet jetzt neu."))
+        self.restart_app()
+
     def create_diagnostics(self) -> None:
         from PySide6.QtCore import QUrl
         from PySide6.QtGui import QDesktopServices
@@ -594,6 +681,7 @@ class MainWindow(QMainWindow):
     # --------------------------------------------------------------- Steuerung
     def toggle_monitoring(self) -> None:
         if self.engine.running:
+            self.auto.user_stopped()                # selbst gestoppt: Auto-Start wartet bis zum nächsten Betreten
             self.setCursor(Qt.CursorShape.WaitCursor)
             try:
                 self.engine.stop()
@@ -611,7 +699,61 @@ class MainWindow(QMainWindow):
             self.unsetCursor()
 
     def toggle_pause(self) -> None:
+        self.auto.user_paused()
         self.engine.toggle_pause()
+
+    # --------------------------------------------------------------- Auto-Start
+    def set_auto_monitor(self, on: bool) -> None:
+        """Schalter oben / im Tray-Menü: sofort wirksam und gespeichert."""
+        s = self.engine.settings
+        if s.auto_monitor == on:
+            return
+        s.auto_monitor = on
+        try:
+            s.save()
+        except OSError:
+            pass
+        if self.auto_switch.isChecked() != on:
+            self.auto_switch.setChecked(on)
+        self.auto.reset()
+        self.show_toast(tr("Auto-Start an – die Überwachung startet, sobald du Anime Astral betrittst.") if on
+                        else tr("Auto-Start aus"))
+
+    def _auto_tick(self) -> None:
+        """Läuft auch im Hintergrund (Tray), führt die Entscheidungen von AutoMonitor aus."""
+        s, engine = self.engine.settings, self.engine
+        if not s.auto_monitor:
+            if self.auto_info.text():
+                self.auto_info.setText("")
+            return
+        rj = engine.rejoin
+        phase = phase_of(rj.status, rj.place)
+        now = time.monotonic()
+        for act in self.auto.tick(now, phase, engine.running, engine.state.paused, s.auto_rejoin_enabled,
+                                  rj.status == "gave_up"):
+            if act == "start":
+                try:
+                    engine.start()
+                    self._auto_error = ""
+                    engine._event(tr("Auto-Start: Anime Astral betreten – Überwachung gestartet"), "info")
+                except EngineError as exc:
+                    self.auto.start_failed(now)
+                    if str(exc) != self._auto_error:      # gleichen Grund nur einmal melden
+                        self._auto_error = str(exc)
+                        engine._event(tr("Auto-Start: noch nicht möglich ({error}) – neuer Versuch in 30 s",
+                                         error=exc), "warn")
+            elif act == "pause" and not engine.state.paused:
+                engine.toggle_pause()
+                engine._event(tr("Auto-Start: Verbindung weg – Überwachung pausiert"), "warn")
+            elif act == "resume" and engine.state.paused:
+                engine.toggle_pause()
+                engine._event(tr("Auto-Start: wieder im Spiel – Überwachung läuft weiter"), "ok")
+            elif act == "stop" and engine.running:
+                engine.stop()
+                engine._event(tr("Auto-Start: Spiel verlassen – Überwachung gestoppt"), "info")
+        text = self.auto.info(now, phase, engine.running)
+        if self.auto_info.text() != text:
+            self.auto_info.setText(text)
 
     # --------------------------------------------------------------- Discord / Status / Assistent
     def resend_status(self) -> None:
@@ -758,6 +900,7 @@ class MainWindow(QMainWindow):
         if refresh_stats:
             self.pages[1].mark_dirty()
         self._tray_tick()
+        self._auto_tick()
         if self.isMinimized() or not self.isVisible():
             self._status_key = None                 # nach dem Wiederherstellen alles neu zeichnen
             return                                  # minimiert: nichts zeichnen (spart CPU)

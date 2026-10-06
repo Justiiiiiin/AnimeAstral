@@ -30,7 +30,12 @@ class SettingsPage(QWidget):
 
         # ------------------------------------------------------------------ Roblox
         root.addWidget(section(tr("Roblox")))
-        ps = Card(tr("Privater Server und Auto-Rejoin"))
+        ps = Card(tr("Privater Server und Auto-Rejoin"),
+                  tr("Der markierte Server gilt für „Server beitreten“ (Kopfzeile, Tray) und für Auto-Rejoin. "
+                     "Roblox startet ohne Browser; Teilen-Links und klassische Links funktionieren. Die Links "
+                     "liegen verschlüsselt nur auf diesem PC.\n\nAuto-Rejoin (Schalter in der Kopfzeile): Nach "
+                     "Verbindungsabbruch, Kick oder Absturz tritt das Programm nach 15 s wieder bei – bis zu 5 "
+                     "Versuche. Wer Roblox selbst schließt, wird nicht zurückgeholt."))
         self.servers = QListWidget()
         smooth(self.servers)
         theme.track_fixed_height(self.servers, 132)
@@ -54,15 +59,13 @@ class SettingsPage(QWidget):
         prow.addStretch(1)
         prow.addWidget(join)
         ps.body.addLayout(prow)
-        ps.body.addWidget(label(tr("Der markierte Server gilt für „Server beitreten“ und Auto-Rejoin. Startet Roblox "
-                                   "ohne Browser; Teilen-Links und klassische Links funktionieren. Die Links bleiben "
-                                   "nur auf diesem PC."), "small", wrap=True))
-        ps.body.addWidget(label(tr("Auto-Rejoin (Schalter in der Kopfzeile): Nach Verbindungsabbruch, Kick oder Absturz "
-                                   "tritt das Programm nach 15 s wieder bei – bis zu 5 Versuche. Wer Roblox selbst "
-                                   "schließt, wird nicht zurückgeholt."), "small", wrap=True))
         ps.body.addStretch(1)
 
-        afk = Card(tr("Anti-AFK"))
+        afk = Card(tr("Anti-AFK"),
+                   tr("Einschalten in der Kopfzeile. Holt Roblox alle paar Minuten kurz nach vorne, drückt die "
+                      "Leertaste und wechselt zurück. Während du tippst oder klickst, wartet es. Roblox darf nicht "
+                      "minimiert sein.\n\nHinweis: Makros sind laut Roblox-Regeln nicht erlaubt – Nutzung auf "
+                      "eigene Verantwortung."))
         ag = form_grid()
         self.afk_minutes = SpinBox()
         self.afk_minutes.setRange(1, 19)
@@ -70,17 +73,15 @@ class SettingsPage(QWidget):
         ag.addWidget(label(tr("Springen alle")), 0, 0)
         ag.addWidget(self.afk_minutes, 0, 1)
         afk.body.addLayout(ag)
-        afk.body.addWidget(label(tr("Schalter in der Kopfzeile. Holt Roblox kurz nach vorne, drückt die Leertaste und "
-                                    "wechselt zurück. Während du tippst oder klickst, wartet es. Roblox darf nicht "
-                                    "minimiert sein."), "small", wrap=True))
-        afk.body.addWidget(label(tr("Hinweis: Makros sind laut Roblox-Regeln nicht erlaubt – Nutzung auf eigene "
-                                    "Verantwortung."), "small", wrap=True))
         afk.body.addStretch(1)
         root.addLayout(columns(ps, afk))
 
         # ------------------------------------------------------------------ Überwachung
         root.addWidget(section(tr("Überwachung")))
-        perf = Card(tr("Leistung"))
+        perf = Card(tr("Leistung"),
+                    tr("Wie oft der Wellenzähler gelesen wird. „Ausgewogen“ passt für die meisten. Kurz vor dem "
+                       "Raid-Ende wird automatisch schneller geprüft, damit 99/100 sicher erkannt wird. Die genauen "
+                       "Zeiten zeigt die Auswahl, wenn du darüberfährst."))
         pg = form_grid()
         self.perf = ComboBox()
         for key, preset in PRESETS.items():
@@ -89,15 +90,14 @@ class SettingsPage(QWidget):
         pg.addWidget(label(tr("Prüfrate")), 0, 0)
         pg.addWidget(self.perf, 0, 1)
         perf.body.addLayout(pg)
-        self.perf_info = label("", "small", wrap=True)
-        perf.body.addWidget(self.perf_info)
         self.low_priority = QCheckBox(tr("Niedrige Prozesspriorität (das Spiel hat Vorrang)"))
         perf.body.addWidget(self.low_priority)
-        perf.body.addWidget(label(tr("„Ausgewogen“ passt für die meisten. Kurz vor dem Raid-Ende wird schneller "
-                                     "geprüft, damit 99/100 sicher erkannt wird."), "small", wrap=True))
         perf.body.addStretch(1)
 
-        guard = Card(tr("Wächter"))
+        guard = Card(tr("Wächter"),
+                     tr("Meldet Abstürze (Roblox-Prozess), Disconnects und Kicks (Roblox-Protokoll), einen "
+                        "stehenden Zähler, zu lange kein beendeter Raid und zu hohen Speicherverbrauch von Roblox. "
+                        "Was davon an Discord geht, stellst du unter „Meldungen“ ein."))
         self.guard_enabled = QCheckBox(tr("Wächter aktiv"))
         guard.body.addWidget(self.guard_enabled)
         gg = form_grid()
@@ -121,15 +121,15 @@ class SettingsPage(QWidget):
         gg.addWidget(label(tr("Roblox-Speicher über")), 2, 0)
         gg.addWidget(self.ram, 2, 1)
         guard.body.addLayout(gg)
-        guard.body.addWidget(label(tr("Abstürze erkennt der Wächter am Roblox-Prozess, Disconnects und Kicks am "
-                                      "Roblox-Protokoll – ohne zusätzliche Bilderkennung. Was gesendet wird, stellst du "
-                                      "unter „Meldungen“ ein."), "small", wrap=True))
         guard.body.addStretch(1)
         root.addLayout(columns(perf, guard))
 
         # ------------------------------------------------------------------ Programm
         root.addWidget(section(tr("Programm")))
-        look = Card(tr("Darstellung"))
+        look = Card(tr("Darstellung"),
+                    tr("Änderungen gelten sofort. Ältere Designs bleiben hier auswählbar, mit der Version, in der "
+                       "sie eingeführt wurden.\n\nUI-Größe: kleiner = mehr pro Seite sichtbar. „An die "
+                       "Fenstergröße anpassen“ vergrößert bzw. verkleinert zusätzlich mit dem Fenster."))
         lg = form_grid()
         self.design = ComboBox()
         for key, info in theme.DESIGNS.items():
@@ -180,10 +180,11 @@ class SettingsPage(QWidget):
         look.body.addWidget(self.auto_fit)
         self.mode_hint = label("", "small", wrap=True)
         look.body.addWidget(self.mode_hint)
-        look.body.addWidget(label(tr("Kleiner = mehr pro Seite sichtbar. Änderungen gelten sofort; ältere Designs "
-                                     "bleiben hier auswählbar."), "small", wrap=True))
         root.addWidget(look)
-        ui = Card(tr("Oberfläche"))
+        ui = Card(tr("Oberfläche"),
+                  tr("Ein Sprachwechsel gilt nach einem Neustart.\n\nSchließt du das Fenster, läuft das Programm "
+                     "im Infobereich (Symbol neben der Uhr) weiter. Rechtsklick auf das Symbol: Öffnen, "
+                     "Start/Stopp, Pause, Server beitreten, Anti-AFK, Auto-Rejoin, Auto-Start, Beenden."))
         ug = form_grid()
         self.language = ComboBox()
         for code, name in LANGUAGES.items():
@@ -193,12 +194,11 @@ class SettingsPage(QWidget):
         ui.body.addLayout(ug)
         self.close_to_tray = QCheckBox(tr("Beim Schließen im Infobereich weiterlaufen"))
         ui.body.addWidget(self.close_to_tray)
-        ui.body.addWidget(label(tr("Rechtsklick auf das Symbol neben der Uhr: Öffnen, Start/Stopp, Pause, Server "
-                                   "beitreten, Anti-AFK, Auto-Rejoin, Beenden. Ein Sprachwechsel gilt nach einem "
-                                   "Neustart."), "small", wrap=True))
         ui.body.addStretch(1)
 
-        keys = Card(tr("Hotkeys"))
+        keys = Card(tr("Hotkeys"),
+                    tr("Wirken global, auch während des Spiels. Format: Ctrl+Alt+S, Shift+F9 … (Ctrl, Alt, Shift, "
+                       "Win). Einzelne F-Tasten vermeiden, die Roblox selbst nutzt."))
         kg = form_grid()
         self.hk_toggle = short_field(QLineEdit())
         self.hk_pause = short_field(QLineEdit())
@@ -212,12 +212,14 @@ class SettingsPage(QWidget):
         keys.body.addLayout(kg)
         self.hk_status = label("", "small", wrap=True)
         keys.body.addWidget(self.hk_status)
-        keys.body.addWidget(label(tr("Global, auch im Spiel. Format: Ctrl+Alt+S, Shift+F9 … – einzelne F-Tasten "
-                                     "vermeiden, die Roblox selbst nutzt."), "small", wrap=True))
         keys.body.addStretch(1)
         root.addLayout(columns(ui, keys))
 
-        rpc = Card(tr("Discord-Profilstatus"))
+        rpc = Card(tr("Discord-Profilstatus"),
+                   tr("Zeigt Raid und Welle als „Spielt …“ in deinem Discord-Profil.\n\nAnwendungs-ID: "
+                      "discord.com/developers/applications → New Application (der Name erscheint im Profil) → "
+                      "Application ID kopieren. Die Discord-Desktop-App muss laufen und das Teilen der Aktivität "
+                      "an sein (Discord → Einstellungen → Aktivitäts-Privatsphäre)."))
         self.rpc_enabled = QCheckBox(tr("Aktuellen Raid und Fortschritt in meinem Discord-Profil anzeigen"))
         rpc.body.addWidget(self.rpc_enabled)
         self.rpc_state = label("", "muted", wrap=True)
@@ -234,10 +236,6 @@ class SettingsPage(QWidget):
         rg.addWidget(label(tr("Spiel-Link (für das Bild)")), 1, 0)
         rg.addWidget(self.rpc_link, 1, 1)
         rpc.body.addLayout(rg)
-        rpc.body.addWidget(label(tr("Anwendungs-ID: discord.com/developers/applications → New Application (der Name "
-                                    "erscheint im Profil als „Spielt …“) → Application ID kopieren. Die Discord-Desktop-"
-                                    "App muss laufen und das Teilen der Aktivität an sein (Discord → Einstellungen → "
-                                    "Aktivitäts-Privatsphäre)."), "small", wrap=True))
         root.addWidget(rpc)
 
         upd = Card(tr("Updates"))
@@ -252,7 +250,11 @@ class SettingsPage(QWidget):
         upd.body.addLayout(urow)
         upd.body.addStretch(1)
 
-        data = Card(tr("Daten"))
+        data = Card(tr("Daten"),
+                    tr("Webhook-URL, Server-Links und IDs sind auf diesem PC mit deinem Windows-Konto "
+                       "verschlüsselt. Für einen PC-Wechsel: hier exportieren (mit Passwort) und am neuen PC "
+                       "importieren.\n\nDas Diagnose-Paket enthält Protokoll und Wertverlauf, aber keine "
+                       "Webhook-URL und keine Links."))
         path = label(str(app_paths.data_dir()), "small", wrap=True)
         path.setToolTip(str(app_paths.data_dir()))
         data.body.addWidget(path)
@@ -269,8 +271,16 @@ class SettingsPage(QWidget):
             drow.addWidget(btn)
         drow.addStretch(1)
         data.body.addLayout(drow)
-        data.body.addWidget(label(tr("settings.json enthält deine Webhook-URL unverschlüsselt – nicht weitergeben."),
-                                  "small", wrap=True))
+        xrow = QHBoxLayout()
+        exp_btn = QPushButton(tr("Exportieren …"))
+        exp_btn.setToolTip(tr("Alle Einstellungen als passwortgeschützte Datei – für einen neuen PC"))
+        exp_btn.clicked.connect(lambda: self.main.export_settings())
+        imp_btn = QPushButton(tr("Importieren …"))
+        imp_btn.clicked.connect(lambda: self.main.import_settings())
+        xrow.addWidget(exp_btn)
+        xrow.addWidget(imp_btn)
+        xrow.addStretch(1)
+        data.body.addLayout(xrow)
         data.body.addStretch(1)
         root.addLayout(columns(upd, data))
         root.addStretch(1)
@@ -385,7 +395,7 @@ class SettingsPage(QWidget):
 
     def _show_preset(self) -> None:
         preset = PRESETS.get(self.perf.currentData(), PRESETS["balanced"])
-        self.perf_info.setText(tr("Ruhig alle {idle} s, kurz vor Raid-Ende alle {hot} s, Quests alle {quest} s.",
+        self.perf.setToolTip(tr("Ruhig alle {idle} s, kurz vor Raid-Ende alle {hot} s, Quests alle {quest} s.",
                                   idle=f"{preset['idle']:g}", hot=f"{preset['hot']:g}", quest=f"{preset['quest']:g}"))
 
     def load(self, s) -> None:

@@ -16,6 +16,7 @@ import cv2
 import numpy as np
 
 from . import app_paths
+from .settings import SECRET_FIELDS
 from .version import __version__
 
 
@@ -70,7 +71,7 @@ def build_report(engine, dest_dir: Path) -> Path:
               f"Datensätze: gesamt {len(engine.stats.records)}, Fehlversuche {engine.stats.failed_count()}"]
 
     settings = s.to_dict()
-    for secret in ("webhook_url", "private_server_link", "ping_user_id", "rpc_client_id"):   # persönliche Zugänge/IDs
+    for secret in SECRET_FIELDS:                                   # persönliche Zugänge/IDs
         if settings.get(secret):
             settings[secret] = "<entfernt>"
     settings["server_favorites"] = [{"name": f.get("name", ""), "link": "<entfernt>"}

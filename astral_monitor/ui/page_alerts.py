@@ -56,7 +56,10 @@ class AlertsPage(QWidget):
         hook.body.addLayout(row)
         root.addWidget(hook)
 
-        live = Card(tr("Live-Status"))
+        live = Card(tr("Live-Status"),
+                    tr("Eine Nachricht im Kanal, die sich laufend aktualisiert, statt vieler Uptime-Meldungen."
+                       "\n\nTipp: Rechtsklick auf die Statusnachricht → „Anheften“. Sie wird danach nur noch "
+                       "bearbeitet. „Neu senden“ erzeugt eine neue Nachricht, die du neu anheftest."))
         self.status_enabled = QCheckBox(tr("Eine Statusnachricht verwenden, die sich selbst aktualisiert"))
         self.status_enabled.toggled.connect(self._sync_uptime)
         live.body.addWidget(self.status_enabled)
@@ -81,9 +84,6 @@ class AlertsPage(QWidget):
         brow.addWidget(resend)
         brow.addStretch(1)
         live.body.addLayout(brow)
-        live.body.addWidget(label(tr("Tipp: Rechtsklick auf die Statusnachricht → „Anheften“. Sie wird danach nur noch "
-                                     "bearbeitet. „Neu senden“ erzeugt eine neue Nachricht, die du neu anheftest."),
-                                  "small", wrap=True))
         root.addWidget(live)
 
         events = Card(tr("Ereignisse"))

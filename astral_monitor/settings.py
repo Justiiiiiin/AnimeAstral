@@ -81,6 +81,8 @@ def default_events() -> dict[str, dict[str, bool]]:
 
 
 MAX_FAVORITES = 20
+# Werte, die in settings.json verschlüsselt liegen (secure.py) und im Diagnose-Paket geschwärzt werden
+SECRET_FIELDS = ("webhook_url", "private_server_link", "ping_user_id", "rpc_client_id")
 
 
 def clean_favorites(value) -> list[dict]:
@@ -158,6 +160,7 @@ class Settings:
     anti_afk_enabled: bool = False      # alle N Minuten kurz zu Roblox, Leertaste, zurück (antiafk.py)
     anti_afk_minutes: int = 10
     auto_rejoin_enabled: bool = False   # nach Disconnect/Kick/Absturz neu beitreten (rejoin.py)
+    auto_monitor: bool = False          # Überwachung startet/stoppt mit Anime Astral (automonitor.py)
     server_favorites: list = field(default_factory=list)   # [{"name", "link"}] – nur lokal, Diagnose schwärzt die Links
     private_server_link: str = "" # roblox.com/games/…?privateServerLinkCode=… (nur lokal, roblox_join.py)
     # Sonstiges
@@ -222,15 +225,29 @@ class Settings:
         return None
 
     # ------------------------------------------------------------ Speichern/Laden
-    def to_dict(self) -> dict:
+    def to_dict(self, protect: bool = False) -> dict:
+        """Als Dict; mit protect=True sind Geheimnisse für settings.json lokal verschlüsselt (secure.py)."""
         data = {}
         for f in fields(self):
             value = getattr(self, f.name)
             data[f.name] = value.as_list() if isinstance(value, Roi) else value
+        if protect:
+            from .secure import protect as enc
+            for name in SECRET_FIELDS:
+                data[name] = enc(data[name])
+            data["server_favorites"] = [{"name": f["name"], "link": enc(f["link"])} for f in data["server_favorites"]]
         return data
 
     @classmethod
     def from_dict(cls, data: dict) -> "Settings":
+        from .secure import unprotect
+        data = dict(data)
+        for name in SECRET_FIELDS:                     # lokal verschlüsselte Werte (ältere Dateien: Klartext)
+            if isinstance(data.get(name), str):
+                data[name] = unprotect(data[name])
+        if isinstance(data.get("server_favorites"), list):
+            data["server_favorites"] = [dict(f, link=unprotect(f.get("link", ""))) if isinstance(f, dict) else f
+                                        for f in data["server_favorites"]]
         s = cls()
         for f in fields(cls):
             if f.name not in data:
@@ -289,5 +306,5 @@ class Settings:
     def save(self) -> None:
         path = app_paths.settings_file()
         tmp = path.with_suffix(".tmp")
-        tmp.write_text(json.dumps(self.to_dict(), indent=2, ensure_ascii=False), encoding="utf-8")
+        tmp.write_text(json.dumps(self.to_dict(protect=True), indent=2, ensure_ascii=False), encoding="utf-8")
         tmp.replace(path)

@@ -26,7 +26,9 @@ class RaidsPage(QWidget):
         root.addWidget(label(tr("Deine Raids als Liste. Welcher gerade läuft, wählst du auf der Startseite aus – "
                                 "Statistik, Discord und Profilstatus nutzen dann diesen Namen."), "muted", wrap=True))
 
-        left = Card(tr("Meine Raids"))
+        left = Card(tr("Meine Raids"),
+                    tr("Doppelklick oder Rechtsklick auf einen Raid zum Umbenennen. Beim Umbenennen zieht die "
+                       "Statistik mit; beim Löschen bleibt sie erhalten."))
         self.list = QListWidget()
         smooth(self.list)
         theme.track_min_height(self.list, 300)
@@ -45,8 +47,6 @@ class RaidsPage(QWidget):
         for btn in (add, ren, delete):
             row.addWidget(btn)
         left.body.addLayout(row)
-        left.body.addWidget(label(tr("Doppelklick oder Rechtsklick auf einen Raid zum Umbenennen. Beim Umbenennen "
-                                     "zieht die Statistik mit."), "small", wrap=True))
 
         right = Card(tr("Raid-Einstellungen"))
         self.sel_title = label("", "h2")

@@ -115,6 +115,10 @@ QPushButton#nav, QPushButton#tab { background: transparent; border: none; text-a
   color: @muted; min-height: 42px; border-radius: 8px; }
 QPushButton#nav:hover, QPushButton#tab:hover { background: @navHover; }
 QPushButton#nav:checked, QPushButton#tab:checked { background: @navActive; color: @text; }
+QToolButton#info, QFrame#card QToolButton#info { background: transparent; border: 1px solid @controlBorder;
+  border-radius: 9px; min-width: 18px; max-width: 18px; min-height: 18px; max-height: 18px; padding: 0;
+  color: @muted; font-size: 8pt; font-weight: 700; }
+QToolButton#info:hover, QFrame#card QToolButton#info:hover { color: @accent; border: 1px solid @accent; }
 QToolButton#gear { background: transparent; border: none; border-radius: 8px; min-height: 40px; min-width: 40px; }
 QToolButton#gear:hover { background: @navHover; }
 QToolButton#gear:checked { background: @navActive; }
@@ -236,6 +240,10 @@ QPushButton#tab, QFrame#card QPushButton#tab { background: transparent; border: 
   min-height: 32px; border-radius: 16px; font-weight: 600; }
 QPushButton#tab:hover, QFrame#card QPushButton#tab:hover { background: @navHover; color: @text; }
 QPushButton#tab:checked, QFrame#card QPushButton#tab:checked { background: @navActive; color: @accent; }
+QToolButton#info, QFrame#card QToolButton#info { background: transparent; border: 1px solid @controlBorder;
+  border-radius: 9px; min-width: 18px; max-width: 18px; min-height: 18px; max-height: 18px; padding: 0;
+  color: @muted; font-size: 8pt; font-weight: 700; }
+QToolButton#info:hover, QFrame#card QToolButton#info:hover { color: @accent; border: 1px solid @accent; }
 QToolButton#gear { background: transparent; border: none; border-radius: 12px; min-height: 44px; min-width: 44px;
   padding: 0; }
 QToolButton#gear:hover { background: @navHover; }

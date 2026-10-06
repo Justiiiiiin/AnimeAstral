@@ -42,17 +42,9 @@ EN: dict[str, str] = {
     "Anzeigename": "Display name",
     "Aufnahme": "Capture",
     "Aufnahmeart": "Capture mode",
-    "Aufnahmeart-Änderungen gelten nach einem Neustart der Überwachung. Wechselst du zwischen Vollbild und Fenstermodus, "
-    "Bereiche neu auswählen.":
-        "Capture mode changes apply after restarting monitoring. If you switch between fullscreen and windowed mode, "
-        "select the areas again.",
     "Aus": "Off",
     "Ausgewogen": "Balanced",
     "Ausgewählten Eintrag löschen": "Delete selected entry",
-    "Auslöser 1 = ab 99/100 (auch 100/100 zählt). Bestätigungen = so oft wird der Wert frisch gelesen, bevor der Raid "
-    "zählt (2 empfohlen).":
-        "Trigger 1 = from 99/100 (100/100 counts too). Confirmations = how often the value is re-read before the raid "
-        "counts (2 recommended).",
     "Auslöser: Gesamt minus": "Trigger: total minus",
     "Auslöser: ab {wave}/{total}": "Trigger: from {wave}/{total}",
     "Auswertung": "Analysis",
@@ -189,10 +181,6 @@ EN: dict[str, str] = {
     "Fehlversuch / Neustart": "Failed attempt / restart",
     "Fehlversuch bei Welle {wave}/{total} · {time}": "Failed attempt at wave {wave}/{total} · {time}",
     "Fehlversuche davor": "Failed attempts before",
-    "Fehlversuche und Neustarts (z. B. nach einer Niederlage) werden automatisch in der Statistik erfasst: Anzahl, Ø Dauer "
-    "und erreichte Welle.":
-        "Failed attempts and restarts (e.g. after a defeat) are recorded automatically in the statistics: count, "
-        "avg. duration and wave reached.",
     "Fenster „{title}“ gefunden": "Window “{title}” found",
     "Fenster „{title}“ nicht gefunden": "Window “{title}” not found",
     "Fenster „{title}“ nicht gefunden. Ist Roblox gestartet?": "Window “{title}” not found. Is Roblox running?",
@@ -227,10 +215,6 @@ EN: dict[str, str] = {
         "Four short steps and you are ready. This takes about a minute.",
     "Installiere … das Programm startet gleich neu.": "Installing … the program will restart shortly.",
     "Installierte Version: {version}": "Installed version: {version}",
-    "Jeder Versuch zählt – auch wenn er nicht bis Welle 100 geht, denn jede Welle gibt Belohnungen. Wähle einen Raid "
-    "oder „Alle Raids“.":
-        "Every attempt counts – even if it does not reach wave 100, because every wave gives rewards. Choose a raid "
-        "or “All raids”.",
     "Jetzt aktualisieren": "Update now",
     "Jetzt nach Updates suchen": "Check for updates now",
     "Jetzt unten neu senden": "Resend at the bottom now",
@@ -445,11 +429,6 @@ EN: dict[str, str] = {
     "Wochenbericht": "Weekly report",
     "Wächter": "Guard",
     "Wächter-Werte dürfen nicht negativ sein.": "Guard values must not be negative.",
-    "Wähle den Bereich großzügig (z. B. die ganze obere Mitte des Fensters). Das Programm findet „Wave x/100“ darin "
-    "selbst, auch im Fenstermodus oder bei verschobenem Layout. Der Bereich muss den Zähler nur enthalten.":
-        "Choose the area generously (e.g. the whole upper middle of the window). The program finds “Wave x/100” in it "
-        "by itself, also in windowed mode or with a shifted layout. The area only needs to contain the counter.",
-    "Wähle die ganze Quest-Liste (Titel und Fortschrittsbalken).": "Choose the whole quest list (titles and progress bars).",
     "Ziehe ein Rechteck um den Wellenzähler („Wave 12/100“) – mit etwas Rand.":
         "Drag a rectangle around the wave counter (“Wave 12/100”) – with some margin.",
     "Ziehe ein Rechteck um die ganze Quest-Liste (Titel und Fortschrittsbalken).":
@@ -545,10 +524,6 @@ EN: dict[str, str] = {
     "Nach jeder Meldung automatisch wieder ganz nach unten schieben":
         "Automatically move it back to the bottom after every message",
     "Quest-Fortschritt an Raid- und Uptime-Meldungen anhängen": "Attach quest progress to raid and uptime messages",
-    "Tipp: Rechtsklick auf die Statusnachricht → „Anheften“. Sie wird danach nur noch bearbeitet. „Neu senden“ "
-    "erzeugt eine neue Nachricht, die du neu anheftest.":
-        "Tip: right-click the status message → “Pin”. From then on it is only edited. “Resend” creates a new message "
-        "that you pin again.",
     "z. B. 100 oder 100, 50": "e.g. 100 or 100, 50",
     "Texterkennung (erweitert)": "Text recognition (advanced)",
     "Debug-Bilder bei Lesefehlern speichern (max. 40, im Datenordner)":
@@ -573,41 +548,10 @@ EN: dict[str, str] = {
     "Ruhig alle {idle} s, kurz vor Raid-Ende alle {hot} s, Quests alle {quest} s.":
         "Idle every {idle} s, close to the raid end every {hot} s, quests every {quest} s.",
     "Roblox-Helfer, Überwachung und Programm.": "Roblox helpers, monitoring and program.",
-    "Auto-Rejoin (Schalter in der Kopfzeile): Nach Verbindungsabbruch, Kick oder Absturz tritt das Programm nach "
-    "15 s wieder bei – bis zu 5 Versuche. Wer Roblox selbst schließt, wird nicht zurückgeholt.":
-        "Auto-rejoin (switch in the header): after a disconnect, kick or crash the program rejoins after 15 s – up "
-        "to 5 attempts. If you close Roblox yourself, it does not bring you back.",
-    "Schalter in der Kopfzeile. Holt Roblox kurz nach vorne, drückt die Leertaste und wechselt zurück. Während du "
-    "tippst oder klickst, wartet es. Roblox darf nicht minimiert sein.":
-        "Switch in the header. Briefly brings Roblox to the front, presses space and switches back. It waits while "
-        "you type or click. Roblox must not be minimized.",
-    "Hinweis: Makros sind laut Roblox-Regeln nicht erlaubt – Nutzung auf eigene Verantwortung.":
-        "Note: macros are not allowed by the Roblox rules – use at your own risk.",
-    "„Ausgewogen“ passt für die meisten. Kurz vor dem Raid-Ende wird schneller geprüft, damit 99/100 sicher erkannt "
-    "wird.":
-        "“Balanced” suits most people. Close to the raid end it checks faster so that 99/100 is reliably detected.",
     "Stillstand nach": "Stall after",
     "Kein Raid beendet seit": "No raid finished for",
     "Roblox-Speicher über": "Roblox memory above",
-    "Abstürze erkennt der Wächter am Roblox-Prozess, Disconnects und Kicks am Roblox-Protokoll – ohne zusätzliche "
-    "Bilderkennung. Was gesendet wird, stellst du unter „Meldungen“ ein.":
-        "The guard detects crashes via the Roblox process, disconnects and kicks via the Roblox log – without extra "
-        "image recognition. What is sent is set under “Alerts”.",
     "Programm": "Program",
-    "Rechtsklick auf das Symbol neben der Uhr: Öffnen, Start/Stopp, Pause, Server beitreten, Anti-AFK, Auto-Rejoin, "
-    "Beenden. Ein Sprachwechsel gilt nach einem Neustart.":
-        "Right-click the icon next to the clock: open, start/stop, pause, join server, anti-AFK, auto-rejoin, quit. "
-        "A language change applies after a restart.",
-    "Global, auch im Spiel. Format: Ctrl+Alt+S, Shift+F9 … – einzelne F-Tasten vermeiden, die Roblox selbst nutzt.":
-        "Global, also in-game. Format: Ctrl+Alt+S, Shift+F9 … – avoid single F keys that Roblox uses itself.",
-    "Anwendungs-ID: discord.com/developers/applications → New Application (der Name erscheint im Profil als "
-    "„Spielt …“) → Application ID kopieren. Die Discord-Desktop-App muss laufen und das Teilen der Aktivität an "
-    "sein (Discord → Einstellungen → Aktivitäts-Privatsphäre).":
-        "Application ID: discord.com/developers/applications → New Application (its name appears in your profile as "
-        "“Playing …”) → copy the Application ID. The Discord desktop app must be running and activity sharing must "
-        "be on (Discord → Settings → Activity Privacy).",
-    "settings.json enthält deine Webhook-URL unverschlüsselt – nicht weitergeben.":
-        "settings.json contains your webhook URL unencrypted – do not share it.",
     "Weitere Aktionen": "More actions",
     # Raids als Namensliste, Server-Favoriten (0.6.4)
     "Ein Raid „{name}“ gibt es schon.": "A raid “{name}” already exists.",
@@ -647,8 +591,6 @@ EN: dict[str, str] = {
     "Profilstatus nutzen dann diesen Namen.":
         "Your raids as a list. You choose which one is running on the start page – statistics, Discord and the "
         "profile status then use that name.",
-    "Doppelklick oder Rechtsklick auf einen Raid zum Umbenennen. Beim Umbenennen zieht die Statistik mit.":
-        "Double-click or right-click a raid to rename it. The statistics follow the new name.",
     "Noch keine Raids": "No raids yet",
     "Lege mit „Neu …“ deinen ersten Raid an.": "Add your first raid with “New …”.",
     "Raid löschen": "Delete raid",
@@ -657,10 +599,6 @@ EN: dict[str, str] = {
     "Ändern …": "Edit …",
     "Server hinzufügen": "Add server",
     "Server ändern": "Edit server",
-    "Der markierte Server gilt für „Server beitreten“ und Auto-Rejoin. Startet Roblox ohne Browser; Teilen-Links und "
-    "klassische Links funktionieren. Die Links bleiben nur auf diesem PC.":
-        "The marked server is used for “Join server” and auto-rejoin. Starts Roblox without a browser; share links "
-        "and classic links work. The links stay on this PC only.",
     "Noch kein Server – mit „Neu …“ deinen Teilen-Link speichern.": "No server yet – save your share link with “New …”.",
     "Höchstens {n} Server.": "At most {n} servers.",
     "Server löschen": "Delete server",
@@ -697,9 +635,136 @@ EN: dict[str, str] = {
     "Wie Windows": "Like Windows",
     "Farbschema": "Color scheme",
     "UI-Größe": "UI size",
-    "Kleiner = mehr pro Seite sichtbar. Änderungen gelten sofort; ältere Designs bleiben hier auswählbar.":
-        "Smaller = more visible per page. Changes apply immediately; older designs stay selectable here.",
     "Das Design „{name}“ gibt es nur dunkel.": "The “{name}” design is only available in dark.",
     "Astral": "Astral",
     "Klassisch": "Classic",
+    # Auto-Start (0.6.6)
+    "selbst gestoppt": "stopped manually",
+    "startet in {s} s": "starts in {s} s",
+    "pausiert (Verbindung)": "paused (connection)",
+    "stoppt in {s} s": "stops in {s} s",
+    "wartet auf Anime Astral": "waiting for Anime Astral",
+    "Auto-Start": "Auto-start",
+    "Startet die Überwachung, sobald du Anime Astral betrittst, pausiert bei Verbindungsabbruch und stoppt, wenn du "
+    "das Spiel verlässt. Selbst Starten/Stoppen hat immer Vorrang.":
+        "Starts monitoring as soon as you enter Anime Astral, pauses on a disconnect and stops when you leave the "
+        "game. Starting/stopping it yourself always takes priority.",
+    "Auto-Start an – die Überwachung startet, sobald du Anime Astral betrittst.":
+        "Auto-start on – monitoring starts as soon as you enter Anime Astral.",
+    "Auto-Start aus": "Auto-start off",
+    "Auto-Start: Anime Astral betreten – Überwachung gestartet": "Auto-start: entered Anime Astral – monitoring started",
+    "Auto-Start: Verbindung weg – Überwachung pausiert": "Auto-start: connection lost – monitoring paused",
+    "Auto-Start: wieder im Spiel – Überwachung läuft weiter": "Auto-start: back in the game – monitoring continues",
+    "Auto-Start: noch nicht möglich ({error}) – neuer Versuch in 30 s":
+        "Auto-start: not possible yet ({error}) – retrying in 30 s",
+    "Auto-Start: Spiel verlassen – Überwachung gestoppt": "Auto-start: left the game – monitoring stopped",
+    # Verschlüsselung, Export/Import, ⓘ-Infos (0.6.6)
+    "Das Passwort braucht mindestens {n} Zeichen.": "The password needs at least {n} characters.",
+    "Die Passwörter stimmen nicht überein.": "The passwords do not match.",
+    "Die Datei ist beschädigt.": "The file is damaged.",
+    "Das ist keine Einstellungs-Datei dieses Programms.": "This is not a settings file of this program.",
+    "Falsches Passwort oder beschädigte Datei.": "Wrong password or damaged file.",
+    "Einstellungen exportieren": "Export settings",
+    "Exportiert: {name} ✓": "Exported: {name} ✓",
+    "Einstellungen importieren": "Import settings",
+    "Einstellungen übernommen. Das Programm startet jetzt neu.": "Settings applied. The program restarts now.",
+    "Einstellungs-Datei": "Settings file",
+    "Eine Nachricht im Kanal, die sich laufend aktualisiert, statt vieler Uptime-Meldungen.\n\nTipp: Rechtsklick auf "
+    "die Statusnachricht → „Anheften“. Sie wird danach nur noch bearbeitet. „Neu senden“ erzeugt eine neue Nachricht, "
+    "die du neu anheftest.":
+        "One message in the channel that keeps updating, instead of many uptime messages.\n\nTip: right-click the "
+        "status message → “Pin”. From then on it is only edited. “Resend” creates a new message that you pin again.",
+    "„Automatisch“ nutzt die Fenster-Aufnahme (Roblox darf verdeckt sein) und sonst den Bildschirm. Änderungen gelten "
+    "nach einem Neustart der Überwachung. Wechselst du zwischen Vollbild und Fenstermodus, die Bereiche neu auswählen.":
+        "“Automatic” uses window capture (Roblox may be covered), otherwise the screen. Changes apply after "
+        "restarting monitoring. If you switch between fullscreen and windowed mode, select the areas again.",
+    "Bereich großzügig wählen (z. B. die ganze obere Mitte) – das Programm findet „Wave x/100“ darin selbst, auch im "
+    "Fenstermodus.\n\nAuslöser 1 = Raid zählt ab 99/100 (auch 100/100). Bestätigungen = so oft wird der Wert frisch "
+    "gelesen, bevor der Raid zählt (2 empfohlen). Sperrzeit = Mindestabstand zwischen zwei gezählten Raids.\n\n"
+    "Fehlversuche und Neustarts landen automatisch in der Statistik.":
+        "Choose the area generously (e.g. the whole upper middle) – the program finds “Wave x/100” in it itself, "
+        "also in windowed mode.\n\nTrigger 1 = the raid counts from 99/100 (100/100 too). Confirmations = how often "
+        "the value is read fresh before the raid counts (2 recommended). Cooldown = minimum time between two counted "
+        "raids.\n\nFailed attempts and restarts go into the statistics automatically.",
+    "Wähle als Bereich die ganze Quest-Liste mit Titeln und Fortschrittsbalken. Der Fortschritt erscheint auf der "
+    "Startseite und in den Discord-Meldungen.":
+        "Select the whole quest list with titles and progress bars. The progress appears on the start page and in "
+        "the Discord messages.",
+    "Doppelklick oder Rechtsklick auf einen Raid zum Umbenennen. Beim Umbenennen zieht die Statistik mit; beim Löschen "
+    "bleibt sie erhalten.":
+        "Double-click or right-click a raid to rename it. Renaming keeps the statistics with it; deleting keeps "
+        "them as they are.",
+    "Der markierte Server gilt für „Server beitreten“ (Kopfzeile, Tray) und für Auto-Rejoin. Roblox startet ohne "
+    "Browser; Teilen-Links und klassische Links funktionieren. Die Links liegen verschlüsselt nur auf diesem PC.\n\n"
+    "Auto-Rejoin (Schalter in der Kopfzeile): Nach Verbindungsabbruch, Kick oder Absturz tritt das Programm nach 15 s "
+    "wieder bei – bis zu 5 Versuche. Wer Roblox selbst schließt, wird nicht zurückgeholt.":
+        "The marked server is used for “Join server” (header, tray) and for auto-rejoin. Roblox starts without a "
+        "browser; share links and classic links work. The links are stored encrypted on this PC only.\n\nAuto-rejoin "
+        "(switch in the header): after a disconnect, kick or crash the program rejoins after 15 s – up to 5 "
+        "attempts. If you close Roblox yourself, it does not bring you back.",
+    "Einschalten in der Kopfzeile. Holt Roblox alle paar Minuten kurz nach vorne, drückt die Leertaste und wechselt "
+    "zurück. Während du tippst oder klickst, wartet es. Roblox darf nicht minimiert sein.\n\nHinweis: Makros sind laut "
+    "Roblox-Regeln nicht erlaubt – Nutzung auf eigene Verantwortung.":
+        "Turn on in the header. Every few minutes it briefly brings Roblox to the front, presses space and switches "
+        "back. It waits while you type or click. Roblox must not be minimized.\n\nNote: macros are not allowed by the "
+        "Roblox rules – use at your own risk.",
+    "Wie oft der Wellenzähler gelesen wird. „Ausgewogen“ passt für die meisten. Kurz vor dem Raid-Ende wird "
+    "automatisch schneller geprüft, damit 99/100 sicher erkannt wird. Die genauen Zeiten zeigt die Auswahl, wenn du "
+    "darüberfährst.":
+        "How often the wave counter is read. “Balanced” suits most people. Close to the raid end it checks faster "
+        "automatically so that 99/100 is reliably detected. Hover over the selection to see the exact times.",
+    "Meldet Abstürze (Roblox-Prozess), Disconnects und Kicks (Roblox-Protokoll), einen stehenden Zähler, zu lange kein "
+    "beendeter Raid und zu hohen Speicherverbrauch von Roblox. Was davon an Discord geht, stellst du unter "
+    "„Meldungen“ ein.":
+        "Reports crashes (Roblox process), disconnects and kicks (Roblox log), a stuck counter, no finished raid for "
+        "too long and too much Roblox memory use. What of this goes to Discord is set under “Alerts”.",
+    "Änderungen gelten sofort. Ältere Designs bleiben hier auswählbar, mit der Version, in der sie eingeführt "
+    "wurden.\n\nUI-Größe: kleiner = mehr pro Seite sichtbar. „An die Fenstergröße anpassen“ vergrößert bzw. "
+    "verkleinert zusätzlich mit dem Fenster.":
+        "Changes apply immediately. Older designs stay selectable here, with the version that introduced them.\n\n"
+        "UI size: smaller = more visible per page. “Adapt to the window size” additionally scales with the window.",
+    "Ein Sprachwechsel gilt nach einem Neustart.\n\nSchließt du das Fenster, läuft das Programm im Infobereich (Symbol "
+    "neben der Uhr) weiter. Rechtsklick auf das Symbol: Öffnen, Start/Stopp, Pause, Server beitreten, Anti-AFK, "
+    "Auto-Rejoin, Auto-Start, Beenden.":
+        "A language change applies after a restart.\n\nIf you close the window, the program keeps running in the "
+        "tray (icon next to the clock). Right-click the icon: open, start/stop, pause, join server, anti-AFK, "
+        "auto-rejoin, auto-start, quit.",
+    "Wirken global, auch während des Spiels. Format: Ctrl+Alt+S, Shift+F9 … (Ctrl, Alt, Shift, Win). Einzelne F-Tasten "
+    "vermeiden, die Roblox selbst nutzt.":
+        "Work globally, also in-game. Format: Ctrl+Alt+S, Shift+F9 … (Ctrl, Alt, Shift, Win). Avoid single F keys "
+        "that Roblox uses itself.",
+    "Zeigt Raid und Welle als „Spielt …“ in deinem Discord-Profil.\n\nAnwendungs-ID: "
+    "discord.com/developers/applications → New Application (der Name erscheint im Profil) → Application ID kopieren. "
+    "Die Discord-Desktop-App muss laufen und das Teilen der Aktivität an sein (Discord → Einstellungen → "
+    "Aktivitäts-Privatsphäre).":
+        "Shows raid and wave as “Playing …” in your Discord profile.\n\nApplication ID: "
+        "discord.com/developers/applications → New Application (its name appears in the profile) → copy the "
+        "Application ID. The Discord desktop app must be running and activity sharing must be on (Discord → "
+        "Settings → Activity Privacy).",
+    "Webhook-URL, Server-Links und IDs sind auf diesem PC mit deinem Windows-Konto verschlüsselt. Für einen "
+    "PC-Wechsel: hier exportieren (mit Passwort) und am neuen PC importieren.\n\nDas Diagnose-Paket enthält Protokoll "
+    "und Wertverlauf, aber keine Webhook-URL und keine Links.":
+        "Webhook URL, server links and IDs are encrypted on this PC with your Windows account. To move to a new PC: "
+        "export here (with a password) and import on the new PC.\n\nThe diagnostics package contains the log and "
+        "value history, but no webhook URL and no links.",
+    "Exportieren …": "Export …",
+    "Alle Einstellungen als passwortgeschützte Datei – für einen neuen PC":
+        "All settings as a password-protected file – for a new PC",
+    "Importieren …": "Import …",
+    "Jeder Versuch zählt – jede Welle gibt Belohnungen.": "Every attempt counts – every wave gives rewards.",
+    "Passwort anzeigen": "Show password",
+    "Passwort": "Password",
+    "Weiter …": "Continue …",
+    "Importieren": "Import",
+    "Bitte das Passwort eingeben.": "Please enter the password.",
+    "⚠️ Die Datei enthält deine Discord-Webhook-URL, deine gespeicherten Server-Links und IDs.":
+        "⚠️ The file contains your Discord webhook URL, your saved server links and IDs.",
+    "Wer die Webhook-URL kennt, kann Nachrichten in deinen Kanal senden. Die Datei wird deshalb mit deinem Passwort "
+    "verschlüsselt (AES-256) – ohne Passwort ist sie unlesbar. Ein vergessenes Passwort kann niemand "
+    "wiederherstellen.":
+        "Anyone who knows the webhook URL can send messages to your channel. That is why the file is encrypted with "
+        "your password (AES-256) – without the password it is unreadable. Nobody can recover a forgotten password.",
+    "Gib das Passwort ein, das du beim Export vergeben hast. Deine aktuellen Einstellungen werden danach ersetzt.":
+        "Enter the password you chose when exporting. Your current settings will then be replaced.",
+    "Wiederholen": "Repeat",
 }

@@ -40,7 +40,10 @@ class DetectPage(QWidget):
 
     # ------------------------------------------------------------------ Karten
     def _capture_card(self) -> Card:
-        card = Card(tr("Aufnahme"))
+        card = Card(tr("Aufnahme"),
+                    tr("„Automatisch“ nutzt die Fenster-Aufnahme (Roblox darf verdeckt sein) und sonst den "
+                       "Bildschirm. Änderungen gelten nach einem Neustart der Überwachung. Wechselst du zwischen "
+                       "Vollbild und Fenstermodus, die Bereiche neu auswählen."))
         grid = QGridLayout()
         grid.setColumnStretch(1, 1)
         grid.setVerticalSpacing(8)
@@ -60,16 +63,15 @@ class DetectPage(QWidget):
         row.addWidget(test)
         row.addStretch(1)
         card.body.addLayout(row)
-        card.body.addWidget(label(tr("Aufnahmeart-Änderungen gelten nach einem Neustart der Überwachung. "
-                                  "Wechselst du zwischen Vollbild und Fenstermodus, Bereiche neu auswählen."),
-                                  "small", wrap=True))
         return card
 
     def _wave_card(self) -> Card:
-        card = Card(tr("Wellenzähler („Wave 12/100“)"))
-        card.body.addWidget(label(tr("Wähle den Bereich großzügig (z. B. die ganze obere Mitte des Fensters). Das "
-                                  "Programm findet „Wave x/100“ darin selbst, auch im Fenstermodus oder bei "
-                                  "verschobenem Layout. Der Bereich muss den Zähler nur enthalten."), "small", wrap=True))
+        card = Card(tr("Wellenzähler („Wave 12/100“)"),
+                    tr("Bereich großzügig wählen (z. B. die ganze obere Mitte) – das Programm findet „Wave "
+                       "x/100“ darin selbst, auch im Fenstermodus.\n\nAuslöser 1 = Raid zählt ab 99/100 (auch "
+                       "100/100). Bestätigungen = so oft wird der Wert frisch gelesen, bevor der Raid zählt (2 "
+                       "empfohlen). Sperrzeit = Mindestabstand zwischen zwei gezählten Raids.\n\nFehlversuche "
+                       "und Neustarts landen automatisch in der Statistik."))
         row = QHBoxLayout()
         self.lbl_wave_roi = label("")
         row.addWidget(self.lbl_wave_roi, 1)
@@ -100,11 +102,6 @@ class DetectPage(QWidget):
         grid.addWidget(label(tr("Sperrzeit zwischen Raids")), 3, 0)
         grid.addWidget(self.cooldown, 3, 1)
         card.body.addLayout(grid)
-        card.body.addWidget(label(tr("Auslöser 1 = ab 99/100 (auch 100/100 zählt). Bestätigungen = so oft wird der Wert "
-                                  "frisch gelesen, bevor der Raid zählt (2 empfohlen)."), "small", wrap=True))
-
-        card.body.addWidget(label(tr("Fehlversuche und Neustarts (z. B. nach einer Niederlage) werden automatisch in "
-                                  "der Statistik erfasst: Anzahl, Ø Dauer und erreichte Welle."), "small", wrap=True))
         test_row = QHBoxLayout()
         test = QPushButton(tr("Wellenzähler testen"))
         test.clicked.connect(self._test_wave)
@@ -121,7 +118,9 @@ class DetectPage(QWidget):
         return card
 
     def _quest_card(self) -> Card:
-        card = Card(tr("Quests (Liste oben rechts)"))
+        card = Card(tr("Quests (Liste oben rechts)"),
+                    tr("Wähle als Bereich die ganze Quest-Liste mit Titeln und Fortschrittsbalken. Der Fortschritt "
+                       "erscheint auf der Startseite und in den Discord-Meldungen."))
         self.read_quests = QCheckBox(tr("Quests lesen und melden"))
         card.body.addWidget(self.read_quests)
         row = QHBoxLayout()
@@ -134,7 +133,6 @@ class DetectPage(QWidget):
         row.addWidget(pick)
         row.addWidget(reset)
         card.body.addLayout(row)
-        card.body.addWidget(label(tr("Wähle die ganze Quest-Liste (Titel und Fortschrittsbalken)."), "small"))
         test_row = QHBoxLayout()
         test = QPushButton(tr("Quests testen"))
         test.clicked.connect(self._test_quests)
@@ -149,9 +147,9 @@ class DetectPage(QWidget):
         return card
 
     def _ocr_card(self) -> Card:
-        card = Card(tr("Texterkennung (erweitert)"))
-        card.body.addWidget(label(tr("Tesseract ist im Programm enthalten. Einen eigenen Pfad brauchst du nur, wenn "
-                                     "„Prüfen“ einen Fehler meldet."), "small", wrap=True))
+        card = Card(tr("Texterkennung (erweitert)"),
+                    tr("Tesseract ist im Programm enthalten. Einen eigenen Pfad brauchst du nur, wenn „Prüfen“ "
+                       "einen Fehler meldet."))
         row = QHBoxLayout()
         self.tess = QLineEdit()
         self.tess.setPlaceholderText(tr("Leer = automatisch suchen"))

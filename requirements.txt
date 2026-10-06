@@ -6,4 +6,5 @@ requests>=2.31
 pytesseract>=0.3.10
 psutil>=5.9
 pypresence>=4.3
+cryptography>=42
 windows-capture; sys_platform == "win32"

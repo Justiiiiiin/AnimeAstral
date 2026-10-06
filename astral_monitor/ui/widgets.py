@@ -11,7 +11,7 @@ from PySide6.QtCore import Property, QByteArray, QEasingCurve, QPropertyAnimatio
 from PySide6.QtGui import QColor, QImage, QPainter, QPixmap, QTextOption
 from PySide6.QtWidgets import (QAbstractButton, QAbstractItemView, QComboBox, QDoubleSpinBox, QFrame, QHBoxLayout, QHeaderView,
                                QLabel, QProgressBar, QScrollArea, QSizePolicy, QSpinBox, QTableWidget,
-                               QTableWidgetItem, QVBoxLayout, QWidget)
+                               QTableWidgetItem, QToolButton, QToolTip, QVBoxLayout, QWidget)
 
 from .. import app_paths
 from ..i18n import thousands
@@ -198,15 +198,54 @@ def form_grid() -> "QGridLayout":
     return grid
 
 
+PARAGRAPH = chr(10) * 2                            # Absatz in Info-Texten (Leerzeile)
+
+
+class InfoButton(QToolButton):
+    """Kleines ⓘ: Erklärung erscheint beim Darüberfahren oder Anklicken – statt Fließtext auf der Seite."""
+
+    def __init__(self, text: str) -> None:
+        super().__init__()
+        self.setObjectName("info")
+        self.setText("i")
+        self.setCursor(Qt.CursorShape.WhatsThisCursor)
+        self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.set_info(text)
+        self.clicked.connect(lambda: QToolTip.showText(self.mapToGlobal(self.rect().bottomLeft()), self.toolTip(), self))
+
+    def set_info(self, text: str) -> None:
+        # als Rich-Text, damit Qt lange Hinweise umbricht; Absätze mit Leerzeile
+        paras = "".join(f"<p style='margin:0 0 6px 0'>{part}</p>" for part in text.split(PARAGRAPH))
+        self.setToolTip(f"<div style='max-width:360px'>{paras}</div>")
+
+
+def with_info(widget: QWidget, text: str) -> QHBoxLayout:
+    """Zeile: Element + ⓘ (z. B. für Kontrollkästchen)."""
+    row = QHBoxLayout()
+    theme.track_spacing(row, 6)
+    row.addWidget(widget)
+    row.addWidget(InfoButton(text))
+    row.addStretch(1)
+    return row
+
+
 class Card(QFrame):
-    def __init__(self, title: str = "") -> None:
+    def __init__(self, title: str = "", info: str = "") -> None:
         super().__init__()
         self.setObjectName("card")
         self.body = QVBoxLayout(self)
         theme.track_margins(self.body, 16, 14, 16, 14)
         theme.track_spacing(self.body, 10)
+        self.info: Optional[InfoButton] = None
         if title:
-            self.body.addWidget(label(title, "h2"))
+            head = QHBoxLayout()
+            theme.track_spacing(head, 8)
+            head.addWidget(label(title, "h2"))
+            if info:
+                self.info = InfoButton(info)
+                head.addWidget(self.info)
+            head.addStretch(1)
+            self.body.addLayout(head)
 
 
 class StatCard(Card):
