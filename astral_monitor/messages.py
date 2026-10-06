@@ -21,6 +21,11 @@ def logo_url() -> str:
     return f"https://raw.githubusercontent.com/{repo}/main/assets/app.png" if repo else ""
 
 
+def _avatar() -> dict:
+    """Logo als Profilbild des Webhooks (gilt je Nachricht; die Webhook-Einstellungen in Discord bleiben unberührt)."""
+    return {"avatar_url": logo_url()} if logo_url() else {}
+
+
 def brand(settings: Settings) -> dict:
     """Kleiner Absender mit Logo über jeder Nachricht (einheitlicher Auftritt)."""
     from .version import __version__
@@ -83,7 +88,7 @@ def build_message(settings: Settings, kind: str, title: str, color: int,
         files.append((name, data, ctype[0] if ctype else "image/jpeg"))
 
     payload: dict = {"username": settings.username, "embeds": [embed],
-                     "allowed_mentions": {"parse": []}}
+                     "allowed_mentions": {"parse": []}, **_avatar()}
     entry = settings.events.get(kind, {})
     uid = settings.ping_user_id.strip()
     if entry.get("ping") and uid.isdigit():
@@ -161,4 +166,4 @@ def build_status(settings: Settings, snap: dict) -> dict:
     }
     if logo_url():
         embed["thumbnail"] = {"url": logo_url()}
-    return {"username": settings.username, "embeds": [embed], "allowed_mentions": {"parse": []}}
+    return {"username": settings.username, "embeds": [embed], "allowed_mentions": {"parse": []}, **_avatar()}

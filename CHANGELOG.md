@@ -10,6 +10,7 @@ Der Abschnitt einer Version wird beim Veröffentlichen automatisch als Versionsh
 - Kein „Fehlversuch“ mehr: jeder Raid zählt normal
 - Raid-Meldung zeigt die erreichte Welle
 - Live-Status neu: Fortschrittsbalken, Symbole, Logo
+- Logo als Profilbild der Discord-Nachrichten
 - Programm aufgeräumt (alter Updater entfernt)
 
 ## 0.7.0

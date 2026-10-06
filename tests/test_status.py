@@ -83,6 +83,20 @@ class StatusTests(unittest.TestCase):
         self.assertIn("gestoppt", stopped["description"])
         self.assertEqual(messages.progress_bar(5, 10, width=4), "▰▰▱▱")
 
+    def test_logo_as_webhook_avatar(self):
+        import os
+        from astral_monitor import messages
+        os.environ["ASTRAL_UPDATE_REPO"] = "friend/AnimeAstral"
+        try:
+            url = "https://raw.githubusercontent.com/friend/AnimeAstral/main/assets/app.png"
+            self.assertEqual(messages.build_status(self.s, SNAP)["avatar_url"], url)
+            payload, _files = messages.build_message(self.s, "raid_done", "x", messages.COLOR_OK)
+            self.assertEqual(payload["avatar_url"], url)
+            self.assertEqual(payload["embeds"][0]["author"]["icon_url"], url)
+        finally:
+            del os.environ["ASTRAL_UPDATE_REPO"]
+        self.assertNotIn("avatar_url", messages.build_status(self.s, SNAP))      # ohne Repo (Quellcode): kein Bild
+
 
 if __name__ == "__main__":
     unittest.main()
