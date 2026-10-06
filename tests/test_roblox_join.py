@@ -2,7 +2,7 @@
 import unittest
 
 import _env  # noqa: F401
-from astral_monitor.roblox_join import DEEP_LINK, explain, parse_private_link
+from astral_monitor.roblox_join import DEEP_LINK, deep_link, explain, parse_private_link, parse_share_link
 
 
 class JoinTests(unittest.TestCase):
@@ -15,8 +15,23 @@ class JoinTests(unittest.TestCase):
                          (123456, "987654321"))
         self.assertIn("linkCode=987654321", DEEP_LINK.format(place=123456, code="987654321"))
 
+    def test_share_links(self):
+        code = "0123456789abcdef0123456789abcdef"
+        for link in (f"https://www.roblox.com/share?code={code}&type=Server",
+                     f"https://www.roblox.com/share-links?code={code}&type=Server&pid=Server&is_retargeting=false"
+                     f"&deep_link_value=roblox%3A%2F%2Fnavigation%2Fshare_links%3Fcode%3D{code}%26type%3DServer"):
+            self.assertEqual(parse_share_link(link), code, link)
+            self.assertEqual(deep_link(link), f"roblox://navigation/share_links?code={code}&type=Server")
+        self.assertEqual(parse_share_link(f"﻿  https://www.roblox.com/share?code={code}&type=Server \n"), code)
+        self.assertIn("Teilen-Link", explain(f"https://www.roblox.com/share?code={code}&type=Server"))
+        for bad in (f"https://www.roblox.com/share?code={code}&type=ExperienceDetails",
+                    f"https://evil.example/share?code={code}&type=Server",
+                    f"https://evilroblox.com/share?code={code}&type=Server",
+                    "https://www.roblox.com/share?code=abc;del&type=Server"):
+            self.assertIsNone(deep_link(bad), bad)
+
     def test_rejects_other_and_unsafe_links(self):
-        for bad in ("", "https://www.roblox.com/share?code=abc&type=Server",
+        for bad in ("",
                     "https://evil.example/games/123456/x?privateServerLinkCode=12345678",
                     "https://www.roblox.com/games/123456/x",
                     "https://www.roblox.com/games/123456/x?privateServerLinkCode=12;del",
@@ -24,7 +39,7 @@ class JoinTests(unittest.TestCase):
             self.assertIsNone(parse_private_link(bad), bad)
 
     def test_explain(self):
-        self.assertIn("Browser", explain("https://www.roblox.com/share?code=abc&type=Server"))
+        self.assertIn("Kein gültiger", explain("https://www.roblox.com/share?code=abc&type=Server"))
         self.assertIn("123456", explain("https://www.roblox.com/games/123456/x?privateServerLinkCode=12345678"))
 
 

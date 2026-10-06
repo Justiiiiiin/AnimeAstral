@@ -1,9 +1,10 @@
 """Privatem Server beitreten, ohne Browser: aus dem Link Spielnummer und Code lesen und den Roblox-Client über seinen
 eigenen Protokoll-Link starten (roblox://…). Der Client nutzt seine gespeicherte Anmeldung – das Programm braucht
-weder Passwort noch Cookie. Unterstützt wird das klassische Format
+weder Passwort noch Cookie. Unterstützte Links:
+    https://www.roblox.com/share?code=<Code>&type=Server        (Teilen-Link, auch /share-links?…)
+        -> roblox://navigation/share_links?code=<Code>&type=Server   (so steht er in Roblox' eigenem Link)
     https://www.roblox.com/games/<Spielnummer>/<Name>?privateServerLinkCode=<Code>
-(Teilen-Links „roblox.com/share?code=…“ lassen sich ohne Anmeldung nicht auflösen: einmal im Browser öffnen, dann
-steht der klassische Link in der Adresszeile)."""
+        -> roblox://experiences/start?placeId=<Spielnummer>&linkCode=<Code>"""
 from __future__ import annotations
 
 import os
@@ -16,16 +17,24 @@ from .i18n import tr
 
 _PLACE_RE = re.compile(r"/games/(\d{3,20})(?:/|$)")
 _CODE_RE = re.compile(r"[A-Za-z0-9_-]{6,100}")
+_SHARE_RE = re.compile(r"[A-Fa-f0-9]{16,64}")
 DEEP_LINK = "roblox://experiences/start?placeId={place}&linkCode={code}"
+SHARE_DEEP_LINK = "roblox://navigation/share_links?code={code}&type=Server"     # so steht er auch in Roblox' Teilen-Link
 
 
-def parse_private_link(text: str) -> Optional[tuple[int, str]]:
-    """(Spielnummer, Code) aus einem Private-Server-Link; None = kein passender Link."""
-    text = (text or "").strip()
+def _url(text: str):
+    text = (text or "").strip().strip("﻿​\"'<>").strip()   # BOM, Null-Breite, Anführungszeichen beim Kopieren
     if not text:
         return None
     url = urlparse(text if "://" in text else "https://" + text)
-    if not url.netloc.lower().endswith("roblox.com"):
+    host = url.netloc.lower().split("@")[-1].split(":")[0]
+    return url if host == "roblox.com" or host.endswith(".roblox.com") else None
+
+
+def parse_private_link(text: str) -> Optional[tuple[int, str]]:
+    """(Spielnummer, Code) aus einem klassischen Private-Server-Link; None = kein passender Link."""
+    url = _url(text)
+    if url is None:
         return None
     place = _PLACE_RE.search(url.path)
     code = (parse_qs(url.query).get("privateServerLinkCode") or [""])[0]
@@ -34,25 +43,46 @@ def parse_private_link(text: str) -> Optional[tuple[int, str]]:
     return int(place.group(1)), code
 
 
+def parse_share_link(text: str) -> Optional[str]:
+    """Code aus einem Teilen-Link (roblox.com/share?… oder /share-links?…, type=Server); None = keiner."""
+    url = _url(text)
+    if url is None or not url.path.rstrip("/").endswith(("/share", "/share-links")):
+        return None
+    query = parse_qs(url.query)
+    code = (query.get("code") or [""])[0]
+    if (query.get("type") or [""])[0].lower() != "server" or not _SHARE_RE.fullmatch(code):
+        return None
+    return code
+
+
+def deep_link(text: str) -> Optional[str]:
+    """roblox://-Link für den Client (klassischer oder Teilen-Link); None = kein gültiger Link."""
+    classic = parse_private_link(text)
+    if classic:
+        return DEEP_LINK.format(place=classic[0], code=classic[1])
+    share = parse_share_link(text)
+    return SHARE_DEEP_LINK.format(code=share) if share else None
+
+
 def explain(text: str) -> str:
     """Kurze Rückmeldung zum eingetragenen Link (für die Einstellungen)."""
     if not (text or "").strip():
         return tr("Kein Link eingetragen.")
-    if "share?" in text and "privateServerLinkCode" not in text:
-        return tr("Teilen-Link erkannt – bitte einmal im Browser öffnen und dann den Link aus der Adresszeile "
-                  "kopieren (enthält „privateServerLinkCode“).")
     parsed = parse_private_link(text)
-    if parsed is None:
-        return tr("Kein gültiger Private-Server-Link (erwartet: roblox.com/games/…?privateServerLinkCode=…).")
-    return tr("Spiel {place} · Code …{tail}", place=parsed[0], tail=parsed[1][-6:])
+    if parsed:
+        return tr("Spiel {place} · Code …{tail}", place=parsed[0], tail=parsed[1][-6:])
+    share = parse_share_link(text)
+    if share:
+        return tr("Teilen-Link · Code …{tail}", tail=share[-6:])
+    return tr("Kein gültiger Private-Server-Link (erwartet: roblox.com/share?code=…&type=Server oder "
+              "roblox.com/games/…?privateServerLinkCode=…).")
 
 
 def join(text: str) -> tuple[bool, str]:
     """Startet den Roblox-Client direkt im privaten Server. Rückgabe (gestartet?, Meldung)."""
-    parsed = parse_private_link(text)
-    if parsed is None:
+    uri = deep_link(text)
+    if uri is None:
         return False, explain(text)
-    uri = DEEP_LINK.format(place=parsed[0], code=parsed[1])
     if sys.platform != "win32":
         return False, tr("Nur unter Windows möglich.")
     try:

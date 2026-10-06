@@ -135,7 +135,7 @@ class SettingsPage(QWidget):
         ps = Card(tr("Privater Server"))
         prow = QHBoxLayout()
         self.ps_link = QLineEdit()
-        self.ps_link.setPlaceholderText("https://www.roblox.com/games/…?privateServerLinkCode=…")
+        self.ps_link.setPlaceholderText("https://www.roblox.com/share?code=…&type=Server")
         self.ps_link.textChanged.connect(lambda text: self.ps_state.setText(roblox_join.explain(text)))
         prow.addWidget(self.ps_link, 1)
         ps_btn = QPushButton(tr("Beitreten"))
@@ -145,9 +145,10 @@ class SettingsPage(QWidget):
         self.ps_state = label("", "small", wrap=True)
         ps.body.addWidget(self.ps_state)
         ps.body.addWidget(label(tr("Startet Roblox direkt in deinem privaten Server, ohne Browser (Knopf auch oben in "
-                                   "der Kopfzeile und im Tray-Menü). Teilen-Links („roblox.com/share?code=…“) einmal im "
-                                   "Browser öffnen und dann den Link aus der Adresszeile kopieren. Der Link bleibt nur "
-                                   "auf diesem PC und ist im Diagnose-Paket nicht enthalten."), "small", wrap=True))
+                                   "der Kopfzeile und im Tray-Menü). Funktioniert mit Teilen-Links "
+                                   "(„roblox.com/share?code=…“) und klassischen Links („…?privateServerLinkCode=…“). "
+                                   "Der Link bleibt nur auf diesem PC und ist im Diagnose-Paket nicht enthalten."),
+                                "small", wrap=True))
         root.addWidget(ps)
 
         keys = Card(tr("Hotkeys (global, auch während des Spiels)"))
