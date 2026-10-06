@@ -87,7 +87,9 @@ def default_events() -> dict[str, dict[str, bool]]:
 
 MAX_FAVORITES = 20
 # Werte, die in settings.json verschlüsselt liegen (secure.py) und im Diagnose-Paket geschwärzt werden
-SECRET_FIELDS = ("webhook_url", "private_server_link", "ping_user_id", "rpc_client_id")
+SECRET_FIELDS = ("webhook_url", "forum_webhook_url", "private_server_link", "ping_user_id", "rpc_client_id")
+# Diese Meldungen landen – mit Forum-Webhook – in einem Beitrag pro Tag statt im Hauptkanal
+DAILY_KINDS = ("raid_done", "quest_update", "quest_done", "record", "wall")
 
 
 def clean_favorites(value) -> list[dict]:
@@ -112,6 +114,7 @@ def is_valid_webhook(url: str) -> bool:
 class Settings:
     # Discord
     webhook_url: str = ""
+    forum_webhook_url: str = ""         # optional: Forum-Kanal, Raid-Meldungen je Tag ein Beitrag
     username: str = "Anime Astral Monitor"
     ping_user_id: str = ""
     events: dict = field(default_factory=default_events)
@@ -192,6 +195,8 @@ class Settings:
     def validate(self) -> Optional[str]:
         if not is_valid_webhook(self.webhook_url):
             return tr("Bitte eine gültige Discord-Webhook-URL eintragen (Seite „Meldungen“).")
+        if self.forum_webhook_url and not is_valid_webhook(self.forum_webhook_url):
+            return tr("Der Forum-Webhook ist keine gültige Discord-Webhook-URL (Seite „Meldungen“).")
         return self.validate_detection()
 
     def validate_detection(self) -> Optional[str]:

@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (QCheckBox, QColorDialog, QGridLayout, QHBoxLayout
 from ..i18n import tr
 from . import theme
 from ..settings import EVENT_DEFS, is_hex_color, is_valid_webhook
-from .widgets import Card, SpinBox, form_grid, label
+from .widgets import Card, InfoButton, SpinBox, form_grid, label
 
 
 class ColorButton(QToolButton):
@@ -68,8 +68,8 @@ class AlertsPage(QWidget):
         self.url.setEchoMode(QLineEdit.EchoMode.Password)
         self.url.setPlaceholderText(tr("https://discord.com/api/webhooks/…"))
         show = QCheckBox(tr("anzeigen"))
-        show.toggled.connect(lambda on: self.url.setEchoMode(
-            QLineEdit.EchoMode.Normal if on else QLineEdit.EchoMode.Password))
+        show.toggled.connect(lambda on: [f.setEchoMode(QLineEdit.EchoMode.Normal if on else QLineEdit.EchoMode.Password)
+                                         for f in (self.url, self.forum)])
         self.name = QLineEdit()
         self.ping = QLineEdit()
         self.ping.setPlaceholderText(tr("Deine Discord-ID (nur Ziffern)"))
@@ -80,6 +80,19 @@ class AlertsPage(QWidget):
         grid.addWidget(self.name, 1, 1, 1, 2)
         grid.addWidget(label(tr("Ping-Ziel")), 2, 0)
         grid.addWidget(self.ping, 2, 1, 1, 2)
+        self.forum = QLineEdit()
+        self.forum.setEchoMode(QLineEdit.EchoMode.Password)
+        self.forum.setPlaceholderText(tr("optional – Webhook eines Forum-Kanals"))
+        forum_label = QHBoxLayout()
+        forum_label.addWidget(label(tr("Tages-Beiträge")))
+        forum_label.addWidget(InfoButton(tr(
+            "Raid-, Quest-, Rekord- und Wand-Meldungen landen in einem Forum-Kanal – jeden Tag in einem eigenen "
+            "Beitrag „Raids · Datum“. Der Hauptkanal bleibt für Live-Status und Alarme frei.\n\nSo geht's: "
+            "Forum-Kanal anlegen → Kanal bearbeiten → Integrationen → Webhooks → neuen Webhook, URL hier "
+            "einfügen. Leer lassen = alles in den Hauptkanal.")))
+        forum_label.addStretch(1)
+        grid.addLayout(forum_label, 3, 0)
+        grid.addWidget(self.forum, 3, 1, 1, 2)
         hook.body.addLayout(grid)
         row = QHBoxLayout()
         test = QPushButton(tr("Test-Nachricht senden"))
@@ -159,6 +172,7 @@ class AlertsPage(QWidget):
         self.url.setText(s.webhook_url)
         self.name.setText(s.username)
         self.ping.setText(s.ping_user_id)
+        self.forum.setText(s.forum_webhook_url)
         for key in self.send_boxes:
             entry = s.events.get(key, {})
             self.send_boxes[key].setChecked(bool(entry.get("send")))
@@ -180,6 +194,10 @@ class AlertsPage(QWidget):
         if ping and not ping.isdigit():
             raise ValueError(tr("Die Discord-ID darf nur aus Ziffern bestehen."))
         s.ping_user_id = ping
+        forum = self.forum.text().strip()
+        if forum and not is_valid_webhook(forum):
+            raise ValueError(tr("Der Forum-Webhook ist keine gültige Discord-Webhook-URL (Seite „Meldungen“)."))
+        s.forum_webhook_url = forum
         for key in self.send_boxes:
             s.events[key] = {"send": self.send_boxes[key].isChecked(),
                              "ping": self.ping_boxes[key].isChecked()}

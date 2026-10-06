@@ -25,7 +25,7 @@ from .profiles import ProfileStore
 from .presence import PresenceUpdater
 from .status import StatusPublisher
 from .quests import QuestReader
-from .settings import Settings
+from .settings import DAILY_KINDS, Settings, is_valid_webhook
 from .stats import RunRecord, StatsStore
 from .tracker import QuestTracker, WaveTracker
 from .wave import WaveReader
@@ -366,10 +366,11 @@ class Engine:
             return
         payload, files = messages.build_message(self.settings, kind, title, color,
                                                 fields, description, image)
+        daily = kind in DAILY_KINDS and is_valid_webhook(self.settings.forum_webhook_url)
         on_done = None
-        if self.settings.status_enabled and self.settings.status_auto_bottom:
+        if self.settings.status_enabled and self.settings.status_auto_bottom and not daily:
             on_done = lambda: self.publisher.request_resend(delay=1.0)     # Status wieder unter die neue Meldung
-        self.sender.submit(payload, files, on_done)
+        self.sender.submit(payload, files, on_done, daily=daily)
 
     @staticmethod
     def _lower_priority() -> None:

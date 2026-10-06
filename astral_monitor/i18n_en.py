@@ -817,4 +817,18 @@ EN: dict[str, str] = {
     "Auto": "Auto",
     "Standardfarbe des Programms": "The program's default color",
     "Farbe": "Color",
+    # Tages-Beiträge im Forum (0.7.2)
+    "Raids · {date}": "Raids · {date}",
+    "Tages-Beiträge": "Daily posts",
+    "optional – Webhook eines Forum-Kanals": "optional – webhook of a forum channel",
+    "Raid-, Quest-, Rekord- und Wand-Meldungen landen in einem Forum-Kanal – jeden Tag in einem eigenen "
+    "Beitrag „Raids · Datum“. Der Hauptkanal bleibt für Live-Status und Alarme frei.\n\nSo geht's: "
+    "Forum-Kanal anlegen → Kanal bearbeiten → Integrationen → Webhooks → neuen Webhook, URL hier "
+    "einfügen. Leer lassen = alles in den Hauptkanal.":
+        "Raid, quest, record and wall messages go to a forum channel – each day in its own post "
+        "“Raids · date”. The main channel stays free for the live status and alerts.\n\nHow to: create a "
+        "forum channel → edit channel → Integrations → Webhooks → new webhook, paste the URL here. "
+        "Leave empty = everything goes to the main channel.",
+    "Der Forum-Webhook ist keine gültige Discord-Webhook-URL (Seite „Meldungen“).":
+        "The forum webhook is not a valid Discord webhook URL (“Alerts” page).",
 }
