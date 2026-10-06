@@ -802,4 +802,10 @@ EN: dict[str, str] = {
     "zur letzten stabilen Version zurückkehren geht jederzeit.":
         "You get new versions earlier, but they may still contain bugs. You can switch this off and return to the "
         "latest stable version under “All versions” at any time.",
+    # Animationen reduzieren (0.7.2)
+    "Animationen reduzieren": "Reduce animations",
+    "Seiten erscheinen ohne Überblendung, Schalter springen sofort um. Spart etwas Leistung, z. B. wenn Roblox "
+    "nebenher läuft.":
+        "Pages appear without fading and switches flip instantly. Saves a little performance, e.g. while Roblox "
+        "is running.",
 }

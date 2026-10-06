@@ -178,6 +178,14 @@ class SettingsPage(QWidget):
         self.auto_fit = QCheckBox(tr("Zusätzlich an die Fenstergröße anpassen"))
         self.auto_fit.toggled.connect(lambda on: self.main.set_appearance(fit=on))
         look.body.addWidget(self.auto_fit)
+        mrow = QHBoxLayout()
+        self.reduce_motion = QCheckBox(tr("Animationen reduzieren"))
+        self.reduce_motion.toggled.connect(lambda on: self.main.set_appearance(reduce_motion=on))
+        mrow.addWidget(self.reduce_motion)
+        mrow.addWidget(InfoButton(tr("Seiten erscheinen ohne Überblendung, Schalter springen sofort um. "
+                                     "Spart etwas Leistung, z. B. wenn Roblox nebenher läuft.")))
+        mrow.addStretch(1)
+        look.body.addLayout(mrow)
         self.mode_hint = label("", "small", wrap=True)
         look.body.addWidget(self.mode_hint)
         root.addWidget(look)
@@ -393,12 +401,14 @@ class SettingsPage(QWidget):
 
     def _sync_look(self, s) -> None:
         """Bedienelemente der Darstellung auf den gespeicherten Stand setzen (ohne erneut auszulösen)."""
-        widgets = [self.design, self.zoom, self.auto_fit] + [b for _p, b in self.zoom_buttons] + self.mode_group.buttons()
+        widgets = [self.design, self.zoom, self.auto_fit, self.reduce_motion] + [b for _p, b in self.zoom_buttons]
+        widgets += self.mode_group.buttons()
         for w in widgets:
             w.blockSignals(True)
         self.design.setCurrentIndex(max(0, self.design.findData(s.ui_design)))
         self.zoom.setValue(s.ui_zoom)
         self.auto_fit.setChecked(s.ui_auto_fit)
+        self.reduce_motion.setChecked(s.ui_reduce_motion)
         for pct, btn in self.zoom_buttons:
             btn.setChecked(pct == s.ui_zoom)
         light_ok = theme.has_mode(s.ui_design, "light")

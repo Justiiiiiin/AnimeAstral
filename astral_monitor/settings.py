@@ -157,6 +157,7 @@ class Settings:
     ui_mode: str = "dark"               # dark | light | system
     ui_zoom: int = 100                  # 50–200 % (mehr pro Seite sehen = kleiner)
     ui_auto_fit: bool = True            # zusätzlich an die Fenstergröße anpassen (0,7–1,3)
+    ui_reduce_motion: bool = False      # keine Überblendungen/Schalter-Animationen (spart Leistung)
     anti_afk_enabled: bool = False      # alle N Minuten kurz zu Roblox, Leertaste, zurück (antiafk.py)
     anti_afk_minutes: int = 10
     auto_rejoin_enabled: bool = False   # nach Disconnect/Kick/Absturz neu beitreten (rejoin.py)

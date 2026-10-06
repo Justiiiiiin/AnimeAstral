@@ -301,7 +301,7 @@ class ToggleSwitch(QAbstractButton):
     knob = Property(float, _get_knob, _set_knob)
 
     def _animate(self, on: bool) -> None:
-        if not self.isVisible():                       # unsichtbar (z. B. beim Laden): ohne Animation
+        if not self.isVisible() or not theme.animations():     # unsichtbar oder abgeschaltet: sofort
             self._set_knob(1.0 if on else 0.0)
             return
         self._anim.stop()

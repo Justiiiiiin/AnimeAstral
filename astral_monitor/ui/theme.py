@@ -362,6 +362,19 @@ def design() -> str:
     return _design
 
 
+_motion = True                                     # False = „Animationen reduzieren“
+
+
+def set_motion(on: bool) -> None:
+    global _motion
+    _motion = bool(on)
+
+
+def animations() -> bool:
+    """Animationen zeigen? (Design sieht sie vor und der Nutzer hat sie nicht abgeschaltet)"""
+    return _motion and bool(design_info()["animate"])
+
+
 def design_info(key: str | None = None) -> dict:
     return DESIGNS.get(key or _design, DESIGNS[DEFAULT_DESIGN])
 
