@@ -80,5 +80,24 @@ class CardTests(unittest.TestCase):
         self.assertGreater(len(full), len(empty) // 2)
 
 
+class DiagnosticsTests(unittest.TestCase):
+    def test_scrub_removes_personal_data(self):
+        import os
+        from astral_monitor.diagnostics import scrub
+        user = os.environ.get("USERNAME", "")
+        text = ("POST https://discord.com/api/webhooks/123/abcDEF-x fehlgeschlagen\n"
+                "Join https://www.roblox.com/share?code=abc123&type=Server\n"
+                "roblox://placeId=1&linkCode=9f8e7d\n"
+                "Ping 123456789012345678 · Welle 42/100 · place 102072869879193\n"
+                f"C:\\Users\\{user}\\AppData\\Local\\Roblox\\logs")
+        out = scrub(text)
+        for secret in ("abcDEF", "abc123", "9f8e7d", "123456789012345678"):
+            self.assertNotIn(secret, out)
+        if len(user) >= 3:
+            self.assertNotIn(user, out)
+        self.assertIn("Welle 42/100", out)                               # Nützliches bleibt
+        self.assertIn("place 102072869879193", out)                      # Spiel-ID (15 Stellen) ist öffentlich
+
+
 if __name__ == "__main__":
     unittest.main()

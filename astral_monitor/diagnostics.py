@@ -1,10 +1,13 @@
-"""Diagnose-Paket: sammelt Protokoll, Wertverlauf, Einstellungen (ohne Webhook) und Bilder in einer ZIP-Datei."""
+"""Diagnose-Paket: sammelt Protokoll, Wertverlauf, Einstellungen und Bilder in einer ZIP-Datei – ohne Webhook,
+Server-Links, Discord-IDs und Windows-Benutzername (zum Weitergeben bei Fehlern)."""
 from __future__ import annotations
 
 import csv
 import io
 import json
+import os
 import platform
+import re
 import sys
 import time
 import zipfile
@@ -39,6 +42,24 @@ def _jpg(image: Optional[np.ndarray]) -> Optional[bytes]:
         return None
     ok, buf = cv2.imencode(".jpg", image, [cv2.IMWRITE_JPEG_QUALITY, 85])
     return buf.tobytes() if ok else None
+
+
+_SCRUB = [
+    (re.compile(r"https?://(?:\w+\.)?discord(?:app)?\.com/api/webhooks/\S+", re.I), "<webhook>"),
+    (re.compile(r"https?://(?:www\.)?roblox\.com/share\?\S+", re.I), "<server-link>"),
+    (re.compile(r"\b(privateServerLinkCode|linkCode|accessCode)=[\w-]+", re.I), r"\1=<entfernt>"),
+    (re.compile(r"(?<!\d)\d{17,20}(?!\d)"), "<id>"),                       # Discord-IDs (Nutzer, Anwendung)
+]
+
+
+def scrub(text: str) -> str:
+    """Persönliches aus Protokolltext entfernen: Webhooks, Server-Links/-Codes, Discord-IDs, Windows-Benutzername."""
+    for pattern, repl in _SCRUB:
+        text = pattern.sub(repl, text)
+    user = os.environ.get("USERNAME", "")
+    if len(user) >= 3:
+        text = re.sub(re.escape(user), "<benutzer>", text, flags=re.I)
+    return text
 
 
 def build_report(engine, dest_dir: Path) -> Path:
@@ -93,12 +114,12 @@ def build_report(engine, dest_dir: Path) -> Path:
         lines.append(f"Screenshot: FEHLER {exc}")
 
     with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as zf:
-        zf.writestr("system_und_zustand.txt", "\n".join(lines))
+        zf.writestr("system_und_zustand.txt", scrub("\n".join(lines)))
         zf.writestr("einstellungen.json", json.dumps(settings, indent=2, ensure_ascii=False))
         zf.writestr("wellenverlauf.csv", trace.getvalue())
         for log_file in (app_paths.log_file(), app_paths.log_file().with_name("monitor.log.1")):
             if log_file.is_file():
-                zf.write(log_file, log_file.name)
+                zf.writestr(log_file.name, scrub(log_file.read_text(encoding="utf-8", errors="replace")))
         history = app_paths.history_file()
         if history.is_file():
             tail = history.read_text(encoding="utf-8", errors="replace").splitlines()
