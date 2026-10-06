@@ -80,6 +80,13 @@ class CardTests(unittest.TestCase):
         self.assertGreater(len(full), len(empty) // 2)
 
 
+class WaveColorTests(unittest.TestCase):
+    def test_tiers(self):
+        from astral_monitor.ui.page_monitor import wave_token
+        self.assertEqual(wave_token(50, 0), "")                         # noch keine Bestwelle
+        self.assertEqual([wave_token(w, 80) for w in (10, 48, 72, 80, 95)], ["", "info", "accent", "warn", "warn"])
+
+
 class DiagnosticsTests(unittest.TestCase):
     def test_scrub_removes_personal_data(self):
         import os

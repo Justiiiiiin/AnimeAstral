@@ -808,4 +808,5 @@ EN: dict[str, str] = {
     "nebenher läuft.":
         "Pages appear without fading and switches flip instantly. Saves a little performance, e.g. while Roblox "
         "is running.",
+    "Bestwelle: {wave}": "Best wave: {wave}",
 }

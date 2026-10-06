@@ -16,6 +16,19 @@ from .widgets import Card, ComboBox, QuestRow, StatCard, bgr_to_pixmap, label, s
 LEVEL_TOKENS = {"ok": "accent", "warn": "warn", "error": "danger", "info": "info"}
 
 
+def wave_token(wave: int, best: int) -> str:
+    """Farbe der Wellenzahl je nach Nähe zur Bestwelle: neuer Rekord (gold), knapp davor (türkis), gut (violett)."""
+    if best <= 0:
+        return ""
+    if wave >= best:
+        return "warn"
+    if wave >= best * 0.9:
+        return "accent"
+    if wave >= best * 0.6:
+        return "info"
+    return ""
+
+
 class MonitorPage(QWidget):
     def __init__(self, main) -> None:
         super().__init__()
@@ -109,6 +122,8 @@ class MonitorPage(QWidget):
         self._self_proc = None
         self._next_self = 0.0
         self._next_wall, self._wall = 0.0, None
+        self._next_best, self._best = 0.0, 0
+        self._wave_color = None
         try:
             import psutil
             self._self_proc = psutil.Process()
@@ -147,7 +162,8 @@ class MonitorPage(QWidget):
         self.main.select_raid(name)
 
     def recolor(self) -> None:
-        """Nach Design-/Farbwechsel: Ereignisse in den neuen Farben."""
+        """Nach Design-/Farbwechsel: Ereignisse und Wellenzahl in den neuen Farben."""
+        self._wave_color = None
         for i in range(self.events.count()):
             item = self.events.item(i)
             token = LEVEL_TOKENS.get(item.data(Qt.ItemDataRole.UserRole) or "info", "info")
@@ -211,9 +227,16 @@ class MonitorPage(QWidget):
         if st.wave_value is not None and st.wave_total:
             self.wave.setText(f"{st.wave_value}/{st.wave_total}")
             self.wave_bar.setValue(int(st.wave_value * 100 / st.wave_total))
+            token = wave_token(st.wave_value, self._best)
         else:
             self.wave.setText("–")
             self.wave_bar.setValue(0)
+            token = ""
+        color = theme.color(token) if token else ""
+        if color != self._wave_color:                   # nur bei Wechsel neu setzen (Stylesheet ist teuer)
+            self._wave_color = color
+            self.wave.setStyleSheet(f"color: {color};" if color else "")
+            self.wave.setToolTip(tr("Bestwelle: {wave}", wave=self._best) if self._best else "")
         total = st.wave_total or max(s.allowed_totals_list() or [100])
         self.i_trigger.setText(tr("Auslöser: ab {wave}/{total}", wave=total - s.trigger_offset, total=total))
         self.i_read.setText(tr("Lesezeit: {ms} ms", ms=f"{st.read_ms:.0f}"))
@@ -223,6 +246,9 @@ class MonitorPage(QWidget):
         if st.profile and now >= self._next_wall:
             self._next_wall = now + 5.0
             self._wall = self.engine.stats.wall(st.profile)
+        if now >= self._next_best:                      # Bestwelle des gewählten Raids (sonst gesamt), alle 5 s
+            self._next_best = now + 5.0
+            self._best = self.engine.stats.best_wave(st.profile or None)
         if st.profile and self._wall:
             raid_text += " · " + tr("Wand: Welle {wave} ({streak}× in Folge)", wave=self._wall.wave,
                                     streak=self._wall.streak)
