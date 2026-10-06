@@ -33,6 +33,21 @@ class TrackerTests(unittest.TestCase):
         self.assertEqual(events, [])
         self.assertEqual(tr.run.first_wave, 10)
 
+    def test_small_drop_corrects_misread_instead_of_restart(self):
+        # echter Fall 06.10.: eingefrorenes Bild beim Umschalten (F11), „25“ als „29“ gelesen, danach wieder 25
+        tr = WaveTracker(3, 0)
+        events, t = feed(tr, [20, 21, 22, 23, 24, 29, 29, 29, 29] + [None] * 6 + [25, 25, 26])
+        self.assertEqual(events, [])
+        self.assertEqual(tr.run.first_wave, 20)
+        self.assertEqual(tr.run.max_wave, 26)
+
+    def test_restart_from_low_wave_still_counts(self):
+        tr = WaveTracker(3, 0)
+        events, t = feed(tr, [1, 2, 3, 4, 5, 6, 7, 8, 9])
+        events, _ = feed(tr, [2, 2, 3], t)                  # neuer Lauf, Beginn knapp verpasst
+        self.assertEqual([e[0] for e in events], ["run_end"])
+        self.assertEqual(events[0][1]["max_wave"], 9)
+
     def test_counter_vanishing_ends_the_run(self):
         tr = WaveTracker(3, 0)
         _, t = feed(tr, [5, 6, 7])

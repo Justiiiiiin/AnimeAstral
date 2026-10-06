@@ -81,13 +81,22 @@ class WaveTracker:
         if self.run is not None and self.last_value is not None and value < self.last_value - DROP_MIN:
             cand = self._drop_value
             if cand is not None and cand <= value <= cand + DROP_MIN:
-                restart_ts = self._drop_ts           # zweite passende Lesung: Neustart bestätigt
-                log.info("Neustart bestätigt: %d -> %d (höchste Welle des Versuchs: %d)",
-                         self.last_value, value, self.run.max_wave)
                 self._drop_value = None
-                info = self._finish()
-                if info:
-                    out.append(("run_end", info))
+                if value > max(START_MAX, self.last_value // 2):
+                    # Ein neuer Lauf beginnt niedrig. Fällt der Zähler nur ein Stück (z. B. 29 -> 25), waren die
+                    # höheren Lesungen falsch (eingefrorenes Bild beim Umschalten o. Ä.) – innerhalb eines Laufs
+                    # sinkt der Zähler nie. Also korrigieren statt einen Fehlversuch einzutragen.
+                    log.info("Zähler-Korrektur: %d -> %d (höhere Lesung war falsch)", self.last_value, value)
+                    self.run.first_wave = min(self.run.first_wave, value)
+                    self.run.max_wave = value
+                    self.last_value = value
+                else:
+                    restart_ts = self._drop_ts           # zweite passende Lesung: Neustart bestätigt
+                    log.info("Neustart bestätigt: %d -> %d (höchste Welle des Versuchs: %d)",
+                             self.last_value, value, self.run.max_wave)
+                    info = self._finish()
+                    if info:
+                        out.append(("run_end", info))
             else:
                 self._drop_value, self._drop_ts = value, now     # erste Lesung: noch abwarten
                 log.info("Zähler fällt von %d auf %d – warte auf Bestätigung", self.last_value, value)
