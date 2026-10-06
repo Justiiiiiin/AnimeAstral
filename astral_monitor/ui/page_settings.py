@@ -115,6 +115,23 @@ class SettingsPage(QWidget):
                                    "es einen Ping gibt, stellst du unter „Meldungen“ ein."), "small", wrap=True))
         root.addWidget(guard)
 
+        afk = Card(tr("Anti-AFK"))
+        arow = QHBoxLayout()
+        arow.addWidget(label(tr("Springen alle")))
+        self.afk_minutes = SpinBox()
+        self.afk_minutes.setRange(1, 19)
+        self.afk_minutes.setSuffix(tr(" Min"))
+        arow.addWidget(self.afk_minutes)
+        arow.addStretch(1)
+        afk.body.addLayout(arow)
+        afk.body.addWidget(label(tr("Ein- und ausschalten oben rechts in der Kopfzeile (oder im Tray-Menü). Das Programm "
+                                    "holt Roblox kurz nach vorne, drückt einmal die Leertaste und wechselt zu deinem "
+                                    "Fenster zurück – Roblox nimmt Tasten nur im Vordergrund an. Tippst oder klickst du "
+                                    "gerade, wartet es, bis du 2 Sekunden nichts eingibst. Roblox darf nicht minimiert "
+                                    "sein. Hinweis: Makros sind laut Roblox-Regeln nicht erlaubt; Nutzung auf eigene "
+                                    "Verantwortung."), "small", wrap=True))
+        root.addWidget(afk)
+
         keys = Card(tr("Hotkeys (global, auch während des Spiels)"))
         kg = QGridLayout()
         kg.setColumnStretch(1, 1)
@@ -204,6 +221,7 @@ class SettingsPage(QWidget):
     def load(self, s) -> None:
         self.language.setCurrentIndex(max(0, self.language.findData(s.language)))
         self.close_to_tray.setChecked(s.close_to_tray)
+        self.afk_minutes.setValue(s.anti_afk_minutes)
         self.perf.setCurrentIndex(max(0, self.perf.findData(s.performance)))
         self.low_priority.setChecked(s.low_priority)
         self.uptime.setValue(s.uptime_minutes)
@@ -230,6 +248,7 @@ class SettingsPage(QWidget):
     def apply(self, s) -> None:
         s.language = self.language.currentData() or "de"
         s.close_to_tray = self.close_to_tray.isChecked()
+        s.anti_afk_minutes = self.afk_minutes.value()
         s.performance = self.perf.currentData()
         s.low_priority = self.low_priority.isChecked()
         s.uptime_minutes = self.uptime.value()

@@ -29,7 +29,7 @@ from .page_monitor import MonitorPage
 from .page_raids import RaidsPage
 from .page_settings import SettingsPage
 from .page_stats import StatsPage
-from .widgets import label, scroll_page
+from .widgets import ToggleSwitch, label, scroll_page
 
 
 class MainWindow(QMainWindow):
@@ -47,18 +47,43 @@ class MainWindow(QMainWindow):
         self._scale_timer.timeout.connect(self._apply_scale)
 
         central = QWidget()
-        root = QHBoxLayout(central)
+        outer = QVBoxLayout(central)
+        outer.setContentsMargins(0, 0, 0, 0)
+        outer.setSpacing(0)
+
+        # Kopfzeile: Programmname, Anti-AFK-Schalter mit Countdown
+        topbar = QFrame()
+        topbar.setObjectName("topbar")
+        top = QHBoxLayout(topbar)
+        theme.track_margins(top, 16, 8, 16, 8)
+        theme.track_spacing(top, 10)
+        top.addWidget(label(tr("Astral Monitor"), "h2"))
+        top.addStretch(1)
+        afk_label = label(tr("Anti-AFK"), "muted")
+        afk_label.setToolTip(tr("Wechselt alle paar Minuten kurz zu Roblox, drückt einmal die Leertaste und wechselt "
+                                "zurück – gegen die Trennung nach 20 Minuten. Abstand: Einstellungen → Anti-AFK."))
+        self.afk_info = label("", "small")
+        self.afk_switch = ToggleSwitch()
+        self.afk_switch.setToolTip(afk_label.toolTip())
+        self.afk_switch.setChecked(engine.settings.anti_afk_enabled)
+        self.afk_switch.toggled.connect(self.set_anti_afk)
+        top.addWidget(self.afk_info)
+        top.addWidget(afk_label)
+        top.addWidget(self.afk_switch)
+        outer.addWidget(topbar)
+
+        body = QWidget()
+        root = QHBoxLayout(body)
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
+        outer.addWidget(body, 1)
 
         sidebar = QFrame()
         sidebar.setObjectName("sidebar")
         theme.track_fixed_width(sidebar, 208)
         side = QVBoxLayout(sidebar)
-        theme.track_margins(side, 12, 22, 12, 16)
+        theme.track_margins(side, 12, 16, 12, 16)
         theme.track_spacing(side, 4)
-        side.addWidget(label(tr("Astral Monitor"), "h2"))
-        side.addSpacing(14)
 
         self.stack = QStackedWidget()
         self.pages = [MonitorPage(self), StatsPage(self), AlertsPage(self), RaidsPage(self),
@@ -133,6 +158,9 @@ class MainWindow(QMainWindow):
         menu.addAction(tr("Öffnen"), self.show_from_tray)
         self.tray_toggle = menu.addAction(tr("Überwachung starten"), self.toggle_monitoring)
         self.tray_pause = menu.addAction(tr("Pause"), self.toggle_pause)
+        self.tray_afk = menu.addAction(tr("Anti-AFK"))
+        self.tray_afk.setCheckable(True)
+        self.tray_afk.toggled.connect(lambda on: self.afk_switch.setChecked(on))
         menu.addSeparator()
         menu.addAction(tr("Beenden"), self.quit_app)
         menu.aboutToShow.connect(self._update_tray_menu)
@@ -149,6 +177,31 @@ class MainWindow(QMainWindow):
         self.tray_toggle.setText(tr("Überwachung stoppen") if running else tr("Überwachung starten"))
         self.tray_pause.setEnabled(running)
         self.tray_pause.setText(tr("Fortsetzen") if self.engine.state.paused else tr("Pause"))
+        self.tray_afk.blockSignals(True)
+        self.tray_afk.setChecked(self.afk_switch.isChecked())
+        self.tray_afk.blockSignals(False)
+
+    # --------------------------------------------------------------- Anti-AFK
+    def set_anti_afk(self, on: bool) -> None:
+        """Schalter oben / im Tray-Menü: sofort wirksam und gespeichert."""
+        if self.engine.settings.anti_afk_enabled == on:
+            return
+        self.engine.settings.anti_afk_enabled = on
+        try:
+            self.engine.settings.save()
+        except OSError:
+            pass
+        if self.afk_switch.isChecked() != on:
+            self.afk_switch.setChecked(on)
+        self.show_toast(tr("Anti-AFK an – alle {minutes} Min. kurz zu Roblox, Leertaste, zurück.",
+                           minutes=self.engine.settings.anti_afk_minutes) if on else tr("Anti-AFK aus"))
+        self._update_afk_info()
+
+    def _update_afk_info(self) -> None:
+        left = self.engine.anti_afk.seconds_left()
+        text = "" if left is None else tr("nächster Sprung in {time}", time=messages.fmt_duration(left))
+        if self.afk_info.text() != text:
+            self.afk_info.setText(text)
 
     def show_from_tray(self) -> None:
         self.showNormal()
@@ -412,6 +465,8 @@ class MainWindow(QMainWindow):
             except OSError:
                 pass
             self.show_from_tray()
+        if self.isVisible() and not self.isMinimized():
+            self._update_afk_info()
         if self.tray is not None:
             st = self.engine.state
             if not st.running:

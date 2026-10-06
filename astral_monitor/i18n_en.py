@@ -27,6 +27,31 @@ EN: dict[str, str] = {
     "Alles": "Everything",
     "Alles bereit ✨": "All set ✨",
     "Anime Astral Monitor": "Anime Astral Monitor",
+    "Anti-AFK": "Anti-AFK",
+    "Anti-AFK an – alle {minutes} Min. kurz zu Roblox, Leertaste, zurück.":
+        "Anti-AFK on – every {minutes} min briefly to Roblox, space, back.",
+    "Anti-AFK aus": "Anti-AFK off",
+    "Anti-AFK: gesprungen": "Anti-AFK: jumped",
+    "Anti-AFK: {reason}": "Anti-AFK: {reason}",
+    "Der Anti-AFK-Abstand muss zwischen 1 und 19 Minuten liegen (Roblox trennt nach 20 Minuten).":
+        "The anti-AFK interval must be between 1 and 19 minutes (Roblox disconnects after 20 minutes).",
+    "Ein- und ausschalten oben rechts in der Kopfzeile (oder im Tray-Menü). Das Programm holt Roblox kurz nach vorne, "
+    "drückt einmal die Leertaste und wechselt zu deinem Fenster zurück – Roblox nimmt Tasten nur im Vordergrund an. "
+    "Tippst oder klickst du gerade, wartet es, bis du 2 Sekunden nichts eingibst. Roblox darf nicht minimiert sein. "
+    "Hinweis: Makros sind laut Roblox-Regeln nicht erlaubt; Nutzung auf eigene Verantwortung.":
+        "Switch it on and off at the top right of the header (or in the tray menu). The program briefly brings Roblox "
+        "to the front, presses space once and switches back to your window – Roblox only accepts keys in the "
+        "foreground. If you are typing or clicking, it waits until you have not done anything for 2 seconds. Roblox "
+        "must not be minimized. Note: macros are not allowed by the Roblox rules; use at your own risk.",
+    "Roblox ist minimiert": "Roblox is minimized",
+    "Roblox ließ sich nicht nach vorne holen": "Roblox could not be brought to the front",
+    "Roblox-Fenster nicht gefunden": "Roblox window not found",
+    "Springen alle": "Jump every",
+    "Wechselt alle paar Minuten kurz zu Roblox, drückt einmal die Leertaste und wechselt zurück – gegen die Trennung "
+    "nach 20 Minuten. Abstand: Einstellungen → Anti-AFK.":
+        "Briefly switches to Roblox every few minutes, presses space once and switches back – against the disconnect "
+        "after 20 minutes. Interval: Settings → Anti-AFK.",
+    "nächster Sprung in {time}": "next jump in {time}",
     "Anwendungs-ID": "Application ID",
     "Anwendungs-ID: discord.com/developers/applications → New Application (der Name erscheint im Profil als „Spielt …“) → "
     "Application ID kopieren. Kein Bot und keine Server-Einladung nötig. Die Discord-Desktop-App muss auf dem PC laufen, "

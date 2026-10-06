@@ -10,8 +10,11 @@ ist deshalb die wichtigste Arbeit für dich: **selbst ausführen, Fehler lesen, 
 Windows-Desktop-App (Python 3.12, PySide6), die das Roblox-Fenster des Spiels **Anime Astral Simulator** per Bildaufnahme
 überwacht. Sie liest den Wellenzähler („Wave 12/100“) und die Quest-Liste per Texterkennung, zählt **Versuche und Wellen**,
 führt Statistiken je Raid und meldet per **Discord-Webhook** (Raid-Ende mit Screenshot, Alarme, eine sich selbst
-aktualisierende Statusnachricht, Statistik-Karten). Sie **sendet nie Eingaben** an Roblox (kein Klicken, keine Tasten) und
-greift nicht in den Roblox-Prozess ein – das ist eine bewusste Grenze, bitte beibehalten.
+aktualisierende Statusnachricht, Statistik-Karten). Sie greift nicht in den Roblox-Prozess ein und **sendet keine
+Eingaben an Roblox – einzige Ausnahme ist das optionale Anti-AFK** (`antiafk.py`, Standard aus, Schalter in der
+Kopfzeile, auf ausdrücklichen Wunsch des Eigentümers 06.10.2026): alle N Minuten Roblox kurz nach vorne, einmal
+Leertaste, zurück. Roblox nimmt Tasten nur im Vordergrund an (getestet: `PostMessage` an das Hintergrundfenster wirkt
+nicht). Darüber hinaus keine Automatisierung (kein Klicken, kein Farmen) – diese Grenze bitte beibehalten.
 
 Benutzer ist der Eigentümer (Deutsch, Windows 11); Freunde sollen es später ebenfalls nutzen („full release 1.0.0“).
 **Oberfläche und Meldungen gibt es auf Deutsch und Englisch** (Einstellungen → Oberfläche, gilt nach Neustart):

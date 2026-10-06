@@ -136,6 +136,8 @@ class Settings:
     # Oberfläche
     language: str = "de"                # de | en (gilt nach Neustart)
     close_to_tray: bool = True          # Fenster schließen = im Infobereich weiterlaufen
+    anti_afk_enabled: bool = False      # alle N Minuten kurz zu Roblox, Leertaste, zurück (antiafk.py)
+    anti_afk_minutes: int = 10
     # Sonstiges
     settings_version: int = 6
     uptime_minutes: int = 10
@@ -195,6 +197,8 @@ class Settings:
             return tr("Die Hotkeys müssen unterschiedlich sein.")
         if self.rpc_client_id.strip() and not self.rpc_client_id.strip().isdigit():
             return tr("Die Discord-Anwendungs-ID besteht nur aus Ziffern (Entwicklerportal → Anwendung → Allgemein).")
+        if not 1 <= self.anti_afk_minutes <= 19:
+            return tr("Der Anti-AFK-Abstand muss zwischen 1 und 19 Minuten liegen (Roblox trennt nach 20 Minuten).")
         if not 20 <= self.status_interval <= 3600:
             return tr("Das Intervall der Live-Status-Nachricht muss zwischen 20 und 3600 Sekunden liegen.")
         return None

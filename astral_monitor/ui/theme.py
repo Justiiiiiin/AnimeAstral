@@ -23,6 +23,8 @@ STYLE = f"""
 QWidget {{ background: {BG}; color: {TEXT}; font-family: "Segoe UI"; font-size: 10pt; }}
 QMainWindow, QStackedWidget {{ background: {BG}; }}
 QFrame#sidebar {{ background: {SIDEBAR}; border-right: 1px solid #1E2630; }}
+QFrame#topbar {{ background: {SIDEBAR}; border-bottom: 1px solid #1E2630; }}
+QFrame#topbar QWidget {{ background: transparent; }}
 QFrame#sidebar QWidget {{ background: transparent; }}
 QFrame#card {{ background: {CARD}; border: 1px solid {BORDER}; border-radius: 10px; }}
 QFrame#card QWidget {{ background: transparent; }}

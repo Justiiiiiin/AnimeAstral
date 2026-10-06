@@ -7,9 +7,9 @@ import cv2
 import numpy as np
 import json
 
-from PySide6.QtCore import QByteArray, QRectF, Qt
+from PySide6.QtCore import QByteArray, QRectF, QSize, Qt
 from PySide6.QtGui import QColor, QImage, QPainter, QPixmap, QTextOption
-from PySide6.QtWidgets import (QAbstractItemView, QComboBox, QDoubleSpinBox, QFrame, QHBoxLayout, QHeaderView,
+from PySide6.QtWidgets import (QAbstractButton, QAbstractItemView, QComboBox, QDoubleSpinBox, QFrame, QHBoxLayout, QHeaderView,
                                QLabel, QProgressBar, QScrollArea, QSizePolicy, QSpinBox, QTableWidget,
                                QTableWidgetItem, QVBoxLayout, QWidget)
 
@@ -215,6 +215,33 @@ class QuestRow(QWidget):
         self.title.setText(q["title"])
         self.value.setText(f"{cur} / {tot}")
         self.bar.setValue(q["percent"] or 0)
+
+
+class ToggleSwitch(QAbstractButton):
+    """Schiebeschalter (an/aus) – skaliert mit theme.px()."""
+
+    def __init__(self, parent=None) -> None:
+        super().__init__(parent)
+        self.setCheckable(True)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+
+    def sizeHint(self) -> QSize:
+        return QSize(theme.px(42), theme.px(24))
+
+    def paintEvent(self, _event) -> None:
+        p = QPainter(self)
+        p.setRenderHint(QPainter.RenderHint.Antialiasing)
+        w, h = self.width(), self.height()
+        track_h = min(h, theme.px(22))
+        top = (h - track_h) / 2
+        p.setPen(Qt.PenStyle.NoPen)
+        p.setBrush(QColor(theme.ACCENT if self.isChecked() else "#2B3644"))
+        p.drawRoundedRect(QRectF(0, top, w, track_h), track_h / 2, track_h / 2)
+        knob = track_h - theme.px(6)
+        x = w - knob - theme.px(3) if self.isChecked() else theme.px(3)
+        p.setBrush(QColor("#06201A" if self.isChecked() else "#8B97A8"))
+        p.drawEllipse(QRectF(x, top + theme.px(3), knob, knob))
+        p.end()
 
 
 class BarChart(QWidget):

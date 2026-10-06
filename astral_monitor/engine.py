@@ -13,6 +13,7 @@ from typing import Callable, Optional
 import numpy as np
 
 from . import app_paths, messages
+from .antiafk import AntiAfk
 from .i18n import N_, dec, tr
 from .capture import CaptureError, FrameSource, GrabResult, create_source
 from .discord_client import DiscordSender
@@ -115,6 +116,8 @@ class Engine:
         self.presence = PresenceUpdater(lambda: self.settings, self.status_snapshot)
         self.presence.start()
         self._last_event_text = ""
+        self.anti_afk = AntiAfk(lambda: self.settings, self._event)    # läuft auch ohne Überwachung (Standard aus)
+        self.anti_afk.start()
 
         self._thread: Optional[threading.Thread] = None
         self._halt = threading.Event()
@@ -223,6 +226,7 @@ class Engine:
 
     def shutdown(self) -> None:
         self.stop()
+        self.anti_afk.stop()
         self.presence.stop()
         self.publisher.finish()
         self.publisher.join(timeout=10)
