@@ -88,8 +88,19 @@ class MonitorPage(QWidget):
         live.body.addWidget(self.status_line)
         self.i_raid = label("", "small")
         self.i_proc = label("", "small")
+        self.i_self = label("", "small")
         live.body.addWidget(self.i_raid)
         live.body.addWidget(self.i_proc)
+        live.body.addWidget(self.i_self)
+        self._self_proc = None
+        self._next_self = 0.0
+        try:
+            import psutil
+            self._self_proc = psutil.Process()
+            self._self_proc.cpu_percent(None)          # Messung beginnen
+            self._cpu_count = psutil.cpu_count() or 1
+        except Exception:
+            self._self_proc = None
         left.addWidget(live)
 
         quests = Card("Quests")
@@ -168,6 +179,15 @@ class MonitorPage(QWidget):
             ram = f"{st.roblox_ram_mb / 1024:.1f} GB RAM".replace(".", ",") if st.roblox_ram_mb else "–"
             cpu = f"{st.roblox_cpu:.0f} % CPU" if st.roblox_cpu is not None else "–"
             self.i_proc.setText(f"Roblox-Prozess: läuft · {ram} · {cpu}")
+        if self._self_proc is not None and now >= self._next_self:
+            self._next_self = now + 3.0                 # eigene Auslastung (gleich gemessen wie bei Roblox)
+            try:
+                ram_mb = self._self_proc.memory_info().rss / 1048576
+                cpu = self._self_proc.cpu_percent(None) / self._cpu_count
+                self.i_self.setText(f"Dieses Programm: {ram_mb:.0f} MB RAM · "
+                                    + f"{cpu:.1f} % CPU".replace(".", ","))
+            except Exception:
+                self.i_self.setText("")
 
         if st.preview is not None and id(st.preview) != self._last_preview_id:
             self._last_preview_id = id(st.preview)
