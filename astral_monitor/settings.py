@@ -127,6 +127,7 @@ class Settings:
     update_skip: str = ""
     rpc_enabled: bool = False
     rpc_client_id: str = ""
+    rpc_game_link: str = "https://www.roblox.com/games/9797806474/Anime-Astral-Simulator"
     # Sonstiges
     settings_version: int = 5
     uptime_minutes: int = 10

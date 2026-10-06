@@ -5,10 +5,15 @@ from typing import Optional
 
 import cv2
 import numpy as np
-from PySide6.QtCore import QRectF, Qt
+import json
+
+from PySide6.QtCore import QByteArray, QRectF, Qt
 from PySide6.QtGui import QColor, QImage, QPainter, QPixmap, QTextOption
-from PySide6.QtWidgets import (QAbstractItemView, QComboBox, QDoubleSpinBox, QFrame, QHBoxLayout, QLabel,
-                               QProgressBar, QScrollArea, QSizePolicy, QSpinBox, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QAbstractItemView, QComboBox, QDoubleSpinBox, QFrame, QHBoxLayout, QHeaderView,
+                               QLabel, QProgressBar, QScrollArea, QSizePolicy, QSpinBox, QTableWidget,
+                               QTableWidgetItem, QVBoxLayout, QWidget)
+
+from .. import app_paths
 
 
 def bgr_to_pixmap(bgr: np.ndarray, max_width: Optional[int] = None) -> QPixmap:
@@ -50,6 +55,83 @@ class ComboBox(_NoWheelMixin, QComboBox):
     def __init__(self, *args) -> None:
         super().__init__(*args)
         self._init_nowheel()
+
+
+class SortItem(QTableWidgetItem):
+    """Tabellenzelle mit eigenem Sortierwert (Zahlen werden als Zahlen sortiert, nicht als Text)."""
+
+    def __init__(self, text: str, key=None, right: bool = False) -> None:
+        super().__init__(text)
+        self._key = key
+        align = Qt.AlignmentFlag.AlignRight if right else Qt.AlignmentFlag.AlignLeft
+        self.setTextAlignment(int(align | Qt.AlignmentFlag.AlignVCenter))
+
+    def __lt__(self, other) -> bool:
+        a, b = self._key, getattr(other, "_key", None)
+        if a is not None and b is not None:
+            return a < b
+        return self.text() < other.text()
+
+
+def make_table(headers: list[str], rights: tuple = (), widths: tuple = (), selectable: bool = False) -> QTableWidget:
+    """Ordentliche Tabelle: Überschrift und Zellen gleich ausgerichtet, jede Spalte einzeln in der Breite
+    ziehbar, Spalten verschiebbar, per Klick auf die Überschrift sortierbar."""
+    table = QTableWidget(0, len(headers))
+    for i, text in enumerate(headers):
+        item = QTableWidgetItem(text)
+        align = Qt.AlignmentFlag.AlignRight if i in rights else Qt.AlignmentFlag.AlignLeft
+        item.setTextAlignment(int(align | Qt.AlignmentFlag.AlignVCenter))
+        table.setHorizontalHeaderItem(i, item)
+    table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+    if selectable:
+        table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+    else:
+        table.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
+    table.verticalHeader().setVisible(False)
+    table.verticalHeader().setDefaultSectionSize(34)
+    table.setShowGrid(False)
+    table.setWordWrap(False)
+    header = table.horizontalHeader()
+    header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)      # jede Spalte einzeln ziehbar
+    header.setStretchLastSection(True)
+    header.setSectionsMovable(True)
+    header.setSortIndicatorShown(True)
+    header.setHighlightSections(False)
+    header.setMinimumSectionSize(60)
+    for i, w in enumerate(widths):
+        table.setColumnWidth(i, w)
+    table.setSortingEnabled(True)
+    smooth(table)
+    return table
+
+
+def _ui_state_file():
+    return app_paths.data_dir() / "ui_state.json"
+
+
+def _read_ui_state() -> dict:
+    try:
+        data = json.loads(_ui_state_file().read_text(encoding="utf-8"))
+        return data if isinstance(data, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
+def save_header(table: QTableWidget, key: str) -> None:
+    """Spaltenbreiten, Reihenfolge und Sortierung merken."""
+    state = _read_ui_state()
+    state[key] = bytes(table.horizontalHeader().saveState().toBase64().data()).decode("ascii")
+    try:
+        _ui_state_file().write_text(json.dumps(state), encoding="utf-8")
+    except OSError:
+        pass
+
+
+def restore_header(table: QTableWidget, key: str) -> None:
+    text = _read_ui_state().get(key)
+    if text:
+        table.horizontalHeader().restoreState(QByteArray.fromBase64(text.encode("ascii")))
 
 
 def smooth(view: QAbstractItemView) -> None:

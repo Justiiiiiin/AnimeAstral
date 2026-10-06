@@ -32,7 +32,7 @@ class StatsTests(unittest.TestCase):
 
     def test_histogram_trend_and_best(self):
         hist = dict(self.st.wave_histogram(None, "Militech Convoy"))
-        self.assertEqual(sum(hist.values()), 10)
+        self.assertEqual(sum(hist.values()), 11)          # alle Versuche, auch der bis zum Ende
         self.assertEqual(self.st.best_wave("Militech Convoy"), 99)
         self.assertEqual(self.st.best_wave("Defense"), 40)
         self.assertTrue(self.st.trend(None, "Defense"))
@@ -66,3 +66,28 @@ class StatsTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class CombinedStatsTests(unittest.TestCase):
+    """Alle Versuche zählen gleich: Wellen, Wellen pro Stunde, Ø Endwelle, Zeit pro Welle."""
+
+    def test_combined_summary(self):
+        st = store("combined.csv")
+        now = time.time()
+        t = now - 2 * 3600
+        for i in range(20):
+            wave = 25 + i % 5
+            dur = wave * 3.7
+            t += dur + 20
+            st.add(RunRecord(t, dur, None, wave, 100, "ok" if i == 0 else "abgebrochen", raid="Militech Convoy"))
+        s = st.summary(None, "Militech Convoy")
+        self.assertEqual(s.attempts, 20)
+        self.assertEqual(s.waves_total, sum(25 + i % 5 for i in range(20)))
+        self.assertEqual(s.best_wave, 29)
+        self.assertAlmostEqual(s.avg_wave_all, s.waves_total / 20)
+        self.assertAlmostEqual(s.sec_per_wave, 3.7, delta=0.05)
+        self.assertGreater(s.waves_per_hour, 0)
+        self.assertEqual(sum(c for _l, c in st.wave_histogram(None, "Militech Convoy")), 20)   # alle Versuche
+        entry = st.per_raid()[0]
+        self.assertEqual((entry["attempts"], entry["waves_total"]), (20, s.waves_total))
+        self.assertTrue(any(w > 0 for _h, w in st.hourly_waves(4, "Militech Convoy")))

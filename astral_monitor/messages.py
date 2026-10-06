@@ -84,13 +84,13 @@ def build_status(settings: Settings, snap: dict) -> dict:
     status = snap.get("status", "stopped")
     wave = f"Welle {snap['wave']}/{snap['total_waves']}" if snap.get("wave") is not None else "Kein Raid im Bild"
     profile = f" · {snap['profile']}" if snap.get("profile") else ""
-    per_hour = snap.get("per_hour")
+    wph, avg_wave = snap.get("waves_per_hour"), snap.get("avg_wave")
     fields = [
-        ("Erfolgreich (Session)", str(snap.get("session_ok", 0)), True),
-        ("Fehlversuche (Session)", str(snap.get("session_failed", 0)), True),
-        ("Raids gesamt", fmt_int(snap.get("total_ok", 0)), True),
-        ("Ø Dauer", fmt_duration(snap.get("avg_duration")), True),
-        ("Raids pro Stunde", f"{per_hour:.1f}".replace(".", ",") if per_hour else "–", True),
+        ("Versuche (Session)", str(snap.get("session_attempts", 0)), True),
+        ("Wellen (Session)", fmt_int(snap.get("session_waves", 0)), True),
+        ("Wellen pro Stunde", f"{wph:.0f}" if wph else "–", True),
+        ("Ø Endwelle", f"{avg_wave:.1f}".replace(".", ",") if avg_wave else "–", True),
+        ("Versuche gesamt", fmt_int(snap.get("total_attempts", 0)), True),
         ("Laufzeit", fmt_duration(snap.get("uptime")), True),
     ]
     if snap.get("best_wave"):

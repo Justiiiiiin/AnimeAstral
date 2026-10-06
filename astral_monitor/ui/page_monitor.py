@@ -51,12 +51,12 @@ class MonitorPage(QWidget):
         # Kennzahlen
         kpis = QHBoxLayout()
         kpis.setSpacing(12)
-        self.k_total = StatCard("Raids gesamt")
-        self.k_session = StatCard("Diese Session")
-        self.k_avg = StatCard("Ø Raid-Dauer")
-        self.k_rate = StatCard("Raids pro Stunde")
-        self.k_failed = StatCard("Fehlversuche (Session)")
-        for card in (self.k_total, self.k_session, self.k_failed, self.k_avg, self.k_rate):
+        self.k_total = StatCard("Versuche gesamt")
+        self.k_session = StatCard("Versuche (Session)")
+        self.k_waves = StatCard("Wellen (Session)")
+        self.k_avg = StatCard("Ø Endwelle")
+        self.k_rate = StatCard("Wellen pro Stunde")
+        for card in (self.k_total, self.k_session, self.k_waves, self.k_avg, self.k_rate):
             kpis.addWidget(card, 1)
         root.addLayout(kpis)
 
@@ -142,11 +142,11 @@ class MonitorPage(QWidget):
         if now - self._last_snap > 1.5:
             self._last_snap = now
             snap = self.engine.stats.snapshot()
-            self.k_total.set_value(messages.fmt_int(snap.total_ok))
-            self.k_session.set_value(str(snap.session_ok))
-            self.k_failed.set_value(str(snap.session_failed))
-            self.k_avg.set_value(messages.fmt_duration(snap.avg_duration))
-            self.k_rate.set_value(f"{snap.per_hour:.1f}".replace(".", ",") if snap.per_hour else "–")
+            self.k_total.set_value(messages.fmt_int(snap.total_attempts))
+            self.k_session.set_value(str(snap.session_attempts))
+            self.k_waves.set_value(messages.fmt_int(snap.session_waves))
+            self.k_avg.set_value(f"{snap.avg_wave:.1f}".replace(".", ",") if snap.avg_wave else "–")
+            self.k_rate.set_value(f"{snap.waves_per_hour:.0f}" if snap.waves_per_hour else "–")
 
         if st.wave_value is not None and st.wave_total:
             self.wave.setText(f"{st.wave_value}/{st.wave_total}")

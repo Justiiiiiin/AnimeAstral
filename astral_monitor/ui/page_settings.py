@@ -132,16 +132,23 @@ class SettingsPage(QWidget):
         rpc = Card("Discord-Profilstatus")
         self.rpc_enabled = QCheckBox("Aktuellen Raid und Fortschritt in meinem Discord-Profil anzeigen")
         rpc.body.addWidget(self.rpc_enabled)
-        rrow = QHBoxLayout()
-        rrow.addWidget(label("Anwendungs-ID"))
+        self.rpc_state = label("", "muted", wrap=True)
+        rpc.body.addWidget(self.rpc_state)
+        grow = QHBoxLayout()
+        grow.addWidget(label("Spiel-Link (für das Bild)"))
+        self.rpc_link = QLineEdit()
+        self.rpc_link.setPlaceholderText("https://www.roblox.com/games/…")
+        grow.addWidget(self.rpc_link, 1)
+        rpc.body.addLayout(grow)
+        irow = QHBoxLayout()
+        irow.addWidget(label("Anwendungs-ID"))
         self.rpc_id = QLineEdit()
-        self.rpc_id.setPlaceholderText("leer = vom Programm hinterlegte ID")
-        rrow.addWidget(self.rpc_id, 1)
-        rpc.body.addLayout(rrow)
-        rpc.body.addWidget(label("Die Discord-App muss auf dem PC laufen. Der Status wird höchstens alle 15 Sekunden "
-                                 "aktualisiert. Bilder je Raid lädt der Eigentümer der Anwendung im Discord-Entwicklerportal "
-                                 "unter „Rich Presence → Art Assets“ hoch; Name = Raid in Kleinbuchstaben mit Unterstrich "
-                                 "(z. B. militech_convoy), Standardbild: logo.", "small", wrap=True))
+        self.rpc_id.setPlaceholderText("leer lassen – ist im Programm hinterlegt")
+        irow.addWidget(self.rpc_id, 1)
+        rpc.body.addLayout(irow)
+        rpc.body.addWidget(label("Als Bild erscheint das Thumbnail des Spiels (von Roblox geladen). Die Discord-Desktop-App "
+                                 "muss auf dem PC laufen; der Status wird höchstens alle 15 Sekunden aktualisiert.",
+                                 "small", wrap=True))
         root.addWidget(rpc)
 
         data = Card("Daten")
@@ -189,6 +196,7 @@ class SettingsPage(QWidget):
         self.update_check.setChecked(s.update_check)
         self.rpc_enabled.setChecked(s.rpc_enabled)
         self.rpc_id.setText(s.rpc_client_id)
+        self.rpc_link.setText(s.rpc_game_link)
 
     def set_hotkey_status(self, text: str, ok: bool) -> None:
         self.hk_status.setText(text)
@@ -212,6 +220,8 @@ class SettingsPage(QWidget):
         s.update_check = self.update_check.isChecked()
         s.rpc_enabled = self.rpc_enabled.isChecked()
         s.rpc_client_id = self.rpc_id.text().strip()
+        s.rpc_game_link = self.rpc_link.text().strip()
 
     def refresh(self) -> None:
-        pass
+        presence = self.main.engine.presence
+        self.rpc_state.setText(("✅ " if presence.status_ok else "ℹ️ ") + presence.status_text)

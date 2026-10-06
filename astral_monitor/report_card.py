@@ -100,14 +100,13 @@ def render_card(stats: StatsStore, since: Optional[float], raid: Optional[str], 
         return c.png()
 
     # ---- Kennzahlen-Kacheln (3 × 2)
-    best_wave = max(r.max_wave for r in recs)
     tiles = [
-        ("Erfolgreich", str(summary.ok), TEAL),
-        ("Fehlversuche", str(summary.failed), AMBER),
-        ("Erfolgsquote", _pct(summary.success_rate), TEXT),
-        ("Bestwelle", str(best_wave), TEXT),
-        ("Ø Dauer (Erfolg)", messages.fmt_duration(summary.avg_duration), TEXT),
-        ("Raids pro Stunde", f"{summary.per_hour:.1f}".replace(".", ",") if summary.per_hour else "–", TEXT),
+        ("Versuche", messages.fmt_int(summary.attempts), TEAL),
+        ("Wellen gesamt", messages.fmt_int(summary.waves_total), TEAL),
+        ("Wellen pro Stunde", f"{summary.waves_per_hour:.0f}" if summary.waves_per_hour else "–", TEXT),
+        ("Bestwelle", str(summary.best_wave), AMBER),
+        ("Ø Endwelle", f"{summary.avg_wave_all:.1f}".replace(".", ",") if summary.avg_wave_all else "–", TEXT),
+        ("Ø Dauer pro Versuch", messages.fmt_duration(summary.avg_duration_all), TEXT),
     ]
     tw, th, gap, x0, y0 = 184, 108, 14, 48, 120
     for i, (label, value, color) in enumerate(tiles):
@@ -122,12 +121,12 @@ def render_card(stats: StatsStore, since: Optional[float], raid: Optional[str], 
     hist = stats.wave_histogram(since, raid)
     if hist:
         c.text((px0 + 20, py0 + 16), "Wo enden die Versuche?", 17, TEXT, bold=True)
-        c.text((px0 + 20, py0 + 40), "Anzahl Fehlversuche je Endwelle", 13, MUTED)
+        c.text((px0 + 20, py0 + 40), "Anzahl Versuche je Endwelle", 13, MUTED)
         data = [(a, b) for a, b in hist]
     else:
-        data = [(f"{h:02d}", n) for h, n in stats.hourly(10, raid)]
-        c.text((px0 + 20, py0 + 16), "Raids pro Stunde", 17, TEXT, bold=True)
-        c.text((px0 + 20, py0 + 40), "Erfolgreiche Raids, letzte 10 Stunden", 13, MUTED)
+        data = [(f"{h:02d}", n) for h, n in stats.hourly_waves(10, raid)]
+        c.text((px0 + 20, py0 + 16), "Wellen pro Stunde", 17, TEXT, bold=True)
+        c.text((px0 + 20, py0 + 40), "Geschaffte Wellen, letzte 10 Stunden", 13, MUTED)
     cx0, cx1, cy0, cy1 = px0 + 24, px1 - 24, py0 + 78, py1 - 34
     n = max(1, len(data))
     slot = (cx1 - cx0) / n
@@ -152,7 +151,7 @@ def render_card(stats: StatsStore, since: Optional[float], raid: Optional[str], 
     for i, p in enumerate(per[:3]):
         y = 420 + i * 52
         c.text((70, y), p["raid"], 18, TEXT, bold=True)
-        sub = f"{p['ok']} erfolgreich · {p['failed']} Fehlversuche · Ø Welle {p['avg_wave']:.1f}"
+        sub = f"{p['attempts']} Versuche · {messages.fmt_int(p['waves_total'])} Wellen · Ø Welle {p['avg_wave']:.1f}"
         c.text((70, y + 24), sub, 13, MUTED)
         bx0, bx1 = 560, W - 230
         c.bar((bx0, y + 12, bx1, y + 24), (30, 40, 52), radius=6)

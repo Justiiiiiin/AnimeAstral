@@ -355,6 +355,9 @@ class MainWindow(QMainWindow):
             if answer != QMessageBox.StandardButton.Yes:
                 event.ignore()
                 return
+        for page in self.pages:
+            if hasattr(page, "save_ui"):
+                page.save_ui()
         if self._hotkeys is not None:
             self._hotkeys.stop()
         self.engine.shutdown()

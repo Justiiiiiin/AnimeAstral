@@ -47,6 +47,15 @@ class Summary:
     avg_cycle: Optional[float] = None           # Ø Zeit pro Erfolg inkl. Fehlversuche
     success_rate: Optional[float] = None
     per_hour: Optional[float] = None
+    # Alle Versuche gleich behandelt (jede Welle gibt Belohnungen)
+    attempts: int = 0
+    waves_total: int = 0
+    best_wave: int = 0
+    avg_wave_all: Optional[float] = None
+    avg_duration_all: Optional[float] = None      # nur gemessene Dauern
+    sec_per_wave: Optional[float] = None
+    waves_per_hour: Optional[float] = None
+    attempts_per_hour: Optional[float] = None
 
 
 @dataclass
@@ -60,6 +69,20 @@ class StatsSnapshot:
     best_duration: Optional[float]
     per_hour: Optional[float]
     success_rate: Optional[float]
+    total_attempts: int = 0
+    session_attempts: int = 0
+    session_waves: int = 0
+    waves_per_hour: Optional[float] = None
+    avg_wave: Optional[float] = None
+
+
+def _span_hours(recs: list) -> float:
+    """Aktive Zeit vom Start des ersten bis zum Ende des letzten Versuchs (in Stunden)."""
+    if not recs:
+        return 0.0
+    first = min(recs, key=lambda r: r.ts_end)
+    start = first.ts_end - (first.duration_s or 0)
+    return (max(r.ts_end for r in recs) - start) / 3600
 
 
 def _opt_float(text) -> Optional[float]:
@@ -205,9 +228,9 @@ class StatsStore:
 
     def wave_histogram(self, since: Optional[float] = None, raid: Optional[str] = None,
                        max_bars: int = 20) -> list[tuple[str, int]]:
-        """Verteilung der Endwellen von Fehlversuchen: [(Beschriftung, Anzahl)]."""
+        """Verteilung der Endwellen aller Versuche: [(Beschriftung, Anzahl)]."""
         with self._lock:
-            waves = [r.max_wave for r in self._in_range(since, raid) if r.result != "ok"]
+            waves = [r.max_wave for r in self._in_range(since, raid)]
         if not waves:
             return []
         lo, hi = min(waves), max(waves)
@@ -254,6 +277,19 @@ class StatsStore:
                 start = recs[0].ts_end - (recs[0].duration_s or 0)
                 hours = (recs[-1].ts_end - start) / 3600
                 s.per_hour = len(ok) / hours if hours >= 0.1 else None
+            if recs:
+                s.attempts = len(recs)
+                s.waves_total = sum(r.max_wave for r in recs)
+                s.best_wave = max(r.max_wave for r in recs)
+                s.avg_wave_all = s.waves_total / len(recs)
+                exact = [r for r in recs if r.duration_s and not r.estimated]
+                s.avg_duration_all = _mean(r.duration_s for r in exact)
+                if exact:
+                    s.sec_per_wave = sum(r.duration_s for r in exact) / max(1, sum(r.max_wave for r in exact))
+                hours = _span_hours(recs)
+                if hours >= 0.1:
+                    s.waves_per_hour = s.waves_total / hours
+                    s.attempts_per_hour = s.attempts / hours
             return s
 
     def snapshot(self) -> StatsSnapshot:
@@ -265,7 +301,13 @@ class StatsStore:
             elapsed_h = (time.time() - self.session_start) / 3600
             durations = [r.duration_s for r in ok_all if r.duration_s][-50:]
             failed_all = len(self.records) - len(ok_all)
+            span = _span_hours(session)
             return StatsSnapshot(
+                total_attempts=len(self.records),
+                session_attempts=len(session),
+                session_waves=sum(r.max_wave for r in session),
+                waves_per_hour=(sum(r.max_wave for r in session) / span) if span >= 0.1 else None,
+                avg_wave=(sum(r.max_wave for r in session) / len(session)) if session else None,
                 total_ok=self.offset + len(ok_all),
                 today_ok=sum(1 for r in ok_all if r.ts_end >= midnight),
                 session_ok=len(session_ok),
@@ -286,6 +328,16 @@ class StatsStore:
                          and (raid is None or (r.raid or "Unbekannt") == raid)))
                     for st in starts]
 
+    def hourly_waves(self, hours: int = 10, raid: Optional[str] = None) -> list[tuple[int, int]]:
+        """[(Stunde 0-23, geschaffte Wellen)] für die letzten `hours` Stunden."""
+        now = datetime.now().replace(minute=0, second=0, microsecond=0)
+        starts = [(now.timestamp() - i * 3600) for i in range(hours - 1, -1, -1)]
+        with self._lock:
+            return [(datetime.fromtimestamp(st).hour,
+                     sum(r.max_wave for r in self.records if st <= r.ts_end < st + 3600
+                         and (raid is None or (r.raid or "Unbekannt") == raid)))
+                    for st in starts]
+
     def per_raid(self, since: Optional[float] = None) -> list[dict]:
         """Kennzahlen je Raid-Name (leerer Name = „Unbekannt“)."""
         with self._lock:
@@ -297,13 +349,17 @@ class StatsStore:
                 ok = [r for r in recs if r.result == "ok"]
                 bad = [r for r in recs if r.result != "ok"]
                 waves = [r.max_wave for r in recs]
-                out.append({"raid": name, "ok": len(ok), "failed": len(bad),
+                exact_all = [r for r in recs if r.duration_s and not r.estimated]
+                hours = _span_hours(recs)
+                out.append({"raid": name, "ok": len(ok), "failed": len(bad), "attempts": len(recs),
+                            "waves_total": sum(waves), "avg_duration_all": _mean(r.duration_s for r in exact_all),
+                            "waves_per_hour": (sum(waves) / hours) if hours >= 0.1 else None,
                             "avg": _mean(r.duration_s for r in ok if not r.estimated),
                             "avg_fail": _mean(r.duration_s for r in bad if not r.estimated),
                             "best": min((r.duration_s for r in ok if r.duration_s and not r.estimated),
                                         default=None),
                             "best_wave": max(waves), "avg_wave": sum(waves) / len(waves)})
-            out.sort(key=lambda d: (-d["ok"], d["raid"]))
+            out.sort(key=lambda d: (-d["attempts"], d["raid"]))
             return out
 
     def last_runs(self, n: int = 100, since: Optional[float] = None,

@@ -147,6 +147,7 @@ class Engine:
             self.wave_reader.set_allowed(settings.allowed_totals_list())
         if self.matcher:
             self.matcher.min_inliers = settings.profile_min_inliers
+        self.presence.poke()
 
     def start(self) -> None:
         if self.running:
@@ -290,6 +291,8 @@ class Engine:
             "status": status, "wave": st.wave_value if status != "stopped" else None,
             "total_waves": st.wave_total, "profile": profile,
             "session_ok": snap.session_ok, "session_failed": snap.session_failed, "total_ok": snap.total_ok,
+            "session_attempts": snap.session_attempts, "session_waves": snap.session_waves,
+            "total_attempts": snap.total_attempts, "waves_per_hour": snap.waves_per_hour, "avg_wave": snap.avg_wave,
             "avg_duration": snap.avg_duration, "per_hour": snap.per_hour,
             "uptime": (time.monotonic() - started) if started and st.running else None,
             "best_wave": self.stats.best_wave(profile or None) or None,

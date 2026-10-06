@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+dist/
+build/
+*.spec
+.venv/
+.venv_build/
+.update_tmp/
+tesseract/
+update_config.json
+manifest.json
+*.log
+.DS_Store

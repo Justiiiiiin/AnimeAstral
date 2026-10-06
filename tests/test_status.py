@@ -8,7 +8,8 @@ from astral_monitor import status as st_mod
 from astral_monitor.settings import Settings
 
 SNAP = {"status": "running", "wave": 14, "total_waves": 100, "profile": "Militech Convoy", "session_ok": 0,
-        "session_failed": 7, "total_ok": 12, "avg_duration": 101.0, "per_hour": 0.0, "uptime": 3700,
+        "session_failed": 7, "total_ok": 12, "session_attempts": 7, "session_waves": 180, "total_attempts": 40,
+        "waves_per_hour": 700.0, "avg_wave": 25.7, "avg_duration": 101.0, "per_hour": 0.0, "uptime": 3700,
         "best_wave": 29, "ram_mb": 2400, "quests": [], "last_event": "x"}
 
 
@@ -71,7 +72,8 @@ class StatusTests(unittest.TestCase):
         self.assertIn("Läuft", embed["title"])
         self.assertIn("Welle 14/100", embed["description"])
         names = [f["name"] for f in embed["fields"]]
-        self.assertIn("Fehlversuche (Session)", names)
+        self.assertIn("Versuche (Session)", names)
+        self.assertIn("Wellen pro Stunde", names)
         self.assertLessEqual(len(embed["fields"]), 25)
 
 

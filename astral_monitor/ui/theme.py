@@ -66,7 +66,9 @@ QProgressBar::chunk {{ background: {ACCENT}; border-radius: 4px; }}
 QTableWidget {{ background: transparent; border: none; gridline-color: transparent; }}
 QTableWidget::item {{ padding: 6px 4px; border-bottom: 1px solid #1E2630; }}
 QHeaderView::section {{ background: transparent; color: {MUTED}; border: none; border-bottom: 1px solid {BORDER};
-  padding: 6px 4px; font-weight: 500; }}
+  border-right: 1px solid #1B232D; padding: 8px 10px; font-weight: 500; }}
+QHeaderView::section:hover {{ color: {TEXT}; background: #18212B; }}
+QTableWidget::item {{ padding: 4px 10px; }}
 QListWidget {{ background: transparent; border: none; outline: none; }}
 QListWidget::item {{ padding: 7px 4px; border-bottom: 1px solid #1E2630; }}
 QScrollArea {{ border: none; background: transparent; }}
