@@ -80,6 +80,19 @@ class CardTests(unittest.TestCase):
         self.assertGreater(len(full), len(empty) // 2)
 
 
+class SafeStartTests(unittest.TestCase):
+    def test_safe_mode_never_overwrites(self):
+        own = Settings()
+        own.username = "Mein Name"
+        own.save()
+        safe = Settings.safe_defaults()
+        self.assertTrue(safe.wizard_done)
+        safe.username = "Anders"
+        safe.save()                                                     # darf nichts schreiben
+        self.assertEqual(Settings.load().username, "Mein Name")
+        self.assertNotIn("safe_mode", safe.to_dict())
+
+
 class WaveColorTests(unittest.TestCase):
     def test_tiers(self):
         from astral_monitor.ui.page_monitor import wave_token

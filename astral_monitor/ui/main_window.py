@@ -590,10 +590,12 @@ class MainWindow(QMainWindow):
                 self.restart_app()
         return True
 
-    def restart_app(self) -> None:
-        """Programm neu starten (z. B. nach Sprachwechsel); die neue Instanz wartet, bis diese beendet ist."""
+    def restart_app(self, safe: bool = False) -> None:
+        """Programm neu starten (z. B. nach Sprachwechsel); die neue Instanz wartet, bis diese beendet ist.
+        safe=True: abgesichert (Standard-Einstellungen), sonst normal."""
         args = sys.argv[1:] if getattr(sys, "frozen", False) else sys.argv
-        QProcess.startDetached(sys.executable, [a for a in args if a != "--restart"] + ["--restart"])
+        args = [a for a in args if a not in ("--restart", "--safe")] + ["--restart"] + (["--safe"] if safe else [])
+        QProcess.startDetached(sys.executable, args)
         self._quitting = True
         self.close()
 
@@ -705,6 +707,17 @@ class MainWindow(QMainWindow):
                                 tr("Gespeichert:\n{path}\n\nDie Datei enthält Protokoll, Wertverlauf, Einstellungen "
                                    "(ohne Webhook) und einen Screenshot des Roblox-Fensters.", path=path))
         QDesktopServices.openUrl(QUrl.fromLocalFile(str(path.parent)))
+
+    def explain_safe_mode(self) -> None:
+        box = QMessageBox(QMessageBox.Icon.Information, tr("Abgesicherter Start"), tr(
+            "Das Programm läuft mit Standard-Einstellungen. Deine eigenen Einstellungen sind unverändert und kommen "
+            "beim nächsten normalen Start zurück – Änderungen in diesem Modus werden nicht gespeichert.\n\n"
+            "Statistik und Raids bleiben wie gewohnt erhalten."), parent=self)
+        normal = box.addButton(tr("Normal neu starten"), QMessageBox.ButtonRole.AcceptRole)
+        box.addButton(tr("Abgesichert bleiben"), QMessageBox.ButtonRole.RejectRole)
+        box.exec()
+        if box.clickedButton() is normal:
+            self.restart_app()
 
     def show_toast(self, text: str) -> None:
         for lbl in (self.toast, self.top_toast):
@@ -1045,10 +1058,17 @@ def run() -> int:
     icon = app_paths.resource_path("assets/app.ico")
     if icon.is_file():
         app.setWindowIcon(QIcon(str(icon)))
+    safe = "--safe" in sys.argv or bool(
+        QApplication.queryKeyboardModifiers() & Qt.KeyboardModifier.ShiftModifier)    # Umschalt beim Start halten
     try:
-        settings = Settings.load()
+        settings = Settings.safe_defaults() if safe else Settings.load()
     except Exception:
         settings = Settings()
+    if safe:
+        try:
+            settings.language = Settings.load().language    # Sprache darf bleiben
+        except Exception:
+            pass
     i18n.set_language(settings.language)            # vor dem Aufbau der Oberfläche
     _install_qt_translation(app, settings.language)
     theme.apply(app, settings.ui_design, settings.ui_mode)
@@ -1070,6 +1090,9 @@ def run() -> int:
     _install_crash_logging()
     window = MainWindow(engine)
     window.show()
+    if safe:
+        window.setWindowTitle(window.windowTitle() + " – " + tr("Abgesicherter Start"))
+        QTimer.singleShot(300, window.explain_safe_mode)
     code = app.exec()
     lock.unlock()
     return code

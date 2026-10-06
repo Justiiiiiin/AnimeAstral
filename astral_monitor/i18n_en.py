@@ -831,4 +831,18 @@ EN: dict[str, str] = {
         "Leave empty = everything goes to the main channel.",
     "Der Forum-Webhook ist keine gültige Discord-Webhook-URL (Seite „Meldungen“).":
         "The forum webhook is not a valid Discord webhook URL (“Alerts” page).",
+    # Abgesicherter Start (0.7.2)
+    "Abgesicherter Start": "Safe start",
+    "Das Programm läuft mit Standard-Einstellungen. Deine eigenen Einstellungen sind unverändert und kommen "
+    "beim nächsten normalen Start zurück – Änderungen in diesem Modus werden nicht gespeichert.\n\n"
+    "Statistik und Raids bleiben wie gewohnt erhalten.":
+        "The program is running with default settings. Your own settings are unchanged and return on the next "
+        "normal start – changes made in this mode are not saved.\n\nStatistics and raids are kept as usual.",
+    "Normal neu starten": "Restart normally",
+    "Abgesichert bleiben": "Stay in safe start",
+    "Abgesichert starten": "Safe start",
+    "Neustart mit Standard-Einstellungen, ohne deine zu löschen – hilft, wenn etwas nicht mehr funktioniert. "
+    "Geht auch: beim Start die Umschalttaste halten.":
+        "Restart with default settings without deleting yours – helps when something stops working. "
+        "Also possible: hold Shift while starting.",
 }

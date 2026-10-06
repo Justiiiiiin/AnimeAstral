@@ -318,7 +318,18 @@ class Settings:
         except (OSError, ValueError):
             return cls()
 
+    @classmethod
+    def safe_defaults(cls) -> "Settings":
+        """Abgesicherter Start: Standardwerte nur im Speicher – die gespeicherten Einstellungen bleiben unberührt."""
+        s = cls()
+        s.wizard_done = True                        # kein Assistent
+        s.update_check = False
+        s.safe_mode = True
+        return s
+
     def save(self) -> None:
+        if getattr(self, "safe_mode", False):       # abgesicherter Start: nichts überschreiben
+            return
         path = app_paths.settings_file()
         tmp = path.with_suffix(".tmp")
         tmp.write_text(json.dumps(self.to_dict(protect=True), indent=2, ensure_ascii=False), encoding="utf-8")

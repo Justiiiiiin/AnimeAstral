@@ -300,8 +300,13 @@ class SettingsPage(QWidget):
         exp_btn.clicked.connect(lambda: self.main.export_settings())
         imp_btn = QPushButton(tr("Importieren …"))
         imp_btn.clicked.connect(lambda: self.main.import_settings())
+        safe_btn = QPushButton(tr("Abgesichert starten"))
+        safe_btn.setToolTip(tr("Neustart mit Standard-Einstellungen, ohne deine zu löschen – hilft, wenn etwas "
+                               "nicht mehr funktioniert. Geht auch: beim Start die Umschalttaste halten."))
+        safe_btn.clicked.connect(lambda: self.main.restart_app(safe=True))
         xrow.addWidget(exp_btn)
         xrow.addWidget(imp_btn)
+        xrow.addWidget(safe_btn)
         xrow.addStretch(1)
         data.body.addLayout(xrow)
         data.body.addStretch(1)
