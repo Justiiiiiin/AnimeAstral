@@ -8,7 +8,6 @@ import numpy as np
 
 from . import messages
 from .i18n import tr
-from .ocr import OcrEngine
 from .settings import Settings
 
 log = logging.getLogger("guard")
@@ -48,12 +47,11 @@ def _default_finder():
 class Guard:
     def __init__(self, get_settings: Callable[[], Settings], state,
                  notify: Callable, event: Callable[[str, str], None],
-                 grab_full: Callable[[], Optional[np.ndarray]],
-                 get_ocr: Callable[[], OcrEngine], process_finder=None) -> None:
+                 grab_full: Callable[[], Optional[np.ndarray]], process_finder=None) -> None:
         self._get = get_settings
         self._state = state
         self._notify, self._event = notify, event
-        self._grab_full, self._get_ocr = grab_full, get_ocr
+        self._grab_full = grab_full
         self._find = process_finder or _default_finder()
         self._cpu_count = 1
         try:

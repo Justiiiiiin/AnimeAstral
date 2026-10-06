@@ -9,7 +9,7 @@ import json
 
 from PySide6.QtCore import Property, QByteArray, QEasingCurve, QPropertyAnimation, QRectF, QSize, Qt
 from PySide6.QtGui import QColor, QImage, QPainter, QPixmap, QTextOption
-from PySide6.QtWidgets import (QAbstractButton, QAbstractItemView, QComboBox, QDoubleSpinBox, QFrame, QHBoxLayout, QHeaderView,
+from PySide6.QtWidgets import (QAbstractButton, QAbstractItemView, QComboBox, QDoubleSpinBox, QFrame, QGridLayout, QHBoxLayout, QHeaderView,
                                QLabel, QProgressBar, QScrollArea, QSizePolicy, QSpinBox, QTableWidget,
                                QTableWidgetItem, QToolButton, QToolTip, QVBoxLayout, QWidget)
 
@@ -189,9 +189,8 @@ def columns(*cards: QWidget, spacing: int = 14) -> QHBoxLayout:
     return row
 
 
-def form_grid() -> "QGridLayout":
+def form_grid() -> QGridLayout:
     """Raster Beschriftung | Feld; die Felder behalten ihre eigene Breite."""
-    from PySide6.QtWidgets import QGridLayout
     grid = QGridLayout()
     grid.setColumnStretch(2, 1)
     theme.track_spacing(grid, 10)
@@ -217,16 +216,6 @@ class InfoButton(QToolButton):
         # als Rich-Text, damit Qt lange Hinweise umbricht; Absätze mit Leerzeile
         paras = "".join(f"<p style='margin:0 0 6px 0'>{part}</p>" for part in text.split(PARAGRAPH))
         self.setToolTip(f"<div style='max-width:360px'>{paras}</div>")
-
-
-def with_info(widget: QWidget, text: str) -> QHBoxLayout:
-    """Zeile: Element + ⓘ (z. B. für Kontrollkästchen)."""
-    row = QHBoxLayout()
-    theme.track_spacing(row, 6)
-    row.addWidget(widget)
-    row.addWidget(InfoButton(text))
-    row.addStretch(1)
-    return row
 
 
 class Card(QFrame):
@@ -257,10 +246,6 @@ class StatCard(Card):
         self.body.addWidget(self.title_label)
         self.value = label(value, "kpi")
         self.body.addWidget(self.value)
-
-    def set_title(self, text: str) -> None:
-        if self.title_label.text() != text:
-            self.title_label.setText(text)
 
     def set_value(self, text: str) -> None:
         if self.value.text() != text:

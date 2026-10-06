@@ -7,11 +7,33 @@ from typing import Optional
 from .settings import Settings
 from .i18n import N_, dec, thousands, tr
 
-COLOR_OK = 0x3DD6B5
-COLOR_WARN = 0xF5A524
-COLOR_INFO = 0x5B8DEF
+COLOR_OK = 0x45E0BF            # Logo-Türkis
+COLOR_WARN = 0xFFB547
+COLOR_INFO = 0x7B8CFF          # Logo-Violett
 COLOR_ERROR = 0xFF6B6B
-COLOR_GRAY = 0x8B97A8
+COLOR_GRAY = 0x6C7891
+
+
+def logo_url() -> str:
+    """Programmlogo aus dem eigenen (öffentlichen) Repository – nur in GitHub-Builds bekannt, sonst leer."""
+    from .updater import current_repo
+    repo = current_repo()
+    return f"https://raw.githubusercontent.com/{repo}/main/assets/app.png" if repo else ""
+
+
+def brand(settings: Settings) -> dict:
+    """Kleiner Absender mit Logo über jeder Nachricht (einheitlicher Auftritt)."""
+    from .version import __version__
+    author = {"name": f"{settings.username} · v{__version__}"}
+    if logo_url():
+        author["icon_url"] = logo_url()
+    return author
+
+
+def progress_bar(value: int, total: int, width: int = 16) -> str:
+    """Fortschrittsbalken aus Zeichen, z. B. ▰▰▰▰▰▰▱▱ (Discord kann keine echten Balken)."""
+    filled = 0 if not total else max(0, min(width, round(width * value / total)))
+    return "▰" * filled + "▱" * (width - filled)
 
 
 def fmt_duration(seconds: Optional[float]) -> str:
@@ -46,7 +68,7 @@ def build_message(settings: Settings, kind: str, title: str, color: int,
         "title": title,
         "color": color,
         "timestamp": datetime.now(timezone.utc).isoformat(),
-        "footer": {"text": settings.username},
+        "author": brand(settings),
     }
     if description:
         embed["description"] = description[:4000]
@@ -81,40 +103,62 @@ STATUS_TEXT = {"running": ("🟢", N_("Läuft")), "paused": ("🟡", N_("Pausier
 
 
 def build_status(settings: Settings, snap: dict) -> dict:
-    """Embed der Live-Statusnachricht aus einem Zustandsabzug der Engine."""
+    """Live-Statusnachricht: Status und Raid als Titel, Welle als großer Fortschrittsbalken, Kennzahlen mit Symbolen
+    in zwei Dreierreihen. „Gestartet vor …“ rechnet Discord selbst live weiter (<t:…:R>)."""
     status = snap.get("status", "stopped")
-    wave = (tr("Welle {wave}/{total}", wave=snap["wave"], total=snap["total_waves"]) if snap.get("wave") is not None
-            else tr("Kein Raid im Bild"))
-    profile = f" · {snap['profile']}" if snap.get("profile") else ""
+    emoji, word = STATUS_TEXT.get(status, ("", status))
+    profile = snap.get("profile") or ""
+    title = f"{emoji} {tr(word)}" + (f" · {profile}" if profile else "")
+
+    wave, total = snap.get("wave"), snap.get("total_waves")
+    if wave is not None and total:
+        pct = round(100 * wave / total)
+        lines = ["## 🌊 " + tr("Welle {wave}/{total}", wave=wave, total=total),
+                 f"`{progress_bar(wave, total)}` **{pct} %**"]
+    elif status == "stopped":
+        lines = ["## 💤 " + tr("Überwachung gestoppt")]
+    else:
+        lines = ["## ⏳ " + tr("Wartet auf den nächsten Raid")]
+    meta = []
+    if snap.get("started_unix") and status != "stopped":
+        meta.append(tr("Gestartet {when}", when=f"<t:{int(snap['started_unix'])}:R>"))
+    if snap.get("last_event"):
+        meta.append(tr("Zuletzt: {event}", event=snap["last_event"]))
+    if meta:
+        lines.append("-# " + "  ·  ".join(meta))
+
     wph, avg_wave = snap.get("waves_per_hour"), snap.get("avg_wave")
     fields = [
-        (tr("Versuche (Session)"), str(snap.get("session_attempts", 0)), True),
-        (tr("Wellen (Session)"), fmt_int(snap.get("session_waves", 0)), True),
-        (tr("Wellen pro Stunde"), f"{wph:.0f}" if wph else "–", True),
-        (tr("Ø Endwelle"), dec(f"{avg_wave:.1f}") if avg_wave else "–", True),
-        (tr("Versuche gesamt"), fmt_int(snap.get("total_attempts", 0)), True),
-        (tr("Laufzeit"), fmt_duration(snap.get("uptime")), True),
+        ("🔁 " + tr("Versuche"), f"**{snap.get('session_attempts', 0)}**\n-# "
+         + tr("gesamt {count}", count=fmt_int(snap.get("total_attempts", 0))), True),
+        ("🌊 " + tr("Wellen"), f"**{fmt_int(snap.get('session_waves', 0))}**", True),
+        ("⚡ " + tr("Wellen/Std"), f"**{wph:.0f}**" if wph else "–", True),
+        ("📈 " + tr("Ø Endwelle"), f"**{dec(f'{avg_wave:.1f}')}**" if avg_wave else "–", True),
+        ("🏆 " + tr("Bestwelle"), f"**{snap['best_wave']}**" if snap.get("best_wave") else "–", True),
+        ("⏱️ " + tr("Laufzeit"), f"**{fmt_duration(snap.get('uptime'))}**" if snap.get("uptime") else "–", True),
     ]
-    if snap.get("best_wave"):
-        label = tr("Bestwelle") + (f" ({snap['profile']})" if snap.get("profile") else "")
-        fields.append((label, str(snap["best_wave"]), True))
+    extra = []
     if snap.get("wall"):
-        fields.append((tr("Wand"), tr("Welle {wave} · {streak}× in Folge", wave=snap["wall"].wave,
-                                         streak=snap["wall"].streak), True))
+        extra.append(("🧱 " + tr("Wand"), tr("Welle {wave} · {streak}× in Folge", wave=snap["wall"].wave,
+                                             streak=snap["wall"].streak), True))
     if snap.get("ram_mb"):
-        fields.append(("Roblox", dec(f"{snap['ram_mb'] / 1024:.1f} GB RAM"), True))
+        extra.append(("🖥️ Roblox", dec(f"{snap['ram_mb'] / 1024:.1f} GB RAM"), True))
+    if extra:
+        while len(extra) < 3:                       # Reihe auffüllen, damit das Raster ruhig bleibt
+            extra.append(("​", "​", True))
+        fields += extra
     if snap.get("quests") and settings.attach_quests:
-        fields.append((tr("Quests"), quest_text(snap["quests"], limit=5), False))
-    description = f"## {wave}{profile}"
-    if snap.get("last_event"):
-        description += "\n-# " + tr("Zuletzt: {event}", event=snap["last_event"])
-    emoji, word = STATUS_TEXT.get(status, ("", status))
+        fields.append(("📜 " + tr("Quests"), quest_text(snap["quests"], limit=5), False))
+
     embed = {
-        "title": f"{emoji} {tr(word)} · Live-Status",
-        "description": description,
+        "author": brand(settings),
+        "title": title[:256],
+        "description": "\n".join(lines),
         "color": STATUS_COLORS.get(status, COLOR_GRAY),
         "fields": [{"name": n[:256], "value": (v or "–")[:1024], "inline": bool(i)} for n, v, i in fields[:25]],
         "timestamp": datetime.now(timezone.utc).isoformat(),
-        "footer": {"text": f"{settings.username} · " + tr("aktualisiert")},
+        "footer": {"text": tr("Live-Status · aktualisiert")},
     }
+    if logo_url():
+        embed["thumbnail"] = {"url": logo_url()}
     return {"username": settings.username, "embeds": [embed], "allowed_mentions": {"parse": []}}

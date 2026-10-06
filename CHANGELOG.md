@@ -9,6 +9,8 @@ Der Abschnitt einer Version wird beim Veröffentlichen automatisch als Versionsh
 ### 🔧 Verbessert
 - Kein „Fehlversuch“ mehr: jeder Raid zählt normal
 - Raid-Meldung zeigt die erreichte Welle
+- Live-Status neu: Fortschrittsbalken, Symbole, Logo
+- Programm aufgeräumt (alter Updater entfernt)
 
 ## 0.7.0
 

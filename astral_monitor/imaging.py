@@ -54,10 +54,6 @@ def ocr_input_mask(mask: np.ndarray, scale: int = 3) -> np.ndarray:
     return _pad_invert(binary)
 
 
-def change_fraction(a: np.ndarray, b: np.ndarray, delta: int = 40) -> float:
-    """Anteil der Pixel, die sich deutlich verändert haben (sehr billig)."""
-    return float((cv2.absdiff(a, b) > delta).mean())
-
 
 def encode_jpeg(bgr: np.ndarray, max_width: int = 1600, quality: int = 85) -> bytes:
     """Verkleinert und als JPEG kodiert (klein genug für Discord, schnell)."""

@@ -1,8 +1,6 @@
 """Seite „Meldungen": Webhook, Ereignisse, Ping."""
 from __future__ import annotations
 
-import threading
-
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (QCheckBox, QGridLayout, QHBoxLayout, QLineEdit, QMessageBox,
                                QPushButton, QVBoxLayout, QWidget)

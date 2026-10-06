@@ -34,7 +34,6 @@ class AntiAfk(threading.Thread):
         self._enabled = False
         self.next_at: Optional[float] = None       # Zeitpunkt (clock) des nächsten Sprungs; None = aus
         self._waiting_since: Optional[float] = None
-        self.last_result = ""
 
     def stop(self) -> None:
         self._halt.set()
@@ -74,7 +73,6 @@ class AntiAfk(threading.Thread):
             return
         self._waiting_since = None
         ok, info = self._jump(s.window_title)
-        self.last_result = info
         if ok:
             self.next_at = now + interval
             log.info("Anti-AFK: gesprungen (%s)", info)

@@ -356,8 +356,6 @@ _mode = "dark"
 _palette = _NEBULA_DARK
 _listeners: list = []                          # Rückrufe bei Design-/Farbwechsel (schwache Referenzen)
 
-# Abwärtskompatibel für Code, der noch Konstanten liest (immer die aktuelle Palette über color() bevorzugen)
-ACCENT = _ASTRAL_DARK["accent"]
 
 
 def design() -> str:
@@ -557,14 +555,13 @@ def set_scale(app: QApplication, factor: float) -> bool:
 
 def set_appearance(app: QApplication, design_key: str, mode: str) -> bool:
     """Design und Farbschema wechseln (sofort, ohne Neustart). Rückgabe: geändert?"""
-    global _design, _mode, _palette, ACCENT
+    global _design, _mode, _palette
     design_key = design_key if design_key in DESIGNS else DEFAULT_DESIGN
     mode = mode if mode in MODES else "dark"
     _effective, palette = _resolve(design_key, mode)
     if design_key == _design and mode == _mode and palette is _palette:
         return False
     _design, _mode, _palette = design_key, mode, palette
-    ACCENT = palette["accent"]
     app.setFont(_font(_scale))
     _apply_palette(app)
     app.setStyleSheet(style(_scale))
@@ -583,11 +580,10 @@ def set_appearance(app: QApplication, design_key: str, mode: str) -> bool:
 
 
 def apply(app: QApplication, design_key: str = DEFAULT_DESIGN, mode: str = "dark") -> None:
-    global _design, _mode, _palette, ACCENT
+    global _design, _mode, _palette
     _design = design_key if design_key in DESIGNS else DEFAULT_DESIGN
     _mode = mode if mode in MODES else "dark"
     _effective, _palette = _resolve(_design, _mode)
-    ACCENT = _palette["accent"]
     app.setFont(_font(_scale))
     _apply_palette(app)
     app.setStyleSheet(style(_scale))

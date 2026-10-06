@@ -70,11 +70,18 @@ class StatusTests(unittest.TestCase):
         from astral_monitor import messages
         embed = messages.build_status(self.s, SNAP)["embeds"][0]
         self.assertIn("Läuft", embed["title"])
+        self.assertIn("Militech Convoy", embed["title"])                  # Raid im Titel
         self.assertIn("Welle 14/100", embed["description"])
+        self.assertIn("▰", embed["description"])                           # Fortschrittsbalken
+        self.assertIn("14 %", embed["description"])
         names = [f["name"] for f in embed["fields"]]
-        self.assertIn("Versuche (Session)", names)
-        self.assertIn("Wellen pro Stunde", names)
+        self.assertTrue(any("Versuche" in n for n in names))
+        self.assertTrue(any("Wellen/Std" in n for n in names))
+        self.assertEqual(len([f for f in embed["fields"] if f["inline"]]) % 3, 0)   # volle Dreierreihen
         self.assertLessEqual(len(embed["fields"]), 25)
+        stopped = messages.build_status(self.s, dict(SNAP, status="stopped", wave=None))["embeds"][0]
+        self.assertIn("gestoppt", stopped["description"])
+        self.assertEqual(messages.progress_bar(5, 10, width=4), "▰▰▱▱")
 
 
 if __name__ == "__main__":

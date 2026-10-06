@@ -92,7 +92,7 @@ Wichtige Entwurfsentscheidungen:
   („dpapi:…“, `Settings.to_dict(protect=True)`); alte Klartext-Dateien laden weiter, auf fremdem PC werden die Werte
   leer. PC-Wechsel: Export/Import als `.astralsettings` mit Passwort (AES-256-GCM, scrypt; `cryptography` gepinnt,
   im Build als hidden import). Kein Server/Konto – bewusst.
-- **Erklärtexte gehören in ⓘ** (`Card(title, info)`, `InfoButton`, `with_info`), nicht als Fließtext auf die Seite;
+- **Erklärtexte gehören in ⓘ** (`Card(title, info)`, `InfoButton`), nicht als Fließtext auf die Seite;
   auf den Seiten nur Bedienelemente und Statuszeilen (Wunsch des Eigentümers: weniger überladen).
 - **Design „Nebula“** (seit 0.7.0, Standard): aus dem Logo abgeleitet; Layout-Flag `rail` = schmale Symbolleiste (76 px, Logo oben, Namen als Tooltip), Status als Pille in der Kopfzeile, Hinweise oben (`top_toast`). Vorlage = Astral + Überschreibungen (`_NEBULA`). Logo: `tools/make_icon.py`.
 - **Designs** (`theme.DESIGNS`, Einstellungen → Darstellung, `ui_design`/`ui_mode`): „Astral“ (seit 0.6.5, vorher Standard:
@@ -109,9 +109,10 @@ Wichtige Entwurfsentscheidungen:
   angezeigt in Überwachung/Statistik/Statusnachricht, Meldung „Wand durchbrochen“ (Ereignis `wall`).
 - **Engine und Oberfläche sind getrennt.** Die Engine läuft in einem Thread; die Oberfläche liest `engine.state` per Timer und
   Ereignisse aus `engine.events`. Widgets nur im GUI-Thread anfassen (`MainWindow.post(callable)` für Rückrufe aus Threads).
-- **Statistik zählt alle Versuche gleich** (der Eigentümer bekommt pro Welle Belohnungen). Kein „erfolgreich/Fehlversuch“ mehr
-  als Hauptsicht; „bis zum Ende geschafft“ ist nur Nebeninfo. In der CSV heißt ein nicht komplett beendeter Lauf weiter
-  `abgebrochen` (Abwärtskompatibilität). Zeit-/Raten-Kennzahlen nutzen nur **gemessene** Dauern; geschätzte (Notiz
+- **Es gibt keine Fehlversuche** (seit 0.7.1, Wunsch des Eigentümers): In Anime Astral scheitert ein Raid nicht, man kommt
+  nur unterschiedlich weit, und jede Welle gibt Belohnungen. Jedes Raid-Ende läuft durch `Engine._finish_run` (gleiche
+  Meldung „Raid beendet · Welle X/100“, Raid-Nummer = alle Versuche). Neue CSV-Zeilen haben immer `ok`; alte Zeilen mit
+  `abgebrochen` zählen genauso. Keine Erfolgsquote, kein „bis zum Ende geschafft“ wieder einführen. Zeit-/Raten-Kennzahlen nutzen nur **gemessene** Dauern; geschätzte (Notiz
   „geschätzt“, Anzeige mit `~`) fließen nicht ein.
 - **Wellenzähler-Suchbereich ist groß** (Standard obere Mitte), das Programm findet den Zähler selbst. Frühere enge Bereiche
   funktionierten im Fenstermodus (Titelleiste) nicht.
@@ -159,8 +160,7 @@ Wichtige Entwurfsentscheidungen:
    Qt-/OpenCV-/Pillow-Teile (`PRUNE`, mit Prüfung, dass keine verbleibende Datei sie braucht): 380 → 228 MB installiert.
 
 Die Versionsnummer steht in `astral_monitor/version.py` und wird vom Build aus dem Tag überschrieben. Aufwärts zählen.
-`update.py`/`update.bat` sind ein **veralteter lokaler Updater** (ZIP-Weg) und können entfernt werden, sobald der
-GitHub-Weg bestätigt ist; `build_exe.bat` baut lokal.
+`build_exe.bat` baut lokal (der alte ZIP-Updater `update.py` ist seit 0.7.1 entfernt).
 
 ## Ungetestet – bitte als Erstes prüfen
 

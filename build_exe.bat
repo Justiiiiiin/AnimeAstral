@@ -26,7 +26,6 @@ if errorlevel 1 goto failed
 
 echo.
 echo Fertig. Das Programm liegt in:  dist\AnimeAstralMonitor\AnimeAstralMonitor.exe
-echo Tesseract-OCR muss auf dem PC installiert sein, siehe LIESMICH.
 explorer "dist\AnimeAstralMonitor"
 pause
 exit /b 0

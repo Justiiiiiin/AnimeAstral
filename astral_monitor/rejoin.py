@@ -178,7 +178,6 @@ class AutoRejoin(threading.Thread):
         self.status = "off"         # off | idle | in_game | left | lost | rejoining | gave_up | down (nur gemeldet)
         self.place: Optional[int] = None
         self.attempt = 0
-        self.lost_at = 0.0
         self.next_try = 0.0
         self.launched_at = 0.0
         self._next_log = 0.0
@@ -274,7 +273,7 @@ class AutoRejoin(threading.Thread):
                 tr("Verbindung verloren (Fehler {code})", code=reason) if reason else tr("Verbindung verloren"))
 
     def _lost(self, now: float, reason: int, grace: float) -> None:
-        self.status, self._reason, self.lost_at, self._alerted = "lost", reason, now, False
+        self.status, self._reason, self._alerted = "lost", reason, False
         self.next_try = now + grace
         text = self._reason_text()
         log.info("Verbindung: %s", text)

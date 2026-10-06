@@ -1,7 +1,6 @@
 """Download-Test mit echtem HTTP (lokaler Server): Fortschritt, Prüfsumme, Abbruch, Installer-Start."""
 import hashlib
 import http.server
-import json
 import os
 import stat
 import sys

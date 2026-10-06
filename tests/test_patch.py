@@ -11,7 +11,7 @@ from pathlib import Path
 
 import _env
 from astral_monitor import updater
-from astral_monitor.updater import PatchPlan, UpdateError
+from astral_monitor.updater import UpdateError
 
 REPO = "friend/AnimeAstral"
 BASE = f"https://github.com/{REPO}/releases/download/v0.6.0/"

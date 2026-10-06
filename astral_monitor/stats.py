@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import csv
 import logging
-import math
 import statistics
 import threading
 import time
@@ -242,7 +241,6 @@ class StatsStore:
         """Ø erreichte Welle je Stunde (oder Tag): [(Beschriftung, Ø Welle, Anzahl Versuche)]."""
         with self._lock:
             recs = self._in_range(since, raid)
-        step = 86400 if by_day else 3600
         groups: dict[float, list[int]] = {}
         for r in recs:
             dt = datetime.fromtimestamp(r.ts_end)

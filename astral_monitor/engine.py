@@ -19,7 +19,7 @@ from .i18n import N_, dec, tr
 from .capture import CaptureError, FrameSource, GrabResult, create_source
 from .discord_client import DiscordSender
 from .guard import Guard
-from .imaging import change_fraction, encode_jpeg, to_gray
+from .imaging import encode_jpeg
 from .ocr import OcrEngine, OcrError
 from .profiles import ProfileStore
 from .presence import PresenceUpdater
@@ -32,8 +32,6 @@ from .wave import WaveReader
 
 log = logging.getLogger("engine")
 
-CHANGE_FRACTION = 0.004     # so viel Bildänderung im Zählerbereich löst eine neue Lesung aus
-STALE_SECONDS = 3.0         # spätestens alle X s trotzdem neu lesen
 HOT_MARGIN = 5              # „heiß" = so viele Wellen vor dem Auslöser
 BURST_SECONDS = 30.0        # so lange nach einem Raid wird auf Quest-Änderungen gewartet
 BURST_INTERVAL = 4.0
@@ -133,8 +131,7 @@ class Engine:
         self.trace: "collections.deque" = collections.deque(maxlen=4000)
         self.profile_store = ProfileStore(app_paths.profiles_dir())
         self.profile_store.remove_reference_images()     # Bilder der früheren Raid-Erkennung (bis 0.6.3) entfernen
-        self.guard = Guard(lambda: self.settings, self.state, self._notify, self._event,
-                           self._grab_full, self.get_ocr)
+        self.guard = Guard(lambda: self.settings, self.state, self._notify, self._event, self._grab_full)
         self._reset_runtime()
 
     # ------------------------------------------------------------------ Steuerung
@@ -344,13 +341,10 @@ class Engine:
         self._next_status = 0.0
         self._trace_last = (None, None)
         self._trace_at = 0.0
-        self._prev_gray: Optional[np.ndarray] = None
-        self._last_ocr = 0.0
         self._reading = None
         self._next_quest = 0.0
         self._next_uptime = 0.0
         self._burst_until = 0.0
-        self._quests_before: list[dict] = []
         self._last_ok: Optional[float] = None
         self._missing_since: Optional[float] = None
         self._last_restart = 0.0
@@ -649,7 +643,6 @@ class Engine:
         self.publisher.request_update()
         self._burst_until = now + BURST_SECONDS
         self._next_quest = now + BURST_INTERVAL
-        self._quests_before = self.quest_tracker.snapshot()
 
     @staticmethod
     def _raid_label(profile: Optional[str]) -> str:

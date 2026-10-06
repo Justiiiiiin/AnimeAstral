@@ -191,10 +191,6 @@ class OcrEngine:
         except Exception as exc:
             raise OcrError(tr("Tesseract lässt sich nicht starten ({path}): {error}", path=cmd, error=exc)) from exc
 
-    @property
-    def backend(self) -> str:
-        return "libtesseract" if self._lib is not None else "tesseract.exe"
-
     def line(self, image: np.ndarray, psm: int = 7, whitelist: str | None = None) -> str:
         if self._lib is not None:
             return self._lib.run(image, psm, whitelist or "").strip()

@@ -17,7 +17,7 @@ W, H, S = 1200, 630, 2           # Zielgröße und Supersampling (Kanten glätte
 BG_TOP, BG_BOTTOM = (13, 18, 24), (18, 26, 35)
 CARD, CARD_LINE = (22, 30, 40), (36, 46, 58)
 TEXT, MUTED, DIM = (236, 241, 247), (139, 151, 168), (84, 96, 112)
-TEAL, AMBER, RED = (61, 214, 181), (245, 165, 36), (255, 122, 122)
+TEAL, AMBER = (61, 214, 181), (245, 165, 36)
 
 
 def _font(bold: bool, size: int) -> ImageFont.FreeTypeFont:
@@ -70,10 +70,6 @@ class _Canvas:
         buf = io.BytesIO()
         out.save(buf, format="PNG", optimize=True)
         return buf.getvalue()
-
-
-def _pct(v: Optional[float]) -> str:
-    return "–" if v is None else f"{v * 100:.0f} %"
 
 
 def render_card(stats: StatsStore, since: Optional[float], raid: Optional[str], title: str) -> bytes:

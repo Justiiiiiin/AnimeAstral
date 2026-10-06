@@ -224,7 +224,6 @@ EN: dict[str, str] = {
     "Kein Bild empfangen (Fenster minimiert?).": "No image received (window minimized?).",
     "Kein Bild vom Roblox-Fenster erhalten.": "No image received from the Roblox window.",
     "Kein Bild – Roblox-Fenster nicht verfügbar": "No image – Roblox window not available",
-    "Kein Raid im Bild": "No raid on screen",
     "Kein Raid-Fortschritt": "No raid progress",
     "Kein Wellenzähler im Bild": "No wave counter on screen",
     "Kein Zähler erkannt – läuft gerade ein Raid?": "No counter detected – is a raid running?",
@@ -431,7 +430,6 @@ EN: dict[str, str] = {
     "Zähler gefunden: {value}/{total} ✓": "Counter found: {value}/{total} ✓",
     "Zähler läuft wieder": "Counter is moving again",
     "Zähler: nicht geprüft": "Counter: not checked",
-    "aktualisiert": "updated",
     "anzeigen": "show",
     "aus": "off",
     "bitte Modifier und Taste angeben, z. B. Ctrl+Alt+S": "please give modifiers and a key, e.g. Ctrl+Alt+S",
@@ -792,4 +790,9 @@ EN: dict[str, str] = {
         "Click a header to sort, drag column borders to change the width. ~ = estimated duration.",
     "Ø {dur} pro Versuch  ·  {spw} pro Welle  ·  {aph} Versuche/Std.  ·  {all} Versuche insgesamt":
         "Avg. {dur} per attempt  ·  {spw} per wave  ·  {aph} attempts/h  ·  {all} attempts in total",
+    # Live-Status neu (0.7.1)
+    "Gestartet {when}": "Started {when}",
+    "gesamt {count}": "total {count}",
+    "Live-Status · aktualisiert": "Live status · updated",
+    "Wellen": "Waves",
 }
