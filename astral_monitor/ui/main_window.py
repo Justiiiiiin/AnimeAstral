@@ -62,10 +62,21 @@ class MainWindow(QMainWindow):
         theme.track_spacing(top, 10)
         self.brandmark = label("", "brandmark")
         top.addWidget(self.brandmark)
-        brand = label(tr("Anime Astral Monitor"), "brand")
+        self.brand = brand = label(tr("Anime Astral Monitor"), "brand")
         brand.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)   # bei Platzmangel kürzen,
         brand.setMinimumWidth(theme.px(40))                                    # nicht die Knöpfe
         top.addWidget(brand, 1)
+        self.pill = QFrame()                           # Nebula: Status als Pille statt Kasten in der Seitenleiste
+        self.pill.setObjectName("pill")
+        pill_row = QHBoxLayout(self.pill)
+        theme.track_margins(pill_row, 12, 4, 14, 4)
+        theme.track_spacing(pill_row, 6)
+        self.pill_text = label(tr("Gestoppt"), "muted")
+        pill_row.addWidget(self.pill_text)
+        top.addWidget(self.pill)
+        self.top_toast = label("", "small")
+        self.top_toast.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+        top.addWidget(self.top_toast, 1)
         top.addStretch(1)
         afk_label = label(tr("Anti-AFK"), "muted")
         afk_label.setToolTip(tr("Wechselt alle paar Minuten kurz zu Roblox, drückt einmal die Leertaste und wechselt "
@@ -126,12 +137,16 @@ class MainWindow(QMainWindow):
         root.setSpacing(0)
         outer.addWidget(body, 1)
 
-        sidebar = QFrame()
+        self.sidebar = sidebar = QFrame()
         sidebar.setObjectName("sidebar")
-        theme.track_fixed_width(sidebar, 208)
+        theme.track(sidebar, lambda o, f: o.setFixedWidth(round((76 if theme.design_info().get("rail") else 208) * f)))
         side = QVBoxLayout(sidebar)
         theme.track_margins(side, 12, 16, 12, 16)
         theme.track_spacing(side, 4)
+        self.rail_logo = label("", "brandmark")        # Nebula: Logo oben in der Symbolleiste
+        self.rail_logo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        theme.track(self.rail_logo, lambda o, f: o.setContentsMargins(0, 0, 0, round(12 * f)))   # Abstand nur mit Logo
+        side.addWidget(self.rail_logo)
 
         self.stack = QStackedWidget()
         self.pages = [MonitorPage(self), StatsPage(self), AlertsPage(self), RaidsPage(self),
@@ -140,6 +155,7 @@ class MainWindow(QMainWindow):
         self.nav = QButtonGroup(self)
         self.nav.setExclusive(True)
         self._nav_icons = ["monitor", "stats", "alerts", "raids", "detect", "settings"]
+        self._nav_names = names
         for i, (name, page) in enumerate(zip(names, self.pages)):
             btn = QPushButton(name)
             btn.setObjectName("nav")
@@ -147,7 +163,7 @@ class MainWindow(QMainWindow):
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
             theme.track(btn, lambda o, f: o.setIconSize(QSize(round(18 * f), round(18 * f))))
             self.nav.addButton(btn, i)
-            side.addWidget(btn)
+            side.addWidget(btn, 0, Qt.AlignmentFlag.AlignHCenter)
             self.stack.addWidget(self._with_savebar(page) if getattr(page, "SAVES", False) else scroll_page(page))
         self.nav.button(0).setChecked(True)
         self.nav.idClicked.connect(self._go)
@@ -175,7 +191,7 @@ class MainWindow(QMainWindow):
         self.gear.setCursor(Qt.CursorShape.PointingHandCursor)
         theme.track(self.gear, lambda o, f: o.setIconSize(QSize(round(22 * f), round(22 * f))))
         self.gear.clicked.connect(lambda: self.nav.button(5).click())
-        bottom.addWidget(self.gear, 0, Qt.AlignmentFlag.AlignBottom)
+        bottom.addWidget(self.gear, 0, Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignHCenter)
         side.addLayout(bottom)
 
         root.addWidget(sidebar)
@@ -470,10 +486,22 @@ class MainWindow(QMainWindow):
         self.gear.setVisible(info["gear"])
         self.gear.setIcon(theme.glyph_icon("settings", 22))
         self.gear.setChecked(self.stack.currentIndex() == 5)
-        self.brandmark.setVisible(info["icons"])
+        rail = bool(info.get("rail"))
+        for i, name in enumerate(self._nav_names):    # schmale Leiste: nur Symbole, Name als Tooltip
+            self.nav.button(i).setText("" if rail else name)
+            self.nav.button(i).setToolTip(name if rail else "")
+        self.sidebar.setFixedWidth(theme.px(76 if rail else 208))
+        self.status_box.setVisible(not rail)
+        self.toast.setVisible(not rail)
+        self.pill.setVisible(rail)
+        self.top_toast.setVisible(rail)
+        self.rail_logo.setVisible(rail)
+        self.brandmark.setVisible(info["icons"] and not rail)
+        self.brand.setVisible(not rail)              # Nebula: Logo steht in der Leiste
         logo = app_paths.resource_path("assets/app.png")
         if info["icons"] and logo.is_file():
             self.brandmark.setPixmap(QIcon(str(logo)).pixmap(QSize(theme.px(22), theme.px(22))))
+            self.rail_logo.setPixmap(QIcon(str(logo)).pixmap(QSize(theme.px(38), theme.px(38))))
         self.pages[0].recolor()
         for page in self.pages:
             page.update()
@@ -675,8 +703,9 @@ class MainWindow(QMainWindow):
         QDesktopServices.openUrl(QUrl.fromLocalFile(str(path.parent)))
 
     def show_toast(self, text: str) -> None:
-        self.toast.setText(text)
-        QTimer.singleShot(3000, lambda: self.toast.setText(""))
+        for lbl in (self.toast, self.top_toast):
+            lbl.setText(text)
+        QTimer.singleShot(3000, lambda: [lbl.setText("") for lbl in (self.toast, self.top_toast)])
 
     def post(self, call: Callable[[], None]) -> None:
         """Aus Hintergrund-Threads: Aufruf im GUI-Thread ausführen lassen."""
@@ -916,12 +945,19 @@ class MainWindow(QMainWindow):
             self.status_sub.setText(tr("Laufzeit {time}", time=messages.fmt_duration(elapsed)))
         elif key != self._status_key:
             self.status_sub.setText("")
+        title = {"paused": tr("Pausiert"), "on": tr("Läuft"), "off": tr("Gestoppt")}[key]
+        if self.pill.isVisible():                  # Nebula: Status + Laufzeit in der Pille
+            pill = "● " + title + (f"  ·  {messages.fmt_duration(elapsed)}" if st.running else "")
+            if self.pill_text.text() != pill:
+                self.pill_text.setText(pill)
         if key != self._status_key:               # Stil nur bei Wechsel neu berechnen (spart CPU)
             self._status_key = key
-            self.status_title.setText("● " + {"paused": tr("Pausiert"), "on": tr("Läuft"), "off": tr("Gestoppt")}[key])
+            self.status_title.setText("● " + title)
             self.status_title.setObjectName({"paused": "warn", "on": "good", "off": "muted"}[key])
+            self.pill_text.setObjectName(self.status_title.objectName())
             self.status_box.setProperty("state", "off" if key == "off" else "on")
-            for widget in (self.status_title, self.status_box):
+            self.pill.setProperty("state", key)
+            for widget in (self.status_title, self.status_box, self.pill_text, self.pill):
                 widget.style().unpolish(widget)
                 widget.style().polish(widget)
 

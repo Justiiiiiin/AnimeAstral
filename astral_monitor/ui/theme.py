@@ -300,20 +300,60 @@ QToolTip { background: @card; color: @text; border: 1px solid @controlBorder; pa
 QDialog { background: @bg; }
 """
 
+# Nebula (0.7.0): aus dem Logo abgeleitet – tiefes Nachtblau, Verlauf Türkis → Violett, weiße Akzente. Eigenes Layout:
+# schmale Symbolleiste (Logo oben, Zahnrad unten, Namen als Tooltip), Status als Pille in der Kopfzeile,
+# Karten mit Verlaufsrand. Baut auf der Astral-Vorlage auf; die Regeln unten überschreiben sie.
+_NEBULA_DARK = dict(_ASTRAL_DARK, **{
+    "bg": "#080A11", "sidebar": "#0B0E17", "topbar": "#080A11", "card": "#10141F", "cardTop": "#141A29",
+    "border": "#1D2436", "borderA": "#2C3A5C", "borderB": "#1A2031", "line": "#151A27", "field": "#0C1019",
+    "control": "#161C2B", "controlHover": "#1F2739", "controlBorder": "#262F45", "navHover": "#141A28",
+    "navActive": "#18223A", "softA": "#163A3A", "softB": "#252A55", "edge": "#3B4A7A", "select": "#24305A",
+    "section": "#7D88B5", "okBg": "#0D1D1E", "okBorder": "#1E5148", "scroll": "#232B40", "text": "#EEF1FA",
+})
+_NEBULA_LIGHT = dict(_ASTRAL_LIGHT, **{
+    "bg": "#F4F5FB", "sidebar": "#FFFFFF", "topbar": "#F4F5FB", "card": "#FFFFFF", "cardTop": "#FBFBFF",
+    "border": "#E3E6F2", "borderA": "#D7DCF0", "borderB": "#EEEAFB", "line": "#ECEEF6", "navHover": "#F0F2FA",
+    "navActive": "#E8EBFB", "softA": "#DDF5EF", "softB": "#E4E6FD", "edge": "#B9C1EE", "section": "#7A82A6",
+})
+_NEBULA = _ASTRAL + """
+QFrame#sidebar { background: @sidebar; border-right: 1px solid @line; }
+QFrame#card { background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 @cardTop, stop:1 @card);
+  border: 1px solid qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 @borderA, stop:1 @borderB); border-radius: 16px; }
+QPushButton#nav { min-height: 46px; max-height: 46px; min-width: 46px; max-width: 46px; padding: 0;
+  border-radius: 14px; text-align: center; }
+QPushButton#nav:hover { background: @navHover; }
+QPushButton#nav:checked { background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 @softA, stop:1 @softB);
+  border: 1px solid @edge; }
+QToolButton#gear { min-height: 46px; max-height: 46px; min-width: 46px; max-width: 46px; border-radius: 14px; }
+QToolButton#gear:checked { background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 @softA, stop:1 @softB);
+  border: 1px solid @edge; }
+QFrame#pill { background: @control; border: 1px solid @controlBorder; border-radius: 15px; }
+QFrame#pill[state="on"] { background: @okBg; border: 1px solid @accent; }
+QFrame#pill[state="paused"] { border: 1px solid @warn; }
+QFrame#pill QLabel { background: transparent; }
+QLabel#h1 { font-size: 20pt; font-weight: 800; }
+QLabel#section { color: @section; }
+QFrame#card[kpi="true"] { border-top: 2px solid qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 @accent, stop:1 @accent2); }
+QFrame#statusbox { border-radius: 14px; }
+"""
+
 DESIGNS: dict[str, dict] = {
     # Schlüssel: Anzeigename, eingeführt in Version, Vorlage, Paletten je Farbschema (fehlt eines: Dunkel)
+    "nebula": {"name": N_("Nebula"), "since": "0.7.0", "template": _NEBULA, "icons": True, "gear": True,
+               "animate": True, "rail": True, "font": ["Segoe UI Variable Text", "Segoe UI"],
+               "palettes": {"dark": _NEBULA_DARK, "light": _NEBULA_LIGHT}},
     "astral": {"name": N_("Astral"), "since": "0.6.5", "template": _ASTRAL, "icons": True, "gear": True,
                "animate": True, "font": ["Segoe UI Variable Text", "Segoe UI"],
                "palettes": {"dark": _ASTRAL_DARK, "light": _ASTRAL_LIGHT}},
     "classic": {"name": N_("Klassisch"), "since": "0.5.0", "template": _CLASSIC, "icons": False, "gear": False,
                 "animate": False, "font": ["Segoe UI"], "palettes": {"dark": _CLASSIC_DARK}},
 }
-DEFAULT_DESIGN = "astral"
+DEFAULT_DESIGN = "nebula"
 MODES = ("dark", "light", "system")
 
 _design = DEFAULT_DESIGN
 _mode = "dark"
-_palette = _ASTRAL_DARK
+_palette = _NEBULA_DARK
 _listeners: list = []                          # Rückrufe bei Design-/Farbwechsel (schwache Referenzen)
 
 # Abwärtskompatibel für Code, der noch Konstanten liest (immer die aktuelle Palette über color() bevorzugen)

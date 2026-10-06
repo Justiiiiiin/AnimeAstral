@@ -799,4 +799,6 @@ EN: dict[str, str] = {
     "Zurück zu {version}": "Back to {version}",
     "Ältere Version": "Older version",
     "neu": "new",
+    # Design Nebula (0.7.0)
+    "Nebula": "Nebula",
 }

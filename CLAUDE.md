@@ -94,7 +94,8 @@ Wichtige Entwurfsentscheidungen:
   im Build als hidden import). Kein Server/Konto – bewusst.
 - **Erklärtexte gehören in ⓘ** (`Card(title, info)`, `InfoButton`, `with_info`), nicht als Fließtext auf die Seite;
   auf den Seiten nur Bedienelemente und Statuszeilen (Wunsch des Eigentümers: weniger überladen).
-- **Designs** (`theme.DESIGNS`, Einstellungen → Darstellung, `ui_design`/`ui_mode`): „Astral“ (seit 0.6.5, Standard:
+- **Design „Nebula“** (seit 0.7.0, Standard): aus dem Logo abgeleitet; Layout-Flag `rail` = schmale Symbolleiste (76 px, Logo oben, Namen als Tooltip), Status als Pille in der Kopfzeile, Hinweise oben (`top_toast`). Vorlage = Astral + Überschreibungen (`_NEBULA`). Logo: `tools/make_icon.py`.
+- **Designs** (`theme.DESIGNS`, Einstellungen → Darstellung, `ui_design`/`ui_mode`): „Astral“ (seit 0.6.5, vorher Standard:
   Symbole aus der Windows-Symbolschrift, Zahnrad unten links, Überblendung beim Seitenwechsel, Hell/Dunkel/Wie Windows)
   und „Klassisch“ (seit 0.5.0, nur dunkel, unverändert). **Alte Designs nie löschen** – neues Design = neuer Eintrag mit
   `since`-Version. Farben nur als `@token` in den Vorlagen bzw. `theme.color("token")` im Code (keine festen Hex-Werte in

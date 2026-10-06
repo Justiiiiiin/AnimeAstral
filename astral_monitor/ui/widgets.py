@@ -251,6 +251,7 @@ class Card(QFrame):
 class StatCard(Card):
     def __init__(self, title: str, value: str = "–") -> None:
         super().__init__()
+        self.setProperty("kpi", True)                  # Nebula: Akzentkante oben
         theme.track_spacing(self.body, 2)
         self.title_label = label(title, "small", wrap=True)     # umbrechen statt die Kachelreihe zu verbreitern
         self.body.addWidget(self.title_label)
