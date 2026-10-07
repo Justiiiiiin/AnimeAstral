@@ -188,6 +188,48 @@ class StatsPage(QWidget):
         per_card.body.addWidget(self.per_table, 1)
         root.addWidget(per_card)
 
+        root.addWidget(label(tr("Persönliche Rekorde"), "h2"))
+        self.records = {}
+        rec_row = QHBoxLayout()
+        theme.track_spacing(rec_row, 12)
+        for key, title in (("best_wave", tr("Bestwelle")), ("best_day", tr("Stärkster Tag")),
+                           ("best_hour", tr("Beste Stunde")), ("longest", tr("Längste Session"))):
+            card = StatCard(title)
+            card.sub = label("", "small")
+            card.body.addWidget(card.sub)
+            self.records[key] = card
+            rec_row.addWidget(card, 1)
+        root.addLayout(rec_row)
+
+    def _fill_records(self, rec: dict) -> None:
+        """Bestwerte über den ganzen Verlauf (unabhängig von Raid- und Zeitraum-Auswahl)."""
+        def show(key, value, sub):
+            self.records[key].set_value(value)
+            self.records[key].sub.setText(sub)
+        if rec["best_wave"]:
+            wave, ts, raid = rec["best_wave"]
+            show("best_wave", str(wave), datetime.fromtimestamp(ts).strftime("%d.%m.%Y") + (f" · {raid}" if raid else ""))
+        else:
+            show("best_wave", "–", "")
+        if rec["best_day"]:
+            day, n, waves = rec["best_day"]
+            show("best_day", tr("{count} Raids", count=messages.fmt_k(n)),
+                 day.strftime("%d.%m.%Y") + " · " + tr("{waves} Wellen", waves=messages.fmt_int(waves)))
+        else:
+            show("best_day", "–", "")
+        if rec["best_hour"]:
+            hour, waves = rec["best_hour"]
+            show("best_hour", tr("{waves} Wellen", waves=messages.fmt_int(waves)),
+                 hour.strftime("%d.%m.%Y · %H:00"))
+        else:
+            show("best_hour", "–", "")
+        if rec["longest"]:
+            seconds, start, n = rec["longest"]
+            show("longest", fmt_hours(seconds),
+                 datetime.fromtimestamp(start).strftime("%d.%m.%Y") + " · " + tr("{count} Raids", count=n))
+        else:
+            show("longest", "–", "")
+
     # ------------------------------------------------------------------ Archiv
     @property
     def store(self):
@@ -417,6 +459,7 @@ class StatsPage(QWidget):
         if self.charts.currentIndex() == 3:
             self._chart_changed(3)
 
+        self._fill_records(stats.personal_records())
         per_rows = []
         for item in stats.per_raid(since):
             per_rows.append([

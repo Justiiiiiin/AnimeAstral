@@ -913,6 +913,13 @@ EN: dict[str, str] = {
     "Was hast du erwartet?": "What did you expect?",
     "Einstellung suchen …": "Search settings …",
     "Keine Einstellung gefunden.": "No setting found.",
+    # Persönliche Rekorde (0.7.6)
+    "Persönliche Rekorde": "Personal records",
+    "Stärkster Tag": "Best day",
+    "Beste Stunde": "Best hour",
+    "Längste Session": "Longest session",
+    "{count} Raids": "{count} raids",
+    "{waves} Wellen": "{waves} waves",
     # Archiv (0.7.6)
     "Archiv": "Archive",
     "Archiv ansehen": "View archive",

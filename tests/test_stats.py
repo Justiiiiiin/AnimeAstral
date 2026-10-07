@@ -154,3 +154,22 @@ class ArchiveTests(unittest.TestCase):
         self.assertIsNone(store.archive(base / "archive"))                    # leer: nichts zu tun
         store.add(RunRecord(time.time(), 100.0, None, 10, 100, "ok", "", ""))
         self.assertEqual(StatsStore(base / "raid_history.csv").best_wave(), 10)
+
+
+class RecordTests(unittest.TestCase):
+    def test_personal_records(self):
+        from datetime import datetime
+        import tempfile
+        store = StatsStore(Path(tempfile.mkdtemp(dir=_env.DATA)) / "h.csv")
+        self.assertIsNone(store.personal_records()["best_wave"])
+        day1 = datetime(2026, 10, 5, 20, 0).timestamp()
+        for i in range(3):                                            # Tag 1: 3 Raids in einer Session
+            store.add(RunRecord(day1 + i * 120, 110.0, None, 50, 100, "ok", "", "A"))
+        day2 = datetime(2026, 10, 6, 8, 0).timestamp()
+        for i in range(5):                                            # Tag 2: 5 Raids, einer mit Rekord
+            store.add(RunRecord(day2 + i * 120, 110.0, None, 97 if i == 2 else 60, 100, "ok", "", "B"))
+        rec = store.personal_records()
+        self.assertEqual(rec["best_wave"][0], 97)
+        self.assertEqual(rec["best_day"][1:], (5, 337))
+        self.assertEqual(rec["best_hour"][1], 337)
+        self.assertEqual(rec["longest"][2], 5)                        # längste zusammenhängende Session
