@@ -911,6 +911,8 @@ EN: dict[str, str] = {
     "Verwendete Komponenten": "Third-party components",
     "Was ist passiert?": "What happened?",
     "Was hast du erwartet?": "What did you expect?",
+    "Einstellung suchen …": "Search settings …",
+    "Keine Einstellung gefunden.": "No setting found.",
     # Saison-Designs (0.7.2)
     "Kürbisnacht": "Pumpkin Night",
     "Frost": "Frost",

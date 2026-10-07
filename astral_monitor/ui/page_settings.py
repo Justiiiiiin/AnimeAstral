@@ -40,7 +40,18 @@ class SettingsPage(QWidget):
         theme.track_margins(root, 28, 24, 28, 24)
         theme.track_spacing(root, 14)
         root.addWidget(label(tr("Einstellungen"), "h1"))
-        root.addWidget(label(tr("Roblox-Helfer, Überwachung und Programm."), "muted"))
+        head = QHBoxLayout()
+        head.addWidget(label(tr("Roblox-Helfer, Überwachung und Programm."), "muted"))
+        head.addStretch(1)
+        self.search = short_field(QLineEdit(), 300)
+        self.search.setPlaceholderText(tr("Einstellung suchen …"))
+        self.search.setClearButtonEnabled(True)
+        self.search.textChanged.connect(self._filter)
+        head.addWidget(self.search)
+        root.addLayout(head)
+        self.no_match = label(tr("Keine Einstellung gefunden."), "muted")
+        self.no_match.setVisible(False)
+        root.addWidget(self.no_match)
 
         # ------------------------------------------------------------------ Roblox
         root.addWidget(section(tr("Roblox")))
@@ -394,6 +405,41 @@ class SettingsPage(QWidget):
         root.addLayout(columns(upd, data))
         root.addStretch(1)
         root.addLayout(self._about_row())
+        self._search_index: list = []               # (Karte, durchsuchbarer Text) – beim ersten Suchen gefüllt
+
+    # ------------------------------------------------------------------ Suche
+    def _build_index(self) -> None:
+        import re
+        from PySide6.QtWidgets import QAbstractButton, QComboBox, QLabel
+        tags = re.compile(r"<[^>]+>")
+        for card in self.findChildren(Card):
+            parts = []
+            for w in [card] + card.findChildren(QWidget):
+                if isinstance(w, QLabel):
+                    parts.append(w.text())
+                elif isinstance(w, QAbstractButton):
+                    parts.append(w.text())
+                elif isinstance(w, QLineEdit):
+                    parts.append(w.placeholderText())
+                elif isinstance(w, QComboBox):
+                    parts += [w.itemText(i) for i in range(w.count())]
+                parts.append(w.toolTip())                    # auch die Erklärungen hinter ⓘ
+            self._search_index.append((card, tags.sub(" ", " ".join(parts)).casefold()))
+
+    def _filter(self, text: str) -> None:
+        """Nur Karten zeigen, in denen alle Suchwörter vorkommen (Titel, Beschriftungen, ⓘ-Erklärungen)."""
+        from PySide6.QtWidgets import QLabel
+        if not self._search_index:
+            self._build_index()
+        words = text.casefold().split()
+        shown = 0
+        for card, haystack in self._search_index:
+            match = all(w in haystack for w in words)
+            card.setVisible(match)
+            shown += match
+        for sec in self.findChildren(QLabel, "section"):
+            sec.setVisible(not words)
+        self.no_match.setVisible(bool(words) and not shown)
 
     # ------------------------------------------------------------------ Über (klein, ganz unten)
     def _about_row(self) -> QHBoxLayout:
