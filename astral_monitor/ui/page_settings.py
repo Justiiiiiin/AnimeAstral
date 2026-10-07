@@ -222,6 +222,11 @@ class SettingsPage(QWidget):
         accent_row.addWidget(auto)
         for hex_color in theme.ACCENTS:
             accent_row.addWidget(self._swatch(hex_color))
+        self.accent_image = QPushButton(tr("Aus Bild"))
+        self.accent_image.setObjectName("chipbtn")
+        self.accent_image.setToolTip(tr("Kräftigste Farbe aus deinem Hintergrundbild übernehmen"))
+        self.accent_image.clicked.connect(self._accent_from_image)
+        accent_row.addWidget(self.accent_image)
         self.accent_custom = QPushButton(tr("Eigene …"))
         self.accent_custom.setObjectName("chipbtn")
         self.accent_custom.setCheckable(True)
@@ -653,6 +658,17 @@ class SettingsPage(QWidget):
         self.main.set_appearance(background=name)
         self._sync_look(self.main.engine.settings)
 
+    def _accent_from_image(self) -> None:
+        from .backdrop import accent_from_image, stored_path
+        path = stored_path(self.main.engine.settings.ui_background)
+        color = accent_from_image(path) if path else None
+        if not color:
+            self.main.show_toast(tr("Im Bild ist keine kräftige Farbe – wähle eine Farbe von Hand"))
+            return
+        self.main.set_appearance(accent=color)
+        self._sync_look(self.main.engine.settings)
+        self.main.show_toast(tr("Akzentfarbe aus dem Bild: {color}", color=color))
+
     def _pick_accent(self) -> None:
         from PySide6.QtGui import QColor
         from PySide6.QtWidgets import QColorDialog
@@ -683,6 +699,7 @@ class SettingsPage(QWidget):
         self.bg_dim.setValue(s.ui_background_dim)
         self.bg_dim.setEnabled(bool(s.ui_background))
         self.bg_remove.setEnabled(bool(s.ui_background))
+        self.accent_image.setEnabled(bool(s.ui_background))
         self.intro.setEnabled(not s.ui_reduce_motion)
         for pct, btn in self.zoom_buttons:
             btn.setChecked(pct == s.ui_zoom)

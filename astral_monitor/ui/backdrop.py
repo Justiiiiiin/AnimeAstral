@@ -137,3 +137,33 @@ class Backdrop(QWidget):
         if self._decor:
             from . import seasonal
             seasonal.paint(p, self._decor, QRectF(self.rect()), self._particles)
+
+
+def accent_from_image(path) -> Optional[str]:
+    """Kräftigste wiederkehrende Farbe eines Bildes als Akzent (Farbton mit dem meisten satten, hellen Anteil),
+    auf gut lesbare Helligkeit gebracht. None = Bild ohne kräftige Farben (z. B. schwarz-weiß)."""
+    from PySide6.QtGui import QImage
+    image = QImage(str(path))
+    if image.isNull():
+        return None
+    small = image.scaled(64, 64, Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation)
+    bins: dict = {}
+    for y in range(small.height()):
+        for x in range(small.width()):
+            h, s, v, _a = small.pixelColor(x, y).getHsvF()
+            if h < 0 or s < 0.35 or v < 0.35:
+                continue                              # graue, blasse und dunkle Stellen zählen nicht
+            b = int(h * 36) % 36
+            weight = s * v
+            acc = bins.setdefault(b, [0.0, 0.0, 0.0, 0.0])
+            acc[0] += weight
+            acc[1] += h * weight
+            acc[2] += s * weight
+            acc[3] += v * weight
+    if not bins:
+        return None
+    total, hs, ss, vs = max(bins.values(), key=lambda a: a[0])
+    if total < 4:                                     # zu wenig Farbe im Bild
+        return None
+    color = QColor.fromHsvF(hs / total, min(0.85, max(0.55, ss / total)), max(0.85, vs / total))
+    return color.name().upper()

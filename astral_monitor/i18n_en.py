@@ -912,6 +912,11 @@ EN: dict[str, str] = {
     "Was hast du erwartet?": "What did you expect?",
     "Einstellung suchen …": "Search settings …",
     "Aussehen": "Look",
+    "Aus Bild": "From image",
+    "Kräftigste Farbe aus deinem Hintergrundbild übernehmen": "Use the strongest color from your background image",
+    "Im Bild ist keine kräftige Farbe – wähle eine Farbe von Hand":
+        "The image has no strong color – pick a color by hand",
+    "Akzentfarbe aus dem Bild: {color}": "Accent color from the image: {color}",
     "Effekte": "Effects",
     "Keine Einstellung gefunden.": "No setting found.",
     "Noch keine Daten im gewählten Zeitraum": "No data in the selected period yet",

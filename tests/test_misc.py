@@ -183,3 +183,26 @@ class SpookyTests(unittest.TestCase):
         rnd = random.Random(1)
         self.assertTrue(all(spooky.FIRST_MIN <= spooky.next_delay(True, rnd) for _ in range(50)))
         self.assertTrue(all(spooky.next_delay(False, rnd) >= 3600 for _ in range(50)))   # höchstens 1× pro Stunde
+
+
+class AccentFromImageTests(unittest.TestCase):
+    def test_dominant_vivid_color(self):
+        import os
+        import tempfile
+        os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+        from PySide6.QtGui import QColor, QGuiApplication, QImage, QPainter
+        app = QGuiApplication.instance() or QGuiApplication([])          # noqa: F841
+        from astral_monitor.ui.backdrop import accent_from_image
+        img = QImage(100, 100, QImage.Format.Format_RGB32)
+        img.fill(QColor("#202020"))                                      # grau zählt nicht
+        p = QPainter(img)
+        p.fillRect(0, 0, 100, 60, QColor("#C0306A"))                     # viel Pink
+        p.fillRect(0, 60, 100, 15, QColor("#2A70D0"))                    # etwas Blau
+        p.end()
+        path = os.path.join(tempfile.mkdtemp(dir=_env.DATA), "bg.png")
+        img.save(path)
+        h = QColor(accent_from_image(path)).hsvHue()
+        self.assertTrue(320 <= h <= 345, h)                              # Pink gewinnt
+        img.fill(QColor("#808080"))
+        img.save(path)
+        self.assertIsNone(accent_from_image(path))                       # grau: keine Farbe
