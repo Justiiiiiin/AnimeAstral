@@ -2,7 +2,6 @@
 
 EN: dict[str, str] = {
     " (pausiert)": " (paused)",
-    " (später unter „Erkennung“ / „Meldungen“)": " (later under “Detection” / “Alerts”)",
     " GB": " GB",
     " Min": " min",
     "12-Stunden-Bericht": "12-hour report",
@@ -41,14 +40,10 @@ EN: dict[str, str] = {
     "Anzahl Versuche je Endwelle": "Attempts per final wave",
     "Anzeigename": "Display name",
     "Aufnahme": "Capture",
-    "Aufnahmeart": "Capture mode",
     "Aus": "Off",
     "Ausgewogen": "Balanced",
     "Ausgewählten Eintrag löschen": "Delete selected entry",
-    "Auslöser: Gesamt minus": "Trigger: total minus",
-    "Auslöser: ab {wave}/{total}": "Trigger: from {wave}/{total}",
     "Auswertung": "Analysis",
-    "Automatisch (Fenster-Capture, sonst Bildschirm)": "Automatic (window capture, otherwise screen)",
     "Automatisch nach Updates suchen (höchstens alle 6 Stunden)": "Check for updates automatically (at most every 6 hours)",
     "Beenden": "Quit",
     "Beitreten": "Join",
@@ -68,11 +63,6 @@ EN: dict[str, str] = {
     "Beendet um": "Ended at",
     "Bei sehr langen Sitzungen hilft ein Neustart von Roblox.": "For very long sessions, restarting Roblox helps.",
     "Beim Stoppen eine Statistik-Karte senden": "Send a stats card when stopping",
-    "Bereich auswählen": "Select area",
-    "Bereich auswählen …": "Select area …",
-    "Bereich: x {x0}–{x1}, y {y0}–{y1} des Fensters": "Area: x {x0}–{x1}, y {y0}–{y1} of the window",
-    "Bereiche, Auslöser und Tests. Alles wird live am Roblox-Fenster geprüft.":
-        "Areas, trigger and tests. Everything is checked live on the Roblox window.",
     "Bereit – wird angezeigt, sobald die Überwachung läuft.": "Ready – shown as soon as monitoring is running.",
     "Bereits geöffnet": "Already open",
     "Bericht": "Report",
@@ -80,26 +70,20 @@ EN: dict[str, str] = {
     "Bestwelle": "Best wave",
     "Bestwelle (Rekord)": "Best wave (record)",
     "Bestwelle {wave}": "Best wave {wave}",
-    "Bestätigungen": "Confirmations",
     "Bild (*.png)": "Image (*.png)",
-    "Bild empfangen: {w} × {h} Pixel ({ms} ms inkl. Start).": "Image received: {w} × {h} pixels ({ms} ms incl. start).",
     "Bild {w} × {h} ✓": "Image {w} × {h} ✓",
     "Bild: nicht geprüft": "Image: not checked",
     "Bilder vom Roblox-Fenster kommen wieder an": "Images from the Roblox window are arriving again",
-    "Bildschirm (Roblox muss sichtbar sein)": "Screen (Roblox must be visible)",
     "Bisher": "Previous",
     "Bitte eine gültige Discord-Webhook-URL eintragen (Seite „Meldungen“).":
         "Please enter a valid Discord webhook URL (page “Alerts”).",
     "Bitte einen Namen aus Buchstaben oder Ziffern eingeben.": "Please enter a name made of letters or digits.",
-    "Bitte mindestens eine erlaubte Gesamtwellenzahl eintragen, z. B. 100.":
-        "Please enter at least one allowed total wave count, e.g. 100.",
     "Bitte unten deine eigene Discord-Anwendungs-ID eintragen.": "Please enter your own Discord application ID below.",
     "Bitte zuerst eine gültige Webhook-URL eintragen.": "Please enter a valid webhook URL first.",
     "Bitte zuerst einen Eintrag in der Tabelle auswählen.": "Please select an entry in the table first.",
     "Bitte zuerst einen Webhook eintragen und „Bericht / Statistik-Karte“ unter „Meldungen“ aktiviert lassen.":
         "Please enter a webhook first and keep “Report / stats card” enabled under “Alerts”.",
     "CSV öffnen": "Open CSV",
-    "Capture-Test": "Capture test",
     "Das Fenster ist minimiert, geschlossen oder eingefroren.": "The window is minimized, closed or frozen.",
     "Das Intervall der Live-Status-Nachricht muss zwischen 20 und 3600 Sekunden liegen.":
         "The live status interval must be between 20 and 3600 seconds.",
@@ -118,16 +102,12 @@ EN: dict[str, str] = {
     "Dauer": "Duration",
     "Deine Discord-ID (nur Ziffern)": "Your Discord ID (digits only)",
     "Der Anime Astral Monitor läuft bereits.": "Anime Astral Monitor is already running.",
-    "Der Auslöser-Abstand muss zwischen 0 und 5 liegen.": "The trigger offset must be between 0 and 5.",
-    "Der Bereich des Wellenzählers ist ungültig (Seite „Erkennung“).": "The wave counter area is invalid (page “Detection”).",
     "Der Installer konnte nicht gestartet werden:\n{error}": "The installer could not be started:\n{error}",
-    "Der Quest-Bereich ist ungültig (Seite „Erkennung“).": "The quest area is invalid (page “Detection”).",
     "Der Roblox-Prozess läuft nicht mehr (Absturz oder geschlossen).": "The Roblox process is no longer running (crashed or closed).",
     "Der Zähler steht seit {minutes} Min. bei Welle {wave}.": "The counter has been stuck at wave {wave} for {minutes} min.",
     "Details stehen in monitor.log ({path}).": "Details are in monitor.log ({path}).",
     "Diagnose": "Diagnostics",
     "Diagnose-Paket erstellt": "Diagnostics package created",
-    "Die Anzahl der Bestätigungen muss zwischen 1 und 4 liegen.": "The number of confirmations must be between 1 and 4.",
     "Die Discord-Anwendungs-ID besteht nur aus Ziffern (Entwicklerportal → Anwendung → Allgemein).":
         "The Discord application ID consists of digits only (developer portal → application → general).",
     "Die Discord-Desktop-App wurde nicht gefunden – bitte Discord am PC starten (nicht im Browser).":
@@ -138,7 +118,6 @@ EN: dict[str, str] = {
         "The live status message is not active. Enter a webhook and enable it under “Alerts”.",
     "Die Prüfsumme der heruntergeladenen Datei stimmt nicht – Update abgebrochen.":
         "The checksum of the downloaded file does not match – update cancelled.",
-    "Die Sperrzeit darf nicht negativ sein.": "The cooldown must not be negative.",
     "Die Sprache wird nach einem Neustart des Programms umgestellt. Jetzt neu starten?":
         "The language changes after restarting the program. Restart now?",
     "Die Stillstand-Zeit muss zwischen 1 und 240 Minuten liegen.": "The stall time must be between 1 and 240 minutes.",
@@ -165,7 +144,6 @@ EN: dict[str, str] = {
     "Du hast Version {version}.": "You have version {version}.",
     "Du hast die neueste Version ({version}).": "You have the latest version ({version}).",
     "Du kannst die Einstellungen jederzeit ändern. Viel Erfolg!": "You can change the settings at any time. Good luck!",
-    "Durchsuchen …": "Browse …",
     "Einrichtung": "Setup",
     "Einstellungen": "Settings",
     "Eintrag löschen": "Delete entry",
@@ -173,18 +151,14 @@ EN: dict[str, str] = {
     "Endwellen": "Final waves",
     "Ereignis": "Event",
     "Ereignisse": "Events",
-    "Erkennung": "Detection",
-    "Erlaubte Gesamtwellen": "Allowed total waves",
     "Erstellt mit Anime Astral Monitor": "Created with Anime Astral Monitor",
     "Fehler: {error}": "Error: {error}",
     "Fehlgeschlagen: {error}": "Failed: {error}",
     "Fenster „{title}“ gefunden": "Window “{title}” found",
     "Fenster „{title}“ nicht gefunden": "Window “{title}” not found",
     "Fenster „{title}“ nicht gefunden. Ist Roblox gestartet?": "Window “{title}” not found. Is Roblox running?",
-    "Fenster-Capture (Roblox darf verdeckt sein)": "Window capture (Roblox may be covered)",
     "Fenster-Capture konnte nicht gestartet werden: {error}": "Window capture could not be started: {error}",
     "Fenster: nicht geprüft": "Window: not checked",
-    "Fenstertitel": "Window title",
     "Fertig": "Done",
     "Fortsetzen": "Resume",
     "Für das Update-Paket ist keine Prüfsumme veröffentlicht.": "No checksum is published for the update package.",
@@ -221,22 +195,18 @@ EN: dict[str, str] = {
     "Karte speichern": "Save card",
     "Karte wird gesendet …": "Sending card …",
     "Kein Bild empfangen (Fenster minimiert?)": "No image received (window minimized?)",
-    "Kein Bild empfangen (Fenster minimiert?).": "No image received (window minimized?).",
-    "Kein Bild vom Roblox-Fenster erhalten.": "No image received from the Roblox window.",
     "Kein Bild – Roblox-Fenster nicht verfügbar": "No image – Roblox window not available",
     "Kein Raid-Fortschritt": "No raid progress",
     "Kein Wellenzähler im Bild": "No wave counter on screen",
     "Kein Zähler erkannt – läuft gerade ein Raid?": "No counter detected – is a raid running?",
     "Kein gültiges GitHub-Repository eingetragen.": "No valid GitHub repository set.",
     "Keine Bilder vom Roblox-Fenster": "No images from the Roblox window",
-    "Keine Quests erkannt. Bereich prüfen.": "No quests detected. Check the area.",
     "Keine Verbindung zu GitHub ({error}).": "No connection to GitHub ({error}).",
     "Keine Versionshinweise angegeben.": "No release notes provided.",
     "Konnte nicht speichern: {error}": "Could not save: {error}",
     "Lade herunter …": "Downloading …",
     "Laufzeit": "Uptime",
     "Laufzeit {time}": "Running {time}",
-    "Leer = automatisch suchen": "Empty = search automatically",
     "Leistung": "Performance",
     "Lesezeit: {ms} ms": "Read time: {ms} ms",
     "Letzte 12 Stunden": "Last 12 hours",
@@ -263,10 +233,8 @@ EN: dict[str, str] = {
     "Nicht registriert: {keys}": "Not registered: {keys}",
     "Noch keine Quests gelesen.": "No quests read yet.",
     "Noch keine Versuche im gewählten Zeitraum": "No attempts in the selected period yet",
-    "Notiz": "Note",
     "Nur speichern": "Save only",
     "Oberfläche": "Interface",
-    "Ohne Screenshot erkannt.": "Detected without screenshot.",
     "Pause": "Pause",
     "Pause / Fortsetzen": "Pause / resume",
     "Pausiert": "Paused",
@@ -274,7 +242,6 @@ EN: dict[str, str] = {
     "Ping-Ziel": "Ping target",
     "Profil": "Profile",
     "Profile": "Profiles",
-    "Programm (*.exe);;Alle (*)": "Program (*.exe);;All (*)",
     "Programmfehler": "Program error",
     "Prüfe Download-Größe …": "Checking download size …",
     "Prüfen": "Check",
@@ -287,10 +254,7 @@ EN: dict[str, str] = {
     "Quest-Fortschritt nach Raid": "Quest progress after raid",
     "Quest: {title} · {old} → {new}/{total}": "Quest: {title} · {old} → {new}/{total}",
     "Quests": "Quests",
-    "Quests (Liste oben rechts)": "Quests (list at the top right)",
     "Quests (Stand vor diesem Raid)": "Quests (before this raid)",
-    "Quests lesen und melden": "Read and report quests",
-    "Quests testen": "Test quests",
     "Raid": "Raid",
     "Raid beendet": "Raid finished",
     "Raid: {name}": "Raid: {name}",
@@ -320,11 +284,9 @@ EN: dict[str, str] = {
     "Sparsam": "Economy",
     "Speicher-Warnung": "Memory warning",
     "Speichern": "Save",
-    "Sperrzeit zwischen Raids": "Cooldown between raids",
     "Spiel-Link (für das Bild)": "Game link (for the image)",
     "Sprache / Language": "Sprache / Language",
     "Später": "Later",
-    "Standard": "Default",
     "Start / Stopp": "Start / stop",
     "Start fehlgeschlagen": "Start failed",
     "Start nicht möglich": "Cannot start",
@@ -347,14 +309,7 @@ EN: dict[str, str] = {
     "Stoppen": "Stop",
     "Suchen": "Search",
     "Tagesbericht": "Daily report",
-    "Takt: ruhig": "Rate: calm",
-    "Takt: schnell (kurz vor Ende)": "Rate: fast (close to the end)",
     "Tesseract lässt sich nicht starten ({path}): {error}": "Tesseract cannot be started ({path}): {error}",
-    "Tesseract-OCR wurde nicht gefunden. Installiere es (Windows-Installer) oder trage den Pfad zur tesseract.exe unter "
-    "„Erkennung“ ein.":
-        "Tesseract OCR was not found. Install it (Windows installer) or enter the path to tesseract.exe under "
-        "“Detection”.",
-    "Test": "Test",
     "Test-Nachricht gesendet ✅": "Test message sent ✅",
     "Test-Nachricht gesendet ✓": "Test message sent ✓",
     "Test-Nachricht senden": "Send test message",
@@ -406,11 +361,9 @@ EN: dict[str, str] = {
     "Wellen gesamt": "Waves total",
     "Wellen pro Stunde": "Waves per hour",
     "Wellen/Std": "Waves/h",
-    "Wellenzähler („Wave 12/100“)": "Wave counter (“Wave 12/100”)",
     "Wellenzähler automatisch finden": "Find the wave counter automatically",
     "Wellenzähler finden": "Find the wave counter",
     "Wellenzähler gefunden": "Wave counter found",
-    "Wellenzähler testen": "Test wave counter",
     "Willkommen": "Welcome",
     "Willkommen 👋": "Welcome 👋",
     "Wird abgebrochen …": "Cancelling …",
@@ -420,10 +373,6 @@ EN: dict[str, str] = {
     "Wochenbericht": "Weekly report",
     "Wächter": "Guard",
     "Wächter-Werte dürfen nicht negativ sein.": "Guard values must not be negative.",
-    "Ziehe ein Rechteck um den Wellenzähler („Wave 12/100“) – mit etwas Rand.":
-        "Drag a rectangle around the wave counter (“Wave 12/100”) – with some margin.",
-    "Ziehe ein Rechteck um die ganze Quest-Liste (Titel und Fortschrittsbalken).":
-        "Drag a rectangle around the whole quest list (titles and progress bars).",
     "Zuletzt: {event}": "Last: {event}",
     "Zurück": "Back",
     "Zähler": "Counter",
@@ -436,13 +385,9 @@ EN: dict[str, str] = {
     "eigene Application ID aus dem Discord-Entwicklerportal": "your own Application ID from the Discord developer portal",
     "https://discord.com/api/webhooks/…": "https://discord.com/api/webhooks/…",
     "https://www.roblox.com/games/…": "https://www.roblox.com/games/…",
-    "tesseract.exe auswählen": "Select tesseract.exe",
     "unbekannte Taste „{key}“": "unknown key “{key}”",
     "unbekannter Modifier „{key}“ (erlaubt: Ctrl, Alt, Shift, Win)": "unknown modifier “{key}” (allowed: Ctrl, Alt, Shift, Win)",
-    "wie global": "as global",
-    "z. B. „Boss bei Welle 27“": "e.g. “Boss at wave 27”",
     "{attempts} Versuche · {waves} Wellen · Ø Welle {avg}": "{attempts} attempts · {waves} waves · avg. wave {avg}",
-    "{count} Quests ({ms} ms)": "{count} quests ({ms} ms)",
     "{count} Raids · {time}": "{count} raids · {time}",
     "{done} von {total} MB": "{done} of {total} MB",
     "{h} Std. {m} Min.": "{h} h {m} min",
@@ -462,11 +407,7 @@ EN: dict[str, str] = {
     "Überwachung gestoppt": "Monitoring stopped",
     "Überwachung starten": "Start monitoring",
     "Überwachung stoppen": "Stop monitoring",
-    "✅ Gelesen: {value}/{total}  ({ms} ms)": "✅ Read: {value}/{total}  ({ms} ms)",
     "✅ Quest abgeschlossen": "✅ Quest completed",
-    "✅ Tesseract {version} gefunden: {path}": "✅ Tesseract {version} found: {path}",
-    "❌ Kein Wellenzähler erkannt. Bereich neu wählen oder zuerst einen Raid starten.":
-        "❌ No wave counter detected. Select the area again or start a raid first.",
     "🎉 Wand durchbrochen: Welle {wave}": "🎉 Wall broken: wave {wave}",
     "🏆 Neuer Rekord: Welle {wave}": "🏆 New record: wave {wave}",
     "🔔 Test-Nachricht": "🔔 Test message",
@@ -513,12 +454,6 @@ EN: dict[str, str] = {
     "Nach jeder Meldung automatisch wieder ganz nach unten schieben":
         "Automatically move it back to the bottom after every message",
     "Quest-Fortschritt an Raid- und Uptime-Meldungen anhängen": "Attach quest progress to raid and uptime messages",
-    "z. B. 100 oder 100, 50": "e.g. 100 or 100, 50",
-    "Texterkennung (erweitert)": "Text recognition (advanced)",
-    "Debug-Bilder bei Lesefehlern speichern (max. 40, im Datenordner)":
-        "Save debug images on read errors (max. 40, in the data folder)",
-    "Tesseract ist im Programm enthalten. Einen eigenen Pfad brauchst du nur, wenn „Prüfen“ einen Fehler meldet.":
-        "Tesseract is included in the program. You only need your own path if “Check” reports an error.",
     "Hier erscheint nach dem Start der Wellenzähler aus dem Spiel.":
         "The wave counter from the game appears here once monitoring starts.",
     "Noch keine Ereignisse – Start, Raids, Alarme und Rejoins erscheinen hier.":
@@ -534,8 +469,6 @@ EN: dict[str, str] = {
         "Log, value history and settings without webhook and links – for troubleshooting",
     "Assistent": "Wizard",
     "Einrichtungsassistent erneut öffnen": "Open the setup wizard again",
-    "Ruhig alle {idle} s, kurz vor Raid-Ende alle {hot} s, Quests alle {quest} s.":
-        "Idle every {idle} s, close to the raid end every {hot} s, quests every {quest} s.",
     "Stillstand nach": "Stall after",
     "Kein Raid beendet seit": "No raid finished for",
     "Roblox-Speicher über": "Roblox memory above",
@@ -557,30 +490,15 @@ EN: dict[str, str] = {
     "Aktueller Raid: {name}": "Current raid: {name}",
     "Kein Raid gewählt": "No raid selected",
     "Noch keine Server gespeichert": "No servers saved yet",
-    "Welcher Raid gerade läuft – gilt sofort, auch für den laufenden Versuch. Raids anlegen und umbenennen unter "
-    "„Raids“.":
-        "Which raid is running – applies immediately, also to the current attempt. Add and rename raids under "
-        "“Raids”.",
     "– kein Raid gewählt –": "– no raid selected –",
     "Aktueller Raid": "Current raid",
     "Raids anlegen …": "Add raids …",
     "Umbenennen …": "Rename …",
-    "Raid-Einstellungen": "Raid settings",
-    "1 = Raid zählt ab 99/100. „wie global“ nutzt den Wert unter „Erkennung“.":
-        "1 = the raid counts from 99/100. “as global” uses the value under “Detection”.",
-    "{attempts} Versuche · Bestwelle {best} · Ø Endwelle {avg}": "{attempts} attempts · best wave {best} · avg. end wave {avg}",
-    "Raid-Einstellungen gespeichert ✓": "Raid settings saved ✓",
     "Als aktuellen Raid wählen": "Select as current raid",
     "Neuer Raid": "New raid",
     "Raid umbenennen": "Rename raid",
     "Neuer Name für „{name}“:": "New name for “{name}”:",
     "Umbenannt: {old} → {new} ✓": "Renamed: {old} → {new} ✓",
-    "Deine Raids als Liste. Welcher gerade läuft, wählst du auf der Startseite aus – Statistik, Discord und "
-    "Profilstatus nutzen dann diesen Namen.":
-        "Your raids as a list. You choose which one is running on the start page – statistics, Discord and the "
-        "profile status then use that name.",
-    "Noch keine Raids": "No raids yet",
-    "Lege mit „Neu …“ deinen ersten Raid an.": "Add your first raid with “New …”.",
     "Raid löschen": "Delete raid",
     "Raid „{name}“ aus der Liste löschen? Die bisherige Statistik bleibt erhalten.":
         "Delete raid “{name}” from the list? Its statistics are kept.",
@@ -657,18 +575,6 @@ EN: dict[str, str] = {
     "die du neu anheftest.":
         "One message in the channel that keeps updating, instead of many uptime messages.\n\nTip: right-click the "
         "status message → “Pin”. From then on it is only edited. “Resend” creates a new message that you pin again.",
-    "„Automatisch“ nutzt die Fenster-Aufnahme (Roblox darf verdeckt sein) und sonst den Bildschirm. Änderungen gelten "
-    "nach einem Neustart der Überwachung. Wechselst du zwischen Vollbild und Fenstermodus, die Bereiche neu auswählen.":
-        "“Automatic” uses window capture (Roblox may be covered), otherwise the screen. Changes apply after "
-        "restarting monitoring. If you switch between fullscreen and windowed mode, select the areas again.",
-    "Wähle als Bereich die ganze Quest-Liste mit Titeln und Fortschrittsbalken. Der Fortschritt erscheint auf der "
-    "Startseite und in den Discord-Meldungen.":
-        "Select the whole quest list with titles and progress bars. The progress appears on the start page and in "
-        "the Discord messages.",
-    "Doppelklick oder Rechtsklick auf einen Raid zum Umbenennen. Beim Umbenennen zieht die Statistik mit; beim Löschen "
-    "bleibt sie erhalten.":
-        "Double-click or right-click a raid to rename it. Renaming keeps the statistics with it; deleting keeps "
-        "them as they are.",
     "Der markierte Server gilt für „Server beitreten“ (Kopfzeile, Tray) und für Auto-Rejoin. Roblox startet ohne "
     "Browser; Teilen-Links und klassische Links funktionieren. Die Links liegen verschlüsselt nur auf diesem PC.\n\n"
     "Auto-Rejoin (Schalter in der Kopfzeile): Nach Verbindungsabbruch, Kick oder Absturz tritt das Programm nach 15 s "
@@ -683,11 +589,6 @@ EN: dict[str, str] = {
         "Turn on in the header. Every few minutes it briefly brings Roblox to the front, presses space and switches "
         "back. It waits while you type or click. Roblox must not be minimized.\n\nNote: macros are not allowed by the "
         "Roblox rules – use at your own risk.",
-    "Wie oft der Wellenzähler gelesen wird. „Ausgewogen“ passt für die meisten. Kurz vor dem Raid-Ende wird "
-    "automatisch schneller geprüft, damit 99/100 sicher erkannt wird. Die genauen Zeiten zeigt die Auswahl, wenn du "
-    "darüberfährst.":
-        "How often the wave counter is read. “Balanced” suits most people. Close to the raid end it checks faster "
-        "automatically so that 99/100 is reliably detected. Hover over the selection to see the exact times.",
     "Meldet Abstürze (Roblox-Prozess), Disconnects und Kicks (Roblox-Protokoll), einen stehenden Zähler, zu lange kein "
     "beendeter Raid und zu hohen Speicherverbrauch von Roblox. Was davon an Discord geht, stellst du unter "
     "„Meldungen“ ein.":
@@ -780,14 +681,6 @@ EN: dict[str, str] = {
     "Raid beendet · Welle {wave}/{total}": "Raid finished · wave {wave}/{total}",
     "Versuche pro Stunde": "Attempts per hour",
     "Raid beendet · #{count} · Welle {wave}/{total}": "Raid finished · #{count} · wave {wave}/{total}",
-    "Bereich großzügig wählen (z. B. die ganze obere Mitte) – das Programm findet „Wave x/100“ darin selbst, auch im "
-    "Fenstermodus.\n\nAuslöser 1 = Raid zählt ab 99/100 (auch 100/100). Bestätigungen = so oft wird der Wert frisch "
-    "gelesen, bevor der Raid zählt (2 empfohlen). Sperrzeit = Mindestabstand zwischen zwei gezählten Raids.\n\n"
-    "Endet ein Raid vor Welle 100, zählt er ganz normal mit der erreichten Welle.":
-        "Choose the area generously (e.g. the whole upper middle) – the program finds “Wave x/100” in it itself, "
-        "also in windowed mode.\n\nTrigger 1 = the raid counts from 99/100 (100/100 too). Confirmations = how often "
-        "the value is read fresh before the raid counts (2 recommended). Cooldown = minimum time between two counted "
-        "raids.\n\nIf a raid ends before wave 100, it counts normally with the wave reached.",
     "Überschrift anklicken sortiert, Spaltenränder ziehen ändert die Breite. ~ = geschätzte Dauer.":
         "Click a header to sort, drag column borders to change the width. ~ = estimated duration.",
     "Ø {dur} pro Versuch  ·  {spw} pro Welle  ·  {aph} Versuche/Std.  ·  {all} Versuche insgesamt":
@@ -971,10 +864,6 @@ EN: dict[str, str] = {
     "Kompakt": "Compact",
     "Nachrichtenstil": "Message style",
     "{waves} Wellen/Std": "{waves} waves/h",
-    "Ausführlich: Kennzahlen als Felder und der Screenshot groß unter der Meldung.\n\nKompakt: eine ruhige Zeile mit "
-    "den wichtigsten Werten, der Screenshot klein rechts – auch der Live-Status wird schlanker.":
-        "Detailed: figures as fields and the screenshot large below the message.\n\nCompact: one calm line with the "
-        "key values, the screenshot small on the right – the live status gets slimmer too.",
     "Nur im Design „Kürbisnacht“: Ab und zu lugt kurz ein gruseliges Gesicht vom unteren Fensterrand hervor – "
     "höchstens einmal pro Stunde, nur bei offenem Fenster. Ein Klick darauf lässt es verschwinden.":
         "Only in the “Pumpkin Night” design: now and then a creepy face briefly peeks up from the bottom edge of the "
@@ -992,4 +881,28 @@ EN: dict[str, str] = {
     "Hintergrundbild wählen": "Choose background image",
     "Bilder (*.png *.jpg *.jpeg *.webp *.bmp)": "Images (*.png *.jpg *.jpeg *.webp *.bmp)",
     "Das Bild konnte nicht geladen werden: {error}": "The image could not be loaded: {error}",
+    # 0.9.0: Erkennung fest eingebaut, Raids unter Einstellungen
+    "Takt: alle {interval} s": "Rate: every {interval} s",
+    "Wellenzähler alle {interval} s, Quests alle {quest} s.": "Wave counter every {interval} s, quests every {quest} s.",
+    "Die Raids, die du auf der Startseite auswählen kannst. Doppelklick oder Rechtsklick zum Umbenennen – die "
+    "Statistik zieht mit. Beim Löschen bleibt die Statistik erhalten.":
+        "The raids you can pick on the home page. Double-click or right-click to rename – the statistics follow. "
+        "Deleting keeps the statistics.",
+    "Noch keine Raids – mit „Neu …“ anlegen.": "No raids yet – create one with “New …”.",
+    "{count} Versuche": "{count} attempts",
+    "Die Texterkennung (Tesseract) fehlt. Bitte das Programm neu installieren.":
+        "Text recognition (Tesseract) is missing. Please reinstall the program.",
+    "Welcher Raid gerade läuft – gilt sofort, auch für den laufenden Versuch. Raids anlegen und umbenennen unter "
+    "Einstellungen → Roblox.":
+        "Which raid is running – applies immediately, including the current attempt. Create and rename raids under "
+        "Settings → Roblox.",
+    "Wie oft der Wellenzähler gelesen wird – gleichmäßig, auch kurz vor Raid-Ende. „Ausgewogen“ (alle 0,5 s) "
+    "erkennt 100/100 sicher und passt für die meisten. Die genauen Zeiten zeigt die Auswahl, wenn du darüberfährst.":
+        "How often the wave counter is read – evenly, also shortly before the raid ends. “Balanced” (every 0.5 s) "
+        "reliably catches 100/100 and suits most people. Hover over the selection for exact times.",
+    "Ausführlich: Kennzahlen als einzelne Felder.\n\nKompakt: eine ruhige Zeile mit den wichtigsten Werten – auch "
+    "der Live-Status wird schlanker.":
+        "Detailed: figures as separate fields.\n\nCompact: one calm line with the key values – the live status gets "
+        "slimmer too.",
+    " (später unter „Meldungen“)": " (later under “Alerts”)",
 }

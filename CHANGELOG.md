@@ -4,6 +4,23 @@ Neueste Version oben. Kurze Stichpunkte, keine Erklärungen (die stehen im Progr
 Der Abschnitt einer Version wird beim Veröffentlichen automatisch als Versionshinweis übernommen
 (`tools/release_notes.py`) und ist im Programm unter Einstellungen → Updates → „Alle Versionen“ lesbar.
 
+## 0.9.0
+
+### 🔧 Verbessert
+- Erkennung fest eingebaut – keine Bereiche mehr einzustellen
+- Immer Fenster-Aufnahme, Raid-Ende bei 100/100
+- Gleichmäßiger Takt (alle 0,5 s) statt „heißem“ Takt
+- Größerer Quest-Bereich: alle Quests samt Fortschritt
+- Raids verwalten unter Einstellungen → Roblox
+- Nur noch vier Seiten in der Symbolleiste
+- Alle Verbesserungen aus 0.8.1-beta.1
+
+### 🗑️ Entfernt
+- Seite „Erkennung“ (Bereiche, Auslöser, Bestätigungen)
+- Seite „Raids“ mit Auslöser und Notiz je Raid
+- Screenshots bei Raid-Meldungen
+- Alte Funktionen gibt es weiter in 0.8.1 und älter
+
 ## 0.8.1-beta.1
 
 ### 🔧 Verbessert

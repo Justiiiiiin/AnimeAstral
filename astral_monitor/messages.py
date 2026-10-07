@@ -85,7 +85,7 @@ def build_message(settings: Settings, kind: str, title: str, color: int,
                   description: str | None = None,
                   image: tuple | None = None) -> tuple[dict, list]:
     """Gibt (payload, files) zurück. `fields`: (Name, Wert, inline). Eine eigene Farbe je Ereignis hat Vorrang.
-    Stil „kompakt“: die ersten Werte als eine ruhige Zeile, Screenshot klein rechts statt groß darunter."""
+    Stil „kompakt“: die ersten Werte als eine ruhige Zeile (ein Bild, z. B. beim Alarm, klein rechts)."""
     compact = settings.message_style == "compact"
     if compact and fields:
         values = [f"{n} {' '.join(str(v).split())}" for n, v, inline in fields if inline and v][:3]   # „Dauer 2:51“

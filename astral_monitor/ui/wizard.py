@@ -266,7 +266,7 @@ class SetupWizard(QDialog):
             lay = QHBoxLayout(row)
             lay.setContentsMargins(0, 0, 0, 0)
             lay.addWidget(chip("✓" if ok else "–", "ok" if ok else ""))
-            lay.addWidget(label(text if ok else text + tr(" (später unter „Erkennung“ / „Meldungen“)")))
+            lay.addWidget(label(text if ok else text + tr(" (später unter „Meldungen“)")))
             lay.addStretch(1)
             self.summary.addWidget(row)
 

@@ -61,10 +61,10 @@ nutzen das). Dort: `settings.json`, `raid_history.csv`, `monitor.log`, `profiles
 | `engine.py` | Zentrale Überwachungsschleife (eigener Thread), hält Zustand (`EngineState`), verbindet alle Teile, Ereignis-Queue zur Oberfläche |
 | `capture.py` | Bildquellen: `WgcSource` (Windows Graphics Capture über Paket `windows-capture`, funktioniert bei verdecktem Fenster) und `ScreenSource` (Fallback). Liefert nur angeforderte Ausschnitte |
 | `wave.py` | Wellenzähler **finden und lesen**: sucht „Wave x/y“ im Suchbereich selbst (Tesseract mit Wortpositionen), merkt sich den Ort, liest dann nur einen engen Bereich; Zwischenspeicher je Bild |
-| `tracker.py` | Zustandsautomat der Wellen: Lauf-Start/-Ende, Neustart-Erkennung (2 passende Lesungen), **Plausibilitätsfilter** (unmögliche Sprünge nach oben werden ignoriert), Auslöser bei 99/100 |
+| `tracker.py` | Zustandsautomat der Wellen: Lauf-Start/-Ende, Neustart-Erkennung (2 passende Lesungen), **Plausibilitätsfilter** (unmögliche Sprünge nach oben werden ignoriert), Raid-Ende bei 100/100 (fest) |
 | `quests.py` | Quest-Liste (Titel + Fortschritt) per OCR, `QuestTracker` in `tracker.py` |
 | `stats.py` | `StatsStore` (CSV `raid_history.csv`), alle Kennzahlen, Verteilung, Trend, Rekorde |
-| `profiles.py` | Raids als Namensliste (anlegen, umbenennen, löschen, Notiz/Auslöser je Raid) |
+| `profiles.py` | Raids als Namensliste (anlegen, umbenennen, löschen) – seit 0.9.0 ohne Einstellungen je Raid |
 | `guard.py` | Wächter: Roblox-Prozess, Stillstand, RAM/CPU (Disconnects: `rejoin.py`) |
 | `status.py` | **Live-Statusnachricht**: eine Discord-Nachricht, die per `PATCH` bearbeitet wird; „unten neu senden“ = `DELETE` + `POST` |
 | `discord_client.py`, `messages.py` | Versand (eigener Thread, Wiederholung bei 429) und Embeds |
@@ -95,6 +95,15 @@ Wichtige Entwurfsentscheidungen:
 - **Erklärtexte gehören in ⓘ** (`Card(title, info)`, `InfoButton`), nicht als Fließtext auf die Seite;
   auf den Seiten nur Bedienelemente und Statuszeilen (Wunsch des Eigentümers: weniger überladen).
 - **Design „Nebula“** (seit 0.7.0, Standard): aus dem Logo abgeleitet; Layout-Flag `rail` = schmale Symbolleiste (76 px, Logo oben, Namen als Tooltip), Status als Pille in der Kopfzeile, Hinweise oben (`top_toast`). Vorlage = Astral + Überschreibungen (`_NEBULA`). Logo: `tools/make_icon.py`.
+- **Seit 0.9.0 – Erkennung ohne Einstellungen** (Wunsch des Eigentümers): keine Seiten „Erkennung“ und „Raids“
+  mehr (Symbolleiste: Überwachung, Statistik, Meldungen, Einstellungen; `PAGE_*`-Konstanten in `main_window.py`).
+  `settings.fix_detection()` setzt beim Laden immer die festen Werte (`FIXED_DETECTION`: Raid-Ende bei 100/100 mit
+  einer Lesung, Fenster-Aufnahme, Standardbereiche) – die Felder bleiben nur für Downgrades in der Datei.
+  Bereiche kommen aus `astral_monitor/regions.json` (fehlt sie: `DEFAULT_*_ROI`). **Kein „heißer“ Takt** mehr:
+  `PRESETS[…]["interval"]` (Standard 0,5 s; 100/100 steht bis ~1 s da). **Raid-Meldungen ohne Screenshot.**
+  Entwickler-Werkzeug (privat, `_dev/`, per `.git/info/exclude` nie im Repo): `_dev/calibrate.py` zeigt das
+  Roblox-Fenster mit den Bereichen, legt sie fest und schreibt `regions.json`; Bildbibliothek (`_dev/library/`,
+  Raids/Upgrade-Shops mit Namen und Position) als Vorarbeit für die Automatik in 1.0.0.
 - **Seit 0.8.0:** Einstellungen mit Reitern (Abschnitte = `section()`-Überschriften, `_assign_groups`) und Suche;
   Saison-Designs mit Deko (`ui/seasonal.py`, gemalt von `ui/backdrop.py`, Karten leicht durchscheinend über
   `cardGlass`-Tokens, 15 Bilder/s nur bei sichtbarem Fenster); Kürbisnacht-Überraschung (`ui/spooky.py`, höchstens
@@ -138,7 +147,7 @@ Wichtige Entwurfsentscheidungen:
     gemessen 178 MB → dauerhaft ~50 MB (eigener Anteil/USS ~36 MB). Die Anzeige „Dieses Programm“ zeigt den Working Set.
   - Update-Downloads werden beim Start gelöscht (`updater.cleanup_downloads`), sonst blieben ~60 MB liegen.
 - **Raid-Statistik je Raid oder gesamt** (Auswahlfeld „Alle Raids (gesamt)“). Raids sind nur noch **Namen**
-  (`profiles.py`, Ordner mit `profile.json`: Notiz, eigener Auslöser). Der aktuelle Raid wird auf der Startseite per
+  (`profiles.py`; verwaltet unter Einstellungen → Roblox, `ui/raids_card.py`). Der aktuelle Raid wird auf der Startseite per
   Dropdown gewählt (`settings.current_raid`, `Engine.set_current_raid` – gilt sofort, auch für den laufenden Versuch).
   Umbenennen (`Engine.rename_raid`) benennt Ordner, CSV-Verlauf und Auswahl mit um; Löschen behält die Statistik.
 - **Server-Favoriten** (`settings.server_favorites`, max. 20; `private_server_link` = der markierte, gilt für

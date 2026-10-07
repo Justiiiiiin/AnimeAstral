@@ -107,8 +107,8 @@ class AlertsPage(QWidget):
             self.style_group.addButton(btn)
             style_row.addWidget(btn)
         style_row.addWidget(InfoButton(tr(
-            "Ausführlich: Kennzahlen als Felder und der Screenshot groß unter der Meldung.\n\nKompakt: eine ruhige "
-            "Zeile mit den wichtigsten Werten, der Screenshot klein rechts – auch der Live-Status wird schlanker.")))
+            "Ausführlich: Kennzahlen als einzelne Felder.\n\nKompakt: eine ruhige Zeile mit den wichtigsten "
+            "Werten – auch der Live-Status wird schlanker.")))
         style_row.addStretch(1)
         grid.addWidget(label(tr("Nachrichtenstil")), 4, 0)
         grid.addLayout(style_row, 4, 1, 1, 2)

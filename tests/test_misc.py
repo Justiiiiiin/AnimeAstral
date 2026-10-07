@@ -221,3 +221,16 @@ class NewDotsTests(unittest.TestCase):
             newdots.__version__ = old
             del newdots.NEW_FEATURES["9.9.9"]
         self.assertEqual(newdots.pending([]), set(newdots.NEW_FEATURES.get(old, ())))
+
+
+class FixedDetectionTests(unittest.TestCase):
+    def test_old_custom_values_are_replaced(self):
+        from astral_monitor.settings import DEFAULT_QUEST_ROI, DEFAULT_WAVE_ROI, PRESETS
+        s = Settings.from_dict({"wave_roi": [0.4, 0.0, 0.5, 0.05], "quest_roi": [0.9, 0.1, 1.0, 0.2],
+                                "trigger_offset": 3, "confirm_reads": 4, "capture_mode": "screen",
+                                "tesseract_path": "C:/x/tesseract.exe", "settings_version": 8})
+        self.assertEqual(s.wave_roi.as_list(), DEFAULT_WAVE_ROI.as_list())
+        self.assertEqual(s.quest_roi.as_list(), DEFAULT_QUEST_ROI.as_list())
+        self.assertEqual((s.trigger_offset, s.confirm_reads, s.capture_mode, s.tesseract_path), (0, 1, "auto", ""))
+        self.assertTrue(all("interval" in p and "hot" not in p for p in PRESETS.values()))   # kein „heißer“ Takt
+        self.assertIsNone(Settings().validate_detection())

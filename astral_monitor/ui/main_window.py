@@ -27,12 +27,16 @@ from ..automonitor import AutoMonitor, phase_of
 from ..settings import Settings, clean_favorites, is_valid_webhook
 from . import theme
 from .page_alerts import AlertsPage
-from .page_detect import DetectPage
 from .page_monitor import MonitorPage
-from .page_raids import RaidsPage
 from .page_settings import SettingsPage
 from .page_stats import StatsPage
 from .widgets import ToggleSwitch, label, scroll_page
+
+
+# Seiten in der Symbolleiste (seit 0.9.0 ohne „Raids“ und „Erkennung“: Raids stehen unter Einstellungen → Roblox,
+# die Erkennung ist fest eingebaut)
+PAGE_MONITOR, PAGE_STATS, PAGE_ALERTS, PAGE_SETTINGS = range(4)
+PAGE_COUNT = 4
 
 
 class PageList:
@@ -42,7 +46,7 @@ class PageList:
 
     def __init__(self, build) -> None:
         self._build = build
-        self._pages: list = [None] * 6
+        self._pages: list = [None] * PAGE_COUNT
 
     def __len__(self) -> int:
         return len(self._pages)
@@ -174,13 +178,13 @@ class MainWindow(QMainWindow):
         side.addWidget(self.rail_logo)
 
         self.stack = QStackedWidget()
-        self._page_classes = [MonitorPage, StatsPage, AlertsPage, RaidsPage, DetectPage, SettingsPage]
+        self._page_classes = [MonitorPage, StatsPage, AlertsPage, SettingsPage]
         self._hotkey_status: Optional[tuple] = None
         self.pages = PageList(self._build_page)
-        names = [tr("Überwachung"), tr("Statistik"), tr("Meldungen"), tr("Raids"), tr("Erkennung"), tr("Einstellungen")]
+        names = [tr("Überwachung"), tr("Statistik"), tr("Meldungen"), tr("Einstellungen")]
         self.nav = QButtonGroup(self)
         self.nav.setExclusive(True)
-        self._nav_icons = ["monitor", "stats", "alerts", "raids", "detect", "settings"]
+        self._nav_icons = ["monitor", "stats", "alerts", "settings"]
         self._nav_names = names
         for i, name in enumerate(names):
             btn = QPushButton(name)
@@ -218,7 +222,7 @@ class MainWindow(QMainWindow):
         self.gear.setToolTip(tr("Einstellungen"))
         self.gear.setCursor(Qt.CursorShape.PointingHandCursor)
         theme.track(self.gear, lambda o, f: o.setIconSize(QSize(round(22 * f), round(22 * f))))
-        self.gear.clicked.connect(lambda: self.nav.button(5).click())
+        self.gear.clicked.connect(lambda: self.nav.button(PAGE_SETTINGS).click())
         self.notes_btn = QToolButton()                 # Notizbuch (nur mit Beta-Updates)
         self.notes_btn.setObjectName("gear")
         self.notes_btn.setToolTip(tr("Notizbuch (Beta)"))
@@ -302,7 +306,7 @@ class MainWindow(QMainWindow):
             old.deleteLater()
         mark_glass(wrapper)
         page.load(self.engine.settings)
-        if index == 5:
+        if index == PAGE_SETTINGS:
             if self._hotkey_status is not None:
                 page.set_hotkey_status(*self._hotkey_status)
             if hasattr(page, "show_profile"):
@@ -380,8 +384,9 @@ class MainWindow(QMainWindow):
         if not self.engine.settings.wizard_done:
             return
         for i in range(self.nav.buttons().__len__()):
-            self.new_dots.attach(f"nav:{i}", self.gear if i == 5 and self.gear.isVisible() else self.nav.button(i))
-        settings_page = self.pages.built(5)               # Reiter-Punkte sonst beim Bauen der Seite
+            self.new_dots.attach(f"nav:{i}", self.gear if i == PAGE_SETTINGS and self.gear.isVisible()
+                                 else self.nav.button(i))
+        settings_page = self.pages.built(PAGE_SETTINGS)               # Reiter-Punkte sonst beim Bauen der Seite
         if settings_page is not None:
             for btn in settings_page.tab_group.buttons():
                 self.new_dots.attach(f"tab:{btn.property('group')}", btn)
@@ -432,8 +437,8 @@ class MainWindow(QMainWindow):
         if pix is not None:
             self.avatar.setPixmap(pix)
             self.avatar.setToolTip(f"{info.get('display', '')} (@{info.get('name', '')})")
-        if self.pages.built(5) is not None:
-            self.pages.built(5).show_profile()
+        if self.pages.built(PAGE_SETTINGS) is not None:
+            self.pages.built(PAGE_SETTINGS).show_profile()
 
     def _refresh_icons_once(self) -> None:
         """Nach jedem Update einmal: Windows-Symbolspeicher erneuern (sonst bleibt das alte Logo an Verknüpfungen)."""
@@ -477,7 +482,7 @@ class MainWindow(QMainWindow):
         s = self.engine.settings
         if not s.private_server_link:
             self.show_from_tray()
-            self.nav.button(5).click()                  # Einstellungen öffnen
+            self.nav.button(PAGE_SETTINGS).click()                  # Einstellungen öffnen
             QMessageBox.information(self, tr("Privater Server"),
                                     tr("Bitte zuerst unter Einstellungen → Privater Server einen Server anlegen."))
             return
@@ -512,8 +517,8 @@ class MainWindow(QMainWindow):
             s.save()
         except OSError as exc:
             QMessageBox.critical(self, tr("Speichern"), tr("Konnte nicht speichern: {error}", error=exc))
-        if self.pages.built(5) is not None:
-            self.pages.built(5).load_servers(s)
+        if self.pages.built(PAGE_SETTINGS) is not None:
+            self.pages.built(PAGE_SETTINGS).load_servers(s)
         self._update_join_btn()
 
     def _update_join_btn(self) -> None:
@@ -534,7 +539,7 @@ class MainWindow(QMainWindow):
 
     def _manage_servers(self) -> None:
         self.show_from_tray()
-        self.nav.button(5).click()
+        self.nav.button(PAGE_SETTINGS).click()
 
     # --------------------------------------------------------------- Raid-Auswahl
     def select_raid(self, name: str) -> None:
@@ -552,6 +557,8 @@ class MainWindow(QMainWindow):
         self.pages[0].reload_raids()
         if self.pages.built(1) is not None:
             self.pages.built(1).mark_dirty()
+        if self.pages.built(PAGE_SETTINGS) is not None:
+            self.pages.built(PAGE_SETTINGS).raids.refresh_list()
 
     # --------------------------------------------------------------- Anti-AFK
     def set_anti_afk(self, on: bool) -> None:
@@ -630,7 +637,7 @@ class MainWindow(QMainWindow):
         """Seitenwechsel; im Design „Astral“ mit kurzer Überblendung (danach ohne Effekt – kostet sonst Leistung)."""
         self.pages[index]                                  # beim ersten Öffnen bauen
         self.stack.setCurrentIndex(index)
-        self.gear.setChecked(index == 5)
+        self.gear.setChecked(index == PAGE_SETTINGS)
         self.new_dots.seen(f"nav:{index}")
         if not theme.animations():
             return
@@ -659,7 +666,7 @@ class MainWindow(QMainWindow):
             self.season_mark.setVisible(info.get("decor") == "halloween")
         for i, key in enumerate(self._nav_icons):
             self.nav.button(i).setIcon(theme.glyph_icon(key) if info["icons"] else QIcon())
-        self.nav.button(5).setVisible(not info["gear"])
+        self.nav.button(PAGE_SETTINGS).setVisible(not info["gear"])
         self.gear.setVisible(info["gear"])
         self.gear.setIcon(theme.glyph_icon("settings", 22))
         self.notes_btn.setIcon(theme.glyph_icon("notes", 22))
@@ -829,8 +836,8 @@ class MainWindow(QMainWindow):
         else:
             self._hotkey_status = (tr("Aktiv: {toggle} (Start/Stopp), {pause} (Pause), {status} (Status neu senden)",
                                       toggle=s.hotkey_toggle, pause=s.hotkey_pause, status=s.hotkey_status), True)
-        if self.pages.built(5) is not None:                # sonst beim Bauen der Seite
-            self.pages.built(5).set_hotkey_status(*self._hotkey_status)
+        if self.pages.built(PAGE_SETTINGS) is not None:                # sonst beim Bauen der Seite
+            self.pages.built(PAGE_SETTINGS).set_hotkey_status(*self._hotkey_status)
 
     # --------------------------------------------------------------- Einstellungen übertragen
     def export_settings(self) -> None:

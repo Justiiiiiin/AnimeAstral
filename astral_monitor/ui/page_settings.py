@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (QButtonGroup, QCheckBox, QHBoxLayout, QLabel, QLi
                                QMenu, QMessageBox, QPushButton, QToolButton, QVBoxLayout, QWidget)
 
 from .. import app_paths, roblox_join, storage
-from ..i18n import LANGUAGES, tr
+from ..i18n import LANGUAGES, dec, tr
 from ..settings import MAX_FAVORITES, PRESETS
 from ..version import __version__
 from . import theme
@@ -132,19 +132,22 @@ class SettingsPage(QWidget):
         self.profile_state = label("", "small", wrap=True)
         prof.body.addWidget(self.profile_state)
         prof.body.addStretch(1)
-        right = QWidget()
-        rcol = QVBoxLayout(right)
-        rcol.setContentsMargins(0, 0, 0, 0)
-        theme.track_spacing(rcol, 14)
-        rcol.addWidget(afk)
-        rcol.addWidget(prof)
-        root.addLayout(columns(ps, right))
+        from .raids_card import RaidsCard
+        self.raids = RaidsCard(main)
+        left, right = QWidget(), QWidget()
+        for col, cards in ((left, (ps, self.raids)), (right, (afk, prof))):
+            lay = QVBoxLayout(col)
+            lay.setContentsMargins(0, 0, 0, 0)
+            theme.track_spacing(lay, 14)
+            for card in cards:
+                lay.addWidget(card)
+        root.addLayout(columns(left, right))
 
         # ------------------------------------------------------------------ Überwachung
         root.addWidget(section(tr("Überwachung")))
         perf = Card(tr("Leistung"),
-                    tr("Wie oft der Wellenzähler gelesen wird. „Ausgewogen“ passt für die meisten. Kurz vor dem "
-                       "Raid-Ende wird automatisch schneller geprüft, damit 99/100 sicher erkannt wird. Die genauen "
+                    tr("Wie oft der Wellenzähler gelesen wird – gleichmäßig, auch kurz vor Raid-Ende. "
+                       "„Ausgewogen“ (alle 0,5 s) erkennt 100/100 sicher und passt für die meisten. Die genauen "
                        "Zeiten zeigt die Auswahl, wenn du darüberfährst."))
         pg = form_grid()
         self.perf = ComboBox()
@@ -778,8 +781,8 @@ class SettingsPage(QWidget):
 
     def _show_preset(self) -> None:
         preset = PRESETS.get(self.perf.currentData(), PRESETS["balanced"])
-        self.perf.setToolTip(tr("Ruhig alle {idle} s, kurz vor Raid-Ende alle {hot} s, Quests alle {quest} s.",
-                                  idle=f"{preset['idle']:g}", hot=f"{preset['hot']:g}", quest=f"{preset['quest']:g}"))
+        self.perf.setToolTip(tr("Wellenzähler alle {interval} s, Quests alle {quest} s.",
+                                  interval=dec(f"{preset['interval']:g}"), quest=f"{preset['quest']:g}"))
 
     # ------------------------------------------------------------------ Speicher
     def refresh_storage(self) -> None:

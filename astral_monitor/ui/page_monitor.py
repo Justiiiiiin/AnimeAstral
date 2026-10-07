@@ -57,7 +57,7 @@ class MonitorPage(QWidget):
         self.raid_combo = ComboBox()
         theme.track_min_width(self.raid_combo, 220)
         self.raid_combo.setToolTip(tr("Welcher Raid gerade läuft – gilt sofort, auch für den laufenden Versuch. "
-                                      "Raids anlegen und umbenennen unter „Raids“."))
+                                      "Raids anlegen und umbenennen unter Einstellungen → Roblox."))
         self.raid_combo.activated.connect(self._raid_chosen)
         raid_box.addWidget(self.raid_combo)
         head.addLayout(raid_box)
@@ -106,10 +106,9 @@ class MonitorPage(QWidget):
         self.wave_bar.setRange(0, 100)
         live.body.addWidget(self.wave_bar)
         info = QHBoxLayout()
-        self.i_trigger = label("", "small")
         self.i_read = label("", "small")
         self.i_mode = label("", "small")
-        for lbl in (self.i_trigger, self.i_read, self.i_mode):
+        for lbl in (self.i_read, self.i_mode):
             info.addWidget(lbl, 1)
         live.body.addLayout(info)
         self.status_line = label("", "muted")
@@ -158,7 +157,7 @@ class MonitorPage(QWidget):
         name = self.raid_combo.currentData()
         if name is None:                               # „Raids anlegen …“
             self.reload_raids()
-            self.main.nav.button(3).click()
+            self.main.nav.button(3).click()               # Einstellungen (Reiter „Roblox“: Meine Raids)
             return
         self.main.select_raid(name)
 
@@ -238,10 +237,8 @@ class MonitorPage(QWidget):
             self._wave_color = color
             self.wave.setStyleSheet(f"color: {color};" if color else "")
             self.wave.setToolTip(tr("Bestwelle: {wave}", wave=self._best) if self._best else "")
-        total = st.wave_total or max(s.allowed_totals_list() or [100])
-        self.i_trigger.setText(tr("Auslöser: ab {wave}/{total}", wave=total - s.trigger_offset, total=total))
         self.i_read.setText(tr("Lesezeit: {ms} ms", ms=f"{st.read_ms:.0f}"))
-        self.i_mode.setText(tr("Takt: schnell (kurz vor Ende)") if st.hot else tr("Takt: ruhig"))
+        self.i_mode.setText(tr("Takt: alle {interval} s", interval=dec(f"{s.preset()['interval']:g}")))
         self.status_line.setText(tr(st.info))
         raid_text = tr("Raid: {name}", name=st.profile or "–")
         if st.profile and now >= self._next_wall:

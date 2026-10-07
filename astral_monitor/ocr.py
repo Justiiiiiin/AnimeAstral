@@ -166,8 +166,7 @@ class OcrEngine:
         cmd = find_tesseract(tesseract_path)
         if not cmd:
             raise OcrError(
-                tr("Tesseract-OCR wurde nicht gefunden. Installiere es (Windows-Installer) "
-                "oder trage den Pfad zur tesseract.exe unter „Erkennung“ ein.")
+                tr("Die Texterkennung (Tesseract) fehlt. Bitte das Programm neu installieren.")
             )
         pytesseract.pytesseract.tesseract_cmd = cmd
         bundled = bundled_dir()

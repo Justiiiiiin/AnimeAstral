@@ -8,6 +8,7 @@ import threading
 import time
 from dataclasses import dataclass
 from logging.handlers import RotatingFileHandler
+from pathlib import Path
 from typing import Callable, Optional
 
 import numpy as np
@@ -19,7 +20,6 @@ from .i18n import N_, dec, tr
 from .capture import CaptureError, FrameSource, GrabResult, create_source
 from .discord_client import DiscordSender
 from .guard import Guard
-from .imaging import encode_jpeg
 from .ocr import OcrEngine, OcrError
 from .profiles import ProfileStore
 from .presence import PresenceUpdater
@@ -32,7 +32,6 @@ from .wave import WaveReader
 
 log = logging.getLogger("engine")
 
-HOT_MARGIN = 5              # „heiß" = so viele Wellen vor dem Auslöser
 BURST_SECONDS = 30.0        # so lange nach einem Raid wird auf Quest-Änderungen gewartet
 BURST_INTERVAL = 4.0
 
@@ -52,7 +51,6 @@ class EngineState:
     wave_total: Optional[int] = None
     info: str = N_("Gestoppt")              # Anzeige über tr()
     read_ms: float = 0.0
-    hot: bool = False
     profile: str = ""                        # gewählter Raid (Startseite)
     roblox_alive: Optional[bool] = None
     roblox_ram_mb: Optional[float] = None
@@ -474,18 +472,12 @@ class Engine:
 
     def _frame_interval_ms(self) -> int:
         """Bildabstand der Fenster-Aufnahme: halber „heißer“ Takt, damit kurz vor Raid-Ende kein Bild fehlt."""
-        return int(min(250, max(50, self.settings.preset()["hot"] * 1000 / 2)))
+        return int(min(250, max(50, self.settings.preset()["interval"] * 1000 / 2)))
 
     def _interval(self) -> float:
-        preset = self.settings.preset()
-        value = self.tracker.last_value
-        if value is None:
-            self.state.hot = False
-            return preset["idle"] * (1.5 if self.state.wave_value is None else 1.0)
-        total = self.tracker.total or max(self.settings.allowed_totals_list() or [100])
-        hot = value >= total - self.settings.trigger_offset - HOT_MARGIN
-        self.state.hot = hot
-        return preset["hot"] if hot else preset["idle"]
+        """Gleichmäßiger Takt (seit 0.9.0 kein schnellerer „heißer“ Takt mehr); ohne sichtbaren Zähler etwas ruhiger."""
+        interval = self.settings.preset()["interval"]
+        return interval * (1.5 if self.state.wave_value is None and self.tracker.last_value is None else 1.0)
 
     def _tick(self, now: float) -> None:
         s = self.settings
@@ -559,7 +551,6 @@ class Engine:
         run = self.tracker.run
         if run is None:
             self.state.profile = self.settings.current_raid
-            self.tracker.offset = self.settings.trigger_offset      # Profil-Auslöser nur während des Laufs
         elif run.profile is None and self.settings.current_raid:
             self._set_profile(run, self.settings.current_raid)     # neuer Versuch: gewählter Raid
         self._trace_wave(reading, now)
@@ -612,38 +603,16 @@ class Engine:
     def _set_profile(self, run, name: str) -> None:
         run.profile = name or None
         self.state.profile = name
-        offset = self.profile_store.settings(name).get("trigger_offset") if name else None
-        self.tracker.offset = offset if isinstance(offset, int) and 0 <= offset <= 5 else self.settings.trigger_offset
 
     def _on_candidate(self, now: float) -> None:
-        """Auslöser gesehen: mit frischen Bildern bestätigen und Screenshot aufnehmen."""
-        s = self.settings
-        reads = max(1, s.confirm_reads)
-        full: Optional[np.ndarray] = None
-        if reads == 1:
-            res = self._source.grab([], True, 0.8)
-            full = res.full if res else None
-        else:
-            for i in range(reads - 1):
-                res = self._source.grab([s.wave_roi], i == reads - 2, 0.8)
-                if res is None:
-                    return
-                again = self.wave_reader.read(res.crops[0])
-                if not again or again.value < again.total - self.tracker.offset:
-                    self._debug_save("bestaetigung_fehlgeschlagen", res.crops[0])
-                    return
-                if res.full is not None:
-                    full = res.full
-
-        info = self.tracker.confirm(now)
-        self._finish_run(info, now, full)
+        """100/100 gesehen: Raid zählt (eine Lesung genügt – das Bild steht bis zu ~1 s da)."""
+        self._finish_run(self.tracker.confirm(now), now)
 
     def _on_run_end(self, info: dict, now: float) -> None:
-        """Raid ohne bestätigten Auslöser beendet (vor Welle 100 aufgehört, oder 99/100 zu spät gesehen) –
-        zählt genauso wie jeder andere Raid, nur ohne Screenshot."""
-        self._finish_run(info, now, None, late=info["result"] == "ok_late")
+        """Raid ohne gesehenes 100/100 beendet (früher aufgehört oder 100/100 verpasst) – zählt genauso."""
+        self._finish_run(info, now)
 
-    def _finish_run(self, info: dict, now: float, full: Optional[np.ndarray], late: bool = False) -> None:
+    def _finish_run(self, info: dict, now: float) -> None:
         """Jedes Raid-Ende: eintragen, melden, Rekord/Wand prüfen. Einen „Fehlversuch“ gibt es nicht – in Anime
         Astral kommt man nur unterschiedlich weit, jede Welle gibt Belohnungen."""
         cycle = None if self._last_ok is None else now - self._last_ok
@@ -652,8 +621,6 @@ class Engine:
         duration, note = self._estimate(info)
         prev_best, prev_count = self.stats.best_wave(raid or None), self.stats.attempts(raid or None)
         wall = self.stats.wall(raid) if raid else None
-        if late:
-            note = "; ".join(x for x in (note, "spät erkannt, kein Screenshot") if x)
         record = RunRecord(time.time(), duration, cycle, info["max_wave"], info["total"], "ok", note, raid)
         self.stats.add(record)
         self.guard.on_raid_end(now)
@@ -664,7 +631,7 @@ class Engine:
         self._event(tr("Raid beendet · #{count} · Welle {wave}/{total}", count=messages.fmt_int(snap.total_attempts),
                        wave=info["max_wave"], total=info["total"]) + (f" · {raid}" if raid else "")
                     + f" · {dur_text}", "ok")
-        self._send_raid(snap, record, full, late=late)
+        self._send_raid(snap, record)
         if wall and info["max_wave"] > wall.wave:
             log.info("Wand durchbrochen in %s: Welle %d (Wand %d nach %d Versuchen)",
                      raid, info["max_wave"], wall.wave, wall.streak)
@@ -687,7 +654,8 @@ class Engine:
     def _raid_label(profile: Optional[str]) -> str:
         return "" if not profile or profile == "Unbekannt" else profile
 
-    def _send_raid(self, snap, record: RunRecord, full: Optional[np.ndarray], late: bool = False) -> None:
+    def _send_raid(self, snap, record: RunRecord) -> None:
+        """Raid-Meldung als Text (seit 0.9.0 ohne Screenshot – im Spiel ohne Aussagekraft)."""
         elapsed = time.time() - self.stats.session_start
         avg = snap.avg_duration
         if record.raid:
@@ -705,10 +673,8 @@ class Engine:
         quests = self.quest_tracker.snapshot()
         if self.settings.attach_quests and quests:
             fields.append((tr("Quests (Stand vor diesem Raid)"), messages.quest_text(quests), False))
-        image = ("raid.jpg", encode_jpeg(full)) if full is not None else None
         self._notify("raid_done", tr("Raid beendet · Welle {wave}/{total}", wave=record.max_wave,
-                                     total=record.total_waves), messages.COLOR_OK, fields,
-                     tr("Ohne Screenshot erkannt.") if late else None, image)
+                                     total=record.total_waves), messages.COLOR_OK, fields)
 
     def _send_uptime(self, now: float) -> None:
         if self.settings.status_enabled and self.settings.webhook_url:

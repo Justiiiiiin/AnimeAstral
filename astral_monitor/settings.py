@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import logging
 from dataclasses import dataclass, field, fields
+from pathlib import Path
 from typing import Optional
 
 from . import app_paths
@@ -44,7 +45,37 @@ class Roi:
 # ist absichtlich großzügig: das Programm findet „Wave x/100“ darin selbst, auch im Fenstermodus
 # (Titelleiste) oder bei leicht verschobenem Layout.
 DEFAULT_WAVE_ROI = Roi(0.30, 0.0, 0.70, 0.13)
-DEFAULT_QUEST_ROI = Roi(0.905, 0.100, 1.000, 0.300)
+DEFAULT_QUEST_ROI = Roi(0.880, 0.090, 1.000, 0.400)    # etwas größer: auch 5–6 Quests und lange Titel
+
+
+def _load_regions() -> None:
+    """Bereiche aus regions.json (vom Entwickler-Werkzeug gepflegt) übernehmen, falls vorhanden."""
+    global DEFAULT_WAVE_ROI, DEFAULT_QUEST_ROI
+    import json
+    path = Path(__file__).with_name("regions.json")
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        DEFAULT_WAVE_ROI = Roi.from_list(data["wave"])
+        DEFAULT_QUEST_ROI = Roi.from_list(data["quest"])
+    except (OSError, ValueError, KeyError, TypeError):
+        pass
+
+
+_load_regions()
+
+# Erkennung ist seit 0.9.0 fest eingebaut (keine Einstellungen mehr): Raid-Ende bei 100/100 mit einer Lesung –
+# so lief es beim Entwickler stundenlang stabil. Die Felder bleiben in der Datei (Downgrade auf ≤ 0.8.1).
+FIXED_DETECTION = {"window_title": "Roblox", "capture_mode": "auto", "allowed_totals": "100", "trigger_offset": 0,
+                   "confirm_reads": 1, "cooldown_seconds": 60, "read_quests": True, "tesseract_path": "",
+                   "debug_images": False}
+
+
+def fix_detection(s) -> None:
+    """Erkennungswerte auf die festen Werte setzen (ältere Dateien können eigene enthalten)."""
+    for name, value in FIXED_DETECTION.items():
+        setattr(s, name, value)
+    s.wave_roi = Roi(**vars(DEFAULT_WAVE_ROI))
+    s.quest_roi = Roi(**vars(DEFAULT_QUEST_ROI))
 # Kulisse zur Raid-Erkennung: nur die Mitte, ohne Menüs/Leisten/Quest-Liste
 
 # Spielseite für das Thumbnail im Discord-Profilstatus (Place-Nummer aus dem laufenden Roblox-Client, geprüft 06.10.2026)
@@ -68,10 +99,11 @@ EVENT_DEFS: list[tuple[str, str, bool, bool]] = [
 ]
 
 # Prüfintervalle in Sekunden: ruhig, kurz vor Raid-Ende ("heiß"), Quest-Abstand
+# Seit 0.9.0 ein gleichmäßiger Takt (kein schnellerer Takt kurz vor Raid-Ende mehr): 100/100 steht bis zu ~1 s da
 PRESETS: dict[str, dict] = {
-    "eco": {"label": N_("Sparsam"), "idle": 2.0, "hot": 0.5, "quest": 60.0},
-    "balanced": {"label": N_("Ausgewogen"), "idle": 1.0, "hot": 0.25, "quest": 30.0},
-    "fast": {"label": N_("Schnell"), "idle": 0.5, "hot": 0.15, "quest": 15.0},
+    "eco": {"label": N_("Sparsam"), "interval": 0.8, "quest": 60.0},
+    "balanced": {"label": N_("Ausgewogen"), "interval": 0.5, "quest": 30.0},
+    "fast": {"label": N_("Schnell"), "interval": 0.3, "quest": 15.0},
 }
 
 
@@ -130,14 +162,14 @@ class Settings:
     attach_quests: bool = True
     # Aufnahme
     window_title: str = "Roblox"
-    capture_mode: str = "auto"          # auto | wgc | screen
+    capture_mode: str = "auto"          # fest (seit 0.9.0): Fenster-Aufnahme, sonst Bildschirm
     performance: str = "balanced"       # eco | balanced | fast
     low_priority: bool = True
     # Wellenzähler
     wave_roi: Roi = field(default_factory=lambda: Roi(**vars(DEFAULT_WAVE_ROI)))
     allowed_totals: str = "100"
-    trigger_offset: int = 1             # 1 = ab 99/100 (also 99 oder 100)
-    confirm_reads: int = 2
+    trigger_offset: int = 0             # fest (seit 0.9.0): Raid-Ende bei 100/100
+    confirm_reads: int = 1
     cooldown_seconds: int = 60
     # Quests
     read_quests: bool = True
@@ -194,7 +226,7 @@ class Settings:
     server_favorites: list = field(default_factory=list)   # [{"name", "link"}] – nur lokal, Diagnose schwärzt die Links
     private_server_link: str = "" # roblox.com/games/…?privateServerLinkCode=… (nur lokal, roblox_join.py)
     # Sonstiges
-    settings_version: int = 8
+    settings_version: int = 9
     uptime_minutes: int = 10
     total_offset: int = 0               # Startwert für "Raids gesamt"
     tesseract_path: str = ""
@@ -220,20 +252,9 @@ class Settings:
         return self.validate_detection()
 
     def validate_detection(self) -> Optional[str]:
-        if not self.wave_roi.is_valid():
-            return tr("Der Bereich des Wellenzählers ist ungültig (Seite „Erkennung“).")
-        if not self.allowed_totals_list():
-            return tr("Bitte mindestens eine erlaubte Gesamtwellenzahl eintragen, z. B. 100.")
-        if not 0 <= self.trigger_offset <= 5:
-            return tr("Der Auslöser-Abstand muss zwischen 0 und 5 liegen.")
-        if not 1 <= self.confirm_reads <= 4:
-            return tr("Die Anzahl der Bestätigungen muss zwischen 1 und 4 liegen.")
-        if self.cooldown_seconds < 0:
-            return tr("Die Sperrzeit darf nicht negativ sein.")
+        """Prüft die einstellbaren Werte (die Erkennung selbst ist seit 0.9.0 fest eingebaut)."""
         if not 1 <= self.uptime_minutes <= 1440:
             return tr("Das Uptime-Intervall muss zwischen 1 und 1440 Minuten liegen.")
-        if self.read_quests and not self.quest_roi.is_valid():
-            return tr("Der Quest-Bereich ist ungültig (Seite „Erkennung“).")
         if not 1 <= self.stall_minutes <= 240:
             return tr("Die Stillstand-Zeit muss zwischen 1 und 240 Minuten liegen.")
         if self.no_raid_minutes < 0 or self.ram_alert_gb < 0:
@@ -319,6 +340,7 @@ class Settings:
             # (früher: Meldung „Fehlversuch“ aus – seit 0.7.1 gibt es keine Fehlversuche mehr)
             s.settings_version = 3
         s.server_favorites = clean_favorites(s.server_favorites)
+        fix_detection(s)
         try:
             s.ui_zoom = min(200, max(50, int(s.ui_zoom)))
         except (TypeError, ValueError):
