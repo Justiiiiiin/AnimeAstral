@@ -24,7 +24,7 @@ class ColorButton(QToolButton):
         menu.addAction(tr("Farbe wählen …"), self._pick)
         menu.addAction(tr("Standardfarbe"), lambda: self.set_value(""))
         self.setMenu(menu)
-        self.setFixedSize(theme.px(34), theme.px(22))
+        self.setFixedSize(theme.px(44), theme.px(22))
         self.set_value("")
 
     def _pick(self) -> None:
@@ -34,14 +34,16 @@ class ColorButton(QToolButton):
 
     def set_value(self, value: str) -> None:
         self.value = value if is_hex_color(value) else ""
+        h = theme.px(22)
+        flat = (f"min-height: {h}px; max-height: {h}px; padding: 0; border-radius: {h // 2}px;")   # flach wie ein Chip
         if self.value:
             self.setText("")
-            self.setStyleSheet(f"QToolButton {{ background: {self.value}; border-radius: 6px; }}"
+            self.setStyleSheet(f"QToolButton {{ background: {self.value}; {flat} }}"
                                "QToolButton::menu-indicator { image: none; width: 0; }")
             self.setToolTip(tr("Eigene Farbe {color}", color=self.value))
         else:
             self.setText(tr("Auto"))
-            self.setStyleSheet("QToolButton { font-size: 8pt; padding: 0; }"
+            self.setStyleSheet(f"QToolButton {{ font-size: 8pt; {flat} }}"
                                "QToolButton::menu-indicator { image: none; width: 0; }")
             self.setToolTip(tr("Standardfarbe des Programms"))
 
