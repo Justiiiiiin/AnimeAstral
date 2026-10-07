@@ -387,6 +387,40 @@ class StatsStore:
                 "active_days": sum(1 for n in per_day if n),
                 "prev_attempts": len(prev), "prev_waves": sum(r.max_wave for r in prev)}
 
+    def personal_records(self) -> dict:
+        """Bestwerte über den ganzen Verlauf: Bestwelle, stärkster Tag (Raids/Wellen), beste Stunde (Wellen),
+        längste Session (zusammenhängende Farmzeit, Pausen über FARM_GAP trennen)."""
+        with self._lock:
+            recs = sorted(self.records, key=lambda r: r.ts_end)
+        out: dict = {"best_wave": None, "best_day": None, "best_hour": None, "longest": None}
+        if not recs:
+            return out
+        best = max(recs, key=lambda r: (r.max_wave, -r.ts_end))
+        out["best_wave"] = (best.max_wave, best.ts_end, best.raid)
+        days: dict = {}
+        hours: dict = {}
+        for r in recs:
+            when = datetime.fromtimestamp(r.ts_end)
+            d = days.setdefault(when.date(), [0, 0])
+            d[0] += 1
+            d[1] += r.max_wave
+            key = when.replace(minute=0, second=0, microsecond=0)
+            hours[key] = hours.get(key, 0) + r.max_wave
+        day, (n, waves) = max(days.items(), key=lambda kv: (kv[1][0], kv[1][1]))
+        out["best_day"] = (day, n, waves)
+        hour, waves = max(hours.items(), key=lambda kv: kv[1])
+        out["best_hour"] = (hour, waves)
+        blocks, current = [], [recs[0]]
+        for prev, rec in zip(recs, recs[1:]):
+            if rec.ts_end - prev.ts_end > FARM_GAP:
+                blocks.append(current)
+                current = []
+            current.append(rec)
+        blocks.append(current)
+        longest = max(blocks, key=farm_seconds)
+        out["longest"] = (farm_seconds(longest), longest[0].ts_end - (longest[0].duration_s or 0), len(longest))
+        return out
+
     def per_raid(self, since: Optional[float] = None) -> list[dict]:
         """Kennzahlen je Raid-Name (leerer Name = „Unbekannt“)."""
         with self._lock:

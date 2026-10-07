@@ -56,7 +56,8 @@ def fmt_int(value: int) -> str:
 
 def fmt_k(value: int) -> str:
     """Mengen kurz mit k/M: 950 → „950“, 18 109 → „18,1k“, 843 231 → „843k“, 1 250 000 → „1,25M“.
-    Zählstände (aktueller Wert bei Quests, Raid-Nummer) bleiben genau (fmt_int)."""
+    Genau bleiben (fmt_int): Wellen (steigen langsam, man will sie exakt sehen), Raid-Nummer und der aktuelle Wert
+    bei Quests."""
     v = abs(value)
     if v < 1000:
         return str(value)
@@ -154,8 +155,8 @@ def build_status(settings: Settings, snap: dict) -> dict:
     fields = [
         ("🔁 " + tr("Versuche"), f"**{snap.get('session_attempts', 0)}**\n-# "
          + tr("gesamt {count}", count=fmt_k(snap.get("total_attempts", 0))), True),
-        ("🌊 " + tr("Wellen"), f"**{fmt_k(snap.get('session_waves', 0))}**", True),
-        ("⚡ " + tr("Wellen/Std"), f"**{fmt_k(round(wph))}**" if wph else "–", True),
+        ("🌊 " + tr("Wellen"), f"**{fmt_int(snap.get('session_waves', 0))}**", True),
+        ("⚡ " + tr("Wellen/Std"), f"**{fmt_int(round(wph))}**" if wph else "–", True),
         ("📈 " + tr("Ø Endwelle"), f"**{dec(f'{avg_wave:.1f}')}**" if avg_wave else "–", True),
         ("🏆 " + tr("Bestwelle"), f"**{snap['best_wave']}**" if snap.get("best_wave") else "–", True),
         ("⏱️ " + tr("Laufzeit"), f"**{fmt_duration(snap.get('uptime'))}**" if snap.get("uptime") else "–", True),

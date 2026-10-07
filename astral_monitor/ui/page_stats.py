@@ -374,8 +374,8 @@ class StatsPage(QWidget):
         s = stats.summary(since, raid)
 
         self.k_attempts.set_value(messages.fmt_k(s.attempts))
-        self.k_waves.set_value(messages.fmt_k(s.waves_total))
-        self.k_wph.set_value(messages.fmt_k(round(s.waves_per_hour)) if s.waves_per_hour else "–")
+        self.k_waves.set_value(messages.fmt_int(s.waves_total))
+        self.k_wph.set_value(messages.fmt_int(round(s.waves_per_hour)) if s.waves_per_hour else "–")
         self.k_avg_wave.set_value(_num(s.avg_wave_all))
         self.k_best_wave.set_value(str(stats.best_wave(raid) or "–"))
         self.details.setText(tr("Ø {dur} pro Versuch  ·  {spw} pro Welle  ·  {aph} Versuche/Std.  ·  {all} Versuche "
@@ -413,7 +413,7 @@ class StatsPage(QWidget):
         self._week_text = PARAGRAPH + tr("Diese Woche: {time} · {attempts} Versuche · {waves} Wellen",
                                          time=fmt_hours(sum(d["farm_s"] for d in week)),
                                          attempts=sum(d["attempts"] for d in week),
-                                         waves=messages.fmt_k(sum(d["waves"] for d in week)))
+                                         waves=messages.fmt_int(sum(d["waves"] for d in week)))
         if self.charts.currentIndex() == 3:
             self._chart_changed(3)
 
@@ -422,7 +422,7 @@ class StatsPage(QWidget):
             per_rows.append([
                 SortItem(item["raid"], item["raid"].lower()),
                 SortItem(str(item["attempts"]), item["attempts"], right=True),
-                SortItem(messages.fmt_k(item["waves_total"]), item["waves_total"], right=True),
+                SortItem(messages.fmt_int(item["waves_total"]), item["waves_total"], right=True),
                 SortItem(_num(item["avg_wave"]), item["avg_wave"], right=True),
                 SortItem(str(item["best_wave"]), item["best_wave"], right=True),
                 SortItem(_dur(item["avg_duration_all"]), item["avg_duration_all"] or -1, right=True),

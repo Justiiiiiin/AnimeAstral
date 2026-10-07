@@ -208,7 +208,7 @@ class Engine:
         self._notify("start_stop", tr("Monitor beendet"), messages.COLOR_GRAY,
                      [(tr("Laufzeit"), messages.fmt_duration(uptime), True),
                       (tr("Versuche Session"), str(snap.session_attempts), True),
-                      (tr("Wellen Session"), messages.fmt_k(snap.session_waves), True),
+                      (tr("Wellen Session"), messages.fmt_int(snap.session_waves), True),
                       (tr("Versuche gesamt"), messages.fmt_k(snap.total_attempts), True)])
 
     def toggle_pause(self) -> bool:
@@ -703,7 +703,7 @@ class Engine:
         uptime = now - (self.state.started_at or now)
         fields = [(tr("Uptime"), messages.fmt_duration(uptime), True),
                   (tr("Versuche Session"), str(snap.session_attempts), True),
-                  (tr("Wellen Session"), messages.fmt_k(snap.session_waves), True),
+                  (tr("Wellen Session"), messages.fmt_int(snap.session_waves), True),
                   (tr("Versuche gesamt"), messages.fmt_k(snap.total_attempts), True)]
         quests = self.quest_tracker.snapshot()
         if self.settings.attach_quests and quests:

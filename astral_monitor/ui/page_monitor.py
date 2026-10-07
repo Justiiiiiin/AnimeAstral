@@ -221,9 +221,9 @@ class MonitorPage(QWidget):
             snap = self.engine.stats.snapshot()
             self.k_total.set_value(messages.fmt_k(snap.total_attempts))
             self.k_session.set_value(str(snap.session_attempts))
-            self.k_waves.set_value(messages.fmt_k(snap.session_waves))
+            self.k_waves.set_value(messages.fmt_int(snap.session_waves))
             self.k_avg.set_value(dec(f"{snap.avg_wave:.1f}") if snap.avg_wave else "–")
-            self.k_rate.set_value(messages.fmt_k(round(snap.waves_per_hour)) if snap.waves_per_hour else "–")
+            self.k_rate.set_value(messages.fmt_int(round(snap.waves_per_hour)) if snap.waves_per_hour else "–")
 
         if st.wave_value is not None and st.wave_total:
             self.wave.setText(f"{st.wave_value}/{st.wave_total}")

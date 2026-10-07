@@ -99,8 +99,8 @@ def render_card(stats: StatsStore, since: Optional[float], raid: Optional[str], 
     # ---- Kennzahlen-Kacheln (3 × 2)
     tiles = [
         (tr("Versuche"), messages.fmt_k(summary.attempts), TEAL),
-        (tr("Wellen gesamt"), messages.fmt_k(summary.waves_total), TEAL),
-        (tr("Wellen pro Stunde"), messages.fmt_k(round(summary.waves_per_hour)) if summary.waves_per_hour else "–", TEXT),
+        (tr("Wellen gesamt"), messages.fmt_int(summary.waves_total), TEAL),
+        (tr("Wellen pro Stunde"), messages.fmt_int(round(summary.waves_per_hour)) if summary.waves_per_hour else "–", TEXT),
         (tr("Bestwelle"), str(summary.best_wave), AMBER),
         (tr("Ø Endwelle"), dec(f"{summary.avg_wave_all:.1f}") if summary.avg_wave_all else "–", TEXT),
         (tr("Ø Dauer pro Versuch"), messages.fmt_duration(summary.avg_duration_all), TEXT),
@@ -149,7 +149,7 @@ def render_card(stats: StatsStore, since: Optional[float], raid: Optional[str], 
         y = 420 + i * 52
         c.text((70, y), p["raid"], 18, TEXT, bold=True)
         sub = tr("{attempts} Versuche · {waves} Wellen · Ø Welle {avg}", attempts=p["attempts"],
-                 waves=messages.fmt_k(p["waves_total"]), avg=dec(f"{p['avg_wave']:.1f}"))
+                 waves=messages.fmt_int(p["waves_total"]), avg=dec(f"{p['avg_wave']:.1f}"))
         c.text((70, y + 24), sub, 13, MUTED)
         bx0, bx1 = 560, W - 230
         c.bar((bx0, y + 12, bx1, y + 24), (30, 40, 52), radius=6)
@@ -191,7 +191,7 @@ def render_month_card(stats: StatsStore, year: int, month: int) -> bytes:
 
     tiles = [
         (tr("Raids"), messages.fmt_k(m["attempts"]), TEAL),
-        (tr("Wellen"), messages.fmt_k(m["waves"]), TEAL),
+        (tr("Wellen"), messages.fmt_int(m["waves"]), TEAL),
         (tr("Farmzeit"), tr("{hours} Std.", hours=dec(f"{m['farm_s'] / 3600:.0f}")), VIOLET),
         (tr("Bestwelle"), str(m["best_wave"]), AMBER),
         (tr("Ø Endwelle"), dec(f"{m['avg_wave']:.1f}") if m["avg_wave"] else "–", TEXT),
