@@ -201,6 +201,8 @@ class MainWindow(QMainWindow):
         self._intro_done = False
         from .spooky import SpookyScheduler
         self._spooky = SpookyScheduler(self, lambda: self.engine.settings.ui_spooky)
+        from .newdots import NewDots
+        self.new_dots = NewDots(engine.settings, self._save_quietly)
         self.avatar = QLabel()                          # eigenes Roblox-Profil (Avatar)
         self.avatar.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.avatar.setVisible(False)
@@ -241,6 +243,7 @@ class MainWindow(QMainWindow):
             QTimer.singleShot(500, self.open_wizard)        # beim ersten Start: Einrichtungsassistent
         else:
             QTimer.singleShot(1500, self._whats_new)        # nach einem Update: kurz „Was ist neu“
+            QTimer.singleShot(600, self._attach_new_dots)
         QTimer.singleShot(4000, updater.cleanup_downloads)               # Reste früherer Updates entfernen
         QTimer.singleShot(5000, self._refresh_icons_once)
         QTimer.singleShot(2500, lambda: self.set_roblox_name(self.engine.settings.roblox_username, quiet=True))
@@ -318,6 +321,21 @@ class MainWindow(QMainWindow):
         tray.setToolTip(f"Anime Astral Monitor {__version__}")
         tray.show()
         return tray
+
+    def _save_quietly(self) -> None:
+        try:
+            self.engine.settings.save()
+        except OSError:
+            pass
+
+    def _attach_new_dots(self) -> None:
+        """„Neu“-Punkte an Symbolleiste (bzw. Zahnrad) und Einstellungs-Reitern."""
+        if not self.engine.settings.wizard_done:
+            return
+        for i in range(self.nav.buttons().__len__()):
+            self.new_dots.attach(f"nav:{i}", self.gear if i == 5 and self.gear.isVisible() else self.nav.button(i))
+        for btn in self.pages[5].tab_group.buttons():
+            self.new_dots.attach(f"tab:{btn.property('group')}", btn)
 
     def _whats_new(self) -> None:
         if self.isVisible():                            # nicht aufdrängen, wenn das Programm im Tray startet
@@ -561,6 +579,7 @@ class MainWindow(QMainWindow):
         """Seitenwechsel; im Design „Astral“ mit kurzer Überblendung (danach ohne Effekt – kostet sonst Leistung)."""
         self.stack.setCurrentIndex(index)
         self.gear.setChecked(index == 5)
+        self.new_dots.seen(f"nav:{index}")
         if not theme.animations():
             return
         widget = self.stack.currentWidget()
@@ -1038,6 +1057,7 @@ class MainWindow(QMainWindow):
     def finish_wizard(self, start: bool) -> None:
         self.engine.settings.wizard_done = True
         self.engine.settings.seen_version = __version__        # Neuinstallation: kein „Was ist neu“
+        self.new_dots.mark_all_seen()                             # … und keine „Neu“-Punkte
         self.save_settings(show_message=False)
         if start:
             self.toggle_monitoring()

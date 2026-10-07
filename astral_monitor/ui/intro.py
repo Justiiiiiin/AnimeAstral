@@ -1,5 +1,5 @@
 """Logo-Animation beim Start: das Logo erscheint in der Mitte, bleibt kurz stehen und gibt dann das Fenster frei
-(~2 s)."""
+(~1,5 s)."""
 from __future__ import annotations
 
 from PySide6.QtCore import QEasingCurve, QRectF, Qt, QTimer, QVariantAnimation
@@ -9,7 +9,7 @@ from PySide6.QtWidgets import QWidget
 from .. import app_paths
 from . import theme
 
-DURATION_MS = 2200
+DURATION_MS = 1400                  # mit kurzem Stand davor ~1,5 s sichtbar (Wunsch)
 
 
 class IntroOverlay(QWidget):

@@ -57,7 +57,8 @@ class SettingsPage(QWidget):
             tabs.addWidget(btn)
         tabs.addStretch(1)
         tabs.addWidget(self.search)
-        self.tab_group.buttonClicked.connect(lambda b: self._show_group(b.property("group")))
+        self.tab_group.buttonClicked.connect(lambda b: (self._show_group(b.property("group")),
+                                                        self.main.new_dots.seen(f"tab:{b.property('group')}")))
         root.addLayout(tabs)
         self.no_match = label(tr("Keine Einstellung gefunden."), "muted")
         self.no_match.setVisible(False)

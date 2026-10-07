@@ -206,3 +206,18 @@ class AccentFromImageTests(unittest.TestCase):
         img.fill(QColor("#808080"))
         img.save(path)
         self.assertIsNone(accent_from_image(path))                       # grau: keine Farbe
+
+
+class NewDotsTests(unittest.TestCase):
+    def test_pending(self):
+        from astral_monitor.ui import newdots
+        old = newdots.__version__
+        newdots.__version__ = "9.9.9"
+        newdots.NEW_FEATURES["9.9.9"] = ("nav:1", "tab:Roblox")
+        try:
+            self.assertEqual(newdots.pending([]), {"nav:1", "tab:Roblox"})
+            self.assertEqual(newdots.pending(["nav:1"]), {"tab:Roblox"})
+        finally:
+            newdots.__version__ = old
+            del newdots.NEW_FEATURES["9.9.9"]
+        self.assertEqual(newdots.pending([]), set(newdots.NEW_FEATURES.get(old, ())))

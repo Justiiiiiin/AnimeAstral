@@ -1,0 +1,79 @@
+"""„Neu“-Punkte: nach einem Update ein kleiner Punkt an Bereichen mit Neuerungen – verschwindet nach dem ersten Öffnen.
+Neuinstallationen sehen keine Punkte (alles ist neu)."""
+from __future__ import annotations
+
+from PySide6.QtCore import QEvent, QObject
+from PySide6.QtWidgets import QLabel, QWidget
+
+from ..version import __version__
+from . import theme
+
+# Je Version: wo es Neues gibt („nav:<Seite>“ = Symbolleiste, „tab:<Abschnitt>“ = Reiter der Einstellungen)
+NEW_FEATURES: dict[str, tuple[str, ...]] = {
+    "0.8.0": ("nav:1", "nav:2", "nav:5", "tab:Roblox", "tab:Darstellung", "tab:Programm"),
+}
+
+
+def pending(seen: list) -> set:
+    """Noch nicht angesehene Neuerungen der installierten Version."""
+    return set(NEW_FEATURES.get(__version__, ())) - set(seen)
+
+
+class _Dot(QObject):
+    """Kleiner Punkt oben rechts an einem Knopf; folgt dessen Größe."""
+
+    def __init__(self, button: QWidget) -> None:
+        super().__init__(button)
+        self.button = button
+        self.label = QLabel(button)
+        self.label.setObjectName("newdot")
+        size = theme.px(9)
+        self.label.setFixedSize(size, size)
+        self.label.setStyleSheet(f"background: {theme.color('accent')}; border-radius: {size // 2}px; "
+                                 f"border: 2px solid {theme.color('sidebar')};")
+        self.label.setToolTip("Neu")
+        button.installEventFilter(self)
+        self._place()
+        self.label.show()
+
+    def _place(self) -> None:
+        self.label.move(self.button.width() - self.label.width() - theme.px(4), theme.px(4))
+        self.label.raise_()
+
+    def eventFilter(self, obj, event) -> bool:
+        if event.type() in (QEvent.Type.Resize, QEvent.Type.Show):
+            self._place()
+        return False
+
+    def remove(self) -> None:
+        self.button.removeEventFilter(self)
+        self.label.hide()                                  # sofort weg (Löschen folgt im nächsten Durchlauf)
+        self.label.deleteLater()
+        self.deleteLater()
+
+
+class NewDots:
+    """Verwaltet die Punkte; `seen` ist die Liste aus den Einstellungen, `save` speichert sie."""
+
+    def __init__(self, settings, save) -> None:
+        self._settings = settings
+        self._save = save
+        self._dots: dict[str, _Dot] = {}
+
+    def attach(self, key: str, button: QWidget) -> None:
+        if key in pending(self._settings.new_seen) and key not in self._dots:
+            self._dots[key] = _Dot(button)
+
+    def seen(self, key: str) -> None:
+        dot = self._dots.pop(key, None)
+        if dot is None:
+            return
+        dot.remove()
+        self._settings.new_seen = sorted(set(self._settings.new_seen) | {key})
+        self._save()
+
+    def mark_all_seen(self) -> None:
+        """Neuinstallation: keine Punkte."""
+        for key in list(self._dots):
+            self._dots.pop(key).remove()
+        self._settings.new_seen = sorted(set(self._settings.new_seen) | set(NEW_FEATURES.get(__version__, ())))
