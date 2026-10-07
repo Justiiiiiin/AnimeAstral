@@ -394,6 +394,51 @@ QLabel#preview { border-radius: 20px; }
 QFrame#pill { border-radius: 16px; }
 """
 
+_NEWYEAR_DARK = dict(_NEBULA_DARK, **{
+    "bg": "#05060E", "sidebar": "#080A16", "topbar": "#05060E", "card": "#0E1022", "cardTop": "#151833",
+    "border": "#22264A", "borderA": "#5A4B8F", "borderB": "#1E2244", "line": "#121530", "field": "#080A18",
+    "control": "#141834", "controlHover": "#1C2144", "controlBorder": "#2B3160", "navHover": "#12152E",
+    "navActive": "#1E2246", "softA": "#4A3A12", "softB": "#3A1A3E", "edge": "#C9A23A", "select": "#2E2A5A",
+    "accent": "#FFC94A", "accent2": "#FF5FA2", "accentHover": "#FFD877", "accent2Hover": "#FF7FB6",
+    "onAccent": "#1A1200", "knobOn": "#1A1200", "okBg": "#1C1708", "okBorder": "#6B5414", "bar": "#B8901E",
+    "stepDone": "#B8901E", "section": "#B9B2E8", "muted": "#9CA0C8", "scroll": "#232850",
+    "cardGlass": "#D80E1022", "cardTopGlass": "#D8151833",
+})
+_SPRING_DARK = dict(_NEBULA_DARK, **{
+    "bg": "#120C14", "sidebar": "#160F19", "topbar": "#120C14", "card": "#1C1420", "cardTop": "#251A2B",
+    "border": "#35263D", "borderA": "#8A4A72", "borderB": "#33243B", "line": "#211827", "field": "#140E17",
+    "control": "#241A2A", "controlHover": "#2F2236", "controlBorder": "#43314D", "navHover": "#221927",
+    "navActive": "#331F35", "softA": "#4A1E36", "softB": "#1E3A28", "edge": "#D07AA8", "select": "#4A2A44",
+    "accent": "#FF8FBF", "accent2": "#8BE38B", "accentHover": "#FFA9CE", "accent2Hover": "#A6EBA6",
+    "onAccent": "#22081A", "knobOn": "#22081A", "okBg": "#24101C", "okBorder": "#7A3A5C", "bar": "#C05A8C",
+    "stepDone": "#C05A8C", "section": "#D9A8C6", "muted": "#B9A2B9", "scroll": "#3A2A40",
+    "cardGlass": "#D81C1420", "cardTopGlass": "#D8251A2B",
+})
+_SPRING_LIGHT = dict(_NEBULA_LIGHT, **{
+    "bg": "#FFF4F8", "topbar": "#FFF4F8", "sidebar": "#FFFAFC", "border": "#F3D9E5", "accent": "#E0559A",
+    "accent2": "#3FAF6A", "accentHover": "#EA6BAA", "accent2Hover": "#52BF7C", "softA": "#FCE0EE",
+    "softB": "#DFF3E5", "edge": "#EBAACB", "bar": "#F0A6C9", "select": "#F9D3E5", "okBg": "#FDEAF3",
+    "okBorder": "#EFB5D0", "navActive": "#FBE3EF", "stepDone": "#F0A6C9", "section": "#B0698E",
+    "cardGlass": "#CCFFFFFF", "cardTopGlass": "#CCFFF9FC",
+})
+_SUMMER_DARK = dict(_NEBULA_DARK, **{
+    "bg": "#081416", "sidebar": "#0A181B", "topbar": "#081416", "card": "#0E2024", "cardTop": "#132B30",
+    "border": "#1C3A40", "borderA": "#3A8A8A", "borderB": "#1A3439", "line": "#0F2428", "field": "#091719",
+    "control": "#11282D", "controlHover": "#17343A", "controlBorder": "#23474E", "navHover": "#10252A",
+    "navActive": "#173A40", "softA": "#4A3A10", "softB": "#0F4040", "edge": "#E0A83A", "select": "#1F4A50",
+    "accent": "#FFC24A", "accent2": "#3DD6C6", "accentHover": "#FFD272", "accent2Hover": "#62E2D5",
+    "onAccent": "#1A1000", "knobOn": "#1A1000", "okBg": "#1C1A0A", "okBorder": "#6A5214", "bar": "#C08E1E",
+    "stepDone": "#C08E1E", "section": "#9CCFCB", "muted": "#9DB8B8", "scroll": "#1F4046",
+    "cardGlass": "#D80E2024", "cardTopGlass": "#D8132B30",
+})
+_SUMMER_LIGHT = dict(_NEBULA_LIGHT, **{
+    "bg": "#FFF8EC", "topbar": "#FFF8EC", "sidebar": "#FFFCF5", "border": "#F1E3C8", "accent": "#E58A00",
+    "accent2": "#0FA3A3", "accentHover": "#F09A12", "accent2Hover": "#1EB5B5", "softA": "#FDEBC8",
+    "softB": "#D6F1F1", "edge": "#EBC27A", "bar": "#F2B95A", "select": "#FBE2B5", "okBg": "#FDF1DA",
+    "okBorder": "#EFCF8F", "navActive": "#FCEED3", "stepDone": "#F2B95A", "section": "#A88445",
+    "cardGlass": "#E6FFFFFF", "cardTopGlass": "#E6FFFDF7",
+})
+
 # Saison-Designs: Karten leicht durchscheinend, damit die Deko (seasonal.py) dahinter sichtbar ist
 _SEASON = _NEBULA + """
 QFrame#card { background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 @cardTopGlass, stop:1 @cardGlass); }
@@ -416,6 +461,17 @@ DESIGNS: dict[str, dict] = {
     "halloween": {"name": N_("Kürbisnacht"), "since": "0.7.2", "template": _SEASON, "icons": True, "gear": True,
                   "animate": True, "rail": True, "font": ["Segoe UI Variable Text", "Segoe UI"],
                   "palettes": {"dark": _HALLOWEEN_DARK}, "season": ((10, 15), (11, 2)), "decor": "halloween"},
+    "newyear": {"name": N_("Silvester"), "since": "0.8.0", "template": _SEASON, "icons": True, "gear": True,
+                "animate": True, "rail": True, "font": ["Segoe UI Variable Text", "Segoe UI"],
+                "palettes": {"dark": _NEWYEAR_DARK}, "season": ((12, 29), (1, 2)), "decor": "newyear"},
+    "spring": {"name": N_("Kirschblüte"), "since": "0.8.0", "template": _SEASON, "icons": True, "gear": True,
+               "animate": True, "rail": True, "font": ["Segoe UI Variable Text", "Segoe UI"],
+               "palettes": {"dark": _SPRING_DARK, "light": _SPRING_LIGHT}, "season": ((3, 20), (4, 30)),
+               "decor": "spring"},
+    "summer": {"name": N_("Sommer"), "since": "0.8.0", "template": _SEASON, "icons": True, "gear": True,
+               "animate": True, "rail": True, "font": ["Segoe UI Variable Text", "Segoe UI"],
+               "palettes": {"dark": _SUMMER_DARK, "light": _SUMMER_LIGHT}, "season": ((6, 21), (8, 31)),
+               "decor": "summer"},
     "winter": {"name": N_("Frost"), "since": "0.7.2", "template": _SEASON, "icons": True, "gear": True,
                "animate": True, "rail": True, "font": ["Segoe UI Variable Text", "Segoe UI"],
                "palettes": {"dark": _WINTER_DARK, "light": _WINTER_LIGHT}, "season": ((12, 1), (1, 6)),

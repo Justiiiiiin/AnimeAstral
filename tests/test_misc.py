@@ -94,7 +94,8 @@ class SeasonTests(unittest.TestCase):
         from astral_monitor.ui import theme
         cases = {date(2026, 10, 14): "", date(2026, 10, 15): "halloween", date(2026, 11, 2): "halloween",
                  date(2026, 11, 3): "", date(2026, 12, 24): "winter", date(2027, 1, 6): "winter",
-                 date(2027, 1, 7): ""}
+                 date(2027, 1, 7): "", date(2026, 12, 31): "newyear", date(2027, 1, 2): "newyear",
+                 date(2027, 4, 1): "spring", date(2027, 7, 15): "summer", date(2027, 9, 10): ""}
         for day, expected in cases.items():
             self.assertEqual(theme.season_design(day), expected, day)
         self.assertEqual(theme.effective_design("astral", True, date(2026, 12, 24)), "winter")

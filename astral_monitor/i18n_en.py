@@ -960,10 +960,15 @@ EN: dict[str, str] = {
     "höchstens einmal pro Stunde, nur bei offenem Fenster. Ein Klick darauf lässt es verschwinden.":
         "Only in the “Pumpkin Night” design: now and then a creepy face briefly peeks up from the bottom edge of the "
         "window – at most once an hour, only while the window is open. Click it to make it vanish.",
-    "Vom 15. Oktober bis 2. November erscheint „Kürbisnacht“, vom 1. Dezember bis 6. Januar „Frost“ – danach "
-    "automatisch wieder dein gewähltes Design. Beide gibt es auch jederzeit oben unter „Design“.":
-        "From October 15 to November 2 “Pumpkin Night” appears, from December 1 to January 6 “Frost” – afterwards "
-        "your chosen design returns automatically. Both are also available any time under “Design” above.",
+    "Saison-Designs erscheinen automatisch zur passenden Zeit: Kirschblüte (20.3.–30.4.), Sommer (21.6.–31.8.), "
+    "Kürbisnacht (15.10.–2.11.), Frost (1.12.–6.1.) und Silvester (29.12.–2.1.) – danach wieder dein gewähltes "
+    "Design. Alle gibt es auch jederzeit oben unter „Design“.":
+        "Seasonal designs appear automatically at the right time: Cherry Blossom (Mar 20 – Apr 30), Summer "
+        "(Jun 21 – Aug 31), Pumpkin Night (Oct 15 – Nov 2), Frost (Dec 1 – Jan 6) and New Year's Eve (Dec 29 – Jan 2) "
+        "– afterwards your chosen design returns. All are also available any time under “Design” above.",
+    "Silvester": "New Year's Eve",
+    "Kirschblüte": "Cherry Blossom",
+    "Sommer": "Summer",
     "Hintergrund": "Background",
     "Hintergrundbild wählen": "Choose background image",
     "Bilder (*.png *.jpg *.jpeg *.webp *.bmp)": "Images (*.png *.jpg *.jpeg *.webp *.bmp)",

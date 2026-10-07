@@ -67,7 +67,7 @@ class Backdrop(QWidget):
         decor = theme.design_info().get("decor", "")
         if decor != self._decor:
             self._decor = decor
-            self._particles = seasonal.make_particles(decor, 16 if decor == "halloween" else 40) if decor else []
+            self._particles = seasonal.make_particles(decor, seasonal.COUNTS.get(decor, 30)) if decor else []
         theme.set_backdrop(self._pixmap is not None or bool(self._decor))
         self._sync_timer()
         self.update()

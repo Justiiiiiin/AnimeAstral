@@ -274,9 +274,9 @@ class SettingsPage(QWidget):
         self.seasonal.toggled.connect(lambda on: (self.main.set_appearance(seasonal=on),
                                                   self._sync_look(self.main.engine.settings)))
         srow.addWidget(self.seasonal)
-        srow.addWidget(InfoButton(tr("Vom 15. Oktober bis 2. November erscheint „Kürbisnacht“, vom 1. Dezember bis "
-                                     "6. Januar „Frost“ – danach automatisch wieder dein gewähltes Design. Beide "
-                                     "gibt es auch jederzeit oben unter „Design“.")))
+        srow.addWidget(InfoButton(tr("Saison-Designs erscheinen automatisch zur passenden Zeit: Kirschblüte (20.3.–30.4.), Sommer (21.6.–31.8.), "
+                                     "Kürbisnacht (15.10.–2.11.), Frost (1.12.–6.1.) und Silvester (29.12.–2.1.) – danach "
+                                     "wieder dein gewähltes Design. Alle gibt es auch jederzeit oben unter „Design“.")))
         srow.addStretch(1)
         fx.body.addLayout(srow)
         krow = QHBoxLayout()
