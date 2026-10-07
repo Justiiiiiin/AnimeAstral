@@ -355,7 +355,6 @@ EN: dict[str, str] = {
     "Welle": "Wave",
     "Welle {wave}": "Wave {wave}",
     "Welle {wave} · {streak}× in Folge": "Wave {wave} · {streak}× in a row",
-    "Welle {wave}/{total}": "Wave {wave}/{total}",
     "Wellen (Session)": "Waves (session)",
     "Wellen Session": "Waves session",
     "Wellen gesamt": "Waves total",
@@ -678,9 +677,7 @@ EN: dict[str, str] = {
     # Design Nebula (0.7.0)
     "Nebula": "Nebula",
     # Keine Fehlversuche mehr (0.7.1)
-    "Raid beendet · Welle {wave}/{total}": "Raid finished · wave {wave}/{total}",
     "Versuche pro Stunde": "Attempts per hour",
-    "Raid beendet · #{count} · Welle {wave}/{total}": "Raid finished · #{count} · wave {wave}/{total}",
     "Überschrift anklicken sortiert, Spaltenränder ziehen ändert die Breite. ~ = geschätzte Dauer.":
         "Click a header to sort, drag column borders to change the width. ~ = estimated duration.",
     "Ø {dur} pro Versuch  ·  {spw} pro Welle  ·  {aph} Versuche/Std.  ·  {all} Versuche insgesamt":
@@ -897,12 +894,16 @@ EN: dict[str, str] = {
         "Which raid is running – applies immediately, including the current attempt. Create and rename raids under "
         "Settings → Roblox.",
     "Wie oft der Wellenzähler gelesen wird – gleichmäßig, auch kurz vor Raid-Ende. „Ausgewogen“ (alle 0,5 s) "
-    "erkennt 100/100 sicher und passt für die meisten. Die genauen Zeiten zeigt die Auswahl, wenn du darüberfährst.":
+    "erkennt das Raid-Ende sicher und passt für die meisten. Die genauen Zeiten zeigt die Auswahl, wenn du "
+    "darüberfährst.":
         "How often the wave counter is read – evenly, also shortly before the raid ends. “Balanced” (every 0.5 s) "
-        "reliably catches 100/100 and suits most people. Hover over the selection for exact times.",
+        "reliably catches the raid end and suits most people. Hover over the selection for exact times.",
     "Ausführlich: Kennzahlen als einzelne Felder.\n\nKompakt: eine ruhige Zeile mit den wichtigsten Werten – auch "
     "der Live-Status wird schlanker.":
         "Detailed: figures as separate fields.\n\nCompact: one calm line with the key values – the live status gets "
         "slimmer too.",
     " (später unter „Meldungen“)": " (later under “Alerts”)",
+    # 0.9.1: Raids ohne Gesamtzahl
+    "Raid beendet · Welle {wave}": "Raid finished · wave {wave}",
+    "Raid beendet · #{count} · Welle {wave}": "Raid finished · #{count} · wave {wave}",
 }

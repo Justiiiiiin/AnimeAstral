@@ -1144,7 +1144,7 @@ class MainWindow(QMainWindow):
             elif st.paused:
                 state = tr("Pausiert")
             elif st.wave_value is not None:
-                state = tr("Welle {wave}/{total}", wave=st.wave_value, total=st.wave_total)
+                state = tr("Welle {wave}", wave=messages.fmt_wave(st.wave_value, st.wave_total))
             else:
                 state = tr("Läuft")
             text = f"Anime Astral Monitor – {state}" + (f" · {st.profile}" if st.profile else "")

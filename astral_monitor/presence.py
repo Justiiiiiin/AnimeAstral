@@ -84,8 +84,9 @@ def build_activity(settings: Settings, snap: dict, icon_url: Optional[str] = Non
     if snap.get("status") == "stopped":
         return None
     profile = snap.get("profile") or ""
-    if snap.get("wave") is not None and snap.get("total_waves"):
-        details = tr("Welle {wave}/{total}", wave=snap["wave"], total=snap["total_waves"]) + (f" · {profile}" if profile else "")
+    if snap.get("wave") is not None:
+        from .messages import fmt_wave
+        details = tr("Welle {wave}", wave=fmt_wave(snap["wave"], snap.get("total_waves"))) + (f" · {profile}" if profile else "")
     else:
         details = tr("Wartet auf den nächsten Raid") + (tr(" (pausiert)") if snap.get("status") == "paused" else "")
     state = tr("Versuche {attempts} · Wellen {waves}", attempts=snap.get("session_attempts", 0),

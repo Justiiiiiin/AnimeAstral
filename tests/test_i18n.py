@@ -44,10 +44,10 @@ class I18nTests(unittest.TestCase):
     def test_tr_switches_language(self):
         try:
             i18n.set_language("en")
-            self.assertEqual(i18n.tr("Welle {wave}/{total}", wave=3, total=100), "Wave 3/100")
+            self.assertEqual(i18n.tr("Welle {wave}", wave="3/100"), "Wave 3/100")
             self.assertEqual(i18n.dec("1.5"), "1.5")
             i18n.set_language("de")
-            self.assertEqual(i18n.tr("Welle {wave}/{total}", wave=3, total=100), "Welle 3/100")
+            self.assertEqual(i18n.tr("Welle {wave}", wave="3/100"), "Welle 3/100")
             self.assertEqual(i18n.dec("1.5"), "1,5")
             self.assertEqual(i18n.tr("Gibt es nicht"), "Gibt es nicht")       # unbekannt: unverändert
         finally:

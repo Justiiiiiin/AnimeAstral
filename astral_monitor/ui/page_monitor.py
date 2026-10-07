@@ -224,13 +224,15 @@ class MonitorPage(QWidget):
             self.k_avg.set_value(dec(f"{snap.avg_wave:.1f}") if snap.avg_wave else "–")
             self.k_rate.set_value(messages.fmt_int(round(snap.waves_per_hour)) if snap.waves_per_hour else "–")
 
-        if st.wave_value is not None and st.wave_total:
-            self.wave.setText(f"{st.wave_value}/{st.wave_total}")
-            self.wave_bar.setValue(int(st.wave_value * 100 / st.wave_total))
+        if st.wave_value is not None:
+            self.wave.setText(messages.fmt_wave(st.wave_value, st.wave_total))
+            self.wave_bar.setValue(int(st.wave_value * 100 / st.wave_total) if st.wave_total else 0)
+            self.wave_bar.setVisible(bool(st.wave_total))      # ohne Gesamtzahl kein Fortschritt
             token = wave_token(st.wave_value, self._best)
         else:
             self.wave.setText("–")
             self.wave_bar.setValue(0)
+            self.wave_bar.setVisible(True)
             token = ""
         color = theme.color(token) if token else ""
         if color != self._wave_color:                   # nur bei Wechsel neu setzen (Stylesheet ist teuer)

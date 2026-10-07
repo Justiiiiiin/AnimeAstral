@@ -112,10 +112,11 @@ class WaveTracker:
                      "gesehen" if start is not None else "nicht gesehen")
 
         self.run.max_wave = max(self.run.max_wave, value)
-        self.run.total = total
+        if total or not self.run.total:                 # Lesung ohne Gesamtzahl ändert ein bekanntes Ziel nicht
+            self.run.total = total
         self.last_value, self.total, self._last_seen = value, total, now
 
-        if (self.armed and not self.run.completed and value >= total - self.offset
+        if (self.armed and not self.run.completed and self.run.total and value >= self.run.total - self.offset
                 and now - self._last_trigger >= self.cooldown):
             out.append(("candidate", None))
         return out
@@ -139,7 +140,7 @@ class WaveTracker:
         self._absent_since = None
         if run is None or run.completed:
             return None
-        result = "ok_late" if run.max_wave >= run.total - self.offset else "abgebrochen"
+        result = "ok_late" if run.total and run.max_wave >= run.total - self.offset else "abgebrochen"
         duration = (self._last_seen - run.start_ts) if run.start_ts is not None else None
         return {"result": result, "max_wave": run.max_wave, "total": run.total, "duration": duration,
                 "profile": run.profile, "first_wave": run.first_wave,

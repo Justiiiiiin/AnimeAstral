@@ -477,7 +477,7 @@ class StatsPage(QWidget):
             first.setData(Qt.ItemDataRole.UserRole, i)                      # Verweis auf den Datensatz (für „Löschen“)
             rows.append([
                 first, SortItem(rec.raid or "–", (rec.raid or "~").lower()),
-                SortItem(f"{rec.max_wave}/{rec.total_waves}", rec.max_wave, right=True),
+                SortItem(messages.fmt_wave(rec.max_wave, rec.total_waves), rec.max_wave, right=True),
                 SortItem(messages.fmt_duration_est(rec.duration_s, rec.estimated), rec.duration_s or -1, right=True)])
         self._fill(self.table, rows)
 

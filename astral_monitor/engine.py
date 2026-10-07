@@ -540,7 +540,8 @@ class Engine:
         reading = self._reading
         if reading:
             self.state.wave_value, self.state.wave_total = reading.value, reading.total
-            self.state.info = f"Wave {reading.value}/{reading.total}" + (" (Cache)" if reading.cached else "")
+            self.state.info = f"Wave {messages.fmt_wave(reading.value, reading.total)}" + (
+                " (Cache)" if reading.cached else "")
         else:
             self.state.wave_value = self.state.wave_total = None
             self.state.info = tr("Kein Wellenzähler im Bild")
@@ -605,11 +606,11 @@ class Engine:
         self.state.profile = name
 
     def _on_candidate(self, now: float) -> None:
-        """100/100 gesehen: Raid zählt (eine Lesung genügt – das Bild steht bis zu ~1 s da)."""
+        """Letzte Welle gesehen (z. B. 100/100, 50/50): Raid zählt (eine Lesung genügt – sie steht bis zu ~1 s da)."""
         self._finish_run(self.tracker.confirm(now), now)
 
     def _on_run_end(self, info: dict, now: float) -> None:
-        """Raid ohne gesehenes 100/100 beendet (früher aufgehört oder 100/100 verpasst) – zählt genauso."""
+        """Raid ohne gesehene letzte Welle beendet (früher aufgehört oder verpasst) – zählt genauso."""
         self._finish_run(info, now)
 
     def _finish_run(self, info: dict, now: float) -> None:
@@ -628,8 +629,8 @@ class Engine:
         dur_text = messages.fmt_duration_est(duration, record.estimated)
         log.info("Raid beendet (#%d, Welle %d/%d, Dauer %s).", snap.total_attempts, info["max_wave"], info["total"],
                  dur_text)
-        self._event(tr("Raid beendet · #{count} · Welle {wave}/{total}", count=messages.fmt_int(snap.total_attempts),
-                       wave=info["max_wave"], total=info["total"]) + (f" · {raid}" if raid else "")
+        self._event(tr("Raid beendet · #{count} · Welle {wave}", count=messages.fmt_int(snap.total_attempts),
+                       wave=messages.fmt_wave(info["max_wave"], info["total"])) + (f" · {raid}" if raid else "")
                     + f" · {dur_text}", "ok")
         self._send_raid(snap, record)
         if wall and info["max_wave"] > wall.wave:
@@ -663,7 +664,7 @@ class Engine:
             avg = per["avg"] if per and per["avg"] else avg
         fields = [
             (tr("Raid"), f"#{messages.fmt_int(snap.total_attempts)}" + (f" · {record.raid}" if record.raid else ""), True),
-            (tr("Welle"), f"{record.max_wave}/{record.total_waves}", True),
+            (tr("Welle"), messages.fmt_wave(record.max_wave, record.total_waves), True),
             (tr("Dauer"), messages.fmt_duration_est(record.duration_s, record.estimated), True),
             (tr("Ø Dauer") + (f" ({record.raid})" if record.raid else ""), messages.fmt_duration(avg), True),
             (tr("Versuche pro Stunde"), dec(f"{snap.per_hour:.1f}") if snap.per_hour else "–", True),
@@ -673,8 +674,9 @@ class Engine:
         quests = self.quest_tracker.snapshot()
         if self.settings.attach_quests and quests:
             fields.append((tr("Quests (Stand vor diesem Raid)"), messages.quest_text(quests), False))
-        self._notify("raid_done", tr("Raid beendet · Welle {wave}/{total}", wave=record.max_wave,
-                                     total=record.total_waves), messages.COLOR_OK, fields)
+        self._notify("raid_done", tr("Raid beendet · Welle {wave}",
+                                     wave=messages.fmt_wave(record.max_wave, record.total_waves)),
+                     messages.COLOR_OK, fields)
 
     def _send_uptime(self, now: float) -> None:
         if self.settings.status_enabled and self.settings.webhook_url:

@@ -50,6 +50,11 @@ def fmt_duration(seconds: Optional[float]) -> str:
     return f"{hours}:{minutes:02d}:{secs:02d}" if hours else f"{minutes}:{secs:02d}"
 
 
+def fmt_wave(wave, total) -> str:
+    """„50/100“ – oder nur „542“ in Modi ohne Gesamtzahl (total 0/None)."""
+    return f"{wave}/{total}" if total else f"{wave}"
+
+
 def fmt_int(value: int) -> str:
     return thousands(f"{value:,}")
 
@@ -142,9 +147,11 @@ def build_status(settings: Settings, snap: dict) -> dict:
     title = f"{emoji} {tr(word)}" + (f" · {profile}" if profile else "")
 
     wave, total = snap.get("wave"), snap.get("total_waves")
-    if wave is not None and total:
+    if wave is not None and not total:                  # Modus ohne Gesamtzahl: nur die Welle, kein Balken
+        lines = ["## 🌊 " + tr("Welle {wave}", wave=fmt_wave(wave, total))]
+    elif wave is not None and total:
         pct = round(100 * wave / total)
-        lines = ["## 🌊 " + tr("Welle {wave}/{total}", wave=wave, total=total),
+        lines = ["## 🌊 " + tr("Welle {wave}", wave=fmt_wave(wave, total)),
                  f"`{progress_bar(wave, total)}` **{pct} %**"]
     elif status == "stopped":
         lines = ["## 💤 " + tr("Überwachung gestoppt")]

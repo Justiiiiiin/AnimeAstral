@@ -234,3 +234,28 @@ class FixedDetectionTests(unittest.TestCase):
         self.assertEqual((s.trigger_offset, s.confirm_reads, s.capture_mode, s.tesseract_path), (0, 1, "auto", ""))
         self.assertTrue(all("interval" in p and "hot" not in p for p in PRESETS.values()))   # kein „heißer“ Takt
         self.assertIsNone(Settings().validate_detection())
+
+    def test_raids_of_any_length(self):
+        from astral_monitor.wave import parse_wave
+        allowed = Settings().allowed_totals_list()
+        for text, expected in (("Wave 12/30", (12, 30)), ("Wave 50/50", (50, 50)), ("Wave 99/100", (99, 100)),
+                               ("Wave 1500/2000", (1500, 2000)), ("Wave 44/10", None), ("Wave 7/3", None)):
+            self.assertEqual(parse_wave(text, allowed), expected, text)       # 30, 50, 100 … 2000 Wellen
+
+    def test_endless_modes_without_total(self):
+        from astral_monitor import messages
+        from astral_monitor.tracker import WaveTracker
+        from astral_monitor.wave import parse_bare_wave
+        self.assertEqual(parse_bare_wave("Wave 542"), 542)
+        self.assertIsNone(parse_bare_wave("Wave 54/1OO"))                 # mit „/“: nie als „54“ werten
+        self.assertIsNone(parse_bare_wave("542"))                         # ohne „Wave“ davor: nein
+        tr = WaveTracker(offset=0)
+        events = []
+        for i, v in enumerate(range(1, 30)):
+            events += tr.update(v, 0, 100.0 + i * 4)
+        self.assertFalse([e for e in events if e[0] == "candidate"])       # ohne Ziel kein vorzeitiges Ende
+        events = tr.update(1, 0, 300.0) + tr.update(1, 0, 304.0)          # Zähler springt zurück: Raid endet
+        ends = [d for k, d in events if k == "run_end"]
+        self.assertEqual((ends[0]["max_wave"], ends[0]["total"]), (29, 0))
+        self.assertEqual(messages.fmt_wave(542, 0), "542")
+        self.assertEqual(messages.fmt_wave(50, 100), "50/100")

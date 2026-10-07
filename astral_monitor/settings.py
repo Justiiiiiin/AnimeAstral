@@ -65,7 +65,7 @@ _load_regions()
 
 # Erkennung ist seit 0.9.0 fest eingebaut (keine Einstellungen mehr): Raid-Ende bei 100/100 mit einer Lesung –
 # so lief es beim Entwickler stundenlang stabil. Die Felder bleiben in der Datei (Downgrade auf ≤ 0.8.1).
-FIXED_DETECTION = {"window_title": "Roblox", "capture_mode": "auto", "allowed_totals": "100", "trigger_offset": 0,
+FIXED_DETECTION = {"window_title": "Roblox", "capture_mode": "auto", "allowed_totals": "auto", "trigger_offset": 0,
                    "confirm_reads": 1, "cooldown_seconds": 60, "read_quests": True, "tesseract_path": "",
                    "debug_images": False}
 
@@ -167,7 +167,7 @@ class Settings:
     low_priority: bool = True
     # Wellenzähler
     wave_roi: Roi = field(default_factory=lambda: Roi(**vars(DEFAULT_WAVE_ROI)))
-    allowed_totals: str = "100"
+    allowed_totals: str = "auto"
     trigger_offset: int = 0             # fest (seit 0.9.0): Raid-Ende bei 100/100
     confirm_reads: int = 1
     cooldown_seconds: int = 60
@@ -234,6 +234,10 @@ class Settings:
 
     # ------------------------------------------------------------------ Helfer
     def allowed_totals_list(self) -> list[int]:
+        if self.allowed_totals.strip().lower() == "auto":
+            # Im Spiel gibt es Raids mit 30, 50, 100 und bis zu 2000 Wellen: alle runden Gesamtzahlen von 20 bis 2000.
+            # Nicht „jede Zahl“ – sonst würde eine Fehllesung wie „10“ statt „100“ als neuer Raid gelten.
+            return sorted(set(range(20, 2001, 10)) | {25, 75})
         out = []
         for part in self.allowed_totals.replace(";", ",").split(","):
             part = part.strip()

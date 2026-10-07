@@ -147,7 +147,7 @@ class SettingsPage(QWidget):
         root.addWidget(section(tr("Überwachung")))
         perf = Card(tr("Leistung"),
                     tr("Wie oft der Wellenzähler gelesen wird – gleichmäßig, auch kurz vor Raid-Ende. "
-                       "„Ausgewogen“ (alle 0,5 s) erkennt 100/100 sicher und passt für die meisten. Die genauen "
+                       "„Ausgewogen“ (alle 0,5 s) erkennt das Raid-Ende sicher und passt für die meisten. Die genauen "
                        "Zeiten zeigt die Auswahl, wenn du darüberfährst."))
         pg = form_grid()
         self.perf = ComboBox()

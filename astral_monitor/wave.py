@@ -29,7 +29,7 @@ RESCAN_AFTER = 3.0         # so lange ohne Treffer, dann wird der Bereich neu ab
 MAX_BAD_READS = 3          # so viele unlesbare Treffer am gemerkten Ort, dann neu suchen
 
 # Zeichen, die Tesseract häufig statt Ziffern liefert (t -> 1, O -> 0 ...)
-_WAVE_RE = re.compile(r"([0-9tlIO|oSB]{1,3})\s*/\s*([0-9tlIO|oSB]{1,4})")
+_WAVE_RE = re.compile(r"([0-9tlIO|oSB]{1,4})\s*/\s*([0-9tlIO|oSB]{1,4})")   # bis 2000 Wellen
 _FIX = str.maketrans({"t": "1", "l": "1", "I": "1", "|": "1", "O": "0", "o": "0", "S": "5", "B": "8"})
 
 
@@ -52,10 +52,27 @@ def parse_wave(text: str, allowed_totals: list[int]) -> Optional[tuple[int, int]
         if allowed_totals:
             if tot not in allowed_totals:
                 continue
-        elif not 2 <= tot <= 999:
+        elif not 2 <= tot <= 2000:
             continue
         if 0 <= cur <= tot:
             return cur, tot
+    return None
+
+
+_BARE_RE = re.compile(r"([a-zA-Z]{3,6})\W{0,3}([0-9tlIO|oSB]{1,4})\b")
+
+
+def parse_bare_wave(text: str) -> Optional[int]:
+    """„Wave 542“ (Modi mit mehr als 100 Wellen zeigen keine Gesamtzahl) -> 542. Nur mit dem Wort „Wave“ direkt
+    davor und ohne „/“ im Text – sonst könnte ein verlesenes „54/100“ als „54“ durchgehen."""
+    if "/" in text:
+        return None
+    for match in _BARE_RE.finditer(text):
+        if _is_wave_word(match.group(1)):
+            try:
+                return int(match.group(2).translate(_FIX))
+            except ValueError:
+                continue
     return None
 
 
@@ -126,6 +143,9 @@ class WaveReader:
         for thr in (TEXT_THRESHOLD, None):               # None = Otsu als Ersatzversuch
             text = self._ocr.line(ocr_input_threshold(gray, thr), psm=7)
             parsed = parse_wave(text, self._allowed)
+            if parsed is None:
+                bare = parse_bare_wave(text)
+                parsed = (bare, 0) if bare is not None else None     # 0 = ohne Gesamtzahl
             if parsed:
                 if len(self._cache) >= CACHE_LIMIT:
                     self._cache.clear()
@@ -163,11 +183,14 @@ class WaveReader:
         best = None
         for wd in words:
             parsed = parse_wave(wd.text, self._allowed)
-            if parsed is None:
-                continue
             cy = wd.y + wd.h / 2
             label = [o for o in words if o is not wd and _is_wave_word(o.text) and abs((o.y + o.h / 2) - cy) < wd.h
                      and o.x < wd.x and wd.x - (o.x + o.w) < 3 * wd.h]
+            if parsed is None:                          # „Wave 542“: nur mit „Wave“ direkt davor
+                bare = parse_bare_wave(f"{label[0].text} {wd.text}") if label else None
+                if bare is None:
+                    continue
+                parsed = (bare, 0)
             score = (1 if label else 0, wd.h)           # „Wave“ davor bevorzugen, sonst die größte Schrift
             if best is None or score > best[0]:
                 best = (score, wd, parsed, label[0] if label else None)
