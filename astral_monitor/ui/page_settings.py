@@ -466,6 +466,9 @@ class SettingsPage(QWidget):
         data.body.addLayout(xrow)
         data.body.addStretch(1)
         root.addLayout(columns(upd, data))
+        from .events_card import EventsCard
+        self.events = EventsCard(main.event_log)          # Debug/Tester: Ereignisse (früher auf der Startseite)
+        root.addWidget(self.events)
         root.addStretch(1)
         root.addLayout(self._about_row())
         self._assign_groups(root)

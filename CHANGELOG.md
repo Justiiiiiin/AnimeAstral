@@ -4,6 +4,18 @@ Neueste Version oben. Kurze Stichpunkte, keine Erklärungen (die stehen im Progr
 Der Abschnitt einer Version wird beim Veröffentlichen automatisch als Versionshinweis übernommen
 (`tools/release_notes.py`) und ist im Programm unter Einstellungen → Updates → „Alle Versionen“ lesbar.
 
+## 0.9.5-beta.4
+
+### ✨ Neu (Beta)
+- Makro-Warteschlange: Aufgaben nacheinander, auf Wunsch in Schleife
+- Aufgaben: Menü öffnen, Pets rollen, Menü schließen, Warten
+- Während „Warten“ läuft das Anti-AFK weiter
+
+### 🔧 Verbessert
+- Start/Stopp, Pause und Status-Knopf links oben in der Kopfzeile
+- Startseite ohne Titel, Fenster-Info und Raid-Auswahl
+- Ereignisse als Debug-Karte unter Einstellungen → Programm
+
 ## 0.9.5-beta.3
 
 ### 🐞 Behoben (Beta)

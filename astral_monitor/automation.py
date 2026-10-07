@@ -37,6 +37,25 @@ def macro_running() -> bool:
     return _ACTIVE.is_set()
 
 
+TASK_KINDS = ("navigate", "pets", "close", "wait")
+
+
+def task_label(task: dict) -> str:
+    """Anzeige einer Aufgabe der Warteschlange."""
+    kind = task.get("kind")
+    if kind == "navigate":
+        return tr("Öffnen: {target}", target=task.get("target", "?"))
+    if kind == "pets":
+        return tr("Pets rollen (Auto!): {world}", world=task.get("world", "?"))
+    if kind == "close":
+        return tr("Menü schließen")
+    if kind == "wait":
+        seconds = int(task.get("seconds", 60))
+        return tr("Warten: {minutes} Min.", minutes=seconds // 60) if seconds % 60 == 0 and seconds >= 60 else \
+            tr("Warten: {seconds} s", seconds=seconds)
+    return str(kind)
+
+
 class Stop(Exception):
     """Abbruch (Nutzer, Zeitüberschreitung, nicht gefunden) – Text = Grund für das Protokoll."""
 
@@ -88,6 +107,62 @@ class Navigator:
 
     def close_menu(self) -> bool:
         return self.start(tr("Menü schließen"), self._close_any)
+
+    def run_queue(self, tasks: list[dict], loop: bool = False) -> bool:
+        """Warteschlange: Aufgaben nacheinander; mit loop von vorn, bis „Stopp“/Esc/Maus. Aufgaben siehe task_label."""
+        tasks = [dict(t) for t in tasks if t.get("kind") in TASK_KINDS]
+        if not tasks:
+            return False
+        return self.start(tr("Warteschlange ({count} Aufgaben)", count=len(tasks)), lambda: self._queue(tasks, loop))
+
+    def _queue(self, tasks: list[dict], loop: bool) -> None:
+        rounds = 0
+        while True:
+            rounds += 1
+            if loop:
+                self.log(tr("Durchlauf {n}", n=rounds))
+            for i, task in enumerate(tasks, 1):
+                self.log(f"{i}/{len(tasks)}  {task_label(task)}")
+                self._task(task)
+                time.sleep(0.6)                           # Spiel kurz Luft lassen
+            if not loop:
+                return
+
+    def _task(self, task: dict) -> None:
+        kind = task.get("kind")
+        if kind == "wait":
+            self._idle_wait(float(task.get("seconds", 60)))
+            return
+        self._focus()                                     # nach Warten/Anti-AFK wieder Roblox vorne
+        if kind == "navigate":
+            self._open(self._window(task.get("target", "")))
+        elif kind == "pets":
+            self._pets_auto(task.get("world", ""), bool(task.get("close", True)))
+        elif kind == "close":
+            self._close_any()
+
+    def _idle_wait(self, seconds: float) -> None:
+        """Warten ohne Eingaben: Maus/Fenster frei, Anti-AFK darf in der Zeit laufen; Esc/„Stopp“ brechen ab."""
+        _ACTIVE.clear()
+        try:
+            end = time.monotonic() + max(0.0, seconds)
+            while time.monotonic() < end:
+                if self._halt.wait(0.25):
+                    raise Stop(tr("Gestoppt."))
+                if ctypes.windll.user32.GetAsyncKeyState(0x1B) & 0x8000:
+                    raise Stop(tr("Abgebrochen (Esc)."))
+        finally:
+            _ACTIVE.set()
+
+    def _focus(self) -> None:
+        from .antiafk import _bring_to_front
+        u32 = ctypes.windll.user32
+        u32.GetForegroundWindow.restype = wintypes.HWND
+        if u32.GetForegroundWindow() != self._hwnd:
+            if not _bring_to_front(self._hwnd):
+                raise Stop(tr("Roblox ließ sich nicht nach vorne holen."))
+            time.sleep(0.25)
+        self._cursor = None                               # Maus darf sich zwischen den Aufgaben bewegt haben
 
     def _run(self, label: str, job: Callable[[], None]) -> None:
         self.log("▶ " + label)

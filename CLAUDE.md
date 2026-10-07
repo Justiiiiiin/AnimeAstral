@@ -22,7 +22,12 @@ Einstellungen → Roblox, Einschalten nur nach Warnung zu den Roblox-Regeln; Wun
 1.0.0): öffnet Menüs anhand der Oberflächen-Karte (`uimap.py` + `astral_monitor/uimap/`, Erkennung `vision.py`) –
 Teleporter auf, per Mausrad zur Welt scrollen, Symbol klicken, Titel prüfen; Pets-Roll „Auto!“ drücken und das
 Menü gleich wieder schließen (Auto-Roll läuft im Hintergrund weiter – nie auf das Rollen warten). Oberfläche: Karte
-„Makro (Beta)“ links oben auf der Startseite (in der Oberfläche heißt es „Makro“). Eingaben per
+„Makro (Beta)“ links oben auf der Startseite (in der Oberfläche heißt es „Makro“), darunter die
+**Makro-Warteschlange** (`ui/macro_queue_card.py`, `Navigator.run_queue`, Aufgaben `automation.TASK_KINDS`, gespeichert in
+`settings.macro_queue`/`macro_loop`; während „Warten“ ist `_ACTIVE` aus, damit das Anti-AFK laufen kann).
+**Startseite seit 0.9.5-beta.4:** kein Titel/Fenster-Info/Raid-Auswahl; Start/Pause/Status als Knöpfe links in der
+Kopfzeile (`MainWindow._mount_controls`); Ereignisse als Debug-Karte unter Einstellungen → Programm
+(`ui/events_card.py`, gesammelt in `MainWindow.event_log`). Die Raid-Auswahl kommt neu (Eigentümer ändert das). Eingaben per
 SendInput nur mit Roblox im Vordergrund, Not-Aus bei Mausbewegung/Esc. **Kein Laufen/Teleportieren** (TELEPORT!-Knöpfe
 werden nicht benutzt – Wunsch des Eigentümers). Darüber hinaus nichts automatisieren, ohne zu fragen.
 **Oberflächen-Karte:** gepflegt im privaten Entwickler-Werkzeug (`_dev/calibrate.py`: Aufnahme, Baum, Vorlagen),

@@ -38,7 +38,7 @@ class AutomationCard(Card):
         row = QHBoxLayout()
         self.target = QComboBox()
         self.target.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
-        self.target.setMinimumContentsLength(12)             # lange Namen machen die Seite sonst zu breit
+        self.target.setMinimumContentsLength(8)              # lange Namen machen die Seite sonst zu breit
         for w in self.map.targets():
             if w["name"] != "Teleporter Fenster":
                 self.target.addItem(w["name"], w["name"])
@@ -51,6 +51,8 @@ class AutomationCard(Card):
 
         row2 = QHBoxLayout()
         self.world = QComboBox()
+        self.world.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
+        self.world.setMinimumContentsLength(3)
         worlds = sorted({m.group(1) for w in self.map.entries
                          if (m := re.match(r"(W\d+) Pets-Roll$", w.get("name", "")))}, key=natural)
         for w in worlds:

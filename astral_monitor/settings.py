@@ -221,7 +221,9 @@ class Settings:
     ui_accent: str = ""                 # eigene Akzentfarbe „#RRGGBB“ (leer = Farbe des Designs)
     anti_afk_enabled: bool = False      # alle N Minuten jedes Roblox-Fenster kurz vor, 4× Esc, zurück (antiafk.py)
     anti_afk_minutes: int = 10
-    automation_enabled: bool = False    # Automatik (Beta): Menüs per Oberflächen-Karte öffnen (automation.py)
+    automation_enabled: bool = False    # Makro (Beta): Menüs per Oberflächen-Karte öffnen (automation.py)
+    macro_queue: list = field(default_factory=list)    # Makro-Warteschlange: [{"kind": …, …}] (automation.TASK_KINDS)
+    macro_loop: bool = False            # Warteschlange immer wieder von vorn
     auto_rejoin_enabled: bool = False   # nach Disconnect/Kick/Absturz neu beitreten (rejoin.py)
     auto_monitor: bool = False          # Überwachung startet/stoppt mit Anime Astral (automonitor.py)
     server_favorites: list = field(default_factory=list)   # [{"name", "link"}] – nur lokal, Diagnose schwärzt die Links

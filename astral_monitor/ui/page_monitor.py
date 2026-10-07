@@ -1,20 +1,17 @@
-"""Seite „Überwachung": Steuerung, Kennzahlen, Live-Erkennung, Quests, Ereignisse."""
+"""Startseite: Kennzahlen, links Makro + Makro-Warteschlange, rechts Live-Erkennung + Quests.
+Start/Stopp, Pause und „Status neu senden“ sitzen in der Kopfzeile des Hauptfensters (MainWindow._mount_controls);
+die Ereignisse stehen als Debug-Karte in den Einstellungen (ui/events_card.py)."""
 from __future__ import annotations
 
 import time
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QColor
-from PySide6.QtWidgets import (QHBoxLayout, QListWidget, QListWidgetItem, QProgressBar,
-                               QPushButton, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import QHBoxLayout, QProgressBar, QPushButton, QVBoxLayout, QWidget
 
 from .. import messages
 from ..i18n import dec, tr
-from ..settings import order_raids
 from . import theme
-from .widgets import Card, ComboBox, EmptyState, QuestRow, StatCard, label, smooth
-
-LEVEL_TOKENS = {"ok": "accent", "warn": "warn", "error": "danger", "info": "info"}
+from .widgets import Card, EmptyState, QuestRow, StatCard, label
 
 
 def wave_token(wave: int, best: int) -> str:
@@ -43,36 +40,15 @@ class MonitorPage(QWidget):
         theme.track_margins(root, 28, 24, 28, 24)
         theme.track_spacing(root, 16)
 
-        # Kopfzeile
-        head = QHBoxLayout()
-        titles = QVBoxLayout()
-        titles.addWidget(label(tr("Überwachung"), "h1"))
-        self.subtitle = label("", "muted", wrap=True)
-        titles.addWidget(self.subtitle)
-        head.addLayout(titles, 1)
-        raid_box = QVBoxLayout()
-        theme.track_spacing(raid_box, 2)
-        raid_box.addWidget(label(tr("Aktueller Raid"), "small"))
-        self.raid_combo = ComboBox()
-        theme.track_min_width(self.raid_combo, 220)
-        self.raid_combo.setToolTip(tr("Welcher Raid gerade läuft – gilt sofort, auch für den laufenden Versuch. "
-                                      "Raids anlegen und umbenennen unter Einstellungen → Roblox."))
-        self.raid_combo.activated.connect(self._raid_chosen)
-        raid_box.addWidget(self.raid_combo)
-        head.addLayout(raid_box)
-        head.addSpacing(theme.px(8))
+        # Steuerung: in der Kopfzeile des Hauptfensters (hier nur erzeugt, Zustand pflegt refresh())
         self.btn_status = QPushButton(tr("Status neu senden"))
         self.btn_status.setToolTip(tr("Löscht die Statusnachricht in Discord und sendet sie ganz unten im Chat neu."))
         self.btn_status.clicked.connect(self.main.resend_status)
-        head.addWidget(self.btn_status)
         self.btn_pause = QPushButton(tr("Pause"))
         self.btn_pause.clicked.connect(self.main.toggle_pause)
         self.btn_start = QPushButton(tr("Starten"))
         self.btn_start.setObjectName("primary")
         self.btn_start.clicked.connect(self.main.toggle_monitoring)
-        head.addWidget(self.btn_pause)
-        head.addWidget(self.btn_start)
-        root.addLayout(head)
 
         # Kennzahlen
         kpis = QHBoxLayout()
@@ -142,66 +118,19 @@ class MonitorPage(QWidget):
         right.addWidget(quests)
         right.addStretch(1)
 
-        events = Card(tr("Ereignisse"))
-        self.events_empty = EmptyState("events", tr("Noch keine Ereignisse – Start, Raids, Alarme und Rejoins "
-                                                    "erscheinen hier."))
-        events.body.addWidget(self.events_empty)
-        self.events = QListWidget()                       # kompakt: eine Zeile je Ereignis, lange Texte gekürzt
-        self.events.setObjectName("events")
-        self.events.setWordWrap(False)
-        self.events.setTextElideMode(Qt.TextElideMode.ElideRight)
-        self.events.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)   # kürzen statt scrollen
-        self.events.setUniformItemSizes(True)
-        self.events.setSpacing(0)
-        smooth(self.events)
-        theme.track_min_height(self.events, 90)
-        events.body.addWidget(self.events, 1)
-        left.addWidget(events, 1)
+        from .macro_queue_card import MacroQueueCard
+        self.queue = MacroQueueCard(main, self.macro)
+        left.addWidget(self.queue, 1)
         mid.addLayout(left, 3)
         mid.addLayout(right, 2)
         root.addLayout(mid, 1)
 
-    def _raid_chosen(self, _index: int) -> None:
-        name = self.raid_combo.currentData()
-        if name is None:                               # „Raids anlegen …“
-            self.reload_raids()
-            self.main.nav.button(3).click()               # Einstellungen (Reiter „Roblox“: Meine Raids)
-            return
-        self.main.select_raid(name)
-
     def recolor(self) -> None:
-        """Nach Design-/Farbwechsel: Ereignisse und Wellenzahl in den neuen Farben."""
+        """Nach Design-/Farbwechsel: Wellenzahl in den neuen Farben."""
         self._wave_color = None
-        for i in range(self.events.count()):
-            item = self.events.item(i)
-            token = LEVEL_TOKENS.get(item.data(Qt.ItemDataRole.UserRole) or "info", "info")
-            item.setForeground(QColor(theme.color(token)))
 
     def reload_raids(self) -> None:
-        """Auswahlliste neu füllen (nach Anlegen/Umbenennen/Löschen) und den gewählten Raid markieren."""
-        current = self.engine.settings.current_raid
-        self.raid_combo.blockSignals(True)
-        self.raid_combo.clear()
-        self.raid_combo.addItem(tr("– kein Raid gewählt –"), "")
-        for name in order_raids(self.engine.profile_store.names(), self.engine.settings.recent_raids):
-            self.raid_combo.addItem(name, name)
-        if self.raid_combo.count() == 1:
-            self.raid_combo.addItem(tr("Raids anlegen …"), None)
-        index = self.raid_combo.findData(current)
-        self.raid_combo.setCurrentIndex(max(0, index))
-        self.raid_combo.blockSignals(False)
-
-    # ---------------------------------------------------------------- Ereignisse
-    def add_event(self, data: dict) -> None:
-        stamp = time.strftime("%H:%M", time.localtime(data.get("ts", time.time())))
-        item = QListWidgetItem(f"{stamp}  {data['text']}")
-        item.setToolTip(time.strftime("%H:%M:%S", time.localtime(data.get("ts", time.time()))) + "  " + data["text"])
-        item.setData(Qt.ItemDataRole.UserRole, data.get("level", "info"))
-        item.setForeground(QColor(theme.color(LEVEL_TOKENS.get(data.get("level", "info"), "info"))))
-        self.events.insertItem(0, item)
-        self.events_empty.setVisible(False)
-        while self.events.count() > 200:
-            self.events.takeItem(self.events.count() - 1)
+        """Raid-Auswahl gibt es auf der Startseite nicht mehr (kommt neu) – Aufrufer bleiben gültig."""
 
     # ---------------------------------------------------------------- Aktualisieren
     def refresh(self) -> None:
@@ -217,11 +146,6 @@ class MonitorPage(QWidget):
             self.btn_start.style().polish(self.btn_start)
             self.btn_pause.setVisible(running)
         self.btn_pause.setText(tr("Fortsetzen") if st.paused else tr("Pause"))
-        if running:
-            w, h = st.frame_size
-            self.subtitle.setText(f"{st.source_info} · {w} × {h}")
-        else:
-            self.subtitle.setText(tr("Gestoppt – Einstellungen prüfen und starten"))
 
         now = time.monotonic()
         if now - self._last_snap > 1.5:

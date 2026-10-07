@@ -1,6 +1,7 @@
 """Hauptfenster: Seitenleiste + Seiten, Takt zur Aktualisierung der Anzeige."""
 from __future__ import annotations
 
+import collections
 import copy
 import logging
 import queue
@@ -69,6 +70,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.engine = engine
         self._ui_calls: "queue.Queue[Callable[[], None]]" = queue.Queue()
+        self.event_log: "collections.deque[dict]" = collections.deque(maxlen=200)   # Ereignisse (Debug-Karte)
         self._status_key = None
         self.setWindowTitle(f"Anime Astral Monitor {__version__}")
         # etwas größer als der Entwurf (1180 × 800), vor allem höher: auf der Startseite ist so alles zu sehen
@@ -93,6 +95,7 @@ class MainWindow(QMainWindow):
         topbar = QFrame()
         topbar.setObjectName("topbar")
         top = QHBoxLayout(topbar)
+        self._top = top
         theme.track_margins(top, 16, 8, 16, 8)
         theme.track_spacing(top, 10)
         self.brandmark = label("", "brandmark")
@@ -207,6 +210,7 @@ class MainWindow(QMainWindow):
         self.nav.button(0).setChecked(True)
         self.nav.idClicked.connect(self._go)
         self._fade = None
+        self._mount_controls()
         side.addStretch(1)
 
         self.toast = label("", "small", wrap=True)
@@ -690,12 +694,14 @@ class MainWindow(QMainWindow):
         self.top_toast.setVisible(rail)
         self.rail_logo.setVisible(rail)
         self.brandmark.setVisible(info["icons"] and not rail)
-        self.brand.setVisible(not rail)              # Nebula: Logo steht in der Leiste
+        self.brand.setVisible(False)                 # Kopfzeile: links Start/Pause/Status (seit 0.9.5-beta.4)
         logo = app_paths.resource_path("assets/app.png")
         if info["icons"] and logo.is_file():
             self.brandmark.setPixmap(QIcon(str(logo)).pixmap(QSize(theme.px(22), theme.px(22))))
             self.rail_logo.setPixmap(QIcon(str(logo)).pixmap(QSize(theme.px(38), theme.px(38))))
         self.pages[0].recolor()
+        if self.pages.built(PAGE_SETTINGS) is not None:
+            self.pages.built(PAGE_SETTINGS).events.recolor()
         for page in self.pages:
             page.update()
         self._status_key = None
@@ -948,6 +954,14 @@ class MainWindow(QMainWindow):
             lbl.setText(text)
         QTimer.singleShot(3000, lambda: [lbl.setText("") for lbl in (self.toast, self.top_toast)])
 
+    def _mount_controls(self) -> None:
+        """Start/Stopp, Pause und „Status neu senden“ als Knöpfe links oben in die Kopfzeile (Wunsch des Eigentümers
+        07.10.2026). Die Knöpfe gehören zur Startseite, die ihren Zustand in refresh() pflegt."""
+        page = self.pages[PAGE_MONITOR]
+        for i, btn in enumerate((page.btn_start, page.btn_pause, page.btn_status), start=1):
+            self._top.insertWidget(i, btn)
+        self.brand.setVisible(False)                      # Name steht im Fenstertitel, Logo in der Seitenleiste
+
     def post(self, call: Callable[[], None]) -> None:
         """Aus Hintergrund-Threads: Aufruf im GUI-Thread ausführen lassen."""
         self._ui_calls.put(call)
@@ -1166,7 +1180,9 @@ class MainWindow(QMainWindow):
             except queue.Empty:
                 break
             if kind == "event":
-                self.pages[0].add_event(data)
+                self.event_log.append(data)               # für die Debug-Karte in den Einstellungen
+                if self.pages.built(PAGE_SETTINGS) is not None:
+                    self.pages.built(PAGE_SETTINGS).events.add(data)
                 refresh_stats = True               # Statistik beim nächsten Anzeigen neu laden (nur Markierung)
         for _ in range(20):
             try:

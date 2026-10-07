@@ -163,7 +163,6 @@ EN: dict[str, str] = {
         "Saved:\n{path}\n\nThe file contains the log, value history, settings (without webhook) and a screenshot of "
         "the Roblox window.",
     "Gestoppt": "Stopped",
-    "Gestoppt – Einstellungen prüfen und starten": "Stopped – check the settings and start",
     "GitHub antwortete mit HTTP {code}.": "GitHub answered with HTTP {code}.",
     "Grenze": "Limit",
     "Hoher Speicherverbrauch": "High memory usage",
@@ -445,8 +444,6 @@ EN: dict[str, str] = {
     "Nach jeder Meldung automatisch wieder ganz nach unten schieben":
         "Automatically move it back to the bottom after every message",
     "Quest-Fortschritt an Raid- und Uptime-Meldungen anhängen": "Attach quest progress to raid and uptime messages",
-    "Noch keine Ereignisse – Start, Raids, Alarme und Rejoins erscheinen hier.":
-        "No events yet – starts, raids, alerts and rejoins appear here.",
     "Privater Server und Auto-Rejoin": "Private server and auto-rejoin",
     "Niedrige Prozesspriorität (das Spiel hat Vorrang)": "Low process priority (the game comes first)",
     "Wächter aktiv": "Guard active",
@@ -479,9 +476,6 @@ EN: dict[str, str] = {
     "Aktueller Raid: {name}": "Current raid: {name}",
     "Kein Raid gewählt": "No raid selected",
     "Noch keine Server gespeichert": "No servers saved yet",
-    "– kein Raid gewählt –": "– no raid selected –",
-    "Aktueller Raid": "Current raid",
-    "Raids anlegen …": "Add raids …",
     "Umbenennen …": "Rename …",
     "Als aktuellen Raid wählen": "Select as current raid",
     "Neuer Raid": "New raid",
@@ -873,10 +867,6 @@ EN: dict[str, str] = {
     "{count} Versuche": "{count} attempts",
     "Die Texterkennung (Tesseract) fehlt. Bitte das Programm neu installieren.":
         "Text recognition (Tesseract) is missing. Please reinstall the program.",
-    "Welcher Raid gerade läuft – gilt sofort, auch für den laufenden Versuch. Raids anlegen und umbenennen unter "
-    "Einstellungen → Roblox.":
-        "Which raid is running – applies immediately, including the current attempt. Create and rename raids under "
-        "Settings → Roblox.",
     "Wie oft der Wellenzähler gelesen wird – gleichmäßig, auch kurz vor Raid-Ende. „Ausgewogen“ (alle 0,5 s) "
     "erkennt das Raid-Ende sicher und passt für die meisten. Die genauen Zeiten zeigt die Auswahl, wenn du "
     "darüberfährst.":
@@ -969,4 +959,28 @@ EN: dict[str, str] = {
         "are restored and stay open so recognition keeps working), presses Esc 4 times – the Roblox menu opens and "
         "closes again – and switches right back. Afterwards Roblox's memory is trimmed.\n\nNote: macros are not "
         "allowed by the Roblox rules – use at your own risk.",
+    # 0.9.5-beta.4: Makro-Warteschlange, Ereignisse als Debug-Karte
+    "Öffnen: {target}": "Open: {target}",
+    "Pets rollen (Auto!): {world}": "Roll pets (Auto!): {world}",
+    "Warten: {minutes} Min.": "Wait: {minutes} min",
+    "Warten: {seconds} s": "Wait: {seconds} s",
+    "Warteschlange ({count} Aufgaben)": "Queue ({count} tasks)",
+    "Durchlauf {n}": "Round {n}",
+    "Ereignisse (Debug)": "Events (debug)",
+    "Was das Programm zuletzt gemacht hat: Start/Stopp, Raid-Enden, Alarme, Rejoins, Anti-AFK. Zum Testen und für "
+    "Fehlermeldungen – das ausführliche Protokoll steckt im Diagnose-Paket.":
+        "What the program did recently: start/stop, raid ends, alerts, rejoins, anti-AFK. For testing and bug "
+        "reports – the detailed log is in the diagnostics package.",
+    "Warten (Min.)": "Wait (min)",
+    "Makro-Warteschlange": "Macro queue",
+    "Aufgaben nacheinander ausführen – mit „Schleife“ immer wieder von vorn, bis „Stopp“, Esc oder Mausbewegung beim "
+    "Klicken. Während „Warten“ ist Roblox frei (Anti-AFK läuft weiter). Doppelklick entfernt eine Aufgabe.":
+        "Run tasks one after another – with “Loop” over and over, until “Stop”, Esc or moving the mouse while it "
+        "clicks. During “Wait” Roblox is free (anti-AFK keeps running). Double-click removes a task.",
+    "Hinzufügen": "Add",
+    "Schleife": "Loop",
+    "Nach oben": "Move up",
+    "Nach unten": "Move down",
+    "Warteschlange starten": "Start queue",
+    "Die Warteschlange ist leer.": "The queue is empty.",
 }
