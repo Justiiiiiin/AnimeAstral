@@ -1,14 +1,15 @@
-"""Logo-Animation beim Start: das Logo erscheint kurz in der Mitte und gibt dann das Fenster frei (~1 s)."""
+"""Logo-Animation beim Start: das Logo erscheint in der Mitte, bleibt kurz stehen und gibt dann das Fenster frei
+(~2 s)."""
 from __future__ import annotations
 
-from PySide6.QtCore import QEasingCurve, QRectF, Qt, QVariantAnimation
+from PySide6.QtCore import QEasingCurve, QRectF, Qt, QTimer, QVariantAnimation
 from PySide6.QtGui import QColor, QFont, QPainter, QPixmap
 from PySide6.QtWidgets import QWidget
 
 from .. import app_paths
 from . import theme
 
-DURATION_MS = 1100
+DURATION_MS = 2200
 
 
 class IntroOverlay(QWidget):
@@ -28,12 +29,20 @@ class IntroOverlay(QWidget):
         self._anim.setEasingCurve(QEasingCurve.Type.Linear)
         self._anim.valueChanged.connect(self._step)
         self._anim.finished.connect(self.deleteLater)
+        self._started = False
         parent.installEventFilter(self)
 
     def start(self) -> None:
+        """Zeigen – die Bewegung beginnt erst nach dem ersten echten Zeichnen (die installierte Version braucht beim
+        Start länger dafür; sonst wäre die Animation vorbei, bevor man sie sieht)."""
         self.raise_()
         self.show()
-        self._anim.start()
+        QTimer.singleShot(8000, lambda: None if self._started else self.deleteLater())   # nie gezeichnet (Tray)
+
+    def _begin(self) -> None:
+        if not self._started:
+            self._started = True
+            QTimer.singleShot(120, self._anim.start)       # kurz voll stehen lassen
 
     def eventFilter(self, obj, event) -> bool:
         if obj is self.parent() and event.type() == event.Type.Resize:
@@ -49,9 +58,11 @@ class IntroOverlay(QWidget):
         self.update()
 
     def paintEvent(self, _event) -> None:
+        if not self._started:
+            self._begin()
         t = self._t
-        grow = QEasingCurve(QEasingCurve.Type.OutCubic).valueForProgress(min(1.0, t / 0.5))
-        fade = 1.0 - QEasingCurve(QEasingCurve.Type.InOutQuad).valueForProgress(max(0.0, (t - 0.55) / 0.45))
+        grow = QEasingCurve(QEasingCurve.Type.OutCubic).valueForProgress(min(1.0, t / 0.3))     # hereinwachsen
+        fade = 1.0 - QEasingCurve(QEasingCurve.Type.InOutQuad).valueForProgress(max(0.0, (t - 0.72) / 0.28))
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
         p.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
@@ -76,7 +87,7 @@ class IntroOverlay(QWidget):
         font.setLetterSpacing(QFont.SpacingType.PercentageSpacing, 104)
         p.setFont(font)
         p.setPen(QColor(theme.color("text")))
-        p.setOpacity(fade * max(0.0, min(1.0, (t - 0.15) / 0.3)))
+        p.setOpacity(fade * max(0.0, min(1.0, (t - 0.1) / 0.2)))
         p.drawText(QRectF(0, cy + size / 2 + theme.px(14), self.width(), theme.px(30)),
                    Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop, "Anime Astral Monitor")
         p.end()
