@@ -14,7 +14,7 @@ from PySide6.QtWidgets import (QAbstractButton, QAbstractItemView, QComboBox, QD
                                QTableWidgetItem, QToolButton, QToolTip, QVBoxLayout, QWidget)
 
 from .. import app_paths
-from ..i18n import thousands
+from ..i18n import thousands, tr
 from . import theme
 
 
@@ -349,7 +349,10 @@ class BarChart(QWidget):
         self.update()
 
     def paintEvent(self, _event) -> None:
-        if not self._data:
+        if not self._data or not any(v for _n, v in self._data):
+            p = QPainter(self)
+            paint_empty(p, QRectF(self.rect()), "chart", tr("Noch keine Daten im gewählten Zeitraum"))
+            p.end()
             return
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
@@ -377,4 +380,60 @@ class BarChart(QWidget):
             if value:                                   # keine „0“ über leeren Balken
                 p.setPen(QColor(theme.color("text")))
                 p.drawText(QRectF(x - gap, h - bottom_pad - bh - line - 2, bw + 2 * gap, line), self._fmt(value), center)
+        p.end()
+
+
+EMPTY_GLYPHS = {"events": 0xE81C, "quests": 0xF0E3, "chart": 0xE9D2, "servers": 0xE734}
+
+
+def paint_empty(p: QPainter, rect: QRectF, glyph: str, text: str) -> None:
+    """Leerer Zustand: Symbol in einem sanft leuchtenden Kreis mit kleinen Sternen, darunter ein kurzer Text."""
+    from PySide6.QtGui import QFont, QRadialGradient
+    p.save()
+    p.setRenderHint(QPainter.RenderHint.Antialiasing)
+    size = theme.px(64)
+    cx = rect.center().x()
+    cy = rect.top() + rect.height() / 2 - theme.px(14)
+    accent, accent2 = QColor(theme.color("accent")), QColor(theme.color("accent2"))
+    glow = QRadialGradient(cx, cy, size / 2)
+    inner, outer = QColor(accent), QColor(accent)
+    inner.setAlphaF(0.22)
+    outer.setAlphaF(0.0)
+    glow.setColorAt(0, inner)
+    glow.setColorAt(1, outer)
+    p.setPen(Qt.PenStyle.NoPen)
+    p.setBrush(glow)
+    p.drawEllipse(QRectF(cx - size / 2, cy - size / 2, size, size))
+    for dx, dy, r in ((0.42, -0.34, 2.2), (-0.46, 0.18, 1.6), (0.30, 0.40, 1.3)):     # kleine Sterne
+        star = QColor(accent2)
+        star.setAlphaF(0.75)
+        p.setBrush(star)
+        p.drawEllipse(QRectF(cx + dx * size - r, cy + dy * size - r, 2 * r, 2 * r))
+    font = QFont()
+    font.setFamilies(list(theme.ICON_FONTS))
+    font.setPixelSize(theme.px(28))
+    p.setFont(font)
+    p.setPen(accent)
+    p.drawText(QRectF(cx - size / 2, cy - size / 2, size, size), Qt.AlignmentFlag.AlignCenter,
+               chr(EMPTY_GLYPHS.get(glyph, 0xE734)))
+    p.setFont(QFont())
+    p.setPen(QColor(theme.color("muted")))
+    text_rect = QRectF(rect.left() + theme.px(16), cy + size / 2 + theme.px(4), rect.width() - theme.px(32),
+                       theme.px(40))
+    p.drawText(text_rect, Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop | Qt.TextFlag.TextWordWrap, text)
+    p.restore()
+
+
+class EmptyState(QWidget):
+    """Platzhalter für leere Bereiche (Ereignisse, Quests) – statt reinem Text."""
+
+    def __init__(self, glyph: str, text: str) -> None:
+        super().__init__()
+        self._glyph, self._text = glyph, text
+        theme.track_min_height(self, 120)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+
+    def paintEvent(self, _event) -> None:
+        p = QPainter(self)
+        paint_empty(p, QRectF(self.rect()), self._glyph, self._text)
         p.end()

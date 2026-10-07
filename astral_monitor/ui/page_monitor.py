@@ -12,7 +12,7 @@ from .. import messages
 from ..i18n import dec, tr
 from ..settings import order_raids
 from . import theme
-from .widgets import Card, ComboBox, QuestRow, StatCard, bgr_to_pixmap, label, smooth
+from .widgets import Card, ComboBox, EmptyState, QuestRow, StatCard, bgr_to_pixmap, label, smooth
 
 LEVEL_TOKENS = {"ok": "accent", "warn": "warn", "error": "danger", "info": "info"}
 
@@ -137,7 +137,7 @@ class MonitorPage(QWidget):
         quests = Card(tr("Quests"))
         self.quest_box = QVBoxLayout()
         theme.track_spacing(self.quest_box, 6)
-        self.quest_empty = label(tr("Noch keine Quests gelesen."), "muted")
+        self.quest_empty = EmptyState("quests", tr("Noch keine Quests gelesen."))
         self.quest_box.addWidget(self.quest_empty)
         quests.body.addLayout(self.quest_box)
         left.addWidget(quests)
@@ -145,8 +145,8 @@ class MonitorPage(QWidget):
         mid.addLayout(left, 3)
 
         events = Card(tr("Ereignisse"))
-        self.events_empty = label(tr("Noch keine Ereignisse – Start, Raids, Alarme und Rejoins erscheinen hier."),
-                                  "empty", wrap=True)
+        self.events_empty = EmptyState("events", tr("Noch keine Ereignisse – Start, Raids, Alarme und Rejoins "
+                                                    "erscheinen hier."))
         events.body.addWidget(self.events_empty)
         self.events = QListWidget()
         smooth(self.events)

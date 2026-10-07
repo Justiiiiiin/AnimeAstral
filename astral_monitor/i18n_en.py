@@ -913,6 +913,7 @@ EN: dict[str, str] = {
     "Was hast du erwartet?": "What did you expect?",
     "Einstellung suchen …": "Search settings …",
     "Keine Einstellung gefunden.": "No setting found.",
+    "Noch keine Daten im gewählten Zeitraum": "No data in the selected period yet",
     "Bubble": "Bubble",
     "OLED": "OLED",
     # Persönliche Rekorde (0.7.6)
