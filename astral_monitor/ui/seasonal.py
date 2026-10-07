@@ -12,7 +12,7 @@ from PySide6.QtGui import QColor, QPainter, QPainterPath, QPen
 from . import theme
 
 LEAF_COLORS = ("#E8742A", "#C9502A", "#E3A23B", "#9C4A26", "#D9622E")
-FPS = 20                              # ruhig und sparsam
+FPS = 15                              # ruhig und sparsam (gemessen: 0,7–2,6 ms je Bild)
 
 
 @dataclass

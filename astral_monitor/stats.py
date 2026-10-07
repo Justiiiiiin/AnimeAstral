@@ -4,6 +4,7 @@ nicht, man kommt nur unterschiedlich weit (jede Welle gibt Belohnungen). Alte Ze
 from __future__ import annotations
 
 import csv
+import functools
 import logging
 import statistics
 import threading
@@ -14,6 +15,33 @@ from pathlib import Path
 from typing import Optional
 
 log = logging.getLogger("stats")
+
+TIME_BOUND = {"hourly_waves", "daily"}       # hängen von der aktuellen Uhrzeit ab (Schlüssel enthält die Minute)
+
+
+def _key_part(value):
+    """Zeitgrenzen („seit …“) auf die Minute runden, damit „letzte 12 Std.“ den Zwischenspeicher trifft."""
+    return int(value // 60) if isinstance(value, float) else value
+
+
+def _cached(fn):
+    """Ergebnis merken, bis sich der Verlauf ändert (neuer Raid, Löschen, Umbenennen, Archiv). Die Statistik-Seite
+    fragt alle 10 s viele Kennzahlen ab – mit einem Jahr Verlauf (>100 000 Raids) wären das sonst ~0,3 s Rechenzeit
+    im Oberflächen-Thread."""
+    name = fn.__name__
+
+    @functools.wraps(fn)
+    def wrapper(self, *args, **kwargs):
+        key = (name, tuple(_key_part(a) for a in args), tuple(sorted((k, _key_part(v)) for k, v in kwargs.items())),
+               int(time.time() // 60) if name in TIME_BOUND else 0)
+        with self._lock:
+            state = (id(self.records), len(self.records), self.records[-1].ts_end if self.records else 0, self._edits)
+            if state != self._cache_state or len(self._cache) > 300:
+                self._cache, self._cache_state = {}, state
+            if key not in self._cache:
+                self._cache[key] = fn(self, *args, **kwargs)
+            return self._cache[key]
+    return wrapper
 
 CSV_FIELDS = ["ts_end", "duration_s", "cycle_s", "max_wave", "total_waves", "result", "note", "raid"]
 _TS_FORMAT = "%Y-%m-%d %H:%M:%S"
@@ -119,6 +147,9 @@ class StatsStore:
         self._lock = threading.RLock()
         self.offset = offset
         self.records: list[RunRecord] = []
+        self._cache: dict = {}
+        self._cache_state: tuple = ()
+        self._edits = 0                              # zählt Änderungen ohne neue Zeile (Umbenennen)
         self.session_start = time.time()
         self._load()
 
@@ -131,7 +162,7 @@ class StatsStore:
                 migrate = reader.fieldnames is not None and "raid" not in reader.fieldnames
                 for row in reader:
                     try:
-                        ts = datetime.strptime(row["ts_end"], _TS_FORMAT).timestamp()
+                        ts = datetime.fromisoformat(row["ts_end"]).timestamp()    # ~10× schneller als strptime
                         self.records.append(RunRecord(
                             ts, _opt_float(row.get("duration_s")), _opt_float(row.get("cycle_s")),
                             int(row.get("max_wave") or 0), int(row.get("total_waves") or 0),
@@ -210,6 +241,7 @@ class StatsStore:
         return [r for r in self.records
                 if (since is None or r.ts_end >= since) and (raid is None or (r.raid or "Unbekannt") == raid)]
 
+    @_cached
     def raid_names(self) -> list[str]:
         """Alle Profilnamen im Verlauf (häufigste zuerst)."""
         with self._lock:
@@ -218,10 +250,12 @@ class StatsStore:
                 counts[r.raid or "Unbekannt"] = counts.get(r.raid or "Unbekannt", 0) + 1
             return [n for n, _c in sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))]
 
+    @_cached
     def best_wave(self, raid: Optional[str] = None) -> int:
         with self._lock:
             return max((r.max_wave for r in self._in_range(None, raid)), default=0)
 
+    @_cached
     def wall(self, raid: Optional[str]) -> Optional[Wall]:
         """Wand eines Raids (nur je Raid sinnvoll, nicht über alle Raids gemischt)."""
         if not raid or raid == "Unbekannt":            # nicht erkannte Läufe sind verschiedene Raids gemischt
@@ -244,10 +278,12 @@ class StatsStore:
             streak += 1
         return Wall(wave, streak, n / len(recent)) if streak else None   # gerade durchbrochen: keine Wand
 
+    @_cached
     def attempts(self, raid: Optional[str] = None) -> int:
         with self._lock:
             return len(self._in_range(None, raid))
 
+    @_cached
     def seconds_per_wave(self, raid: Optional[str] = None) -> Optional[float]:
         """Typische Sekunden pro Welle aus Läufen mit gemessener Dauer (für die Dauer-Schätzung)."""
         with self._lock:
@@ -259,6 +295,7 @@ class StatsStore:
                 values = sample(None)
             return statistics.median(values) if len(values) >= 3 else None
 
+    @_cached
     def wave_histogram(self, since: Optional[float] = None, raid: Optional[str] = None,
                        max_bars: int = 10) -> list[tuple[str, int]]:
         """Verteilung der Endwellen: [(Beschriftung, Anzahl)] in runden Schritten (1, 2, 5, 10, 20 …), höchstens
@@ -275,6 +312,7 @@ class StatsStore:
             out.append((str(base) if size == 1 else f"{base}–{base + size - 1}", count))
         return out
 
+    @_cached
     def trend(self, since: Optional[float] = None, raid: Optional[str] = None,
               by_day: bool = False, limit: int = 24) -> list[tuple[str, float, int]]:
         """Ø erreichte Welle je Stunde (oder Tag): [(Beschriftung, Ø Welle, Anzahl Versuche)]."""
@@ -292,6 +330,7 @@ class StatsStore:
             out.append((label, sum(groups[key]) / len(groups[key]), len(groups[key])))
         return out
 
+    @_cached
     def summary(self, since: Optional[float] = None, raid: Optional[str] = None) -> Summary:
         with self._lock:
             recs = self._in_range(since, raid)
@@ -311,11 +350,26 @@ class StatsStore:
                     s.attempts_per_hour = s.attempts / hours
             return s
 
+    def _tail_since(self, since: float) -> list[RunRecord]:
+        """Versuche ab `since`, von hinten gesucht (Verlauf ist zeitlich sortiert) – schnell auch bei großem Verlauf."""
+        out = []
+        for r in reversed(self.records):
+            if r.ts_end < since:
+                break
+            out.append(r)
+        out.reverse()
+        return out
+
     def snapshot(self) -> StatsSnapshot:
         with self._lock:
-            session = [r for r in self.records if r.ts_end >= self.session_start]
+            session = self._tail_since(self.session_start)
             elapsed_h = (time.time() - self.session_start) / 3600
-            durations = [r.duration_s for r in self.records if r.duration_s and not r.estimated][-50:]
+            durations = []
+            for r in reversed(self.records):               # nur die letzten 50 gemessenen (nicht alles durchgehen)
+                if r.duration_s and not r.estimated:
+                    durations.append(r.duration_s)
+                    if len(durations) == 50:
+                        break
             span = _span_hours(session)
             waves = sum(r.max_wave for r in session)
             return StatsSnapshot(
@@ -328,6 +382,7 @@ class StatsStore:
                 per_hour=len(session) / elapsed_h if elapsed_h >= 5 / 60 else None,
             )
 
+    @_cached
     def hourly_waves(self, hours: int = 10, raid: Optional[str] = None) -> list[tuple[int, int]]:
         """[(Stunde 0-23, geschaffte Wellen)] für die letzten `hours` Stunden."""
         now = datetime.now().replace(minute=0, second=0, microsecond=0)
@@ -338,6 +393,7 @@ class StatsStore:
                          and (raid is None or (r.raid or "Unbekannt") == raid)))
                     for st in starts]
 
+    @_cached
     def daily(self, days: int = 7, raid: Optional[str] = None, end: Optional[datetime] = None) -> list[dict]:
         """Je Kalendertag (älteste zuerst, bis einschließlich `end`/heute): Versuche, Wellen, Farmzeit (s)."""
         from datetime import timedelta
@@ -353,6 +409,7 @@ class StatsStore:
                             "farm_s": farm_seconds(recs)})
         return out
 
+    @_cached
     def month(self, year: int, month: int) -> dict:
         """Monatsrückblick: Summen, Bestwerte, bester Tag, Lieblingsraid, Raids je Tag, Vergleich zum Vormonat."""
         import calendar
@@ -387,6 +444,7 @@ class StatsStore:
                 "active_days": sum(1 for n in per_day if n),
                 "prev_attempts": len(prev), "prev_waves": sum(r.max_wave for r in prev)}
 
+    @_cached
     def personal_records(self) -> dict:
         """Bestwerte über den ganzen Verlauf: Bestwelle, stärkster Tag (Raids/Wellen), beste Stunde (Wellen),
         längste Session (zusammenhängende Farmzeit, Pausen über FARM_GAP trennen)."""
@@ -421,6 +479,7 @@ class StatsStore:
         out["longest"] = (farm_seconds(longest), longest[0].ts_end - (longest[0].duration_s or 0), len(longest))
         return out
 
+    @_cached
     def per_raid(self, since: Optional[float] = None) -> list[dict]:
         """Kennzahlen je Raid-Name (leerer Name = „Unbekannt“)."""
         with self._lock:
@@ -453,6 +512,7 @@ class StatsStore:
                 if rec.raid == old:
                     rec.raid = new
                     count += 1
+            self._edits += 1
             if count:
                 self._rewrite()
             return count
