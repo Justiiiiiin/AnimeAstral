@@ -3,8 +3,8 @@ from __future__ import annotations
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor
-from PySide6.QtWidgets import (QCheckBox, QColorDialog, QGridLayout, QHBoxLayout, QLineEdit, QMenu, QMessageBox,
-                               QPushButton, QToolButton, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QButtonGroup, QCheckBox, QColorDialog, QGridLayout, QHBoxLayout, QLineEdit, QMenu,
+                               QMessageBox, QPushButton, QToolButton, QVBoxLayout, QWidget)
 
 from ..i18n import tr
 from . import theme
@@ -93,6 +93,23 @@ class AlertsPage(QWidget):
         forum_label.addStretch(1)
         grid.addLayout(forum_label, 3, 0)
         grid.addWidget(self.forum, 3, 1, 1, 2)
+        style_row = QHBoxLayout()
+        theme.track_spacing(style_row, 6)
+        self.style_group = QButtonGroup(self)
+        self.style_group.setExclusive(True)
+        for key, text in (("detailed", tr("Ausführlich")), ("compact", tr("Kompakt"))):
+            btn = QPushButton(text)
+            btn.setObjectName("chipbtn")
+            btn.setCheckable(True)
+            btn.setProperty("style_key", key)
+            self.style_group.addButton(btn)
+            style_row.addWidget(btn)
+        style_row.addWidget(InfoButton(tr(
+            "Ausführlich: Kennzahlen als Felder und der Screenshot groß unter der Meldung.\n\nKompakt: eine ruhige "
+            "Zeile mit den wichtigsten Werten, der Screenshot klein rechts – auch der Live-Status wird schlanker.")))
+        style_row.addStretch(1)
+        grid.addWidget(label(tr("Nachrichtenstil")), 4, 0)
+        grid.addLayout(style_row, 4, 1, 1, 2)
         hook.body.addLayout(grid)
         row = QHBoxLayout()
         test = QPushButton(tr("Test-Nachricht senden"))
@@ -173,6 +190,8 @@ class AlertsPage(QWidget):
         self.name.setText(s.username)
         self.ping.setText(s.ping_user_id)
         self.forum.setText(s.forum_webhook_url)
+        for btn in self.style_group.buttons():
+            btn.setChecked(btn.property("style_key") == s.message_style)
         for key in self.send_boxes:
             entry = s.events.get(key, {})
             self.send_boxes[key].setChecked(bool(entry.get("send")))
@@ -198,6 +217,8 @@ class AlertsPage(QWidget):
         if forum and not is_valid_webhook(forum):
             raise ValueError(tr("Der Forum-Webhook ist keine gültige Discord-Webhook-URL (Seite „Meldungen“)."))
         s.forum_webhook_url = forum
+        checked = self.style_group.checkedButton()
+        s.message_style = checked.property("style_key") if checked else "detailed"
         for key in self.send_boxes:
             s.events[key] = {"send": self.send_boxes[key].isChecked(),
                              "ping": self.ping_boxes[key].isChecked()}

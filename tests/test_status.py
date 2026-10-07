@@ -83,6 +83,24 @@ class StatusTests(unittest.TestCase):
         self.assertIn("gestoppt", stopped["description"])
         self.assertEqual(messages.progress_bar(5, 10, width=4), "▰▰▱▱")
 
+    def test_compact_style(self):
+        from astral_monitor import messages
+        self.s.message_style = "compact"
+        try:
+            payload, files = messages.build_message(
+                self.s, "raid_done", "Raid beendet · Welle 89/100", messages.COLOR_OK,
+                [("Raid", "#348 · New Leaf", True), ("Welle", "89/100", True), ("Dauer", "2:51", True),
+                 ("Ø Dauer", "2:40", True)], image=("raid.jpg", b"x"))
+            embed = payload["embeds"][0]
+            self.assertNotIn("fields", embed)
+            self.assertIn("#348 · New Leaf  ·  89/100  ·  2:51", embed["description"])       # nur die ersten drei
+            self.assertEqual(embed["thumbnail"]["url"], "attachment://raid.jpg")              # Bild klein rechts
+            status = messages.build_status(self.s, SNAP)["embeds"][0]
+            self.assertFalse([f for f in status["fields"] if f["inline"]])                    # keine Kachel-Felder
+            self.assertIn("🔁 7", status["description"])
+        finally:
+            self.s.message_style = "detailed"
+
     def test_custom_embed_color(self):
         from astral_monitor import messages
         self.s.events["record"]["color"] = "#FF00AA"

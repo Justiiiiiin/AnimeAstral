@@ -84,7 +84,14 @@ def build_message(settings: Settings, kind: str, title: str, color: int,
                   fields: list[tuple[str, str, bool]] | None = None,
                   description: str | None = None,
                   image: tuple | None = None) -> tuple[dict, list]:
-    """Gibt (payload, files) zurück. `fields`: (Name, Wert, inline). Eine eigene Farbe je Ereignis hat Vorrang."""
+    """Gibt (payload, files) zurück. `fields`: (Name, Wert, inline). Eine eigene Farbe je Ereignis hat Vorrang.
+    Stil „kompakt“: die ersten Werte als eine ruhige Zeile, Screenshot klein rechts statt groß darunter."""
+    compact = settings.message_style == "compact"
+    if compact and fields:
+        values = [" ".join(str(v).split()) for _n, v, inline in fields if inline and v][:3]
+        line = "-# " + "  ·  ".join(values) if values else ""
+        description = "\n".join(x for x in (description, line) if x) or None
+        fields = None
     custom = settings.events.get(kind, {}).get("color")
     if is_hex_color(custom):
         color = int(custom[1:], 16)
@@ -103,7 +110,7 @@ def build_message(settings: Settings, kind: str, title: str, color: int,
     files: list = []
     if image:
         name, data, *ctype = image                       # (Name, Daten[, Content-Type])
-        embed["image"] = {"url": f"attachment://{name}"}
+        embed["thumbnail" if compact else "image"] = {"url": f"attachment://{name}"}
         files.append((name, data, ctype[0] if ctype else "image/jpeg"))
 
     payload: dict = {"username": settings.username, "embeds": [embed],
@@ -173,6 +180,16 @@ def build_status(settings: Settings, snap: dict) -> dict:
         fields += extra
     if snap.get("quests") and settings.attach_quests:
         fields.append(("📜 " + tr("Quests"), quest_text(snap["quests"], limit=5), False))
+    if settings.message_style == "compact":          # kompakt: Kennzahlen als eine Zeile, Quests bleiben
+        parts = [f"🔁 {snap.get('session_attempts', 0)}", f"🌊 {fmt_int(snap.get('session_waves', 0))}"]
+        if wph:
+            parts.append(f"⚡ {fmt_int(round(wph))}/h")
+        if snap.get("best_wave"):
+            parts.append(f"🏆 {snap['best_wave']}")
+        if snap.get("uptime"):
+            parts.append(f"⏱️ {fmt_duration(snap.get('uptime'))}")
+        lines.insert(len(lines) - 1 if meta else len(lines), "-# " + "  ·  ".join(parts))   # vor „Gestartet …“
+        fields = [f for f in fields if not f[2]]
 
     embed = {
         "author": brand(settings),

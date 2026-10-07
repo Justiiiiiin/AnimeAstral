@@ -121,6 +121,7 @@ def is_valid_webhook(url: str) -> bool:
 class Settings:
     # Discord
     webhook_url: str = ""
+    message_style: str = "detailed"     # Discord: „detailed“ (Felder, großes Bild) oder „compact“ (eine Zeile)
     forum_webhook_url: str = ""         # optional: Forum-Kanal, Raid-Meldungen je Tag ein Beitrag
     username: str = "Anime Astral Monitor"
     ping_user_id: str = ""
@@ -319,6 +320,8 @@ class Settings:
             s.ui_zoom = min(200, max(50, int(s.ui_zoom)))
         except (TypeError, ValueError):
             s.ui_zoom = 100
+        if s.message_style not in ("detailed", "compact"):
+            s.message_style = "detailed"
         if not is_hex_color(s.ui_accent):
             s.ui_accent = ""
         if not (isinstance(s.ui_background, str) and s.ui_background.startswith("background.")
