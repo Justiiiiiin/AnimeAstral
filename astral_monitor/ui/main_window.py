@@ -35,6 +35,31 @@ from .page_stats import StatsPage
 from .widgets import ToggleSwitch, label, scroll_page
 
 
+class PageList:
+    """Seiten erst beim ersten Öffnen bauen: weniger Bedienelemente = schnellerer Start und Designwechsel (Qt gestaltet
+    beim Wechsel jedes Element neu, ~0,35 ms pro Stück). Zugriff per Index baut die Seite; Schleifen sehen nur gebaute
+    Seiten (z. B. Einstellungen übernehmen – nie geöffnete Seiten haben nichts geändert)."""
+
+    def __init__(self, build) -> None:
+        self._build = build
+        self._pages: list = [None] * 6
+
+    def __len__(self) -> int:
+        return len(self._pages)
+
+    def __getitem__(self, index: int):
+        if self._pages[index] is None:
+            self._pages[index] = self._build(index)
+        return self._pages[index]
+
+    def __iter__(self):
+        return (p for p in self._pages if p is not None)
+
+    def built(self, index: int):
+        """Seite, falls schon gebaut – sonst None (für Hinweise wie „Statistik neu laden“)."""
+        return self._pages[index]
+
+
 class MainWindow(QMainWindow):
     def __init__(self, engine: Engine) -> None:
         super().__init__()
@@ -149,14 +174,15 @@ class MainWindow(QMainWindow):
         side.addWidget(self.rail_logo)
 
         self.stack = QStackedWidget()
-        self.pages = [MonitorPage(self), StatsPage(self), AlertsPage(self), RaidsPage(self),
-                      DetectPage(self), SettingsPage(self)]
+        self._page_classes = [MonitorPage, StatsPage, AlertsPage, RaidsPage, DetectPage, SettingsPage]
+        self._hotkey_status: Optional[tuple] = None
+        self.pages = PageList(self._build_page)
         names = [tr("Überwachung"), tr("Statistik"), tr("Meldungen"), tr("Raids"), tr("Erkennung"), tr("Einstellungen")]
         self.nav = QButtonGroup(self)
         self.nav.setExclusive(True)
         self._nav_icons = ["monitor", "stats", "alerts", "raids", "detect", "settings"]
         self._nav_names = names
-        for i, (name, page) in enumerate(zip(names, self.pages)):
+        for i, name in enumerate(names):
             btn = QPushButton(name)
             btn.setObjectName("nav")
             btn.setCheckable(True)
@@ -164,7 +190,9 @@ class MainWindow(QMainWindow):
             theme.track(btn, lambda o, f: o.setIconSize(QSize(round(18 * f), round(18 * f))))
             self.nav.addButton(btn, i)
             side.addWidget(btn, 0, Qt.AlignmentFlag.AlignHCenter)
-            self.stack.addWidget(self._with_savebar(page) if getattr(page, "SAVES", False) else scroll_page(page))
+            placeholder = QWidget()                       # wird beim ersten Öffnen durch die Seite ersetzt
+            placeholder.setProperty("glass", True)
+            self.stack.addWidget(placeholder)
         self.nav.button(0).setChecked(True)
         self.nav.idClicked.connect(self._go)
         self._fade = None
@@ -217,16 +245,12 @@ class MainWindow(QMainWindow):
 
         root.addWidget(sidebar)
         from .backdrop import Backdrop, mark_glass
-        for page in self.pages:
-            page.setProperty("page", True)
         self.backdrop = Backdrop(self.stack)
         root.addWidget(self.backdrop, 1)
         mark_glass(self.stack)
         self.backdrop.set_image(engine.settings.ui_background, engine.settings.ui_background_dim)
         self.setCentralWidget(central)
-
-        for page in self.pages:
-            page.load(engine.settings)
+        self.pages[0]                                     # Startseite sofort, alle anderen beim ersten Öffnen
         self._update_join_btn()
         theme.on_change(self._apply_design)
         self._apply_design()
@@ -264,6 +288,29 @@ class MainWindow(QMainWindow):
         self._tray_hint_shown = False
         self.tray = self._setup_tray()
         show_request_file().unlink(missing_ok=True)          # Rest eines früheren Laufs
+
+    def _build_page(self, index: int) -> QWidget:
+        """Seite bauen, an ihren Platz im Stapel setzen und mit den aktuellen Einstellungen füllen."""
+        from .backdrop import mark_glass
+        page = self._page_classes[index](self)
+        page.setProperty("page", True)
+        wrapper = self._with_savebar(page) if getattr(page, "SAVES", False) else scroll_page(page)
+        old = self.stack.widget(index)
+        self.stack.insertWidget(index, wrapper)
+        if old is not None:
+            self.stack.removeWidget(old)
+            old.deleteLater()
+        mark_glass(wrapper)
+        page.load(self.engine.settings)
+        if index == 5:
+            if self._hotkey_status is not None:
+                page.set_hotkey_status(*self._hotkey_status)
+            if hasattr(page, "show_profile"):
+                page.show_profile()
+            if self.engine.settings.wizard_done:
+                for btn in page.tab_group.buttons():
+                    self.new_dots.attach(f"tab:{btn.property('group')}", btn)
+        return page
 
     def _with_savebar(self, page: QWidget) -> QWidget:
         """Seite mit Einstellungen: scrollt, die Speichern-Leiste bleibt unten immer sichtbar."""
@@ -334,8 +381,10 @@ class MainWindow(QMainWindow):
             return
         for i in range(self.nav.buttons().__len__()):
             self.new_dots.attach(f"nav:{i}", self.gear if i == 5 and self.gear.isVisible() else self.nav.button(i))
-        for btn in self.pages[5].tab_group.buttons():
-            self.new_dots.attach(f"tab:{btn.property('group')}", btn)
+        settings_page = self.pages.built(5)               # Reiter-Punkte sonst beim Bauen der Seite
+        if settings_page is not None:
+            for btn in settings_page.tab_group.buttons():
+                self.new_dots.attach(f"tab:{btn.property('group')}", btn)
 
     def _whats_new(self) -> None:
         if self.isVisible():                            # nicht aufdrängen, wenn das Programm im Tray startet
@@ -383,8 +432,8 @@ class MainWindow(QMainWindow):
         if pix is not None:
             self.avatar.setPixmap(pix)
             self.avatar.setToolTip(f"{info.get('display', '')} (@{info.get('name', '')})")
-        if hasattr(self.pages[5], "show_profile"):
-            self.pages[5].show_profile()
+        if self.pages.built(5) is not None:
+            self.pages.built(5).show_profile()
 
     def _refresh_icons_once(self) -> None:
         """Nach jedem Update einmal: Windows-Symbolspeicher erneuern (sonst bleibt das alte Logo an Verknüpfungen)."""
@@ -463,7 +512,8 @@ class MainWindow(QMainWindow):
             s.save()
         except OSError as exc:
             QMessageBox.critical(self, tr("Speichern"), tr("Konnte nicht speichern: {error}", error=exc))
-        self.pages[5].load_servers(s)
+        if self.pages.built(5) is not None:
+            self.pages.built(5).load_servers(s)
         self._update_join_btn()
 
     def _update_join_btn(self) -> None:
@@ -500,7 +550,8 @@ class MainWindow(QMainWindow):
     def raids_changed(self) -> None:
         """Nach Anlegen/Umbenennen/Löschen: Auswahl und Statistik auffrischen."""
         self.pages[0].reload_raids()
-        self.pages[1].mark_dirty()
+        if self.pages.built(1) is not None:
+            self.pages.built(1).mark_dirty()
 
     # --------------------------------------------------------------- Anti-AFK
     def set_anti_afk(self, on: bool) -> None:
@@ -577,6 +628,7 @@ class MainWindow(QMainWindow):
     # --------------------------------------------------------------- Darstellung
     def _go(self, index: int) -> None:
         """Seitenwechsel; im Design „Astral“ mit kurzer Überblendung (danach ohne Effekt – kostet sonst Leistung)."""
+        self.pages[index]                                  # beim ersten Öffnen bauen
         self.stack.setCurrentIndex(index)
         self.gear.setChecked(index == 5)
         self.new_dots.seen(f"nav:{index}")
@@ -772,12 +824,13 @@ class MainWindow(QMainWindow):
         listener.start()
         listener.ready.wait(2.0)
         self._hotkeys = listener
-        page = self.pages[5]
         if listener.failed:
-            page.set_hotkey_status(tr("Nicht registriert: {keys}", keys="; ".join(listener.failed)), False)
+            self._hotkey_status = (tr("Nicht registriert: {keys}", keys="; ".join(listener.failed)), False)
         else:
-            page.set_hotkey_status(tr("Aktiv: {toggle} (Start/Stopp), {pause} (Pause), {status} (Status neu senden)",
+            self._hotkey_status = (tr("Aktiv: {toggle} (Start/Stopp), {pause} (Pause), {status} (Status neu senden)",
                                       toggle=s.hotkey_toggle, pause=s.hotkey_pause, status=s.hotkey_status), True)
+        if self.pages.built(5) is not None:                # sonst beim Bauen der Seite
+            self.pages.built(5).set_hotkey_status(*self._hotkey_status)
 
     # --------------------------------------------------------------- Einstellungen übertragen
     def export_settings(self) -> None:
@@ -1106,8 +1159,8 @@ class MainWindow(QMainWindow):
                 self._ui_calls.get_nowait()()
             except queue.Empty:
                 break
-        if refresh_stats:
-            self.pages[1].mark_dirty()
+        if refresh_stats and self.pages.built(1) is not None:
+            self.pages.built(1).mark_dirty()
         self._tray_tick()
         self._auto_tick()
         if self.isMinimized() or not self.isVisible():

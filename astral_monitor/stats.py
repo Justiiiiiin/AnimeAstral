@@ -150,6 +150,7 @@ class StatsStore:
         self._cache: dict = {}
         self._cache_state: tuple = ()
         self._edits = 0                              # zählt Änderungen ohne neue Zeile (Umbenennen)
+        self._hours: dict = {}                       # Stunden-Schlüssel (Ortszeit), siehe _hour_key
         self.session_start = time.time()
         self._load()
 
@@ -238,8 +239,21 @@ class StatsStore:
 
     # ------------------------------------------------------------- Kennzahlen
     def _in_range(self, since: Optional[float], raid: Optional[str] = None) -> list[RunRecord]:
-        return [r for r in self.records
-                if (since is None or r.ts_end >= since) and (raid is None or (r.raid or "Unbekannt") == raid)]
+        recs = self.records if since is None else self._tail_since(since)
+        if raid is None:
+            return list(recs)
+        return [r for r in recs if (r.raid or "Unbekannt") == raid]
+
+    def _hour_key(self, ts: float) -> tuple[float, float]:
+        """(Beginn der Ortszeit-Stunde, Beginn des Ortszeit-Tages) – je volle Stunde nur einmal berechnet
+        (datetime.fromtimestamp für jeden einzelnen Raid war der teuerste Teil der Auswertungen)."""
+        bucket = int(ts // 3600)
+        hit = self._hours.get(bucket)
+        if hit is None:
+            hour = datetime.fromtimestamp(bucket * 3600).replace(minute=0, second=0, microsecond=0)
+            hit = (hour.timestamp(), hour.replace(hour=0).timestamp())
+            self._hours[bucket] = hit
+        return hit
 
     @_cached
     def raid_names(self) -> list[str]:
@@ -306,24 +320,28 @@ class StatsStore:
             return []
         lo, hi = min(waves), max(waves)
         size = next((n for n in (1, 2, 5, 10, 20, 25, 50, 100) if hi // n - lo // n + 1 <= max_bars), 100)
+        counts: dict = {}
+        for w in waves:
+            counts[w // size] = counts.get(w // size, 0) + 1
         out = []
         for base in range((lo // size) * size, hi + 1, size):
-            count = sum(1 for w in waves if base <= w < base + size)
-            out.append((str(base) if size == 1 else f"{base}–{base + size - 1}", count))
+            out.append((str(base) if size == 1 else f"{base}–{base + size - 1}", counts.get(base // size, 0)))
         return out
 
     @_cached
     def trend(self, since: Optional[float] = None, raid: Optional[str] = None,
               by_day: bool = False, limit: int = 24) -> list[tuple[str, float, int]]:
         """Ø erreichte Welle je Stunde (oder Tag): [(Beschriftung, Ø Welle, Anzahl Versuche)]."""
-        with self._lock:
-            recs = self._in_range(since, raid)
         groups: dict[float, list[int]] = {}
-        for r in recs:
-            dt = datetime.fromtimestamp(r.ts_end)
-            base = dt.replace(hour=0, minute=0, second=0, microsecond=0) if by_day \
-                else dt.replace(minute=0, second=0, microsecond=0)
-            groups.setdefault(base.timestamp(), []).append(r.max_wave)
+        with self._lock:
+            recs = self.records if since is None else self._tail_since(since)
+            for r in reversed(recs):                       # neueste zuerst, aufhören sobald genug Gruppen da sind
+                if raid is not None and (r.raid or "Unbekannt") != raid:
+                    continue
+                base = self._hour_key(r.ts_end)[1 if by_day else 0]
+                if base not in groups and len(groups) >= limit:
+                    break
+                groups.setdefault(base, []).append(r.max_wave)
         out = []
         for key in sorted(groups)[-limit:]:
             label = datetime.fromtimestamp(key).strftime("%d.%m." if by_day else "%H")
@@ -388,10 +406,9 @@ class StatsStore:
         now = datetime.now().replace(minute=0, second=0, microsecond=0)
         starts = [(now.timestamp() - i * 3600) for i in range(hours - 1, -1, -1)]
         with self._lock:
-            return [(datetime.fromtimestamp(st).hour,
-                     sum(r.max_wave for r in self.records if st <= r.ts_end < st + 3600
-                         and (raid is None or (r.raid or "Unbekannt") == raid)))
-                    for st in starts]
+            recent = [r for r in self._tail_since(starts[0]) if raid is None or (r.raid or "Unbekannt") == raid]
+        return [(datetime.fromtimestamp(st).hour, sum(r.max_wave for r in recent if st <= r.ts_end < st + 3600))
+                for st in starts]
 
     @_cached
     def daily(self, days: int = 7, raid: Optional[str] = None, end: Optional[datetime] = None) -> list[dict]:
@@ -400,11 +417,12 @@ class StatsStore:
         last = (end or datetime.now()).replace(hour=0, minute=0, second=0, microsecond=0)
         out = []
         with self._lock:
+            first = (last - timedelta(days=days - 1)).timestamp()
+            recent = [r for r in self._tail_since(first) if raid is None or (r.raid or "Unbekannt") == raid]
             for i in range(days - 1, -1, -1):
                 start = last - timedelta(days=i)
                 lo, hi = start.timestamp(), (start + timedelta(days=1)).timestamp()
-                recs = [r for r in self.records if lo <= r.ts_end < hi
-                        and (raid is None or (r.raid or "Unbekannt") == raid)]
+                recs = [r for r in recent if lo <= r.ts_end < hi]
                 out.append({"day": start.date(), "attempts": len(recs), "waves": sum(r.max_wave for r in recs),
                             "farm_s": farm_seconds(recs)})
         return out
@@ -457,17 +475,19 @@ class StatsStore:
         out["best_wave"] = (best.max_wave, best.ts_end, best.raid)
         days: dict = {}
         hours: dict = {}
-        for r in recs:
-            when = datetime.fromtimestamp(r.ts_end)
-            d = days.setdefault(when.date(), [0, 0])
-            d[0] += 1
-            d[1] += r.max_wave
-            key = when.replace(minute=0, second=0, microsecond=0)
-            hours[key] = hours.get(key, 0) + r.max_wave
-        day, (n, waves) = max(days.items(), key=lambda kv: (kv[1][0], kv[1][1]))
-        out["best_day"] = (day, n, waves)
-        hour, waves = max(hours.items(), key=lambda kv: kv[1])
-        out["best_hour"] = (hour, waves)
+        with self._lock:
+            for r in recs:
+                hour_ts, day_ts = self._hour_key(r.ts_end)
+                d = days.get(day_ts)
+                if d is None:
+                    d = days[day_ts] = [0, 0]
+                d[0] += 1
+                d[1] += r.max_wave
+                hours[hour_ts] = hours.get(hour_ts, 0) + r.max_wave
+        day_ts, (n, waves) = max(days.items(), key=lambda kv: (kv[1][0], kv[1][1]))
+        out["best_day"] = (datetime.fromtimestamp(day_ts).date(), n, waves)
+        hour_ts, waves = max(hours.items(), key=lambda kv: kv[1])
+        out["best_hour"] = (datetime.fromtimestamp(hour_ts), waves)
         blocks, current = [], [recs[0]]
         for prev, rec in zip(recs, recs[1:]):
             if rec.ts_end - prev.ts_end > FARM_GAP:

@@ -1,6 +1,7 @@
 """Seite „Statistik": alle Versuche zusammen (jede Welle gibt Belohnungen), je Raid oder gesamt."""
 from __future__ import annotations
 
+import threading
 import time
 from datetime import datetime
 from pathlib import Path
@@ -62,6 +63,8 @@ class StatsPage(QWidget):
         self._week_text = ""
         self._archive = None
         self._archive_path = None
+        self._computing = False
+        self._generation = 0
 
         root = QVBoxLayout(self)
         theme.track_margins(root, 28, 24, 28, 24)
@@ -378,8 +381,7 @@ class StatsPage(QWidget):
             QDesktopServices.openUrl(QUrl.fromLocalFile(str(path)))
 
     # ------------------------------------------------------------------ Anzeige
-    def _sync_profiles(self) -> None:
-        names = self.store.raid_names()
+    def _sync_profiles(self, names: list) -> None:
         if names == self._profile_names:
             return
         current = self._raid()
@@ -406,27 +408,56 @@ class StatsPage(QWidget):
         table.sortByColumn(column if column >= 0 else 0, order)
 
     def refresh(self) -> None:
+        """Auswerten im Hintergrund, Anzeigen im GUI-Thread – die Seite bleibt auch mit großem Verlauf sofort
+        bedienbar (ein Jahr Verlauf ≈ 100 000 Raids: nach jedem neuen Raid ~0,1–0,2 s Rechenzeit)."""
         now = time.monotonic()
         if not self._dirty and now - self._last < 10:
             return
+        if self._computing:
+            return                                       # läuft schon; danach erneut, falls inzwischen geändert
         self._dirty, self._last = False, now
-        stats = self.store
-        self._sync_profiles()
-        since, raid = self._since(), self._raid()
-        s = stats.summary(since, raid)
+        self._computing = True
+        self._generation += 1
+        job = (self._generation, self.store, self._since(), self._raid(), self.range.currentData() in ("7d", "all"))
 
+        def work() -> None:
+            try:
+                data = self._compute(*job[1:])
+            except Exception:
+                data = None
+            self.main.post(lambda: self._show(job[0], data))
+
+        threading.Thread(target=work, name="stats", daemon=True).start()
+
+    @staticmethod
+    def _compute(stats, since, raid, by_day) -> dict:
+        """Alle Kennzahlen der Seite (ohne Qt – darf in einem eigenen Thread laufen)."""
+        return {
+            "names": stats.raid_names(), "summary": stats.summary(since, raid), "best": stats.best_wave(raid),
+            "total": stats.snapshot().total_attempts, "wall": stats.wall(raid),
+            "rows": stats.last_runs(200, since, raid), "hist": stats.wave_histogram(since, raid),
+            "trend": stats.trend(since, raid, by_day), "hours": stats.hourly_waves(10, raid),
+            "week": stats.daily(7, raid), "records": stats.personal_records(), "per_raid": stats.per_raid(since),
+        }
+
+    def _show(self, generation: int, data: Optional[dict]) -> None:
+        self._computing = False
+        if data is None or generation != self._generation:
+            return
+        self._sync_profiles(data["names"])
+        s = data["summary"]
         self.k_attempts.set_value(messages.fmt_k(s.attempts))
         self.k_waves.set_value(messages.fmt_int(s.waves_total))
         self.k_wph.set_value(messages.fmt_int(round(s.waves_per_hour)) if s.waves_per_hour else "–")
         self.k_avg_wave.set_value(_num(s.avg_wave_all))
-        self.k_best_wave.set_value(str(stats.best_wave(raid) or "–"))
+        self.k_best_wave.set_value(str(data["best"] or "–"))
         self.details.setText(tr("Ø {dur} pro Versuch  ·  {spw} pro Welle  ·  {aph} Versuche/Std.  ·  {all} Versuche "
                                 "insgesamt",
                                 dur=_dur(s.avg_duration_all),
                                 spw="–" if s.sec_per_wave is None else dec(f"{s.sec_per_wave:.1f} s"),
                                 aph=_num(s.attempts_per_hour),
-                                all=messages.fmt_k(stats.snapshot().total_attempts)))
-        wall = stats.wall(raid)
+                                all=messages.fmt_k(data["total"])))
+        wall = data["wall"]
         self.wall_label.setVisible(wall is not None)
         if wall:
             self.wall_label.setText(tr(
@@ -434,7 +465,7 @@ class StatsPage(QWidget):
                 "Versuche enden genau dort). Vermutlich eine Boss-Welle – sobald du sie schaffst, kommt eine Meldung.",
                 wave=wall.wave, streak=wall.streak, share=f"{wall.share * 100:.0f}"))
 
-        self._rows = stats.last_runs(200, since, raid)
+        self._rows = data["rows"]
         rows = []
         for i, rec in enumerate(self._rows):
             first = SortItem(datetime.fromtimestamp(rec.ts_end).strftime("%d.%m. %H:%M:%S"), rec.ts_end)
@@ -445,11 +476,10 @@ class StatsPage(QWidget):
                 SortItem(messages.fmt_duration_est(rec.duration_s, rec.estimated), rec.duration_s or -1, right=True)])
         self._fill(self.table, rows)
 
-        self.chart_hist.set_data(stats.wave_histogram(since, raid))
-        by_day = self.range.currentData() in ("7d", "all")
-        self.chart_trend.set_data([(label_, int(round(avg))) for label_, avg, _n in stats.trend(since, raid, by_day)])
-        self.chart_hour.set_data([(f"{h:02d}", c) for h, c in stats.hourly_waves(10, raid)])
-        week = stats.daily(7, raid)
+        self.chart_hist.set_data(data["hist"])
+        self.chart_trend.set_data([(label_, int(round(avg))) for label_, avg, _n in data["trend"]])
+        self.chart_hour.set_data([(f"{h:02d}", c) for h, c in data["hours"]])
+        week = data["week"]
         self.chart_week.set_data([(tr(WEEKDAYS[d["day"].weekday()]), round(d["farm_s"] / 60)) for d in week],
                                  fmt=lambda minutes: fmt_hours(minutes * 60))
         self._week_text = PARAGRAPH + tr("Diese Woche: {time} · {attempts} Versuche · {waves} Wellen",
@@ -459,9 +489,9 @@ class StatsPage(QWidget):
         if self.charts.currentIndex() == 3:
             self._chart_changed(3)
 
-        self._fill_records(stats.personal_records())
+        self._fill_records(data["records"])
         per_rows = []
-        for item in stats.per_raid(since):
+        for item in data["per_raid"]:
             per_rows.append([
                 SortItem(item["raid"], item["raid"].lower()),
                 SortItem(str(item["attempts"]), item["attempts"], right=True),
@@ -471,6 +501,8 @@ class StatsPage(QWidget):
                 SortItem(_dur(item["avg_duration_all"]), item["avg_duration_all"] or -1, right=True),
                 SortItem(_num(item["waves_per_hour"], 0), item["waves_per_hour"] or -1, right=True)])
         self._fill(self.per_table, per_rows)
+        if self._dirty:                                   # während des Rechnens geändert: gleich noch einmal
+            self.refresh()
 
     def load(self, settings) -> None:
         pass
