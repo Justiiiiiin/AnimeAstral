@@ -16,7 +16,7 @@ LEAF_COLORS = ("#E8742A", "#C9502A", "#E3A23B", "#9C4A26", "#D9622E")
 PETAL_COLORS = ("#FFB7D5", "#FF9CC6", "#FFD1E3", "#F7A8C8")
 FIREWORK_COLORS = ("#FFC94A", "#FF5FA2", "#7FE0FF", "#B98CFF", "#FFFFFF")
 COUNTS = {"halloween": 16, "winter": 40, "newyear": 9, "spring": 26, "summer": 26}
-FPS = 15                              # ruhig und sparsam (gemessen: 0,7–2,6 ms je Bild)
+FPS = 20                              # gleichmäßig getaktet; nur Teilchen-Bereiche neu (siehe backdrop._tick)
 
 
 @dataclass
@@ -204,6 +204,25 @@ def _glow(p: QPainter, cx: float, cy: float, size: float, phase: float, color: s
     p.setPen(Qt.PenStyle.NoPen)
     p.setBrush(g)
     p.drawEllipse(QRectF(cx - size * 3, cy - size * 3, size * 6, size * 6))
+
+
+def bounds(kind: str, rect: QRectF, particles: list[Flake]) -> list[QRectF]:
+    """Bereiche, die die Teilchen gerade belegen (zum gezielten Neuzeichnen statt des ganzen Fensters)."""
+    w, h = rect.width(), rect.height()
+    out = []
+    for f in particles:
+        size = theme.px(f.size)
+        if kind == "newyear":
+            if f.phase <= 0:
+                continue
+            cx, cy, r = rect.x() + f.x * w, rect.y() + f.y * h, size * 1.35   # Ring + Absinken
+            out.append(QRectF(cx - r, cy - r, 2 * r, 2 * r))
+            continue
+        x = rect.x() + (f.x + math.sin(f.phase * 0.9) * f.sway) * w
+        y = rect.y() + f.y * h
+        r = size * (3.2 if kind == "summer" else 0.8) + 2               # Schein bzw. gedrehtes Blatt
+        out.append(QRectF(x - r, y - r, 2 * r, 2 * r))
+    return out
 
 
 def paint(p: QPainter, kind: str, rect: QRectF, particles: list[Flake]) -> None:

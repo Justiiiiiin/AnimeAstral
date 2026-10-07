@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Optional
 
 from PySide6.QtCore import QRectF, Qt, QTimer
-from PySide6.QtGui import QColor, QImageReader, QPainter, QPixmap
+from PySide6.QtGui import QColor, QImageReader, QPainter, QPixmap, QRegion
 from PySide6.QtWidgets import (QAbstractScrollArea, QCheckBox, QLabel, QRadioButton, QStackedWidget, QVBoxLayout,
                                QWidget)
 
@@ -59,6 +59,7 @@ class Backdrop(QWidget):
         self._particles: list = []
         self._last = 0.0
         self._timer = QTimer(self)
+        self._timer.setTimerType(Qt.TimerType.PreciseTimer)   # gleichmäßige Abstände = ruhigere Bewegung
         self._timer.timeout.connect(self._tick)
 
     def refresh_decor(self) -> None:
@@ -87,9 +88,16 @@ class Backdrop(QWidget):
             self._timer.stop()
             return
         now = time.monotonic()
+        area = QRectF(self.rect())
+        before = seasonal.bounds(self._decor, area, self._particles)
         seasonal.step(self._particles, now, min(0.2, now - self._last))
         self._last = now
-        self.update()
+        # Nur die Stellen neu zeichnen, an denen ein Teilchen war oder jetzt ist – nicht das ganze Fenster mit allen
+        # Karten (gemessen: das war der Großteil der Rechenzeit)
+        region = QRegion()
+        for r in before + seasonal.bounds(self._decor, area, self._particles):
+            region += r.toAlignedRect()
+        self.update(region)
 
     def showEvent(self, event) -> None:
         super().showEvent(event)
