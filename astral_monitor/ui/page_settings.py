@@ -40,15 +40,25 @@ class SettingsPage(QWidget):
         theme.track_margins(root, 28, 24, 28, 24)
         theme.track_spacing(root, 14)
         root.addWidget(label(tr("Einstellungen"), "h1"))
-        head = QHBoxLayout()
-        head.addWidget(label(tr("Roblox-Helfer, Überwachung und Programm."), "muted"))
-        head.addStretch(1)
         self.search = short_field(QLineEdit(), 300)
         self.search.setPlaceholderText(tr("Einstellung suchen …"))
         self.search.setClearButtonEnabled(True)
         self.search.textChanged.connect(self._filter)
-        head.addWidget(self.search)
-        root.addLayout(head)
+        tabs = QHBoxLayout()
+        theme.track_spacing(tabs, 4)
+        self.tab_group = QButtonGroup(self)
+        self.tab_group.setExclusive(True)
+        for key in ("Roblox", "Überwachung", "Darstellung", "Programm"):
+            btn = QPushButton(tr(key))
+            btn.setObjectName("tab")
+            btn.setCheckable(True)
+            btn.setProperty("group", key)
+            self.tab_group.addButton(btn)
+            tabs.addWidget(btn)
+        tabs.addStretch(1)
+        tabs.addWidget(self.search)
+        self.tab_group.buttonClicked.connect(lambda b: self._show_group(b.property("group")))
+        root.addLayout(tabs)
         self.no_match = label(tr("Keine Einstellung gefunden."), "muted")
         self.no_match.setVisible(False)
         root.addWidget(self.no_match)
@@ -150,8 +160,8 @@ class SettingsPage(QWidget):
         root.addLayout(columns(perf, guard))
 
         # ------------------------------------------------------------------ Programm
-        root.addWidget(section(tr("Programm")))
-        look = Card(tr("Darstellung"),
+        root.addWidget(section(tr("Darstellung")))
+        look = Card(tr("Aussehen"),
                     tr("Änderungen gelten sofort. Ältere Designs bleiben hier auswählbar, mit der Version, in der "
                        "sie eingeführt wurden.\n\nUI-Größe: kleiner = mehr pro Seite sichtbar. „An die "
                        "Fenstergröße anpassen“ vergrößert bzw. verkleinert zusätzlich mit dem Fenster."))
@@ -246,6 +256,10 @@ class SettingsPage(QWidget):
         self.auto_fit = QCheckBox(tr("Zusätzlich an die Fenstergröße anpassen"))
         self.auto_fit.toggled.connect(lambda on: self.main.set_appearance(fit=on))
         look.body.addWidget(self.auto_fit)
+        self.mode_hint = label("", "small", wrap=True)
+        look.body.addWidget(self.mode_hint)
+        look.body.addStretch(1)
+        fx = Card(tr("Effekte"))
         mrow = QHBoxLayout()
         self.reduce_motion = QCheckBox(tr("Animationen reduzieren"))
         self.reduce_motion.toggled.connect(lambda on: self.main.set_appearance(reduce_motion=on))
@@ -254,7 +268,7 @@ class SettingsPage(QWidget):
         mrow.addWidget(InfoButton(tr("Seiten erscheinen ohne Überblendung, Schalter springen sofort um. "
                                      "Spart etwas Leistung, z. B. wenn Roblox nebenher läuft.")))
         mrow.addStretch(1)
-        look.body.addLayout(mrow)
+        fx.body.addLayout(mrow)
         srow = QHBoxLayout()
         self.seasonal = QCheckBox(tr("Saison-Designs automatisch"))
         self.seasonal.toggled.connect(lambda on: (self.main.set_appearance(seasonal=on),
@@ -264,7 +278,7 @@ class SettingsPage(QWidget):
                                      "6. Januar „Frost“ – danach automatisch wieder dein gewähltes Design. Beide "
                                      "gibt es auch jederzeit oben unter „Design“.")))
         srow.addStretch(1)
-        look.body.addLayout(srow)
+        fx.body.addLayout(srow)
         krow = QHBoxLayout()
         self.spooky = QCheckBox(tr("Kürbisnacht-Überraschung"))
         self.spooky.toggled.connect(lambda on: self.main.set_appearance(spooky=on))
@@ -273,13 +287,14 @@ class SettingsPage(QWidget):
                                      "unteren Fensterrand hervor – höchstens einmal pro Stunde, nur bei offenem "
                                      "Fenster. Ein Klick darauf lässt es verschwinden.")))
         krow.addStretch(1)
-        look.body.addLayout(krow)
+        fx.body.addLayout(krow)
         self.intro = QCheckBox(tr("Logo-Animation beim Start"))
         self.intro.toggled.connect(lambda on: self.main.set_appearance(intro=on))
-        look.body.addWidget(self.intro)
-        self.mode_hint = label("", "small", wrap=True)
-        look.body.addWidget(self.mode_hint)
-        root.addWidget(look)
+        fx.body.addWidget(self.intro)
+        fx.body.addStretch(1)
+        root.addLayout(columns(look, fx))
+
+        root.addWidget(section(tr("Programm")))
         ui = Card(tr("Oberfläche"),
                   tr("Ein Sprachwechsel gilt nach einem Neustart.\n\nSchließt du das Fenster, läuft das Programm "
                      "im Infobereich (Symbol neben der Uhr) weiter. Rechtsklick auf das Symbol: Öffnen, "
@@ -414,7 +429,42 @@ class SettingsPage(QWidget):
         root.addLayout(columns(upd, data))
         root.addStretch(1)
         root.addLayout(self._about_row())
+        self._assign_groups(root)
+        self.tab_group.buttons()[0].setChecked(True)
+        self._show_group("Roblox")
         self._search_index: list = []               # (Karte, durchsuchbarer Text) – beim ersten Suchen gefüllt
+
+    # ------------------------------------------------------------------ Reiter
+    def _assign_groups(self, root) -> None:
+        """Karten den Abschnitten zuordnen (Reihenfolge wie auf der Seite: Abschnittsüberschrift, dann ihre Karten)."""
+        from PySide6.QtWidgets import QLabel
+        self._groups: dict = {}
+        current = None
+        for i in range(root.count()):
+            item = root.itemAt(i)
+            if item.widget():
+                widgets = [item.widget()]
+            elif item.layout():
+                widgets = [item.layout().itemAt(j).widget() for j in range(item.layout().count())]
+            else:
+                widgets = []
+            for w in widgets:
+                if isinstance(w, QLabel) and w.objectName() == "section":
+                    current = w
+                    self._groups[w] = []
+                elif isinstance(w, Card) and current is not None:
+                    self._groups[current].append(w)
+
+    def _show_group(self, key: str) -> None:
+        """Nur einen Abschnitt zeigen (weniger Scrollen); die Suche zeigt dagegen alle Treffer."""
+        self._group = key
+        if self.search.text().strip():
+            return
+        for sec, cards in self._groups.items():
+            visible = sec.text() == tr(key).upper()
+            sec.setVisible(False)                          # der Reiter ersetzt die Überschrift
+            for card in cards:
+                card.setVisible(visible)
 
     # ------------------------------------------------------------------ Suche
     def _build_index(self) -> None:
@@ -441,6 +491,10 @@ class SettingsPage(QWidget):
         if not self._search_index:
             self._build_index()
         words = text.casefold().split()
+        if not words:
+            self.no_match.setVisible(False)
+            self._show_group(getattr(self, "_group", "Roblox"))
+            return
         shown = 0
         for card, haystack in self._search_index:
             match = all(w in haystack for w in words)

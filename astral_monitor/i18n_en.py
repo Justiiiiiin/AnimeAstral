@@ -536,7 +536,6 @@ EN: dict[str, str] = {
     "Einrichtungsassistent erneut öffnen": "Open the setup wizard again",
     "Ruhig alle {idle} s, kurz vor Raid-Ende alle {hot} s, Quests alle {quest} s.":
         "Idle every {idle} s, close to the raid end every {hot} s, quests every {quest} s.",
-    "Roblox-Helfer, Überwachung und Programm.": "Roblox helpers, monitoring and program.",
     "Stillstand nach": "Stall after",
     "Kein Raid beendet seit": "No raid finished for",
     "Roblox-Speicher über": "Roblox memory above",
@@ -912,6 +911,8 @@ EN: dict[str, str] = {
     "Was ist passiert?": "What happened?",
     "Was hast du erwartet?": "What did you expect?",
     "Einstellung suchen …": "Search settings …",
+    "Aussehen": "Look",
+    "Effekte": "Effects",
     "Keine Einstellung gefunden.": "No setting found.",
     "Noch keine Daten im gewählten Zeitraum": "No data in the selected period yet",
     "Bubble": "Bubble",
