@@ -487,6 +487,7 @@ class SettingsPage(QWidget):
         info = roblox_profile.load_info() if self.main.engine.settings.roblox_username else None
         pix = round_pixmap(roblox_profile.avatar_file(), theme.px(48)) if info else None
         self.avatar_preview.setPixmap(pix) if pix else self.avatar_preview.clear()
+        self.avatar_preview.setVisible(pix is not None)          # ohne Profil keine leere Lücke
         if error:
             self.profile_state.setText(error)
         elif info:

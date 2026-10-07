@@ -4,6 +4,30 @@ Neueste Version oben. Kurze Stichpunkte, keine Erklärungen (die stehen im Progr
 Der Abschnitt einer Version wird beim Veröffentlichen automatisch als Versionshinweis übernommen
 (`tools/release_notes.py`) und ist im Programm unter Einstellungen → Updates → „Alle Versionen“ lesbar.
 
+## 0.8.0
+
+### ✨ Neu
+- Einstellungen mit Reitern und Suchfeld
+- Dein Roblox-Profil: Avatar in Seitenleiste und auf Karten
+- Persönliche Rekorde in der Statistik
+- Statistik archivieren und neu beginnen
+- Designs „Bubble“ (rund) und „OLED“ (echtes Schwarz)
+- Saison-Designs Silvester, Kirschblüte und Sommer
+- Saison-Deko: Blätter, Kürbisse, Schnee, Feuerwerk, Blüten
+- Kürbisnacht-Überraschung (abschaltbar)
+- Nachrichtenstil „Kompakt“ für Discord
+- Akzentfarbe aus dem Hintergrundbild
+- „Was ist neu“ nach Updates und „Neu“-Punkte
+- „Fehler melden“ ganz unten in den Einstellungen
+
+### 🔧 Verbessert
+- Statistik auch mit großem Verlauf flüssig
+- Versuche und Quest-Ziele kurz mit k (Wellen bleiben genau)
+- Zuletzt benutzte Raids stehen oben
+- Kräftigere Saison-Farben
+- Leere Bereiche mit kleiner Illustration
+- Logo-Animation beim Start zuverlässig sichtbar
+
 ## 0.7.5.1
 
 ### 🐞 Behoben

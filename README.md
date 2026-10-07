@@ -21,14 +21,17 @@ Es muss nichts weiter installiert werden (Texterkennung ist enthalten). Windows 
 - **Auto-Start** der Überwachung beim Betreten des Spiels, optionales **Anti-AFK**
 - **Wächter:** Alarm bei Absturz, Disconnect, Stillstand, hohem Speicherverbrauch
 - Quests, Hotkeys, Tray-Symbol, Discord-Profilstatus, Deutsch/Englisch
-- **Monatsrückblick** und Wochenüberblick, Server-Favoriten per Code teilen, Tages-Beiträge im Forum-Kanal
-- Designs **Nebula**, Astral, Klassisch und Saison-Designs, hell/dunkel, Akzentfarbe, eigenes Hintergrundbild,
-  UI-Größe 50–200 %
+- **Monatsrückblick**, Wochenüberblick, persönliche Rekorde, Statistik-Archiv
+- Server-Favoriten per Code teilen, Tages-Beiträge im Forum-Kanal, kompakter Nachrichtenstil
+- Dein **Roblox-Profil** (Avatar über die öffentliche Roblox-Seite, ohne Anmeldung)
+- Designs **Nebula**, Bubble, OLED, Astral, Klassisch und Saison-Designs mit Deko (Kürbisnacht, Frost,
+  Silvester, Kirschblüte, Sommer), hell/dunkel, Akzentfarbe, eigenes Hintergrundbild, UI-Größe 50–200 %
 - **Automatische Updates** (meist nur wenige MB), alle Versionshinweise im Programm, Downgrade möglich
 
 ## Datenschutz
 
-Das Programm sendet Daten nur an die Discord-Webhook-URL, die du selbst einträgst, und (für Updates) an GitHub.
+Das Programm sendet Daten nur an die Discord-Webhook-URL, die du selbst einträgst, (für Updates) an GitHub und –
+nur wenn du deinen Roblox-Namen einträgst – an die öffentliche Roblox-Schnittstelle (Avatar, ohne Anmeldung).
 Einstellungen und Verlauf liegen lokal in `%APPDATA%\AnimeAstralMonitor`; Webhook-URL und Server-Links sind dort mit
 deinem Windows-Konto verschlüsselt. Für einen PC-Wechsel lassen sich die Einstellungen mit Passwort exportieren.
 

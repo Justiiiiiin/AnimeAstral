@@ -95,6 +95,13 @@ Wichtige Entwurfsentscheidungen:
 - **Erklärtexte gehören in ⓘ** (`Card(title, info)`, `InfoButton`), nicht als Fließtext auf die Seite;
   auf den Seiten nur Bedienelemente und Statuszeilen (Wunsch des Eigentümers: weniger überladen).
 - **Design „Nebula“** (seit 0.7.0, Standard): aus dem Logo abgeleitet; Layout-Flag `rail` = schmale Symbolleiste (76 px, Logo oben, Namen als Tooltip), Status als Pille in der Kopfzeile, Hinweise oben (`top_toast`). Vorlage = Astral + Überschreibungen (`_NEBULA`). Logo: `tools/make_icon.py`.
+- **Seit 0.8.0:** Einstellungen mit Reitern (Abschnitte = `section()`-Überschriften, `_assign_groups`) und Suche;
+  Saison-Designs mit Deko (`ui/seasonal.py`, gemalt von `ui/backdrop.py`, Karten leicht durchscheinend über
+  `cardGlass`-Tokens, 15 Bilder/s nur bei sichtbarem Fenster); Kürbisnacht-Überraschung (`ui/spooky.py`, höchstens
+  1×/Std.); Roblox-Profil (`roblox_profile.py`, nur öffentliche API, Name in `SECRET_FIELDS`); Statistik-Werte per
+  `@_cached` bis zum nächsten Raid zwischengespeichert (gemessen mit 120 000 Raids); „Neu“-Punkte je Version in
+  `ui/newdots.py` (`NEW_FEATURES` bei jedem Release pflegen). Wellenzahlen immer genau, andere Mengen mit k
+  (`messages.fmt_k`). Glas-/Mica-Effekt wurde verworfen: Qt zeichnet Fenster mit Windows-Rahmen deckend.
 - **Designs** (`theme.DESIGNS`, Einstellungen → Darstellung, `ui_design`/`ui_mode`): „Astral“ (seit 0.6.5, vorher Standard:
   Symbole aus der Windows-Symbolschrift, Zahnrad unten links, Überblendung beim Seitenwechsel, Hell/Dunkel/Wie Windows)
   und „Klassisch“ (seit 0.5.0, nur dunkel, unverändert). **Alte Designs nie löschen** – neues Design = neuer Eintrag mit
