@@ -198,6 +198,98 @@ def template_menus(m: UiMap) -> list[TemplateMenu]:
     return out
 
 
+def words_in(frame: np.ndarray, roi: list[float], ocr) -> list[tuple[str, list[float]]]:
+    """Alle Wörter in einem Bereich mit Lage im Roblox-Fenster (Anteile). Zwei Durchgänge: helle Schrift mit
+    Umriss (Knöpfe, Titel) und allgemein (Otsu) – doppelte Funde werden zusammengelegt."""
+    if ocr is None:
+        return []
+    fh, fw = frame.shape[:2]
+    x0, y0 = int(roi[0] * fw), int(roi[1] * fh)
+    crop = frame[y0:int(roi[3] * fh), x0:int(roi[2] * fw)]
+    if crop.size == 0:
+        return []
+    gray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
+    scale = 1.0 if crop.shape[0] >= 600 else 1.5
+    found: list[tuple[str, list[float]]] = []
+    for binary in (cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY_INV)[1],
+                   cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]):
+        img = binary if scale == 1.0 else cv2.resize(binary, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
+        try:
+            words = ocr.words(img, psm=11)
+        except Exception:  # noqa: BLE001 – Lesefehler: dann eben weniger Wörter
+            continue
+        for wd in words:
+            text = re.sub(r"^[^A-Za-z0-9%]+|[^A-Za-z0-9%!?]+$", "", wd.text)
+            if len(text) < 2 or wd.conf < 40:
+                continue
+            box = [(x0 + wd.x / scale) / fw, (y0 + wd.y / scale) / fh,
+                   (x0 + (wd.x + wd.w) / scale) / fw, (y0 + (wd.y + wd.h) / scale) / fh]
+            cx, cy = (box[0] + box[2]) / 2, (box[1] + box[3]) / 2
+            if any(t.lower() == text.lower() and abs((b[0] + b[2]) / 2 - cx) < 0.01 and abs((b[1] + b[3]) / 2 - cy)
+                   < 0.01 for t, b in found):
+                continue
+            found.append((text, box))
+    return found
+
+
+def find_word(frame: np.ndarray, roi: list[float], ocr, *wanted: str) -> list[float] | None:
+    """Lage des ersten Worts aus wanted (ohne Groß-/Kleinschreibung) im Bereich, sonst None."""
+    want = {w.lower() for w in wanted}
+    for text, box in words_in(frame, roi, ocr):
+        if text.lower() in want:
+            return box
+    return None
+
+
+class SlotLayout:
+    """Symbol-Plätze einer Welt-Zeile (aus der Vorlage-Zeile der Karte): Abstand, Breite, Höhe; leere Plätze
+    werden am ruhigen Rand erkannt (gemessen: belegt ≥ 31, leer ≤ 21)."""
+    EMPTY_STD = 25.0
+
+    def __init__(self, uimap: UiMap, list_window: dict) -> None:
+        icons, wide = [], []
+        for row in uimap.rows(list_window):
+            kids = [e for e in uimap.children(row) if e.get("rel") and e.get("kind") in ("Knopf", "Symbol")]
+            small = sorted((e["rel"] for e in kids if e["rel"][2] - e["rel"][0] < 0.09), key=lambda r: r[0])
+            if len(small) >= 3:
+                icons = small
+                wide = [e["rel"] for e in kids if e["rel"][2] - e["rel"][0] >= 0.09 and e["rel"][0] > 0.6]
+                break
+        if len(icons) < 3:
+            raise ValueError("keine Vorlage-Zeile mit Symbolen")
+        diffs = sorted(b[0] - a[0] for a, b in zip(icons, icons[1:]))
+        self.pitch = diffs[len(diffs) // 2]
+        self.x0 = icons[0][0]
+        widths = sorted(r[2] - r[0] for r in icons)
+        self.w = widths[len(widths) // 2]
+        tops, bottoms = sorted(r[1] for r in icons), sorted(r[3] for r in icons)
+        self.y = (tops[len(tops) // 2], bottoms[len(bottoms) // 2])
+        end = min((r[0] for r in wide), default=0.78)
+        self.count = int((end - self.x0) / self.pitch) + 1
+
+    def slots(self, row_img: np.ndarray) -> list[tuple[int, list[float]]]:
+        """Belegte Plätze: (Platz, Lage in der Zeile)."""
+        h, w = row_img.shape[:2]
+        out = []
+        for i in range(self.count):
+            x0 = self.x0 + i * self.pitch
+            rel = [x0, self.y[0], x0 + self.w, self.y[1]]
+            crop = row_img[int(rel[1] * h):int(rel[3] * h), int(rel[0] * w):int(rel[2] * w)]
+            if crop.size == 0:
+                continue
+            g = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY).astype(np.float32)[:, :max(8, int(crop.shape[1] * 0.6))]
+            ring = np.concatenate([g[2:5, 4:].ravel(), g[-5:-2, 4:].ravel(), g[4:-4, 2:5].ravel()])
+            if float(ring.std()) >= self.EMPTY_STD:
+                out.append((i, [round(v, 4) for v in rel]))
+        return out
+
+    def index_of(self, rel: list[float]) -> int | None:
+        if rel[2] - rel[0] >= 0.09:
+            return None
+        i = round((rel[0] - self.x0) / self.pitch)
+        return i if 0 <= i < self.count else None
+
+
 def read_text(frame: np.ndarray, roi: list[float], ocr) -> str:
     """Text in einem Bereich lesen (z. B. „Kosten (Yen)“ im Pets-Roll-Menü)."""
     fh, fw = frame.shape[:2]

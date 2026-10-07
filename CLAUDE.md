@@ -25,6 +25,15 @@ Menü gleich wieder schließen (Auto-Roll läuft im Hintergrund weiter – nie a
 „Makro (Beta)“ links oben auf der Startseite (in der Oberfläche heißt es „Makro“), darunter die
 **Makro-Warteschlange** (`ui/macro_queue_card.py`, `Navigator.run_queue`, Aufgaben `automation.TASK_KINDS`, gespeichert in
 `settings.macro_queue`/`macro_loop`; während „Warten“ ist `_ACTIVE` aus, damit das Anti-AFK laufen kann).
+Aufgaben seit 0.9.7: Auto Roll (Fenster öffnen, „Auto Roll“/„Auto!“ per Texterkennung drücken, schließen), Raid
+starten (Create/Start) / beitreten (Join), Warten – reines Öffnen bringt in der Schlange nichts (Eigentümer).
+**Erkunden (seit 0.9.7-beta.1, `explorer.py`, Wissen in `knowledge.py`):** übernimmt Roblox ein paar Minuten, geht
+den Teleporter durch, öffnet in neuen Welten und bei Symbolen ohne Fenster jedes Symbol einmal, ordnet es ein
+(Titel + gelesene Wörter), schließt (X, Vorlage-Close oder „Close“/„Exit“ bei ganzen Bildschirmen), danach die
+Knöpfe am Bildschirmrand (`extra.hud`, feste Lage mit Bildprüfung). Nie Aktions-Knöpfe klicken
+(`knowledge.ACTION_WORDS`). Ergebnis: `uimap_local.json` im Datenordner (mitgelieferte Karte hat Vorrang) +
+`explore/<zeit>/report.json` mit Bildern. Offen: Raid-Zahnrad (Auto Retry / Auto Leave ab Welle N) – mit Auto Retry an
+kann man nicht verlassen; vor einem Raid-Wechsel also erst Auto Retry aus.
 **Startseite seit 0.9.5-beta.4:** kein Titel/Fenster-Info/Raid-Auswahl; Start/Pause/Status als Knöpfe links in der
 Kopfzeile (`MainWindow._mount_controls`); Ereignisse als Debug-Karte unter Einstellungen → Programm
 (`ui/events_card.py`, gesammelt in `MainWindow.event_log`). Die Raid-Auswahl kommt neu (Eigentümer ändert das). Eingaben per

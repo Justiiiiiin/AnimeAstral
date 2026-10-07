@@ -4,6 +4,17 @@ Neueste Version oben. Kurze Stichpunkte, keine Erklärungen (die stehen im Progr
 Der Abschnitt einer Version wird beim Veröffentlichen automatisch als Versionshinweis übernommen
 (`tools/release_notes.py`) und ist im Programm unter Einstellungen → Updates → „Alle Versionen“ lesbar.
 
+## 0.9.7-beta.1
+
+### ✨ Neu (Beta)
+- Erkunden: Makro öffnet neue Welten und Menüs selbst (3 Min.)
+- Eingebautes Wissen: Gacha, Titans, Pets, Crafting, Artefakte …
+- Liest Equip Best, Guild und die Knöpfe am Bildschirmrand
+- Gefundenes landet in der Karte – danach direkt anwählbar
+- Beim Erkunden nur öffnen/schließen, nie Roll, Buy oder Claim
+- Warteschlange: Auto Roll, Raid starten, Raid beitreten
+- Makro-Karte: „Auto Roll“ für jedes Ziel (auch Pets-Roll)
+
 ## 0.9.5-beta.4
 
 ### ✨ Neu (Beta)

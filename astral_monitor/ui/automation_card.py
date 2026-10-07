@@ -3,13 +3,12 @@ drücken und danach wieder schließen. Standard aus; Einschalten nur nach Warnun
 Die Logik steckt in automation.py (ohne Qt)."""
 from __future__ import annotations
 
-import re
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QCheckBox, QComboBox, QHBoxLayout, QListWidget, QMessageBox, QPushButton
+from PySide6.QtWidgets import QCheckBox, QComboBox, QHBoxLayout, QListWidget, QMessageBox, QPushButton, QSpinBox
 
 from ..i18n import tr
-from ..uimap import UiMap, natural
+from ..uimap import UiMap
 from . import theme
 from .widgets import Card, label, smooth
 
@@ -49,30 +48,37 @@ class AutomationCard(Card):
         row.addWidget(self.go)
         self.body.addLayout(row)
 
-        row2 = QHBoxLayout()
-        self.world = QComboBox()
-        self.world.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
-        self.world.setMinimumContentsLength(3)
-        worlds = sorted({m.group(1) for w in self.map.entries
-                         if (m := re.match(r"(W\d+) Pets-Roll$", w.get("name", "")))}, key=natural)
-        for w in worlds:
-            self.world.addItem(w, w)
-        self.pets = QPushButton(tr("Pets rollen (Auto!)"))
-        self.pets.clicked.connect(lambda: self._start("pets", self.world.currentData()))
-        self.close_after = QCheckBox(tr("Danach schließen"))
-        self.close_after.setToolTip(tr("Klickt nach „Auto!“ gleich „CLOSE“ – Auto-Roll läuft im Hintergrund "
-                                       "weiter."))
-        self.close_after.setChecked(True)
+        self.roll = QPushButton(tr("Auto Roll"))
+        self.roll.setToolTip(tr("Ziel öffnen, „Auto Roll“ bzw. „Auto!“ drücken und gleich wieder schließen – das "
+                                "Spiel rollt im Hintergrund weiter (Gachas, Titans, Pets-Roll)."))
+        self.roll.clicked.connect(lambda: self._start("autoroll", self.target.currentData()))
+        row.insertWidget(2, self.roll)
         self.close_btn = QPushButton(tr("Menü schließen"))
         self.close_btn.clicked.connect(lambda: self._start("close", None))
         self.stop_btn = QPushButton(tr("Stopp"))
         self.stop_btn.clicked.connect(lambda: self.navigator and self.navigator.stop())
-        row2.addWidget(self.world)
-        row2.addWidget(self.pets, 1)
-        row2.addWidget(self.close_after)
-        self.body.addLayout(row2)
         row0.addWidget(self.close_btn)
         row0.addWidget(self.stop_btn)
+        row4 = QHBoxLayout()
+        self.explore_btn = QPushButton(tr("Erkunden …"))
+        self.explore_btn.setToolTip(tr("Das Makro übernimmt Roblox für ein paar Minuten: Teleporter auf, neue Welten "
+                                       "und Symbole ohne bekanntes Fenster je einmal öffnen, einordnen und schließen; "
+                                       "danach die Knöpfe am Bildschirmrand (Equip Best, Guild …). Es wird nur geöffnet "
+                                       "und geschlossen – nie Roll, Craft, Buy oder Claim."))
+        self.explore_btn.clicked.connect(self._explore)
+        self.explore_minutes = QSpinBox()
+        self.explore_minutes.setRange(1, 15)
+        self.explore_minutes.setValue(3)
+        self.explore_minutes.setSuffix(tr(" Min"))
+        report = QPushButton(tr("Bericht"))
+        report.setToolTip(tr("Ordner mit dem letzten Erkundungs-Bericht und den Bildern öffnen"))
+        report.clicked.connect(self._open_report)
+        row4.addWidget(self.explore_btn)
+        row4.addWidget(self.explore_minutes)
+        row4.addWidget(report)
+        row4.addStretch(1)
+        self.body.addLayout(row4)
+        self._explore_controls = [self.explore_btn, self.explore_minutes]
 
         self.log = QListWidget()
         smooth(self.log)
@@ -108,7 +114,7 @@ class AutomationCard(Card):
 
     def _update(self) -> None:
         on = self.enabled.isChecked() and bool(self.map.entries)
-        for w in (self.target, self.go, self.world, self.pets, self.close_after, self.close_btn):
+        for w in (self.target, self.go, self.roll, self.close_btn, *getattr(self, "_explore_controls", [])):
             w.setEnabled(on)
         self.stop_btn.setEnabled(on)
 
@@ -136,10 +142,58 @@ class AutomationCard(Card):
             return
         if what == "navigate" and arg:
             nav.navigate(arg)
-        elif what == "pets" and arg:
-            nav.pets_auto(arg, close_after=self.close_after.isChecked())
+        elif what == "autoroll" and arg:
+            nav.autoroll(arg)
         elif what == "close":
             nav.close_menu()
+
+    def _explore(self) -> None:
+        if not self.enabled.isChecked():
+            return
+        minutes = self.explore_minutes.value()
+        answer = QMessageBox.question(
+            self, tr("Erkunden"),
+            tr("Das Makro übernimmt Roblox für bis zu {minutes} Minuten und öffnet dabei Menüs im Spiel (nur öffnen "
+               "und schließen, nichts kaufen oder rollen).\n\nNicht die Maus bewegen – das bricht ab (Esc ebenso). "
+               "Starten?", minutes=minutes))
+        if answer != QMessageBox.StandardButton.Yes:
+            return
+        nav = self._ensure_navigator()
+        if nav.busy:
+            self._add_log(tr("Läuft schon – erst „Stopp“."))
+            return
+        from ..app_paths import data_dir
+        nav.explore(minutes, data_dir())
+        self._watch_explore()
+
+    def _watch_explore(self) -> None:
+        """Nach dem Erkunden die Karte neu laden, damit neue Ziele auswählbar sind."""
+        from PySide6.QtCore import QTimer
+        if self.navigator is not None and self.navigator.busy:
+            QTimer.singleShot(1000, self._watch_explore)
+            return
+        self.reload_map()
+
+    def reload_map(self) -> None:
+        self.map = UiMap.load()
+        if self.navigator is not None:
+            self.navigator.map = self.map
+        current = self.target.currentData()
+        self.target.clear()
+        for w in self.map.targets():
+            if w["name"] != "Teleporter Fenster":
+                self.target.addItem(w["name"], w["name"])
+        self.target.setCurrentIndex(max(0, self.target.findData(current)))
+        queue = getattr(self.main.pages.built(0), "queue", None)
+        if queue is not None:
+            queue.reload()
+
+    def _open_report(self) -> None:
+        import os
+        from ..app_paths import data_dir
+        folder = data_dir() / "explore"
+        folder.mkdir(parents=True, exist_ok=True)
+        os.startfile(str(folder))                          # noqa: S606 – eigener Datenordner
 
     def _add_log(self, text: str) -> None:
         self.log.addItem(text)

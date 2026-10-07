@@ -15,6 +15,7 @@ NEW_FEATURES: dict[str, tuple[str, ...]] = {
     "0.9.5-beta.1": ("nav:3", "tab:Roblox"),        # Automatik (Beta) unter Einstellungen → Roblox
     "0.9.5-beta.2": ("nav:0",),                     # Startseite neu: Makro, Ereignisse, Live, Quests
     "0.9.5-beta.4": ("nav:0", "nav:3", "tab:Programm"),   # Warteschlange; Ereignisse unter Einstellungen → Programm
+    "0.9.7-beta.1": ("nav:0",),                     # Erkunden, Auto Roll, Raids in der Warteschlange
 }
 
 

@@ -36,7 +36,11 @@
   "window": [
    2560,
    1440
-  ]
+  ],
+  "extra": {
+   "hud": true
+  },
+  "img": "img/Teleporter_Fenster_Teleporter_20261007_1.png"
  },
  {
   "name": "Scrollbalken",
@@ -7760,5 +7764,235 @@
   },
   "opened_by_id": "W21_Night_City/W21_Pets_20261007_163805_534.png",
   "opened_by": "W21 Pets"
+ },
+ {
+  "name": "Shop",
+  "kind": "Knopf",
+  "parent": "",
+  "note": "Knopf am Bildschirmrand (immer an derselben Stelle)",
+  "file": "Knopf/Shop_20261007_205204_977.png",
+  "roi": [
+   0.007,
+   0.4444,
+   0.0344,
+   0.4958
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "extra": {
+   "hud": true
+  },
+  "img": "img/Knopf_Shop_20261007_205204_977.png"
+ },
+ {
+  "name": "Pets",
+  "kind": "Knopf",
+  "parent": "",
+  "note": "Knopf am Bildschirmrand (immer an derselben Stelle)",
+  "file": "Knopf/Pets_20261007_205204_980.png",
+  "roi": [
+   0.0359,
+   0.4444,
+   0.0633,
+   0.4958
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "extra": {
+   "hud": true
+  },
+  "img": "img/Knopf_Pets_20261007_205204_980.png"
+ },
+ {
+  "name": "Items",
+  "kind": "Knopf",
+  "parent": "",
+  "note": "Knopf am Bildschirmrand (immer an derselben Stelle)",
+  "file": "Knopf/Items_20261007_205204_988.png",
+  "roi": [
+   0.007,
+   0.4972,
+   0.0344,
+   0.55
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "extra": {
+   "hud": true
+  },
+  "img": "img/Knopf_Items_20261007_205204_988.png"
+ },
+ {
+  "name": "Achiev",
+  "kind": "Knopf",
+  "parent": "",
+  "note": "Knopf am Bildschirmrand (immer an derselben Stelle)",
+  "file": "Knopf/Achiev_20261007_205204_996.png",
+  "roi": [
+   0.0359,
+   0.4972,
+   0.0633,
+   0.55
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "extra": {
+   "hud": true
+  },
+  "img": "img/Knopf_Achiev_20261007_205204_996.png"
+ },
+ {
+  "name": "Index",
+  "kind": "Knopf",
+  "parent": "",
+  "note": "Knopf am Bildschirmrand (immer an derselben Stelle)",
+  "file": "Knopf/Index_20261007_205205_003.png",
+  "roi": [
+   0.0641,
+   0.4972,
+   0.0922,
+   0.55
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "extra": {
+   "hud": true
+  },
+  "img": "img/Knopf_Index_20261007_205205_003.png"
+ },
+ {
+  "name": "Guild",
+  "kind": "Knopf",
+  "parent": "",
+  "note": "Knopf am Bildschirmrand (immer an derselben Stelle)",
+  "file": "Knopf/Guild_20261007_205205_009.png",
+  "roi": [
+   0.0016,
+   0.8833,
+   0.025,
+   0.9292
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "extra": {
+   "hud": true
+  },
+  "img": "img/Knopf_Guild_20261007_205205_009.png"
+ },
+ {
+  "name": "Boosts",
+  "kind": "Knopf",
+  "parent": "",
+  "note": "Knopf am Bildschirmrand (immer an derselben Stelle)",
+  "file": "Knopf/Boosts_20261007_205205_017.png",
+  "roi": [
+   0.0016,
+   0.9306,
+   0.025,
+   0.975
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "extra": {
+   "hud": true
+  },
+  "img": "img/Knopf_Boosts_20261007_205205_017.png"
+ },
+ {
+  "name": "G. Quests",
+  "kind": "Knopf",
+  "parent": "",
+  "note": "Knopf am Bildschirmrand (immer an derselben Stelle)",
+  "file": "Knopf/G_Quests_20261007_205205_024.png",
+  "roi": [
+   0.0266,
+   0.9306,
+   0.0508,
+   0.975
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "extra": {
+   "hud": true
+  },
+  "img": "img/Knopf_G_Quests_20261007_205205_024.png"
+ },
+ {
+  "name": "Promotion",
+  "kind": "Knopf",
+  "parent": "",
+  "note": "Knopf am Bildschirmrand (immer an derselben Stelle)",
+  "file": "Knopf/Promotion_20261007_205205_030.png",
+  "roi": [
+   0.0516,
+   0.9306,
+   0.0766,
+   0.975
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "extra": {
+   "hud": true
+  },
+  "img": "img/Knopf_Promotion_20261007_205205_030.png"
+ },
+ {
+  "name": "Equip Best",
+  "kind": "Knopf",
+  "parent": "",
+  "note": "Knopf am Bildschirmrand (immer an derselben Stelle)",
+  "file": "Knopf/Equip_Best_20261007_205205_037.png",
+  "roi": [
+   0.5156,
+   0.9056,
+   0.5422,
+   0.95
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "extra": {
+   "hud": true
+  },
+  "img": "img/Knopf_Equip_Best_20261007_205205_037.png"
  }
 ]

@@ -15,8 +15,8 @@ from ..uimap import natural
 from . import theme
 from .widgets import Card, smooth
 
-KINDS = [("navigate", N_("Öffnen")), ("pets", N_("Pets rollen (Auto!)")), ("close", N_("Menü schließen")),
-         ("wait", N_("Warten (Min.)"))]
+KINDS = [("autoroll", N_("Auto Roll")), ("raid_create", N_("Raid starten")), ("raid_join", N_("Raid beitreten")),
+         ("wait", N_("Warten (Min.)"))]                  # reines Öffnen bringt in der Schlange nichts (Eigentümer)
 
 
 class MacroQueueCard(Card):
@@ -32,13 +32,13 @@ class MacroQueueCard(Card):
         add_row = QHBoxLayout()
         self.kind = QComboBox()
         self.kind.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
-        self.kind.setMinimumContentsLength(8)             # schmal halten: Startseite sonst zu breit
+        self.kind.setMinimumContentsLength(6)             # schmal halten: Startseite sonst zu breit
         for key, text in KINDS:
             self.kind.addItem(tr(text), key)
         self.kind.currentIndexChanged.connect(self._kind_changed)
         self.param = QComboBox()
         self.param.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
-        self.param.setMinimumContentsLength(6)
+        self.param.setMinimumContentsLength(5)
         self.minutes = QSpinBox()
         self.minutes.setRange(1, 240)
         self.minutes.setValue(10)
@@ -69,7 +69,7 @@ class MacroQueueCard(Card):
         down.clicked.connect(lambda: self._move(1))
         remove = QPushButton(tr("Entfernen"))
         remove.clicked.connect(self._remove)
-        self.run = QPushButton(tr("Warteschlange starten"))
+        self.run = QPushButton(tr("Starten"))
         self.run.setObjectName("primary")
         self.run.clicked.connect(self._start)
         stop = QPushButton(tr("Stopp"))
@@ -87,6 +87,10 @@ class MacroQueueCard(Card):
 
         for task in s.macro_queue or []:
             self._append(task)
+
+    def reload(self) -> None:
+        """Nach dem Erkunden: neue Ziele in die Auswahl."""
+        self._kind_changed()
         self._kind_changed()
         self.macro.enabled.toggled.connect(lambda _on: self._update())
         self._update()
@@ -95,29 +99,24 @@ class MacroQueueCard(Card):
     def _kind_changed(self, _i: int = 0) -> None:
         kind = self.kind.currentData()
         self.param.clear()
-        if kind == "navigate":
-            for w in self.macro.map.targets():
-                if w["name"] != "Teleporter Fenster":
-                    self.param.addItem(w["name"], w["name"])
-        elif kind == "pets":
-            worlds = sorted({m.group(1) for w in self.macro.map.entries
-                             if (m := re.match(r"(W\d+) Pets-Roll$", w.get("name", "")))}, key=natural)
-            for w in worlds:
-                self.param.addItem(w, w)
-        self.param.setVisible(kind in ("navigate", "pets"))
+        if kind != "wait":
+            names = [w["name"] for w in self.macro.map.targets() if w["name"] != "Teleporter Fenster"]
+            if kind in ("raid_create", "raid_join"):          # Raids/Defense zuerst
+                names.sort(key=lambda n: (not re.search(r"raid|defense|castle|gate", n, re.I), natural(n)))
+            for name in names:
+                self.param.addItem(name, name)
+        self.param.setVisible(kind != "wait")
         self.minutes.setVisible(kind == "wait")
 
     def _add(self) -> None:
         kind = self.kind.currentData()
         task: dict = {"kind": kind}
-        if kind == "navigate":
-            task["target"] = self.param.currentData()
-        elif kind == "pets":
-            task["world"], task["close"] = self.param.currentData(), True
-        elif kind == "wait":
+        if kind == "wait":
             task["seconds"] = self.minutes.value() * 60
-        if kind in ("navigate", "pets") and not self.param.currentData():
-            return
+        else:
+            if not self.param.currentData():
+                return
+            task["target"] = self.param.currentData()
         self._append(task)
         self.list.setCurrentRow(self.list.count() - 1)
         self._save()

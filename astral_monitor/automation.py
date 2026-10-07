@@ -8,11 +8,13 @@ from __future__ import annotations
 
 import ctypes
 import logging
+import re
 import threading
 import time
 from ctypes import wintypes
 from typing import Callable, Optional
 
+import cv2
 import numpy as np
 
 from . import vision, winapi
@@ -37,12 +39,18 @@ def macro_running() -> bool:
     return _ACTIVE.is_set()
 
 
-TASK_KINDS = ("navigate", "pets", "close", "wait")
+TASK_KINDS = ("autoroll", "raid_create", "raid_join", "wait", "navigate", "pets", "close")   # letzte 3: alt
 
 
 def task_label(task: dict) -> str:
     """Anzeige einer Aufgabe der Warteschlange."""
     kind = task.get("kind")
+    if kind == "autoroll":
+        return tr("Auto Roll: {target}", target=task.get("target", "?"))
+    if kind == "raid_create":
+        return tr("Raid starten: {target}", target=task.get("target", "?"))
+    if kind == "raid_join":
+        return tr("Raid beitreten: {target}", target=task.get("target", "?"))
     if kind == "navigate":
         return tr("Öffnen: {target}", target=task.get("target", "?"))
     if kind == "pets":
@@ -108,6 +116,15 @@ class Navigator:
     def close_menu(self) -> bool:
         return self.start(tr("Menü schließen"), self._close_any)
 
+    def explore(self, minutes: float, data_dir) -> bool:
+        """Erkunden: neue Welten/Fenster selbst öffnen, einordnen, schließen (explorer.py)."""
+        from .explorer import Explorer
+        return self.start(tr("Erkunden ({minutes} Min.)", minutes=minutes),
+                          lambda: Explorer(self, minutes, data_dir).run())
+
+    def map_opened(self, button: dict) -> bool:
+        return self.map.window_for(button) is not None
+
     def run_queue(self, tasks: list[dict], loop: bool = False) -> bool:
         """Warteschlange: Aufgaben nacheinander; mit loop von vorn, bis „Stopp“/Esc/Maus. Aufgaben siehe task_label."""
         tasks = [dict(t) for t in tasks if t.get("kind") in TASK_KINDS]
@@ -134,12 +151,92 @@ class Navigator:
             self._idle_wait(float(task.get("seconds", 60)))
             return
         self._focus()                                     # nach Warten/Anti-AFK wieder Roblox vorne
-        if kind == "navigate":
+        if kind == "autoroll":
+            self._autoroll(self._window(task.get("target", "")))
+        elif kind in ("raid_create", "raid_join"):
+            self._raid(self._window(task.get("target", "")), join=kind == "raid_join")
+        elif kind == "navigate":
             self._open(self._window(task.get("target", "")))
         elif kind == "pets":
             self._pets_auto(task.get("world", ""), bool(task.get("close", True)))
         elif kind == "close":
             self._close_any()
+
+    # ------------------------------------------------------------------ Aufgaben im Fenster
+    def autoroll(self, target: str) -> bool:
+        return self.start(tr("Auto Roll: {target}", target=target), lambda: self._autoroll(self._window(target)))
+
+    def _window_area(self, window: dict) -> tuple[list[float], np.ndarray]:
+        """Lage des offenen Fensters (Standard-Rahmen, Vorlage oder ganzer Bildschirm) und aktuelles Bild."""
+        frame = self._frame()
+        kind, st = self._screen(frame)
+        if kind == "template":
+            return st.window["roi"], frame
+        if kind == "menu":
+            return st[0], frame
+        return [0.0, 0.0, 1.0, 1.0], frame
+
+    def _press(self, window: dict, *labels: tuple[str, ...]) -> str:
+        """Knopf im offenen Fenster über seine Beschriftung finden und drücken (z. B. („auto", „roll“), („join",)).
+        Mehrteilige Beschriftungen: Wörter nebeneinander in einer Zeile. Rückgabe: gedrückte Beschriftung."""
+        roi, frame = self._window_area(window)
+        words = vision.words_in(frame, roi, self._ocr)
+        norm = [(re.sub(r"[^a-z0-9]", "", w.lower()), b) for w, b in words]
+        for label in labels:
+            for i, (w, box) in enumerate(norm):
+                if w != label[0]:
+                    continue
+                boxes = [box]
+                for part in label[1:]:                    # nächstes Wort rechts daneben, gleiche Zeile
+                    nxt = next((b for v, b in norm if v == part and 0 <= b[0] - boxes[-1][2] < 0.03
+                                and abs((b[1] + b[3]) / 2 - (boxes[-1][1] + boxes[-1][3]) / 2) < 0.015), None)
+                    if nxt is None:
+                        boxes = []
+                        break
+                    boxes.append(nxt)
+                if boxes:
+                    area = [min(b[0] for b in boxes), min(b[1] for b in boxes), max(b[2] for b in boxes),
+                            max(b[3] for b in boxes)]
+                    text = " ".join(label)
+                    self.log(tr("Klicke „{button}“.", button=text))
+                    self._click_roi(area)
+                    return text
+        raise Stop(tr("Knopf „{button}“ nicht gefunden in „{name}“.", button=" / ".join(" ".join(x) for x in labels),
+                      name=window["name"]))
+
+    def _autoroll(self, window: dict) -> None:
+        """Fenster öffnen, „Auto Roll“ (Gacha, Titans) bzw. „Auto!“ (Pets) drücken, gleich wieder schließen – das
+        Spiel rollt im Hintergrund weiter."""
+        self._open(window)
+        auto = self.map.element(window, "Auto!")
+        if auto is not None:
+            self.log(tr("Klicke „Auto!“."))
+            self._click_roi(auto["roi"])
+        else:
+            self._press(window, ("auto", "roll"), ("autoroll",), ("auto",))
+        time.sleep(AUTO_SETTLE)
+        self.log(tr("Auto-Roll läuft im Hintergrund – schließe das Menü."))
+        self._close_any()
+
+    def _raid(self, window: dict, join: bool) -> None:
+        """Raid-Fenster öffnen und „Create“/„Start“ (eigener Raid, kostet einen Schlüssel) bzw. „Join“ drücken.
+        Was danach kommt (Lobby, Teleport), wird protokolliert und als Bild für die Fehlersuche gespeichert."""
+        self._open(window)
+        if join:
+            self._press(window, ("join",))
+        else:
+            self._press(window, ("create",), ("start",))
+        time.sleep(3.0)
+        frame = self._frame()
+        kind, st = self._screen(frame)
+        self.log(tr("Danach: {state}", state=(st[1] if kind == "menu" else kind) or "?"))
+        try:
+            from .app_paths import debug_dir
+            path = debug_dir() / f"makro_raid_{time.strftime('%H%M%S')}.jpg"
+            small = cv2.resize(frame, None, fx=0.5, fy=0.5, interpolation=cv2.INTER_AREA)
+            cv2.imencode(".jpg", small, [cv2.IMWRITE_JPEG_QUALITY, 80])[1].tofile(str(path))
+        except Exception:  # noqa: BLE001 – nur Hilfe für die Fehlersuche
+            pass
 
     def _idle_wait(self, seconds: float) -> None:
         """Warten ohne Eingaben: Maus/Fenster frei, Anti-AFK darf in der Zeit laufen; Esc/„Stopp“ brechen ab."""
@@ -286,7 +383,6 @@ class Navigator:
         rows = self.map.rows(row_list)
         out = []
         for r in self._rows.find(frame, row_list["roi"]):
-            import cv2
             key = (cv2.resize(cv2.cvtColor(r.image, cv2.COLOR_BGR2GRAY), (96, 12)) // 16).tobytes()
             name = self._names.get(key)
             if name is None:

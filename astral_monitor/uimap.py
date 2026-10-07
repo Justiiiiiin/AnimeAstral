@@ -32,12 +32,43 @@ class UiMap:
         self._by_id = {e.get("file"): e for e in entries}
 
     @classmethod
-    def load(cls, base: Path = MAP_DIR) -> "UiMap":
+    def load(cls, base: Path = MAP_DIR, local: Optional[Path] = None) -> "UiMap":
+        """Mitgelieferte Karte + lokale Ergänzung (vom Erkunden, im Datenordner). Mitgeliefertes hat Vorrang."""
         try:
             data = json.loads((base / "index.json").read_text(encoding="utf-8"))
         except (OSError, ValueError):
             data = []
-        return cls([e for e in data if isinstance(e, dict) and e.get("name")], base)
+        entries = [e for e in data if isinstance(e, dict) and e.get("name")]
+        if local is None:
+            try:
+                from .app_paths import data_dir
+                local = data_dir() / LOCAL_FILE
+            except Exception:  # noqa: BLE001
+                local = None
+        if local is not None:
+            have = {e.get("file") for e in entries}
+            entries += [e for e in load_local(local) if e.get("file") not in have]
+        return cls(entries, base)
+
+    def add(self, entry: dict) -> None:
+        """Eintrag zur Laufzeit ergänzen (Erkunden)."""
+        self.entries.append(entry)
+        self._by_id[entry.get("file")] = entry
+
+    def window_for(self, button: dict) -> Optional[dict]:
+        """Fenster, das dieser Knopf öffnet (oder None)."""
+        for e in self.entries:
+            if e.get("kind") in CONTAINER_KINDS and e.get("kind") != ROW:
+                if e.get("opened_by_id"):
+                    if e["opened_by_id"] == button.get("file"):
+                        return e
+                elif e.get("opened_by") and e.get("opened_by") == button.get("name"):
+                    return e
+        return None
+
+    def hud(self) -> list[dict]:
+        """Knöpfe am Bildschirmrand (Shop, Guild, Equip Best …) – immer an derselben Stelle."""
+        return [e for e in self.entries if (e.get("extra") or {}).get("hud") and e.get("kind") == "Knopf"]
 
     # -- Nachschlagen
     def find(self, name: str, kinds: Optional[tuple] = None) -> Optional[dict]:
@@ -120,6 +151,28 @@ def _read_image(path: str) -> Optional[np.ndarray]:
         return cv2.imdecode(np.fromfile(path, dtype=np.uint8), cv2.IMREAD_COLOR)
     except (OSError, ValueError):
         return None
+
+
+LOCAL_FILE = "uimap_local.json"     # Ergänzung durch „Erkunden“ (Datenordner, pro Nutzer)
+
+
+def load_local(path: Path) -> list[dict]:
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    return [e for e in data if isinstance(e, dict) and e.get("name") and e.get("file")]
+
+
+def save_local(path: Path, entries: list[dict]) -> None:
+    """Lokale Ergänzung schreiben (gleiche Kennung = ersetzen)."""
+    merged: dict[str, dict] = {e["file"]: e for e in load_local(path)}
+    for e in entries:
+        merged[e["file"]] = e
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(".tmp")
+    tmp.write_text(json.dumps(list(merged.values()), indent=1, ensure_ascii=False), encoding="utf-8")
+    tmp.replace(path)
 
 
 def world_number(name: str) -> Optional[int]:

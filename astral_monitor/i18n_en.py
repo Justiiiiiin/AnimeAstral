@@ -883,7 +883,6 @@ EN: dict[str, str] = {
     # 0.9.5: Makro (Beta)
     "Makro (Beta)": "Macro (beta)",
     "Makro erlauben": "Allow macro",
-    "Danach schließen": "Close afterwards",
     "Das Makro klickt selbst in Roblox (Mausklicks und Mausrad per SendInput, wie AutoHotkey oder ein Autoclicker)."
     "\n\nMakros sind laut Roblox-Regeln nicht erlaubt. Wer sie nutzt, riskiert eine Sperre – auf eigene "
     "Verantwortung.\n\nTrotzdem einschalten?":
@@ -891,7 +890,6 @@ EN: dict[str, str] = {
         "autoclicker).\n\nMacros are not allowed by the Roblox rules. Using them risks a ban – at your own risk."
         "\n\nTurn it on anyway?",
     "Hin navigieren": "Navigate there",
-    "Pets rollen (Auto!)": "Roll pets (Auto!)",
     "Stopp": "Stop",
     "Läuft schon – erst „Stopp“.": "Already running – press “Stop” first.",
     "Hin navigieren: {target}": "Navigate to: {target}",
@@ -934,8 +932,6 @@ EN: dict[str, str] = {
     "nächstes Anti-AFK in {time}": "next anti-AFK in {time}",
     # 0.9.5-beta.2: Pets sofort schließen, Anti-AFK ohne Warten/Minimieren
     "Auto-Roll läuft im Hintergrund – schließe das Menü.": "Auto-roll keeps running in the background – closing the menu.",
-    "Klickt nach „Auto!“ gleich „CLOSE“ – Auto-Roll läuft im Hintergrund weiter.":
-        "Clicks “CLOSE” right after “Auto!” – auto-roll keeps running in the background.",
     "Öffnet Menüs im Spiel anhand der mitgelieferten Oberflächen-Karte: Teleporter auf, zur Welt scrollen, Symbol "
     "anklicken, Titel prüfen. „Pets rollen“ öffnet das Roll-Menü der Welt, drückt „Auto!“ und schließt das Menü "
     "gleich wieder – Auto-Roll läuft im Hintergrund weiter. Kein Laufen, kein Teleportieren.\n\nNot-Aus: Maus "
@@ -981,6 +977,52 @@ EN: dict[str, str] = {
     "Schleife": "Loop",
     "Nach oben": "Move up",
     "Nach unten": "Move down",
-    "Warteschlange starten": "Start queue",
     "Die Warteschlange ist leer.": "The queue is empty.",
+    # 0.9.7-beta.1: Erkunden, Auto Roll, Raids in der Warteschlange
+    "Auto Roll: {target}": "Auto roll: {target}",
+    "Raid starten: {target}": "Start raid: {target}",
+    "Raid beitreten: {target}": "Join raid: {target}",
+    "Erkunden ({minutes} Min.)": "Explore ({minutes} min)",
+    "Knopf „{button}“ nicht gefunden in „{name}“.": "Button “{button}” not found in “{name}”.",
+    "Danach: {state}": "Afterwards: {state}",
+    "Erkundet: {count} Fenster, {worlds} neue Welten – Bericht: {path}":
+        "Explored: {count} windows, {worlds} new worlds – report: {path}",
+    "{world} · Platz {n}: {title} ({kind})": "{world} · slot {n}: {title} ({kind})",
+    "{button}: {title} ({kind})": "{button}: {title} ({kind})",
+    "Equip Best": "Equip Best",
+    "Zeit abgelaufen – Erkunden beendet.": "Time is up – exploring finished.",
+    "Gilde": "Guild",
+    "Neue Welt: {world}": "New world: {world}",
+    "Pets (Roll-Menü)": "Pets (roll menu)",
+    "Titans": "Titans",
+    "Gacha": "Gacha",
+    "Crafting": "Crafting",
+    "Upgrade Tree": "Upgrade tree",
+    "Artefakt": "Artifact",
+    "Upgrades": "Upgrades",
+    "Progression": "Progression",
+    "Shop / Händler": "Shop / merchant",
+    "Battlepass": "Battle pass",
+    "Defense": "Defense",
+    "Tausch": "Exchange",
+    "Passiv": "Passive",
+    "Unbekannt": "Unknown",
+    "Erkunden …": "Explore …",
+    "Das Makro übernimmt Roblox für ein paar Minuten: Teleporter auf, neue Welten und Symbole ohne bekanntes "
+    "Fenster je einmal öffnen, einordnen und schließen; danach die Knöpfe am Bildschirmrand (Equip Best, Guild …). "
+    "Es wird nur geöffnet und geschlossen – nie Roll, Craft, Buy oder Claim.":
+        "The macro takes over Roblox for a few minutes: opens the teleporter, opens each new world and each icon "
+        "without a known window once, classifies it and closes it; then the buttons at the screen edge (Equip Best, "
+        "Guild …). It only opens and closes – never Roll, Craft, Buy or Claim.",
+    "Ordner mit dem letzten Erkundungs-Bericht und den Bildern öffnen":
+        "Open the folder with the latest exploration report and images",
+    "Erkunden": "Explore",
+    "Das Makro übernimmt Roblox für bis zu {minutes} Minuten und öffnet dabei Menüs im Spiel (nur öffnen und "
+    "schließen, nichts kaufen oder rollen).\n\nNicht die Maus bewegen – das bricht ab (Esc ebenso). Starten?":
+        "The macro takes over Roblox for up to {minutes} minutes and opens menus in the game (only opening and "
+        "closing, no buying or rolling).\n\nDo not move the mouse – that cancels it (Esc too). Start?",
+    "Auto Roll": "Auto roll",
+    "Raid starten": "Start raid",
+    "Raid beitreten": "Join raid",
+    'Ziel öffnen, „Auto Roll“ bzw. „Auto!“ drücken und gleich wieder schließen – das Spiel rollt im Hintergrund weiter (Gachas, Titans, Pets-Roll).': 'Opens the target, presses “Auto Roll” or “Auto!” and closes it right away – the game keeps rolling in the background (gachas, titans, pets roll).',
 }
