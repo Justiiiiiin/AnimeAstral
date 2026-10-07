@@ -136,3 +136,21 @@ class FarmTimeTests(unittest.TestCase):
         self.assertEqual(m["favorite_raid"], "Alvarez")                             # benannter Raid vor „Unbekannt“
         self.assertEqual(m["peak_hour"], 8)
         self.assertEqual(store.month(2026, 11)["prev_attempts"], 11)
+
+
+class ArchiveTests(unittest.TestCase):
+    def test_archive_and_view(self):
+        import tempfile
+        base = Path(tempfile.mkdtemp(dir=_env.DATA))
+        store = StatsStore(base / "raid_history.csv", offset=50)
+        for i in range(3):
+            store.add(RunRecord(time.time() - 100 + i, 100.0, None, 40 + i, 100, "ok", "", "Alvarez"))
+        archived = store.archive(base / "archive")
+        self.assertTrue(archived.is_file())
+        self.assertEqual((store.records, store.offset), ([], 0))
+        self.assertFalse((base / "raid_history.csv").exists())
+        self.assertEqual(StatsStore.archives(base / "archive"), [archived])
+        self.assertEqual(StatsStore(archived).best_wave(), 42)                 # Archiv bleibt lesbar
+        self.assertIsNone(store.archive(base / "archive"))                    # leer: nichts zu tun
+        store.add(RunRecord(time.time(), 100.0, None, 10, 100, "ok", "", ""))
+        self.assertEqual(StatsStore(base / "raid_history.csv").best_wave(), 10)

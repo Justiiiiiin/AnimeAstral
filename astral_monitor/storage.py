@@ -28,6 +28,7 @@ def _groups(base: Path) -> list[tuple[str, list[Path], bool]]:
     log = app_paths.log_file()
     return [
         (N_("Statistik"), [app_paths.history_file()], False),
+        (N_("Archiv"), [base / "archive"], False),
         (N_("Raids und Einstellungen"), [base / "profiles", app_paths.settings_file()], False),
         (N_("Protokoll"), [log], False),
         (N_("Ältere Protokolle"), sorted(base.glob(log.name + ".*")), True),

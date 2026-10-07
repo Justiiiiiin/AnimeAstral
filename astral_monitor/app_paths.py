@@ -44,6 +44,11 @@ def profiles_dir() -> Path:
     return path
 
 
+def archive_dir() -> Path:
+    """Archivierte Statistiken (Statistik → ⋯ → Archivieren)."""
+    return data_dir() / "archive"
+
+
 def debug_dir() -> Path:
     path = data_dir() / "debug"
     path.mkdir(exist_ok=True)

@@ -913,6 +913,21 @@ EN: dict[str, str] = {
     "Was hast du erwartet?": "What did you expect?",
     "Einstellung suchen …": "Search settings …",
     "Keine Einstellung gefunden.": "No setting found.",
+    # Archiv (0.7.6)
+    "Archiv": "Archive",
+    "Archiv ansehen": "View archive",
+    "Archivieren und neu beginnen …": "Archive and start over …",
+    "Archivieren und neu beginnen": "Archive and start over",
+    "Zur aktuellen Statistik": "Back to current statistics",
+    "Aktuelle Statistik": "Current statistics",
+    "Noch kein Archiv": "No archive yet",
+    "Archiv {name} – nur ansehen": "Archive {name} – view only",
+    "Die Statistik wird ins Archiv verschoben und beginnt bei null (auch die Raid-Nummer). Das Archiv bleibt unter "
+    "⋯ → Archiv ansehen erhalten.":
+        "The statistics are moved to the archive and start from zero (including the raid number). The archive stays "
+        "available under ⋯ → View archive.",
+    "Noch nichts zu archivieren": "Nothing to archive yet",
+    "Archiviert ✓ – die Statistik beginnt neu": "Archived ✓ – statistics start over",
     "Was ist neu": "What's new",
     "Neu in Version {version}": "New in version {version}",
     "Alle Änderungen …": "All changes …",

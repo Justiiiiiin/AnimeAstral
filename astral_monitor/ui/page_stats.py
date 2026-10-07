@@ -41,6 +41,15 @@ def _dur(value: Optional[float]) -> str:
     return messages.fmt_duration(value)
 
 
+
+def _archive_name(path) -> str:
+    """„raid_history_2026-10-07_101500.csv“ -> „07.10.2026 10:15“."""
+    try:
+        stamp = datetime.strptime(Path(path).stem[len("raid_history_"):], "%Y-%m-%d_%H%M%S")
+        return stamp.strftime("%d.%m.%Y %H:%M")
+    except ValueError:
+        return Path(path).stem
+
 class StatsPage(QWidget):
     def __init__(self, main) -> None:
         super().__init__()
@@ -51,6 +60,8 @@ class StatsPage(QWidget):
         self._rows: list = []
         self._profile_names: list[str] = []
         self._week_text = ""
+        self._archive = None
+        self._archive_path = None
 
         root = QVBoxLayout(self)
         theme.track_margins(root, 28, 24, 28, 24)
@@ -85,7 +96,11 @@ class StatsPage(QWidget):
         menu.addAction(tr("Monatsrückblick speichern …"), self._save_month)
         menu.addAction(tr("Monatsrückblick an Discord"), self._send_month)
         menu.addSeparator()
-        menu.addAction(tr("Ausgewählten Eintrag löschen"), self._delete_selected)
+        self.delete_action = menu.addAction(tr("Ausgewählten Eintrag löschen"), self._delete_selected)
+        menu.addSeparator()
+        self.archive_menu = menu.addMenu(tr("Archiv ansehen"))
+        self.archive_menu.aboutToShow.connect(self._fill_archive_menu)
+        self.archive_action = menu.addAction(tr("Archivieren und neu beginnen …"), self._archive_now)
         menu.addSeparator()
         menu.addAction(tr("CSV öffnen"), self._open_csv)
         menu.addAction(tr("Datenordner öffnen"),
@@ -94,6 +109,17 @@ class StatsPage(QWidget):
         for widget in (save_card, send_card, more):
             head.addWidget(widget)
         root.addLayout(head)
+        self.archive_bar = QHBoxLayout()                 # sichtbar, solange ein Archiv angezeigt wird
+        self.archive_label = label("", "warn")
+        self.archive_back = QPushButton(tr("Zur aktuellen Statistik"))
+        self.archive_back.setObjectName("slim")
+        self.archive_back.clicked.connect(lambda: self._show_archive(None))
+        self.archive_bar.addWidget(self.archive_label)
+        self.archive_bar.addWidget(self.archive_back)
+        self.archive_bar.addStretch(1)
+        root.addLayout(self.archive_bar)
+        self.archive_label.setVisible(False)
+        self.archive_back.setVisible(False)
 
         def kpi_row(*cards) -> QHBoxLayout:
             row = QHBoxLayout()
@@ -162,6 +188,54 @@ class StatsPage(QWidget):
         per_card.body.addWidget(self.per_table, 1)
         root.addWidget(per_card)
 
+    # ------------------------------------------------------------------ Archiv
+    @property
+    def store(self):
+        """Angezeigte Statistik: die aktuelle oder ein geöffnetes Archiv (nur ansehen)."""
+        return self._archive or self.engine.stats
+
+    def _fill_archive_menu(self) -> None:
+        from ..stats import StatsStore
+        self.archive_menu.clear()
+        files = StatsStore.archives(app_paths.archive_dir())
+        if self._archive is not None:
+            self.archive_menu.addAction(tr("Aktuelle Statistik"), lambda: self._show_archive(None))
+            self.archive_menu.addSeparator()
+        for path in files:
+            self.archive_menu.addAction(_archive_name(path), lambda p=path: self._show_archive(p))
+        if not files:
+            act = self.archive_menu.addAction(tr("Noch kein Archiv"))
+            act.setEnabled(False)
+
+    def _show_archive(self, path) -> None:
+        from ..stats import StatsStore
+        self._archive = StatsStore(path) if path else None
+        self._archive_path = path
+        viewing = self._archive is not None
+        self.archive_label.setText(tr("Archiv {name} – nur ansehen", name=_archive_name(path)) if viewing else "")
+        self.archive_label.setVisible(viewing)
+        self.archive_back.setVisible(viewing)
+        self.delete_action.setEnabled(not viewing)
+        self.archive_action.setEnabled(not viewing)
+        if viewing and self.range.currentData() == "session":
+            self.range.setCurrentIndex(self.range.findData("all"))     # im Archiv gibt es keine laufende Session
+        self._profile_names = []
+        self.mark_dirty()
+        self.refresh()
+
+    def _archive_now(self) -> None:
+        if QMessageBox.question(self, tr("Archivieren und neu beginnen"), tr(
+                "Die Statistik wird ins Archiv verschoben und beginnt bei null (auch die Raid-Nummer). Das Archiv "
+                "bleibt unter ⋯ → Archiv ansehen erhalten.")) != QMessageBox.StandardButton.Yes:
+            return
+        if self.engine.archive_stats() is None:
+            self.main.show_toast(tr("Noch nichts zu archivieren"))
+            return
+        self.main.show_toast(tr("Archiviert ✓ – die Statistik beginnt neu"))
+        self._profile_names = []
+        self.mark_dirty()
+        self.refresh()
+
     # ------------------------------------------------------------------ Hilfen
     def mark_dirty(self) -> None:
         self._dirty = True
@@ -177,7 +251,7 @@ class StatsPage(QWidget):
         key = self.range.currentData()
         now = time.time()
         if key == "session":
-            return self.engine.stats.session_start
+            return self.store.session_start
         return {"12h": now - 12 * 3600, "24h": now - 24 * 3600, "7d": now - 7 * 86400}.get(key)
 
     def _report_title(self) -> str:
@@ -199,7 +273,7 @@ class StatsPage(QWidget):
                                               str(Path.home() / "astral-statistik.png"), tr("Bild (*.png)"))
         if not path:
             return
-        png = render_card(self.engine.stats, self._since(), self._raid(), self._report_title())
+        png = render_card(self.store, self._since(), self._raid(), self._report_title())
         try:
             Path(path).write_bytes(png)
         except OSError as exc:
@@ -223,21 +297,21 @@ class StatsPage(QWidget):
         if not path:
             return
         try:
-            Path(path).write_bytes(render_month_card(self.engine.stats, year, month))
+            Path(path).write_bytes(render_month_card(self.store, year, month))
         except OSError as exc:
             QMessageBox.critical(self, tr("Speichern"), tr("Konnte nicht speichern: {error}", error=exc))
             return
         self.main.show_toast(tr("Karte gespeichert ✓"))
 
     def _send_month(self) -> None:
-        if not self.engine.send_month(*self._month()):
+        if not self.engine.send_month(*self._month(), stats=self.store):
             QMessageBox.information(self, tr("Discord"), tr("Bitte zuerst einen Webhook eintragen und „Bericht / Statistik-Karte“ "
                                                      "unter „Meldungen“ aktiviert lassen."))
             return
         self.main.show_toast(tr("Karte wird gesendet …"))
 
     def _send_card(self) -> None:
-        if not self.engine.send_report(self._since(), self._raid(), self._report_title()):
+        if not self.engine.send_report(self._since(), self._raid(), self._report_title(), stats=self.store):
             QMessageBox.information(self, tr("Discord"), tr("Bitte zuerst einen Webhook eintragen und „Bericht / Statistik-Karte“ "
                                                      "unter „Meldungen“ aktiviert lassen."))
             return
@@ -252,7 +326,7 @@ class StatsPage(QWidget):
             return
         if QMessageBox.question(self, tr("Eintrag löschen"), tr("Diesen Eintrag dauerhaft löschen?")) \
                 == QMessageBox.StandardButton.Yes:
-            self.engine.stats.delete_record(self._rows[int(index)])
+            self.store.delete_record(self._rows[int(index)])
             self.mark_dirty()
             self.refresh()
 
@@ -263,7 +337,7 @@ class StatsPage(QWidget):
 
     # ------------------------------------------------------------------ Anzeige
     def _sync_profiles(self) -> None:
-        names = self.engine.stats.raid_names()
+        names = self.store.raid_names()
         if names == self._profile_names:
             return
         current = self._raid()
@@ -294,14 +368,14 @@ class StatsPage(QWidget):
         if not self._dirty and now - self._last < 10:
             return
         self._dirty, self._last = False, now
-        stats = self.engine.stats
+        stats = self.store
         self._sync_profiles()
         since, raid = self._since(), self._raid()
         s = stats.summary(since, raid)
 
         self.k_attempts.set_value(messages.fmt_k(s.attempts))
         self.k_waves.set_value(messages.fmt_k(s.waves_total))
-        self.k_wph.set_value(_num(s.waves_per_hour, 0))
+        self.k_wph.set_value(messages.fmt_k(round(s.waves_per_hour)) if s.waves_per_hour else "–")
         self.k_avg_wave.set_value(_num(s.avg_wave_all))
         self.k_best_wave.set_value(str(stats.best_wave(raid) or "–"))
         self.details.setText(tr("Ø {dur} pro Versuch  ·  {spw} pro Welle  ·  {aph} Versuche/Std.  ·  {all} Versuche "

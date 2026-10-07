@@ -155,7 +155,7 @@ def build_status(settings: Settings, snap: dict) -> dict:
         ("🔁 " + tr("Versuche"), f"**{snap.get('session_attempts', 0)}**\n-# "
          + tr("gesamt {count}", count=fmt_k(snap.get("total_attempts", 0))), True),
         ("🌊 " + tr("Wellen"), f"**{fmt_k(snap.get('session_waves', 0))}**", True),
-        ("⚡ " + tr("Wellen/Std"), f"**{wph:.0f}**" if wph else "–", True),
+        ("⚡ " + tr("Wellen/Std"), f"**{fmt_k(round(wph))}**" if wph else "–", True),
         ("📈 " + tr("Ø Endwelle"), f"**{dec(f'{avg_wave:.1f}')}**" if avg_wave else "–", True),
         ("🏆 " + tr("Bestwelle"), f"**{snap['best_wave']}**" if snap.get("best_wave") else "–", True),
         ("⏱️ " + tr("Laufzeit"), f"**{fmt_duration(snap.get('uptime'))}**" if snap.get("uptime") else "–", True),

@@ -305,12 +305,12 @@ class Engine:
         """Statusnachricht löschen und ganz unten im Chat neu senden."""
         self.publisher.request_resend()
 
-    def send_report(self, since: Optional[float], raid: Optional[str], title: str) -> bool:
+    def send_report(self, since: Optional[float], raid: Optional[str], title: str, stats=None) -> bool:
         """Statistik-Karte erzeugen und an Discord senden."""
         if not self.settings.webhook_url:
             return False
         from .report_card import render_card
-        png = render_card(self.stats, since, raid, title)
+        png = render_card(stats or self.stats, since, raid, title)
         entry = self.settings.events.get("report", {"send": True})
         if not entry.get("send"):
             return False
@@ -319,12 +319,12 @@ class Engine:
         self.sender.submit(payload, files)
         return True
 
-    def send_month(self, year: int, month: int) -> bool:
+    def send_month(self, year: int, month: int, stats=None) -> bool:
         """Monatsrückblick als Bild an Discord (Ereignis „Bericht / Statistik-Karte“)."""
         if not self.settings.webhook_url or not self.settings.events.get("report", {"send": True}).get("send"):
             return False
         from .report_card import month_title, render_month_card
-        png = render_month_card(self.stats, year, month)
+        png = render_month_card(stats or self.stats, year, month)
         title = "📅 " + tr("Monatsrückblick {month}", month=month_title(year, month))
         payload, files = messages.build_message(self.settings, "report", title, messages.COLOR_INFO,
                                                 image=("monat.png", png, "image/png"))
@@ -339,6 +339,14 @@ class Engine:
         if spw is None or not info.get("first_wave"):
             return None, ""
         return info.get("observed", 0.0) + max(0, info["first_wave"] - 1) * spw, "geschätzt"
+
+    def archive_stats(self) -> Optional[Path]:
+        """Statistik archivieren und bei null beginnen (auch der Startwert der Raid-Nummer)."""
+        path = self.stats.archive(app_paths.archive_dir())
+        if path is not None:
+            self.settings.total_offset = 0
+            self.publisher.request_update()
+        return path
 
     def rename_raid(self, old: str, new: str) -> str:
         """Raid umbenennen: Profil-Ordner, Verlauf und aktuelle Auswahl. Rückgabe: neuer Name."""

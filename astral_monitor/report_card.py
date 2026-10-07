@@ -100,7 +100,7 @@ def render_card(stats: StatsStore, since: Optional[float], raid: Optional[str], 
     tiles = [
         (tr("Versuche"), messages.fmt_k(summary.attempts), TEAL),
         (tr("Wellen gesamt"), messages.fmt_k(summary.waves_total), TEAL),
-        (tr("Wellen pro Stunde"), f"{summary.waves_per_hour:.0f}" if summary.waves_per_hour else "–", TEXT),
+        (tr("Wellen pro Stunde"), messages.fmt_k(round(summary.waves_per_hour)) if summary.waves_per_hour else "–", TEXT),
         (tr("Bestwelle"), str(summary.best_wave), AMBER),
         (tr("Ø Endwelle"), dec(f"{summary.avg_wave_all:.1f}") if summary.avg_wave_all else "–", TEXT),
         (tr("Ø Dauer pro Versuch"), messages.fmt_duration(summary.avg_duration_all), TEXT),

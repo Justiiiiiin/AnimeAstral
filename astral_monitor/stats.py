@@ -165,6 +165,26 @@ class StatsStore:
         except OSError as exc:
             log.warning("Verlauf konnte nicht aktualisiert werden: %s", exc)
 
+    def archive(self, folder: Path) -> Optional[Path]:
+        """Statistik ins Archiv verschieben und neu beginnen. Rückgabe: Archivdatei (None = nichts zu archivieren)."""
+        with self._lock:
+            if not self.records:
+                return None
+            folder.mkdir(parents=True, exist_ok=True)
+            stamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
+            target = folder / f"raid_history_{stamp}.csv"
+            self._rewrite()                            # vollständigen Stand sichern
+            self._path.replace(target)
+            self.records = []
+            self.offset = 0
+            self.session_start = time.time()
+            return target
+
+    @staticmethod
+    def archives(folder: Path) -> list[Path]:
+        """Archivierte Statistiken, neueste zuerst."""
+        return sorted(folder.glob("raid_history_*.csv"), reverse=True) if folder.is_dir() else []
+
     def add(self, rec: RunRecord) -> None:
         with self._lock:
             self.records.append(rec)
