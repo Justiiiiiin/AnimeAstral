@@ -162,3 +162,14 @@ class DiagnosticsTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SeasonDecorTests(unittest.TestCase):
+    def test_particles_wrap_around(self):
+        from astral_monitor.ui import seasonal
+        leaves = seasonal.make_particles("halloween", 10)
+        flakes = seasonal.make_particles("winter", 10)
+        self.assertEqual((len(leaves), len(flakes)), (10, 10))
+        for _ in range(400):                                   # 80 s Bewegung
+            seasonal.step(leaves, 0, 0.2)
+        self.assertTrue(all(-0.06 <= f.y <= 1.05 for f in leaves))   # fallen unten raus, oben wieder rein

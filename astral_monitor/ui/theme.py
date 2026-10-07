@@ -346,6 +346,7 @@ _HALLOWEEN_DARK = dict(_NEBULA_DARK, **{
     "accent": "#FF8A2A", "accent2": "#A45BFF", "accentHover": "#FFA04F", "accent2Hover": "#B97BFF",
     "onAccent": "#1A0D02", "knobOn": "#1A0D02", "okBg": "#1E140D", "okBorder": "#5A3415", "bar": "#8A4A1E",
     "stepDone": "#8A4A1E", "section": "#A28AB8", "scroll": "#2E2238", "warn": "#FFD25A",
+    "cardGlass": "#D817101D", "cardTopGlass": "#D81E1526",          # leicht durchscheinend (Deko dahinter)
 })
 _WINTER_DARK = dict(_NEBULA_DARK, **{
     "bg": "#070D16", "sidebar": "#0A1220", "topbar": "#070D16", "card": "#0E1726", "cardTop": "#132036",
@@ -355,11 +356,13 @@ _WINTER_DARK = dict(_NEBULA_DARK, **{
     "accent": "#8FD8FF", "accent2": "#B7A8FF", "accentHover": "#AEE3FF", "accent2Hover": "#CABEFF",
     "onAccent": "#05121D", "knobOn": "#05121D", "okBg": "#0B1E2B", "okBorder": "#1F4D6B", "bar": "#2E6E99",
     "stepDone": "#2E6E99", "section": "#8AA6C8", "scroll": "#1C2D45",
+    "cardGlass": "#D80E1726", "cardTopGlass": "#D8132036",
 })
 _WINTER_LIGHT = dict(_NEBULA_LIGHT, **{
     "bg": "#F2F7FC", "topbar": "#F2F7FC", "accent": "#1C8FD0", "accent2": "#6A7BFF", "accentHover": "#2AA0E0",
     "accent2Hover": "#7D8CFF", "softA": "#DDF0FB", "softB": "#E5E8FD", "edge": "#A9CFEA", "bar": "#9CCBEA",
     "select": "#CFE7F7", "okBg": "#E6F4FB", "okBorder": "#A9D4EC", "navActive": "#E3F0FA", "stepDone": "#9CCBEA",
+    "cardGlass": "#E0FFFFFF", "cardTopGlass": "#E0FBFBFF",
 })
 
 # OLED (0.7.6): echtes Schwarz, Nebula-Aufbau
@@ -390,6 +393,11 @@ QLabel#preview { border-radius: 20px; }
 QFrame#pill { border-radius: 16px; }
 """
 
+# Saison-Designs: Karten leicht durchscheinend, damit die Deko (seasonal.py) dahinter sichtbar ist
+_SEASON = _NEBULA + """
+QFrame#card { background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 @cardTopGlass, stop:1 @cardGlass); }
+"""
+
 DESIGNS: dict[str, dict] = {
     # Schlüssel: Anzeigename, eingeführt in Version, Vorlage, Paletten je Farbschema (fehlt eines: Dunkel)
     "nebula": {"name": N_("Nebula"), "since": "0.7.0", "template": _NEBULA, "icons": True, "gear": True,
@@ -404,12 +412,13 @@ DESIGNS: dict[str, dict] = {
     "oled": {"name": N_("OLED"), "since": "0.7.6", "template": _NEBULA, "icons": True, "gear": True,
              "animate": True, "rail": True, "font": ["Segoe UI Variable Text", "Segoe UI"],
              "palettes": {"dark": _OLED_DARK}},
-    "halloween": {"name": N_("Kürbisnacht"), "since": "0.7.2", "template": _NEBULA, "icons": True, "gear": True,
+    "halloween": {"name": N_("Kürbisnacht"), "since": "0.7.2", "template": _SEASON, "icons": True, "gear": True,
                   "animate": True, "rail": True, "font": ["Segoe UI Variable Text", "Segoe UI"],
-                  "palettes": {"dark": _HALLOWEEN_DARK}, "season": ((10, 15), (11, 2))},
-    "winter": {"name": N_("Frost"), "since": "0.7.2", "template": _NEBULA, "icons": True, "gear": True,
+                  "palettes": {"dark": _HALLOWEEN_DARK}, "season": ((10, 15), (11, 2)), "decor": "halloween"},
+    "winter": {"name": N_("Frost"), "since": "0.7.2", "template": _SEASON, "icons": True, "gear": True,
                "animate": True, "rail": True, "font": ["Segoe UI Variable Text", "Segoe UI"],
-               "palettes": {"dark": _WINTER_DARK, "light": _WINTER_LIGHT}, "season": ((12, 1), (1, 6))},
+               "palettes": {"dark": _WINTER_DARK, "light": _WINTER_LIGHT}, "season": ((12, 1), (1, 6)),
+               "decor": "winter"},
     "classic": {"name": N_("Klassisch"), "since": "0.5.0", "template": _CLASSIC, "icons": False, "gear": False,
                 "animate": False, "font": ["Segoe UI"], "palettes": {"dark": _CLASSIC_DARK}},
 }

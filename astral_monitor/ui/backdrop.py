@@ -3,10 +3,11 @@ Karten bleiben deckend, nur die Flächen dazwischen werden durchsichtig (theme: 
 from __future__ import annotations
 
 import shutil
+import time
 from pathlib import Path
 from typing import Optional
 
-from PySide6.QtCore import QRectF, Qt
+from PySide6.QtCore import QRectF, Qt, QTimer
 from PySide6.QtGui import QColor, QImageReader, QPainter, QPixmap
 from PySide6.QtWidgets import (QAbstractScrollArea, QCheckBox, QLabel, QRadioButton, QStackedWidget, QVBoxLayout,
                                QWidget)
@@ -54,6 +55,49 @@ class Backdrop(QWidget):
         lay.addWidget(content)
         self._pixmap: Optional[QPixmap] = None
         self._dim = 0.7
+        self._decor = ""                            # Saison-Deko des Designs („halloween“, „winter“)
+        self._particles: list = []
+        self._last = 0.0
+        self._timer = QTimer(self)
+        self._timer.timeout.connect(self._tick)
+
+    def refresh_decor(self) -> None:
+        """Nach Design-/Animationswechsel: Deko des aktiven Designs übernehmen, Bewegung an/aus."""
+        from . import seasonal
+        decor = theme.design_info().get("decor", "")
+        if decor != self._decor:
+            self._decor = decor
+            self._particles = seasonal.make_particles(decor, 16 if decor == "halloween" else 40) if decor else []
+        theme.set_backdrop(self._pixmap is not None or bool(self._decor))
+        self._sync_timer()
+        self.update()
+
+    def _sync_timer(self) -> None:
+        from . import seasonal
+        run = bool(self._decor) and theme.animations() and self.isVisible() and not self.window().isMinimized()
+        if run and not self._timer.isActive():
+            self._last = time.monotonic()
+            self._timer.start(1000 // seasonal.FPS)
+        elif not run:
+            self._timer.stop()
+
+    def _tick(self) -> None:
+        from . import seasonal
+        if not self.isVisible() or self.window().isMinimized():
+            self._timer.stop()
+            return
+        now = time.monotonic()
+        seasonal.step(self._particles, now, min(0.2, now - self._last))
+        self._last = now
+        self.update()
+
+    def showEvent(self, event) -> None:
+        super().showEvent(event)
+        self._sync_timer()
+
+    def hideEvent(self, event) -> None:
+        super().hideEvent(event)
+        self._timer.stop()
 
     def set_image(self, name: str, dim_percent: int) -> None:
         path = stored_path(name)
@@ -68,7 +112,7 @@ class Backdrop(QWidget):
             if not image.isNull():
                 self._pixmap = QPixmap.fromImage(image)
         self._dim = max(0, min(95, dim_percent)) / 100
-        theme.set_backdrop(self._pixmap is not None)
+        theme.set_backdrop(self._pixmap is not None or bool(self._decor))
         self.update()
 
     def paintEvent(self, _event) -> None:
@@ -76,6 +120,8 @@ class Backdrop(QWidget):
         bg = QColor(theme.color("bg"))
         if self._pixmap is None:
             p.fillRect(self.rect(), bg)
+            self._paint_decor(p)
+            p.end()
             return
         p.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
         src = QRectF(self._pixmap.rect())
@@ -84,4 +130,10 @@ class Backdrop(QWidget):
         p.drawPixmap(QRectF(self.rect()), self._pixmap, QRectF((src.width() - w) / 2, (src.height() - h) / 2, w, h))
         bg.setAlphaF(self._dim)
         p.fillRect(self.rect(), bg)
+        self._paint_decor(p)
         p.end()
+
+    def _paint_decor(self, p: QPainter) -> None:
+        if self._decor:
+            from . import seasonal
+            seasonal.paint(p, self._decor, QRectF(self.rect()), self._particles)

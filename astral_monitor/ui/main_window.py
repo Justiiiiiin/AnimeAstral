@@ -12,7 +12,7 @@ from typing import Callable, Optional
 from PySide6.QtCore import (QEasingCurve, QEvent, QLibraryInfo, QLockFile, QProcess, QPropertyAnimation, QSize,
                             Qt, QTimer, QTranslator)
 from PySide6.QtGui import QIcon
-from PySide6.QtWidgets import (QApplication, QButtonGroup, QFrame, QGraphicsOpacityEffect, QHBoxLayout,
+from PySide6.QtWidgets import (QApplication, QButtonGroup, QFrame, QGraphicsOpacityEffect, QHBoxLayout, QLabel,
                                QMainWindow, QMenu, QMessageBox, QPushButton, QSizePolicy, QStackedWidget,
                                QSystemTrayIcon, QToolButton, QVBoxLayout, QWidget)
 
@@ -199,6 +199,10 @@ class MainWindow(QMainWindow):
         self.notes_btn.clicked.connect(self.open_notes)
         self._notes = None
         self._intro_done = False
+        self.season_mark = QLabel()                     # Saison-Deko in der Seitenleiste (z. B. Kürbis)
+        self.season_mark.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.season_mark.setVisible(False)
+        side.addWidget(self.season_mark, 0, Qt.AlignmentFlag.AlignHCenter)
         side.addWidget(self.notes_btn, 0, Qt.AlignmentFlag.AlignHCenter)
         bottom.addWidget(self.gear, 0, Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignHCenter)
         side.addLayout(bottom)
@@ -525,6 +529,12 @@ class MainWindow(QMainWindow):
     def _apply_design(self) -> None:
         """Teile, die das Stylesheet nicht abdeckt: Symbole, Zahnrad, Titelleiste, Farben gezeichneter Inhalte."""
         info = theme.design_info()
+        if hasattr(self, "backdrop"):
+            self.backdrop.refresh_decor()
+            if info.get("decor") == "halloween":
+                from .seasonal import pumpkin_pixmap
+                self.season_mark.setPixmap(pumpkin_pixmap(theme.px(40)))
+            self.season_mark.setVisible(info.get("decor") == "halloween")
         for i, key in enumerate(self._nav_icons):
             self.nav.button(i).setIcon(theme.glyph_icon(key) if info["icons"] else QIcon())
         self.nav.button(5).setVisible(not info["gear"])
@@ -587,6 +597,7 @@ class MainWindow(QMainWindow):
         if reduce_motion is not None:
             s.ui_reduce_motion = reduce_motion
             theme.set_motion(not reduce_motion)
+            self.backdrop.refresh_decor()
         try:
             s.save()
         except OSError:
@@ -614,8 +625,10 @@ class MainWindow(QMainWindow):
 
     def changeEvent(self, event) -> None:
         super().changeEvent(event)
-        if event.type() == QEvent.Type.WindowStateChange and self.isMinimized():
-            QTimer.singleShot(1000, winapi.trim_memory)
+        if event.type() == QEvent.Type.WindowStateChange:
+            self.backdrop._sync_timer()                 # Saison-Deko: minimiert keine Bewegung
+            if self.isMinimized():
+                QTimer.singleShot(1000, winapi.trim_memory)
 
     # --------------------------------------------------------------- Einstellungen
     def collect_settings(self) -> Optional[Settings]:
