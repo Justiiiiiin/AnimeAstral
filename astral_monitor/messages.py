@@ -88,7 +88,7 @@ def build_message(settings: Settings, kind: str, title: str, color: int,
     Stil „kompakt“: die ersten Werte als eine ruhige Zeile, Screenshot klein rechts statt groß darunter."""
     compact = settings.message_style == "compact"
     if compact and fields:
-        values = [" ".join(str(v).split()) for _n, v, inline in fields if inline and v][:3]
+        values = [f"{n} {' '.join(str(v).split())}" for n, v, inline in fields if inline and v][:3]   # „Dauer 2:51“
         line = "-# " + "  ·  ".join(values) if values else ""
         description = "\n".join(x for x in (description, line) if x) or None
         fields = None
@@ -181,13 +181,14 @@ def build_status(settings: Settings, snap: dict) -> dict:
     if snap.get("quests") and settings.attach_quests:
         fields.append(("📜 " + tr("Quests"), quest_text(snap["quests"], limit=5), False))
     if settings.message_style == "compact":          # kompakt: Kennzahlen als eine Zeile, Quests bleiben
-        parts = [f"🔁 {snap.get('session_attempts', 0)}", f"🌊 {fmt_int(snap.get('session_waves', 0))}"]
+        parts = [tr("{count} Raids", count=snap.get("session_attempts", 0)),
+                 tr("{waves} Wellen", waves=fmt_int(snap.get("session_waves", 0)))]
         if wph:
-            parts.append(f"⚡ {fmt_int(round(wph))}/h")
+            parts.append(tr("{waves} Wellen/Std", waves=fmt_int(round(wph))))
         if snap.get("best_wave"):
-            parts.append(f"🏆 {snap['best_wave']}")
+            parts.append(tr("Bestwelle {wave}", wave=snap["best_wave"]))
         if snap.get("uptime"):
-            parts.append(f"⏱️ {fmt_duration(snap.get('uptime'))}")
+            parts.append(tr("Laufzeit {time}", time=fmt_duration(snap.get("uptime"))))
         lines.insert(len(lines) - 1 if meta else len(lines), "-# " + "  ·  ".join(parts))   # vor „Gestartet …“
         fields = [f for f in fields if not f[2]]
 

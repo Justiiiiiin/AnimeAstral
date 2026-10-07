@@ -93,11 +93,11 @@ class StatusTests(unittest.TestCase):
                  ("Ø Dauer", "2:40", True)], image=("raid.jpg", b"x"))
             embed = payload["embeds"][0]
             self.assertNotIn("fields", embed)
-            self.assertIn("#348 · New Leaf  ·  89/100  ·  2:51", embed["description"])       # nur die ersten drei
+            self.assertIn("Raid #348 · New Leaf  ·  Welle 89/100  ·  Dauer 2:51", embed["description"])   # erste drei
             self.assertEqual(embed["thumbnail"]["url"], "attachment://raid.jpg")              # Bild klein rechts
             status = messages.build_status(self.s, SNAP)["embeds"][0]
             self.assertFalse([f for f in status["fields"] if f["inline"]])                    # keine Kachel-Felder
-            self.assertIn("🔁 7", status["description"])
+            self.assertIn("7 Raids", status["description"])
         finally:
             self.s.message_style = "detailed"
 

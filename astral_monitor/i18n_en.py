@@ -950,6 +950,7 @@ EN: dict[str, str] = {
     "Ausführlich": "Detailed",
     "Kompakt": "Compact",
     "Nachrichtenstil": "Message style",
+    "{waves} Wellen/Std": "{waves} waves/h",
     "Ausführlich: Kennzahlen als Felder und der Screenshot groß unter der Meldung.\n\nKompakt: eine ruhige Zeile mit "
     "den wichtigsten Werten, der Screenshot klein rechts – auch der Live-Status wird schlanker.":
         "Detailed: figures as fields and the screenshot large below the message.\n\nCompact: one calm line with the "
