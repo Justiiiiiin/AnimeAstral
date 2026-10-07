@@ -437,3 +437,25 @@ class EmptyState(QWidget):
         p = QPainter(self)
         paint_empty(p, QRectF(self.rect()), self._glyph, self._text)
         p.end()
+
+
+def round_pixmap(path, size: int):
+    """Bild als runder Ausschnitt (Avatar). None = Bild fehlt."""
+    from PySide6.QtGui import QPainterPath
+    src = QPixmap(str(path))
+    if src.isNull():
+        return None
+    ratio = 2.0
+    out = QPixmap(int(size * ratio), int(size * ratio))
+    out.setDevicePixelRatio(ratio)
+    out.fill(Qt.GlobalColor.transparent)
+    p = QPainter(out)
+    p.setRenderHint(QPainter.RenderHint.Antialiasing)
+    p.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
+    clip = QPainterPath()
+    clip.addEllipse(QRectF(0, 0, size, size))
+    p.setClipPath(clip)
+    p.fillRect(QRectF(0, 0, size, size), QColor(theme.color("control")))
+    p.drawPixmap(QRectF(0, 0, size, size), src, QRectF(src.rect()))
+    p.end()
+    return out

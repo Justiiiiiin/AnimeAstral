@@ -94,7 +94,8 @@ def default_events() -> dict[str, dict[str, bool]]:
 
 MAX_FAVORITES = 20
 # Werte, die in settings.json verschlüsselt liegen (secure.py) und im Diagnose-Paket geschwärzt werden
-SECRET_FIELDS = ("webhook_url", "forum_webhook_url", "private_server_link", "ping_user_id", "rpc_client_id")
+SECRET_FIELDS = ("webhook_url", "forum_webhook_url", "private_server_link", "ping_user_id", "rpc_client_id",
+                 "roblox_username")
 # Diese Meldungen landen – mit Forum-Webhook – in einem Beitrag pro Tag statt im Hauptkanal
 DAILY_KINDS = ("raid_done", "quest_update", "quest_done", "record", "wall")
 
@@ -143,6 +144,7 @@ class Settings:
     quest_roi: Roi = field(default_factory=lambda: Roi(**vars(DEFAULT_QUEST_ROI)))
     # Raid: auf der Startseite ausgewählt (keine Bilderkennung mehr)
     current_raid: str = ""
+    roblox_username: str = ""           # eigenes Roblox-Profil (Name + Avatar in Seitenleiste/Karten)
     recent_raids: list = field(default_factory=list)   # zuletzt gewählte Raids, neueste zuerst
     # Wächter
     guard_enabled: bool = True

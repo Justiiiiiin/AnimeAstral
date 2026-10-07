@@ -913,6 +913,19 @@ EN: dict[str, str] = {
     "Einstellung suchen …": "Search settings …",
     "Aussehen": "Look",
     "Aus Bild": "From image",
+    # Roblox-Profil (0.8.0)
+    "Dein Roblox-Profil": "Your Roblox profile",
+    "Nur dein Roblox-Name – Anzeigename und Avatar kommen über die öffentliche Roblox-Seite, ohne Anmeldung. Der "
+    "Avatar erscheint in der Seitenleiste und auf den Statistik-Karten. Leer lassen = kein Profil.":
+        "Just your Roblox name – display name and avatar come from Roblox's public site, no login. The avatar "
+        "appears in the sidebar and on the statistics cards. Leave empty = no profile.",
+    "Roblox-Name": "Roblox name",
+    "Wird geladen …": "Loading …",
+    "Verbunden: {display} (@{name})": "Connected: {display} (@{name})",
+    "Kein gültiger Roblox-Name (3–20 Zeichen: Buchstaben, Ziffern, _).":
+        "Not a valid Roblox name (3–20 characters: letters, digits, _).",
+    "Roblox ist gerade nicht erreichbar.": "Roblox can't be reached right now.",
+    "Diesen Roblox-Namen gibt es nicht.": "This Roblox name doesn't exist.",
     "Kräftigste Farbe aus deinem Hintergrundbild übernehmen": "Use the strongest color from your background image",
     "Im Bild ist keine kräftige Farbe – wähle eine Farbe von Hand":
         "The image has no strong color – pick a color by hand",

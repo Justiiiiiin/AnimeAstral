@@ -8,8 +8,8 @@ from urllib.parse import urlencode
 
 from PySide6.QtCore import QUrl, Qt
 from PySide6.QtGui import QDesktopServices
-from PySide6.QtWidgets import (QButtonGroup, QCheckBox, QHBoxLayout, QLineEdit, QListWidget, QListWidgetItem, QMenu,
-                               QMessageBox, QPushButton, QToolButton, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QButtonGroup, QCheckBox, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem,
+                               QMenu, QMessageBox, QPushButton, QToolButton, QVBoxLayout, QWidget)
 
 from .. import app_paths, roblox_join, storage
 from ..i18n import LANGUAGES, tr
@@ -109,7 +109,35 @@ class SettingsPage(QWidget):
         ag.addWidget(self.afk_minutes, 0, 1)
         afk.body.addLayout(ag)
         afk.body.addStretch(1)
-        root.addLayout(columns(ps, afk))
+
+        prof = Card(tr("Dein Roblox-Profil"),
+                    tr("Nur dein Roblox-Name – Anzeigename und Avatar kommen über die öffentliche Roblox-Seite, ohne "
+                       "Anmeldung. Der Avatar erscheint in der Seitenleiste und auf den Statistik-Karten. Leer lassen "
+                       "= kein Profil."))
+        frow = QHBoxLayout()
+        theme.track_spacing(frow, 10)
+        self.avatar_preview = QLabel()
+        theme.track(self.avatar_preview, lambda o, f: o.setFixedSize(round(48 * f), round(48 * f)))
+        frow.addWidget(self.avatar_preview)
+        self.roblox_name = short_field(QLineEdit(), 200)
+        self.roblox_name.setPlaceholderText(tr("Roblox-Name"))
+        self.roblox_name.returnPressed.connect(self._apply_profile)
+        frow.addWidget(self.roblox_name)
+        apply_btn = QPushButton(tr("Übernehmen"))
+        apply_btn.clicked.connect(self._apply_profile)
+        frow.addWidget(apply_btn)
+        frow.addStretch(1)
+        prof.body.addLayout(frow)
+        self.profile_state = label("", "small", wrap=True)
+        prof.body.addWidget(self.profile_state)
+        prof.body.addStretch(1)
+        right = QWidget()
+        rcol = QVBoxLayout(right)
+        rcol.setContentsMargins(0, 0, 0, 0)
+        theme.track_spacing(rcol, 14)
+        rcol.addWidget(afk)
+        rcol.addWidget(prof)
+        root.addLayout(columns(ps, right))
 
         # ------------------------------------------------------------------ Überwachung
         root.addWidget(section(tr("Überwachung")))
@@ -279,9 +307,10 @@ class SettingsPage(QWidget):
         self.seasonal.toggled.connect(lambda on: (self.main.set_appearance(seasonal=on),
                                                   self._sync_look(self.main.engine.settings)))
         srow.addWidget(self.seasonal)
-        srow.addWidget(InfoButton(tr("Saison-Designs erscheinen automatisch zur passenden Zeit: Kirschblüte (20.3.–30.4.), Sommer (21.6.–31.8.), "
-                                     "Kürbisnacht (15.10.–2.11.), Frost (1.12.–6.1.) und Silvester (29.12.–2.1.) – danach "
-                                     "wieder dein gewähltes Design. Alle gibt es auch jederzeit oben unter „Design“.")))
+        srow.addWidget(InfoButton(tr(
+            "Saison-Designs erscheinen automatisch zur passenden Zeit: Kirschblüte (20.3.–30.4.), Sommer (21.6.–31.8.), "
+            "Kürbisnacht (15.10.–2.11.), Frost (1.12.–6.1.) und Silvester (29.12.–2.1.) – danach wieder dein gewähltes "
+            "Design. Alle gibt es auch jederzeit oben unter „Design“.")))
         srow.addStretch(1)
         fx.body.addLayout(srow)
         krow = QHBoxLayout()
@@ -439,6 +468,32 @@ class SettingsPage(QWidget):
         self._show_group("Roblox")
         self._search_index: list = []               # (Karte, durchsuchbarer Text) – beim ersten Suchen gefüllt
 
+    # ------------------------------------------------------------------ Roblox-Profil
+    def _apply_profile(self) -> None:
+        from .. import roblox_profile
+        name = self.roblox_name.text().strip()
+        if name and not roblox_profile.valid_name(name):
+            self.profile_state.setText(tr("Kein gültiger Roblox-Name (3–20 Zeichen: Buchstaben, Ziffern, _)."))
+            return
+        self.main.set_roblox_name(name, self.show_profile)
+        if name:
+            self.profile_state.setText(tr("Wird geladen …"))
+
+    def show_profile(self, error: str = "") -> None:
+        """Vorschau und Status nach dem Laden (auch beim Start)."""
+        from .. import roblox_profile
+        from .widgets import round_pixmap
+        info = roblox_profile.load_info() if self.main.engine.settings.roblox_username else None
+        pix = round_pixmap(roblox_profile.avatar_file(), theme.px(48)) if info else None
+        self.avatar_preview.setPixmap(pix) if pix else self.avatar_preview.clear()
+        if error:
+            self.profile_state.setText(error)
+        elif info:
+            self.profile_state.setText(tr("Verbunden: {display} (@{name})", display=info.get("display", ""),
+                                          name=info.get("name", "")))
+        else:
+            self.profile_state.setText("")
+
     # ------------------------------------------------------------------ Reiter
     def _assign_groups(self, root) -> None:
         """Karten den Abschnitten zuordnen (Reihenfolge wie auf der Seite: Abschnittsüberschrift, dann ihre Karten)."""
@@ -457,8 +512,8 @@ class SettingsPage(QWidget):
                 if isinstance(w, QLabel) and w.objectName() == "section":
                     current = w
                     self._groups[w] = []
-                elif isinstance(w, Card) and current is not None:
-                    self._groups[current].append(w)
+                elif current is not None and w is not None:     # Karte oder Spalte mit mehreren Karten
+                    self._groups[current] += [w] if isinstance(w, Card) else w.findChildren(Card)
 
     def _show_group(self, key: str) -> None:
         """Nur einen Abschnitt zeigen (weniger Scrollen); die Suche zeigt dagegen alle Treffer."""
@@ -745,6 +800,7 @@ class SettingsPage(QWidget):
         self.refresh_storage()
 
     def load(self, s) -> None:
+        self.roblox_name.setText(s.roblox_username)
         self._sync_look(s)
         self.language.setCurrentIndex(max(0, self.language.findData(s.language)))
         self.close_to_tray.setChecked(s.close_to_tray)

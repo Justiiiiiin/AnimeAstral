@@ -72,6 +72,28 @@ class _Canvas:
         return buf.getvalue()
 
 
+def _profile(c: _Canvas) -> int:
+    """Eigenes Roblox-Profil oben rechts (Avatar + Name). Rückgabe: rechter Rand für weitere Kopftexte."""
+    from . import roblox_profile
+    info = roblox_profile.load_info()
+    path = roblox_profile.avatar_file()
+    if not info or not path.is_file():
+        return W - 48
+    try:
+        avatar = Image.open(path).convert("RGBA").resize((52 * S, 52 * S), Image.LANCZOS)
+    except OSError:
+        return W - 48
+    mask = Image.new("L", avatar.size, 0)
+    ImageDraw.Draw(mask).ellipse((0, 0, avatar.size[0] - 1, avatar.size[1] - 1), fill=255)
+    x, y = W - 48 - 52, 34
+    c.d.ellipse((x * S - 3 * S, y * S - 3 * S, (x + 52) * S + 3 * S, (y + 52) * S + 3 * S), fill=CARD,
+                outline=TEAL, width=2 * S)
+    c.img.paste(avatar, (x * S, y * S), mask)
+    c.text((x - 14, 40), info.get("display") or info.get("name", ""), 17, TEXT, bold=True, anchor="ra")
+    c.text((x - 14, 64), "@" + info.get("name", ""), 13, DIM, anchor="ra")
+    return x - 14 - 230                              # Platz für den Namen lassen
+
+
 def render_card(stats: StatsStore, since: Optional[float], raid: Optional[str], title: str) -> bytes:
     summary = stats.summary(since, raid)
     recs = stats.last_runs(100000, since, raid)
@@ -84,12 +106,13 @@ def render_card(stats: StatsStore, since: Optional[float], raid: Optional[str], 
         c.img.paste(logo, (48 * S, 36 * S), logo)
     c.text((120, 38), "ANIME ASTRAL MONITOR", 14, TEAL, bold=True, spacing=2.2)
     c.text((120, 58), title + (f" · {raid}" if raid else ""), 32, TEXT, bold=True)
+    right = _profile(c)
     if recs:
         first, last = datetime.fromtimestamp(recs[-1].ts_end), datetime.fromtimestamp(recs[0].ts_end)
         span = (last - first).total_seconds()
-        c.text((W - 48, 44), f"{first:%d.%m.%Y} · {first:%H:%M}–{last:%H:%M}", 17, MUTED, anchor="ra")
+        c.text((right, 44), f"{first:%d.%m.%Y} · {first:%H:%M}–{last:%H:%M}", 17, MUTED, anchor="ra")
         mins = int(span // 60)
-        c.text((W - 48, 70), tr("{h} Std. {m} Min.", h=mins // 60, m=mins % 60) if mins >= 60 else tr("{minutes} Min.", minutes=mins), 15, DIM, anchor="ra")
+        c.text((right, 70), tr("{h} Std. {m} Min.", h=mins // 60, m=mins % 60) if mins >= 60 else tr("{minutes} Min.", minutes=mins), 15, DIM, anchor="ra")
 
     if not recs:
         c.box((48, 130, W - 48, 560))
@@ -184,9 +207,10 @@ def render_month_card(stats: StatsStore, year: int, month: int) -> bytes:
         c.box((48, 130, W - 48, 560))
         c.text((W // 2, 345), tr("In diesem Monat gibt es noch keine Raids"), 26, MUTED, anchor="mm")
         return c.png()
+    right = _profile(c)
     if m["prev_attempts"]:
         change = round(100 * (m["attempts"] - m["prev_attempts"]) / m["prev_attempts"])
-        c.text((W - 48, 48), tr("{change} % Raids zum Vormonat", change=f"{change:+d}"), 17,
+        c.text((right, 48), tr("{change} % Raids zum Vormonat", change=f"{change:+d}"), 17,
                TEAL if change >= 0 else AMBER, bold=True, anchor="ra")
 
     tiles = [

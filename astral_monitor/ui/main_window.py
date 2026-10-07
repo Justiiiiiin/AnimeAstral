@@ -201,6 +201,10 @@ class MainWindow(QMainWindow):
         self._intro_done = False
         from .spooky import SpookyScheduler
         self._spooky = SpookyScheduler(self, lambda: self.engine.settings.ui_spooky)
+        self.avatar = QLabel()                          # eigenes Roblox-Profil (Avatar)
+        self.avatar.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.avatar.setVisible(False)
+        side.addWidget(self.avatar, 0, Qt.AlignmentFlag.AlignHCenter)
         self.season_mark = QLabel()                     # Saison-Deko in der Seitenleiste (z. B. Kürbis)
         self.season_mark.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.season_mark.setVisible(False)
@@ -239,6 +243,7 @@ class MainWindow(QMainWindow):
             QTimer.singleShot(1500, self._whats_new)        # nach einem Update: kurz „Was ist neu“
         QTimer.singleShot(4000, updater.cleanup_downloads)               # Reste früherer Updates entfernen
         QTimer.singleShot(5000, self._refresh_icons_once)
+        QTimer.singleShot(2500, lambda: self.set_roblox_name(self.engine.settings.roblox_username, quiet=True))
         QTimer.singleShot(6000, lambda: self.check_updates(False))     # leise im Hintergrund (höchstens alle 6 Stunden)
 
         self.timer = QTimer(self)
@@ -318,6 +323,50 @@ class MainWindow(QMainWindow):
         if self.isVisible():                            # nicht aufdrängen, wenn das Programm im Tray startet
             from .whats_new import show_if_updated
             show_if_updated(self)
+
+    # --------------------------------------------------------------- Roblox-Profil
+    def set_roblox_name(self, name: str, done: Optional[Callable] = None, quiet: bool = False) -> None:
+        """Profil setzen/aktualisieren: speichert den Namen, lädt Avatar im Hintergrund (höchstens einmal am Tag)."""
+        from .. import roblox_profile
+        s = self.engine.settings
+        if name != s.roblox_username:
+            s.roblox_username = name
+            try:
+                s.save()
+            except OSError:
+                pass
+        if not name:
+            roblox_profile.clear()
+            self._show_avatar()
+            if done:
+                done()
+            return
+        if quiet and not roblox_profile.needs_refresh(name, roblox_profile.load_info()):
+            self._show_avatar()
+            return
+
+        def work() -> None:
+            try:
+                roblox_profile.refresh(name)
+                error = ""
+            except roblox_profile.ProfileError as exc:
+                error = str(exc)
+            self.post(lambda: (self._show_avatar(), done(error) if done else None))
+
+        threading.Thread(target=work, daemon=True).start()
+        self._show_avatar()
+
+    def _show_avatar(self) -> None:
+        from .. import roblox_profile
+        from .widgets import round_pixmap
+        info = roblox_profile.load_info() if self.engine.settings.roblox_username else None
+        pix = round_pixmap(roblox_profile.avatar_file(), theme.px(38)) if info else None
+        self.avatar.setVisible(pix is not None)
+        if pix is not None:
+            self.avatar.setPixmap(pix)
+            self.avatar.setToolTip(f"{info.get('display', '')} (@{info.get('name', '')})")
+        if hasattr(self.pages[5], "show_profile"):
+            self.pages[5].show_profile()
 
     def _refresh_icons_once(self) -> None:
         """Nach jedem Update einmal: Windows-Symbolspeicher erneuern (sonst bleibt das alte Logo an Verknüpfungen)."""
