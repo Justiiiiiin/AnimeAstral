@@ -4,6 +4,15 @@ Neueste Version oben. Kurze Stichpunkte, keine Erklärungen (die stehen im Progr
 Der Abschnitt einer Version wird beim Veröffentlichen automatisch als Versionshinweis übernommen
 (`tools/release_notes.py`) und ist im Programm unter Einstellungen → Updates → „Alle Versionen“ lesbar.
 
+## 0.7.5.1
+
+### 🐞 Behoben
+- Windows zeigt an Verknüpfungen das neue Logo
+- Quest-Titel vollständiger (Text nach der Zahl bleibt)
+- Zerteilte Raid-Namen in Quests repariert („Conv oy“)
+- Quest-Fortschritt „1/90“ wird erkannt
+- Quests in derselben Reihenfolge wie im Spiel
+
 ## 0.7.5
 
 ### ✨ Neu

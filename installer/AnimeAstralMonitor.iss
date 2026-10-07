@@ -51,6 +51,8 @@ Name: "{autoprograms}\{#AppName} (abgesichert)"; Filename: "{app}\{#AppExe}"; Pa
 Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; Tasks: desktopicon
 
 [Run]
+; Windows-Symbolspeicher auffrischen (sonst zeigen Verknüpfungen noch das alte Logo)
+Filename: "{sys}\ie4uinit.exe"; Parameters: "-show"; Flags: runhidden nowait skipifdoesntexist
 ; Normale Installation: Startoption am Ende
 Filename: "{app}\{#AppExe}"; Description: "{#AppName} starten"; Flags: nowait postinstall skipifsilent runasoriginaluser
 ; Automatisches Update (leise): Programm danach wieder starten

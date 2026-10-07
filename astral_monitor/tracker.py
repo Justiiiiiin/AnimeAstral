@@ -156,6 +156,7 @@ class Quest:
     votes: Counter = field(default_factory=Counter)
     missed: int = 0
     pending: Optional[int] = None
+    pos: int = 0                         # Platz in der Liste im Spiel (Anzeige in derselben Reihenfolge)
 
     @property
     def percent(self) -> Optional[int]:
@@ -188,16 +189,17 @@ class QuestTracker:
         completed: list[Quest] = []
         seen: set[int] = set()
 
-        for line in lines:
+        for pos, line in enumerate(lines):
             quest = self._match(line, seen)
             if quest is None:
-                quest = Quest(next(self._ids), line.title, line.cur, line.total)
+                quest = Quest(next(self._ids), line.title, line.cur, line.total, pos=pos)
                 quest.votes[line.title] += 1
                 self.items.append(quest)
                 seen.add(quest.id)
                 continue
             seen.add(quest.id)
             quest.missed = 0
+            quest.pos = pos
             quest.votes[line.title] += 1
             quest.title = quest.votes.most_common(1)[0][0]
             if line.total:
@@ -218,7 +220,7 @@ class QuestTracker:
         for quest in self.items:
             if quest.id not in seen:
                 quest.missed += 1
-        self.items = [q for q in self.items if q.missed < 3]
+        self.items = sorted((q for q in self.items if q.missed < 3), key=lambda q: q.pos)
         return changes, completed
 
     def _match(self, line: QuestLine, seen: set[int]) -> Optional[Quest]:

@@ -164,6 +164,7 @@ class Engine:
         self._source = source
         self.wave_reader = WaveReader(ocr, s.allowed_totals_list())
         self.quest_reader = QuestReader(ocr)
+        self.quest_reader.names = tuple(self.profile_store.names())
         self.tracker = WaveTracker(s.trigger_offset, s.cooldown_seconds)
         self.quest_tracker = QuestTracker()
         self._reset_runtime()

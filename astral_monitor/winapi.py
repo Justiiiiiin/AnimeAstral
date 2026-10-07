@@ -54,6 +54,19 @@ def trim_memory() -> bool:
     return bool(k32.SetProcessWorkingSetSizeEx(k32.GetCurrentProcess(), ctypes.c_size_t(-1), ctypes.c_size_t(-1), 0))
 
 
+def refresh_shell_icons() -> None:
+    """Windows-Symbolspeicher auffrischen, damit Verknüpfungen (Start, Desktop, Taskleiste) nach einem Update das neue
+    Logo zeigen – ein Update per Paket tauscht die EXE aus, Windows merkt sich das alte Bild sonst lange."""
+    if not IS_WIN:
+        return
+    try:
+        ctypes.windll.shell32.SHChangeNotify(0x08000000, 0, None, None)     # SHCNE_ASSOCCHANGED
+        import subprocess
+        subprocess.Popen(["ie4uinit.exe", "-show"], creationflags=subprocess.CREATE_NO_WINDOW, close_fds=True)
+    except Exception:
+        pass
+
+
 def is_minimized(hwnd: int) -> bool:
     return bool(IS_WIN and _user32.IsIconic(hwnd))
 

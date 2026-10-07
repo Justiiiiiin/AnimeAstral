@@ -28,8 +28,12 @@ def _num(text: str) -> Optional[int]:
     return int(digits) if digits else None
 
 
+_ONE_RE = re.compile(r"(?<!\d)[lI!|](?=\s*/\s*\d)")        # „1/90“ wird gern als „l/90“ oder „I/90“ gelesen
+_TIMES_RE = re.compile(r"\s+t(?:i(?:m(?:e(?:s|\(s?\)?)?)?)?)?$", re.IGNORECASE)   # „time(s)“, auch abgeschnitten
+
+
 def parse_progress(text: str) -> Optional[tuple[int, int]]:
-    text = text.strip()
+    text = _ONE_RE.sub("1", text.strip())
     match = _PROG_RE.search(text)
     if match:
         cur, tot = _num(match.group(1)), _num(match.group(2))
@@ -43,12 +47,21 @@ def parse_progress(text: str) -> Optional[tuple[int, int]]:
     return None
 
 
-def clean_title(text: str) -> str:
-    """Schneidet nach der letzten Ziffer ab (Titel sind am Fensterrand oft abgeschnitten)."""
+def clean_title(text: str, names: tuple = ()) -> str:
+    """Titel säubern: Reste am Fensterrand und „time(s)“ weg, Wörter nach der Zahl bleiben („Clear 8000 waves in
+    MaxTac Ca“). Bekannte Raid-Namen werden repariert, wenn die Erkennung sie zerteilt („Conv oy“ -> „Convoy“)."""
     text = re.sub(r"\s+", " ", text).strip()
+    text = re.sub(r"[^\w)]+$", "", text)
+    text = _TIMES_RE.sub("", text)
     last = max((i for i, ch in enumerate(text) if ch.isdigit()), default=-1)
-    if last >= 0:
+    tail = text[last + 1:].split()
+    if last >= 0 and len(tail) == 1 and len(tail[0]) <= 4:      # ein kurzes Wortstück nach der Zahl: abgeschnitten
         text = text[: last + 1]
+    for name in names:
+        letters = name.replace(" ", "")
+        if len(letters) >= 4:
+            pattern = r"\s*".join(re.escape(ch) for ch in letters)
+            text = re.sub(pattern, name, text, flags=re.IGNORECASE)
     return text.strip(" .,:;-|")
 
 
@@ -60,6 +73,7 @@ def _total_from_title(title: str) -> Optional[int]:
 class QuestReader:
     def __init__(self, ocr: OcrEngine) -> None:
         self._ocr = ocr
+        self.names: tuple = ()                     # bekannte Raid-Namen (zum Reparieren zerteilter Wörter)
 
     def read(self, crop: np.ndarray) -> list[QuestLine]:
         height = crop.shape[0]
@@ -76,7 +90,7 @@ class QuestReader:
                     pending["prog"], pending["py"] = progress, y
                 continue
             letters = sum(ch.isalpha() for ch in ln.text)
-            title = clean_title(ln.text)
+            title = clean_title(ln.text, self.names)
             if letters >= 6 and any(ch.isdigit() for ch in title):
                 pending = {"title": title, "y": y, "prog": None, "py": None}
                 entries.append(pending)

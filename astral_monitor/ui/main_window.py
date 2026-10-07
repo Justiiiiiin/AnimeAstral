@@ -230,6 +230,7 @@ class MainWindow(QMainWindow):
         if not engine.settings.wizard_done:
             QTimer.singleShot(500, self.open_wizard)        # beim ersten Start: Einrichtungsassistent
         QTimer.singleShot(4000, updater.cleanup_downloads)               # Reste früherer Updates entfernen
+        QTimer.singleShot(5000, self._refresh_icons_once)
         QTimer.singleShot(6000, lambda: self.check_updates(False))     # leise im Hintergrund (höchstens alle 6 Stunden)
 
         self.timer = QTimer(self)
@@ -304,6 +305,18 @@ class MainWindow(QMainWindow):
         tray.setToolTip(f"Anime Astral Monitor {__version__}")
         tray.show()
         return tray
+
+    def _refresh_icons_once(self) -> None:
+        """Nach jedem Update einmal: Windows-Symbolspeicher erneuern (sonst bleibt das alte Logo an Verknüpfungen)."""
+        s = self.engine.settings
+        if not getattr(sys, "frozen", False) or s.icons_refreshed == __version__:
+            return
+        winapi.refresh_shell_icons()
+        s.icons_refreshed = __version__
+        try:
+            s.save()
+        except OSError:
+            pass
 
     def open_notes(self) -> None:
         from .notes_window import NotesWindow

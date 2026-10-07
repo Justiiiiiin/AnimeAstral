@@ -155,6 +155,7 @@ class Settings:
     update_check: bool = True
     update_last_check: float = 0.0
     update_skip: str = ""
+    icons_refreshed: str = ""           # Version, für die der Windows-Symbolspeicher erneuert wurde
     update_beta: bool = False           # Betas (Vorabversionen) anbieten
     rpc_enabled: bool = False
     rpc_client_id: str = ""
