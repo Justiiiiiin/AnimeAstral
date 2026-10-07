@@ -81,6 +81,13 @@ def is_hex_color(value) -> bool:
         c in "0123456789abcdefABCDEF" for c in value[1:])
 
 
+def order_raids(names: list, recent: list) -> list:
+    """Raid-Auswahl: zuletzt benutzte zuerst (neueste oben), danach die übrigen alphabetisch."""
+    known = set(names)
+    first = [n for n in recent if n in known]
+    return first + sorted((n for n in names if n not in first), key=str.lower)
+
+
 def default_events() -> dict[str, dict[str, bool]]:
     return {k: {"send": send, "ping": ping} for k, _label, send, ping in EVENT_DEFS}
 
@@ -135,6 +142,7 @@ class Settings:
     quest_roi: Roi = field(default_factory=lambda: Roi(**vars(DEFAULT_QUEST_ROI)))
     # Raid: auf der Startseite ausgewählt (keine Bilderkennung mehr)
     current_raid: str = ""
+    recent_raids: list = field(default_factory=list)   # zuletzt gewählte Raids, neueste zuerst
     # Wächter
     guard_enabled: bool = True
     stall_minutes: int = 10

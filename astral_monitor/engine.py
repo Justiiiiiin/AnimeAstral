@@ -344,6 +344,7 @@ class Engine:
         """Raid umbenennen: Profil-Ordner, Verlauf und aktuelle Auswahl. Rückgabe: neuer Name."""
         name = self.profile_store.rename(old, new)
         self.stats.rename_raid(old, name)
+        self.settings.recent_raids = [name if n == old else n for n in self.settings.recent_raids]
         if self.settings.current_raid == old:
             self.set_current_raid(name)
         return name
@@ -577,6 +578,8 @@ class Engine:
         """Raid aus der Auswahl auf der Startseite (keine Bilderkennung mehr – die Kamera ist frei einstellbar).
         Gilt sofort, auch für den gerade laufenden Versuch."""
         self.settings.current_raid = name
+        if name:
+            self.settings.recent_raids = ([name] + [n for n in self.settings.recent_raids if n != name])[:20]
         run = self.tracker.run
         if run is not None and not run.completed:
             self._set_profile(run, name)

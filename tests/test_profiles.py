@@ -55,3 +55,9 @@ class ProfileStoreTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class RecentRaidTests(unittest.TestCase):
+    def test_recent_first(self):
+        from astral_monitor.settings import order_raids
+        self.assertEqual(order_raids(["b", "A", "c", "d"], ["c", "gone", "A"]), ["c", "A", "b", "d"])

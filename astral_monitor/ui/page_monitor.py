@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (QHBoxLayout, QListWidget, QListWidgetItem, QProgr
 
 from .. import messages
 from ..i18n import dec, tr
+from ..settings import order_raids
 from . import theme
 from .widgets import Card, ComboBox, QuestRow, StatCard, bgr_to_pixmap, label, smooth
 
@@ -175,7 +176,7 @@ class MonitorPage(QWidget):
         self.raid_combo.blockSignals(True)
         self.raid_combo.clear()
         self.raid_combo.addItem(tr("– kein Raid gewählt –"), "")
-        for name in self.engine.profile_store.names():
+        for name in order_raids(self.engine.profile_store.names(), self.engine.settings.recent_raids):
             self.raid_combo.addItem(name, name)
         if self.raid_combo.count() == 1:
             self.raid_combo.addItem(tr("Raids anlegen …"), None)
