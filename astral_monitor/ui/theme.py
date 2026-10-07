@@ -362,6 +362,34 @@ _WINTER_LIGHT = dict(_NEBULA_LIGHT, **{
     "select": "#CFE7F7", "okBg": "#E6F4FB", "okBorder": "#A9D4EC", "navActive": "#E3F0FA", "stepDone": "#9CCBEA",
 })
 
+# OLED (0.7.6): echtes Schwarz, Nebula-Aufbau
+_OLED_DARK = dict(_NEBULA_DARK, **{
+    "bg": "#000000", "sidebar": "#000000", "topbar": "#000000", "card": "#08090C", "cardTop": "#0C0E13",
+    "border": "#16181F", "borderA": "#232838", "borderB": "#111319", "line": "#0E1015", "field": "#030405",
+    "control": "#0F1116", "controlHover": "#171A22", "controlBorder": "#1D212B", "navHover": "#0C0E13",
+    "navActive": "#121620", "okBg": "#03100D", "dangerBg": "#160709", "disabledBg": "#050608",
+    "headerLine": "#101219", "barEmpty": "#0E1015", "scroll": "#1A1D26", "trackOff": "#1A1D26",
+})
+
+# Bubble (0.7.6): Nebula mit runden „Blasen“-Formen – Knöpfe und Felder als Pillen, große Kartenradien
+_BUBBLE = _NEBULA + """
+QFrame#card { border-radius: 26px; }
+QFrame#statusbox { border-radius: 22px; }
+QPushButton, QToolButton { border-radius: 19px; }
+QPushButton#nav, QToolButton#gear { border-radius: 23px; }
+QPushButton#chipbtn { border-radius: 15px; }
+QLineEdit, QSpinBox, QDoubleSpinBox, QComboBox { border-radius: 19px; padding: 6px 16px; }
+QComboBox { padding-right: 30px; }
+QPlainTextEdit, QTextBrowser { border-radius: 18px; }
+QComboBox QAbstractItemView { border-radius: 16px; }
+QMenu { border-radius: 18px; }
+QMenu::item { border-radius: 12px; }
+QCheckBox::indicator { border-radius: 9px; }
+QListWidget::item:hover, QListWidget::item:selected { border-radius: 14px; }
+QLabel#preview { border-radius: 20px; }
+QFrame#pill { border-radius: 16px; }
+"""
+
 DESIGNS: dict[str, dict] = {
     # Schlüssel: Anzeigename, eingeführt in Version, Vorlage, Paletten je Farbschema (fehlt eines: Dunkel)
     "nebula": {"name": N_("Nebula"), "since": "0.7.0", "template": _NEBULA, "icons": True, "gear": True,
@@ -370,6 +398,12 @@ DESIGNS: dict[str, dict] = {
     "astral": {"name": N_("Astral"), "since": "0.6.5", "template": _ASTRAL, "icons": True, "gear": True,
                "animate": True, "font": ["Segoe UI Variable Text", "Segoe UI"],
                "palettes": {"dark": _ASTRAL_DARK, "light": _ASTRAL_LIGHT}},
+    "bubble": {"name": N_("Bubble"), "since": "0.7.6", "template": _BUBBLE, "icons": True, "gear": True,
+               "animate": True, "rail": True, "font": ["Segoe UI Variable Text", "Segoe UI"],
+               "palettes": {"dark": _NEBULA_DARK, "light": _NEBULA_LIGHT}},
+    "oled": {"name": N_("OLED"), "since": "0.7.6", "template": _NEBULA, "icons": True, "gear": True,
+             "animate": True, "rail": True, "font": ["Segoe UI Variable Text", "Segoe UI"],
+             "palettes": {"dark": _OLED_DARK}},
     "halloween": {"name": N_("Kürbisnacht"), "since": "0.7.2", "template": _NEBULA, "icons": True, "gear": True,
                   "animate": True, "rail": True, "font": ["Segoe UI Variable Text", "Segoe UI"],
                   "palettes": {"dark": _HALLOWEEN_DARK}, "season": ((10, 15), (11, 2))},
