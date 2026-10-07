@@ -4,6 +4,17 @@ Neueste Version oben. Kurze Stichpunkte, keine Erklärungen (die stehen im Progr
 Der Abschnitt einer Version wird beim Veröffentlichen automatisch als Versionshinweis übernommen
 (`tools/release_notes.py`) und ist im Programm unter Einstellungen → Updates → „Alle Versionen“ lesbar.
 
+## 0.8.1-beta.1
+
+### 🔧 Verbessert
+- Start schneller: Seiten werden erst beim ersten Öffnen gebaut
+- Design- und Farbwechsel etwa doppelt so schnell
+- Statistik rechnet im Hintergrund – nie mehr Hänger
+- Auswertungen bis zu 160× schneller, Verlauf lädt ~4× schneller
+- Statistik-Karten werden im Hintergrund gezeichnet
+- Saison-Deko flüssiger (20 Bilder/s) ohne Mehrlast
+- Seitenwechsel knackiger
+
 ## 0.8.0
 
 ### ✨ Neu

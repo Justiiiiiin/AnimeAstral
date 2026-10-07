@@ -640,7 +640,7 @@ class MainWindow(QMainWindow):
         effect = QGraphicsOpacityEffect(widget)
         widget.setGraphicsEffect(effect)
         anim = QPropertyAnimation(effect, b"opacity", self)
-        anim.setDuration(150)
+        anim.setDuration(120)                         # kurz = knackig, aber noch weich
         anim.setStartValue(0.0)
         anim.setEndValue(1.0)
         anim.setEasingCurve(QEasingCurve.Type.OutCubic)
