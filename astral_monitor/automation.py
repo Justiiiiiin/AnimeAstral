@@ -7,6 +7,7 @@ Ablauf in einem eigenen Thread; Meldungen über log(text). Ohne Qt."""
 from __future__ import annotations
 
 import ctypes
+import logging
 import threading
 import time
 from ctypes import wintypes
@@ -18,9 +19,12 @@ from . import vision, winapi
 from .i18n import tr
 from .uimap import ROW, UiMap, match_row, world_number
 
+_log = logging.getLogger("makro")
+
 STEP_WAIT = 0.15          # Abstand der Prüfungen nach einem Klick
 OPEN_TIMEOUT = 5.0        # so lange darf ein Menü zum Öffnen brauchen
-SCROLL_NOTCHES = 3        # Mausrad-Rasten je Schritt
+SCROLL_NOTCHES = 4        # Mausrad-Rasten je Schritt
+BAR_STEP = 0.15           # Scrollbalken je Schritt um diesen Anteil der Schiene ziehen
 MAX_SCROLLS = 60
 USER_MOVE_PX = 25         # Maus so weit von der gesetzten Stelle = der Nutzer greift ein -> Stopp
 AUTO_SETTLE = 0.8         # nach „Auto!“ kurz warten, dann schließen (Auto-Roll läuft im Hintergrund weiter)
@@ -43,7 +47,7 @@ class Navigator:
         self.source_factory = source_factory              # () -> Bildquelle (grab(rois, full, timeout))
         self.window_title = window_title
         self.ocr_factory = ocr_factory
-        self.log = log
+        self._ui_log = log
         self.map = uimap or UiMap.load()
         self._halt = threading.Event()
         self._thread: Optional[threading.Thread] = None
@@ -55,6 +59,10 @@ class Navigator:
         self._menu: Optional[vision.MenuFrame] = None
         self._rows: Optional[vision.RowFinder] = None
         self._templates: list = []
+
+    def log(self, text: str) -> None:
+        _log.info("Makro: %s", text)
+        self._ui_log(text)
 
     # ------------------------------------------------------------------ Steuerung
     @property
@@ -214,14 +222,17 @@ class Navigator:
         return out
 
     def _scroll_to(self, row_list: dict, target: dict) -> list[float]:
-        """Zur Welt-Zeile scrollen (Mausrad über der Liste) und ihre aktuelle Lage liefern."""
+        """Zur Welt-Zeile scrollen und ihre aktuelle Lage liefern. Erst Mausrad über der Liste (vorher Maus bewegen,
+        sonst ignoriert Roblox das Rad); bewegt sich die Liste damit nicht, den Scrollbalken ziehen."""
         want = world_number(target["name"])
         x0, y0, x1, y1 = row_list["roi"]
         over = ((x0 + x1) / 2, (y0 + y1) / 2)
         last = None
-        same = 0
-        for _ in range(MAX_SCROLLS):
-            visible = self._visible_rows(self._frame(), row_list)
+        stuck = 0
+        use_bar = False
+        for step in range(MAX_SCROLLS):
+            frame = self._frame()
+            visible = self._visible_rows(frame, row_list)
             for row, roi in visible:
                 if row["name"] == target["name"]:
                     return roi
@@ -230,14 +241,78 @@ class Navigator:
                 direction = -1                            # nichts lesbar: nach unten suchen
             else:
                 direction = -1 if want > max(numbers) else 1
-            names = tuple(r["name"] for r, _ in visible)
-            same = same + 1 if names == last else 0
-            if same >= 2:                                 # Liste bewegt sich nicht mehr: Ende erreicht
-                raise Stop(tr("Welt „{world}“ nicht gefunden (Ende der Liste).", world=target["name"]))
-            last = names
-            self._wheel(over, direction * SCROLL_NOTCHES)
-            time.sleep(0.35)                              # Liste gleitet nach
+            # Lage der sichtbaren Zeilen vergleichen (nicht nur Namen: kleine Schritte zeigen dieselben Welten)
+            layout = tuple((r["name"], round(roi[1], 3)) for r, roi in visible)
+            moved = last is None or layout != last
+            last = layout
+            _log.info("Makro: Schritt %d, sichtbar %s, Ziel %s (%s), Richtung %s, bewegt %s", step,
+                      [f"{n}@{y}" for n, y in layout], target["name"], want, "runter" if direction < 0 else "hoch",
+                      moved)
+            if not moved:
+                stuck += 1
+                if not use_bar and stuck >= 2:            # Mausrad wirkt nicht: Scrollbalken versuchen
+                    use_bar = self._scrollbar(row_list) is not None
+                    if use_bar:
+                        self.log(tr("Mausrad bewegt die Liste nicht – ziehe den Scrollbalken."))
+                        stuck = 0
+                if stuck >= 3:
+                    raise Stop(tr("Welt „{world}“ nicht gefunden (Liste bewegt sich nicht).",
+                                  world=target["name"]))
+            else:
+                stuck = 0
+            if use_bar:
+                self._drag_scrollbar(row_list, frame, direction)
+            else:
+                self._wheel(over, direction * SCROLL_NOTCHES)
+            time.sleep(0.45)                              # Liste gleitet nach
         raise Stop(tr("Welt „{world}“ nicht gefunden.", world=target["name"]))
+
+    def _scrollbar(self, row_list: dict) -> Optional[dict]:
+        return next((e for e in self.map.children(row_list) if e.get("kind") == "Scrollbalken" and e.get("roi")), None)
+
+    def _drag_scrollbar(self, row_list: dict, frame: np.ndarray, direction: int) -> None:
+        """Griff des Scrollbalkens suchen (hellster Abschnitt der Schiene) und ein Stück nach oben/unten ziehen."""
+        bar = self._scrollbar(row_list)
+        if bar is None:
+            raise Stop(tr("Kein Scrollbalken in der Karte."))
+        fh, fw = frame.shape[:2]
+        x0, y0, x1, y1 = bar["roi"]
+        strip = frame[int(y0 * fh):int(y1 * fh), max(0, int(x0 * fw) - 2):int(x1 * fw) + 2]
+        if strip.size == 0:
+            raise Stop(tr("Kein Scrollbalken in der Karte."))
+        rows = strip.mean(axis=(1, 2))                    # Helligkeit je Bildzeile
+        bright = rows > (np.median(rows) + 25)
+        ys = np.flatnonzero(bright)
+        if ys.size:
+            grip = (ys[0] + ys[-1]) / 2 / len(rows)       # Mitte des Griffs (Anteil der Schiene)
+        else:
+            grip = 0.0 if direction < 0 else 1.0          # Griff nicht erkennbar: am Ende anfassen
+        start = (x0 + x1) / 2, y0 + grip * (y1 - y0)
+        delta = (y1 - y0) * BAR_STEP * (1 if direction < 0 else -1)
+        end = start[0], min(y1, max(y0, start[1] + delta))
+        _log.info("Makro: Scrollbalken ziehen %.3f -> %.3f (Griff %s)", start[1], end[1], bool(ys.size))
+        self._drag(start, end)
+
+    def _drag(self, start: tuple[float, float], end: tuple[float, float]) -> None:
+        self._check()
+        sx, sy = self._point(*start)
+        ex, ey = self._point(*end)
+        u32 = ctypes.windll.user32
+        u32.SetCursorPos(sx - 2, sy - 2)
+        for _ in range(3):
+            _mouse(0x0001, 1, 1)
+            time.sleep(0.025)
+        u32.SetCursorPos(sx, sy)
+        time.sleep(0.06)
+        _mouse(0x0002)                                    # drücken
+        steps = 12
+        for k in range(1, steps + 1):                     # gleichmäßig ziehen (Roblox braucht Zwischenschritte)
+            u32.SetCursorPos(sx, int(sy + (ey - sy) * k / steps))
+            _mouse(0x0001, 0, 0)
+            time.sleep(0.02)
+        time.sleep(0.05)
+        _mouse(0x0004)                                    # loslassen
+        self._cursor = (ex, ey)
 
     def _is_open(self, window: dict, frame: np.ndarray) -> bool:
         kind, st = self._screen(frame)
@@ -362,9 +437,13 @@ class Navigator:
         self._check()
         x, y = self._point(*pos)
         u32 = ctypes.windll.user32
+        u32.SetCursorPos(x - 3, y - 3)
+        for _ in range(3):                                # echte Bewegung: sonst gilt die Liste nicht als „unter der
+            _mouse(0x0001, 1, 1)                          # Maus“ und Roblox ignoriert das Rad
+            time.sleep(0.025)
         u32.SetCursorPos(x, y)
         self._cursor = (x, y)
-        time.sleep(0.05)
+        time.sleep(0.08)
         step = 1 if notches > 0 else -1
         for _ in range(abs(notches)):
             _mouse(0x0800, data=120 * step)               # MOUSEEVENTF_WHEEL (+ = hoch, - = runter)

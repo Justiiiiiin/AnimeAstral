@@ -920,7 +920,10 @@ EN: dict[str, str] = {
     "Klicke „{button}“.": "Clicking “{button}”.",
     "Öffne „{name}“.": "Opening “{name}”.",
     "„{name}“ ging nicht auf.": "“{name}” did not open.",
-    "Welt „{world}“ nicht gefunden (Ende der Liste).": "World “{world}” not found (end of list).",
+    "Welt „{world}“ nicht gefunden (Liste bewegt sich nicht).": "World “{world}” not found (list does not move).",
+    "Mausrad bewegt die Liste nicht – ziehe den Scrollbalken.":
+        "The mouse wheel does not move the list – dragging the scrollbar.",
+    "Kein Scrollbalken in der Karte.": "No scrollbar in the map.",
     "Welt „{world}“ nicht gefunden.": "World “{world}” not found.",
     "„{name}“ ist offen.": "“{name}” is open.",
     "Offen ist „{title}“ – passt der Name „{name}“?": "“{title}” is open – does the name “{name}” match?",
