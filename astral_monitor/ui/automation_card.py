@@ -1,5 +1,5 @@
-"""Karte „Automatik (Beta)“ (Einstellungen → Roblox): erste Wege im Spiel testen – Menü per Karte öffnen,
-Pets-Roll „Auto!“ drücken, Menü schließen. Standard aus; Einschalten nur nach Warnung (Roblox-Regeln).
+"""Karte „Makro (Beta)“ (Startseite, links oben): erste Wege im Spiel – Menü per Karte öffnen, Pets-Roll „Auto!“
+drücken und danach wieder schließen. Standard aus; Einschalten nur nach Warnung (Roblox-Regeln).
 Die Logik steckt in automation.py (ohne Qt)."""
 from __future__ import annotations
 
@@ -16,23 +16,29 @@ from .widgets import Card, label, smooth
 
 class AutomationCard(Card):
     def __init__(self, main) -> None:
-        super().__init__(tr("Automatik (Beta)"),
+        super().__init__(tr("Makro (Beta)"),
                          tr("Öffnet Menüs im Spiel anhand der mitgelieferten Oberflächen-Karte: Teleporter auf, zur "
                             "Welt scrollen, Symbol anklicken, Titel prüfen. „Pets rollen“ öffnet das Roll-Menü der "
-                            "Welt und drückt „Auto!“. Kein Laufen, kein Teleportieren.\n\nNot-Aus: Maus bewegen oder "
-                            "Esc. Roblox muss sichtbar sein (nicht minimiert) und wird dafür nach vorne geholt.\n\n"
-                            "Hinweis: Makros und Automatisierung sind laut Roblox-Regeln nicht erlaubt – Nutzung auf "
-                            "eigene Verantwortung."))
+                            "Welt, drückt „Auto!“ und schließt das Menü gleich wieder – Auto-Roll läuft im "
+                            "Hintergrund weiter. Kein Laufen, kein Teleportieren.\n\nNot-Aus: Maus bewegen, Esc "
+                            "oder „Stopp“. Roblox muss sichtbar sein (nicht minimiert) und wird dafür "
+                            "nach vorne geholt.\n\nHinweis: Makros sind laut Roblox-Regeln nicht erlaubt – Nutzung "
+                            "auf eigene Verantwortung."))
         self.main = main
         self.map = UiMap.load()
         self.navigator = None
-        self.enabled = QCheckBox(tr("Automatik erlauben"))
+        self.enabled = QCheckBox(tr("Makro erlauben"))
         self.enabled.setChecked(bool(main.engine.settings.automation_enabled))
         self.enabled.toggled.connect(self._toggle)
-        self.body.addWidget(self.enabled)
+        row0 = QHBoxLayout()                              # Schalter + Schließen/Stopp in einer Zeile (Höhe sparen)
+        row0.addWidget(self.enabled)
+        row0.addStretch(1)
+        self.body.addLayout(row0)
 
         row = QHBoxLayout()
         self.target = QComboBox()
+        self.target.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
+        self.target.setMinimumContentsLength(12)             # lange Namen machen die Seite sonst zu breit
         for w in self.map.targets():
             if w["name"] != "Teleporter Fenster":
                 self.target.addItem(w["name"], w["name"])
@@ -51,20 +57,24 @@ class AutomationCard(Card):
             self.world.addItem(w, w)
         self.pets = QPushButton(tr("Pets rollen (Auto!)"))
         self.pets.clicked.connect(lambda: self._start("pets", self.world.currentData()))
+        self.close_after = QCheckBox(tr("Danach schließen"))
+        self.close_after.setToolTip(tr("Klickt nach „Auto!“ gleich „CLOSE“ – Auto-Roll läuft im Hintergrund "
+                                       "weiter."))
+        self.close_after.setChecked(True)
         self.close_btn = QPushButton(tr("Menü schließen"))
         self.close_btn.clicked.connect(lambda: self._start("close", None))
         self.stop_btn = QPushButton(tr("Stopp"))
         self.stop_btn.clicked.connect(lambda: self.navigator and self.navigator.stop())
         row2.addWidget(self.world)
-        row2.addWidget(self.pets)
-        row2.addStretch(1)
-        row2.addWidget(self.close_btn)
-        row2.addWidget(self.stop_btn)
+        row2.addWidget(self.pets, 1)
+        row2.addWidget(self.close_after)
         self.body.addLayout(row2)
+        row0.addWidget(self.close_btn)
+        row0.addWidget(self.stop_btn)
 
         self.log = QListWidget()
         smooth(self.log)
-        theme.track_fixed_height(self.log, 120)
+        theme.track_fixed_height(self.log, 66)
         self.body.addWidget(self.log)
         if not self.map.entries:
             self.body.addWidget(label(tr("Keine Oberflächen-Karte vorhanden."), "muted"))
@@ -75,10 +85,10 @@ class AutomationCard(Card):
         s = self.main.engine.settings
         if on and not s.automation_enabled:
             answer = QMessageBox.warning(
-                self, tr("Automatik (Beta)"),
-                tr("Die Automatik klickt selbst in Roblox (Mausklicks und Mausrad per SendInput, wie AutoHotkey "
-                   "oder ein Autoclicker).\n\nMakros und Automatisierung sind laut Roblox-Regeln nicht erlaubt. "
-                   "Wer sie nutzt, riskiert eine Sperre – auf eigene Verantwortung.\n\nTrotzdem einschalten?"),
+                self, tr("Makro (Beta)"),
+                tr("Das Makro klickt selbst in Roblox (Mausklicks und Mausrad per SendInput, wie AutoHotkey "
+                   "oder ein Autoclicker).\n\nMakros sind laut Roblox-Regeln nicht erlaubt. Wer sie nutzt, "
+                   "riskiert eine Sperre – auf eigene Verantwortung.\n\nTrotzdem einschalten?"),
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No)
             if answer != QMessageBox.StandardButton.Yes:
                 self.enabled.blockSignals(True)
@@ -96,7 +106,7 @@ class AutomationCard(Card):
 
     def _update(self) -> None:
         on = self.enabled.isChecked() and bool(self.map.entries)
-        for w in (self.target, self.go, self.world, self.pets, self.close_btn):
+        for w in (self.target, self.go, self.world, self.pets, self.close_after, self.close_btn):
             w.setEnabled(on)
         self.stop_btn.setEnabled(on)
 
@@ -125,7 +135,7 @@ class AutomationCard(Card):
         if what == "navigate" and arg:
             nav.navigate(arg)
         elif what == "pets" and arg:
-            nav.pets_auto(arg)
+            nav.pets_auto(arg, close_after=self.close_after.isChecked())
         elif what == "close":
             nav.close_menu()
 

@@ -4,6 +4,21 @@ Neueste Version oben. Kurze Stichpunkte, keine Erklärungen (die stehen im Progr
 Der Abschnitt einer Version wird beim Veröffentlichen automatisch als Versionshinweis übernommen
 (`tools/release_notes.py`) und ist im Programm unter Einstellungen → Updates → „Alle Versionen“ lesbar.
 
+## 0.9.5-beta.2
+
+### ✨ Neu (Beta)
+- „Automatik“ heißt jetzt Makro und sitzt auf der Startseite
+- Pets rollen: nach „Auto!“ schließt das Menü gleich wieder
+- Anti-AFK neu: alle Roblox-Fenster, 4× Esc, ohne Wartezeit
+- Minimiertes Roblox bleibt danach offen (Erkennung läuft)
+- Anti-AFK leert danach den Roblox-Arbeitsspeicher
+
+### 🔧 Verbessert
+- Startseite neu: links Makro + Ereignisse, rechts Live + Quests
+- Ereignisse und Quests kompakt, je eine Zeile
+- Live-Erkennung ohne Vorschaubild
+- Größeres Fenster: Startseite ohne Scrollen
+
 ## 0.9.5-beta.1
 
 ### ✨ Neu (Beta)

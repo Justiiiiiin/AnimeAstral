@@ -1,9 +1,10 @@
-"""Anti-AFK (optional, Standard aus): alle N Minuten kurz zu Roblox wechseln, einmal Leertaste, zurück.
+"""Anti-AFK (optional, Standard aus): alle N Minuten jedes Roblox-Fenster kurz nach vorne, 4× Esc, zurück.
 
-Die EINZIGE Stelle, an der das Programm Eingaben an Roblox sendet – auf ausdrücklichen Wunsch des Eigentümers. Roblox
-nimmt Tasten nur im Vordergrund an (getestet: Fenster-Nachrichten an das Hintergrundfenster wirken nicht), deshalb der
-kurze Fensterwechsel. Damit der Tastendruck nicht in einem anderen Programm landet, wird gewartet, bis der Nutzer
-2 Sekunden lang nichts eingegeben hat (höchstens 60 s, danach beim nächsten Durchlauf erneut)."""
+Seit 0.9.5-beta.2 nach dem bewährten AutoHotkey-Skript des Eigentümers: alle Clients, Esc statt Leertaste, zusätzlich
+Esc direkt an das Fenster, danach Roblox-Speicher leeren. Minimierte Fenster werden wiederhergestellt und bleiben offen
+(minimiert liefert die Aufnahme keine Bilder – Wunsch des Eigentümers). Kein Warten, wenn der Nutzer gerade tippt:
+sofort zum fälligen Zeitpunkt, damit Roblox beim Spielen nicht unnötig lange vorne bleibt. Nur während das Makro
+klickt, wird gewartet."""
 from __future__ import annotations
 
 import logging
@@ -15,8 +16,6 @@ from .i18n import tr
 
 log = logging.getLogger("antiafk")
 
-QUIET_SECONDS = 2.0          # so lange keine eigene Eingabe des Nutzers, bevor gewechselt wird
-MAX_WAIT = 60.0              # länger nicht auf Ruhe warten – dann Versuch im nächsten Durchlauf
 RETRY_SECONDS = 30.0         # nach einem Fehlschlag (Roblox nicht gefunden …) erneut versuchen
 
 
@@ -24,16 +23,17 @@ class AntiAfk(threading.Thread):
     def __init__(self, get_settings: Callable, event: Callable[[str, str], None],
                  jump: Optional[Callable[[str], tuple[bool, str]]] = None,
                  idle_seconds: Optional[Callable[[], float]] = None,
-                 clock: Callable[[], float] = time.monotonic) -> None:
+                 clock: Callable[[], float] = time.monotonic,
+                 busy: Optional[Callable[[], bool]] = None) -> None:
         super().__init__(name="antiafk", daemon=True)
+        self._busy = busy or _macro_busy
         self._get, self._event = get_settings, event
         self._jump = jump or jump_in_roblox
-        self._idle = idle_seconds or user_idle_seconds
+        self._idle = idle_seconds or user_idle_seconds   # nicht mehr genutzt (kein Warten), bleibt für Aufrufer
         self._clock = clock
         self._halt = threading.Event()
         self._enabled = False
         self.next_at: Optional[float] = None       # Zeitpunkt (clock) des nächsten Sprungs; None = aus
-        self._waiting_since: Optional[float] = None
 
     def stop(self) -> None:
         self._halt.set()
@@ -53,7 +53,7 @@ class AntiAfk(threading.Thread):
         s = self._get()
         interval = max(1, min(19, int(s.anti_afk_minutes))) * 60
         if not s.anti_afk_enabled:
-            self._enabled, self.next_at, self._waiting_since = False, None, None
+            self._enabled, self.next_at = False, None
             return
         if not self._enabled:                      # gerade eingeschaltet: erster Sprung nach einem Intervall
             self._enabled, self.next_at = True, now + interval
@@ -62,25 +62,25 @@ class AntiAfk(threading.Thread):
             self.next_at = now + interval          # Intervall wurde verkürzt
         if self.next_at is None or now < self.next_at:
             return
-        if self._idle() < QUIET_SECONDS:           # Nutzer tippt/klickt gerade: kurz warten
-            if self._waiting_since is None:
-                self._waiting_since = now
-            if now - self._waiting_since < MAX_WAIT:
-                return
-            self._waiting_since = None
-            self.next_at = now + RETRY_SECONDS
-            log.info("Anti-AFK: Nutzer durchgehend aktiv – übersprungen")
+        if self._busy():                            # Makro klickt gerade: nicht dazwischenfunken
             return
-        self._waiting_since = None
         ok, info = self._jump(s.window_title)
         if ok:
             self.next_at = now + interval
-            log.info("Anti-AFK: gesprungen (%s)", info)
-            self._event(tr("Anti-AFK: gesprungen"), "info")
+            log.info("Anti-AFK: ausgeführt (%s)", info)
+            self._event(tr("Anti-AFK: Roblox aktiv gehalten ({info})", info=info), "info")
         else:
             self.next_at = now + RETRY_SECONDS
             log.info("Anti-AFK: nicht möglich – %s", info)
             self._event(tr("Anti-AFK: {reason}", reason=info), "warn")
+
+
+def _macro_busy() -> bool:
+    try:
+        from .automation import macro_running
+        return macro_running()
+    except Exception:  # noqa: BLE001
+        return False
 
 
 # ------------------------------------------------------------------ Windows
@@ -98,32 +98,106 @@ def user_idle_seconds() -> float:
     return ((ctypes.windll.kernel32.GetTickCount() - info.dwTime) & 0xFFFFFFFF) / 1000.0
 
 
-def jump_in_roblox(title: str) -> tuple[bool, str]:
-    """Roblox nach vorne, Leertaste, vorheriges Fenster zurück. Rückgabe (geklappt?, Beschreibung)."""
+ROBLOX_EXE = "robloxplayerbeta.exe"
+ESC_PRESSES = 4              # gerade Anzahl: Roblox-Menü auf und wieder zu (keine Wirkung im Spiel)
+
+
+def roblox_windows(title: str = "Roblox") -> list[int]:
+    """Alle Hauptfenster der Roblox-Clients (Prozess RobloxPlayerBeta.exe) – auch minimierte, auch mehrere.
+    Fallback: Fenster mit dem Titel."""
     import ctypes
     from ctypes import wintypes
 
     from . import winapi
+    pids: set[int] = set()
+    try:
+        import psutil
+        pids = {p.pid for p in psutil.process_iter(["name"]) if (p.info.get("name") or "").lower() == ROBLOX_EXE}
+    except Exception:  # noqa: BLE001
+        pass
+    found: list[int] = []
+    if pids:
+        u32 = ctypes.windll.user32
+        enum = ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
+
+        @enum
+        def callback(hwnd, _lparam):
+            pid = wintypes.DWORD()
+            u32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
+            if pid.value in pids and u32.IsWindowVisible(hwnd) and u32.GetWindowTextLengthW(hwnd) \
+                    and not u32.GetWindow(hwnd, 4):        # GW_OWNER: nur Hauptfenster
+                found.append(int(hwnd))
+            return True
+        u32.EnumWindows(callback, 0)
+    if not found:
+        hwnd = winapi.find_window(title)
+        if hwnd is not None:
+            found.append(hwnd)
+    return found
+
+
+def wake_roblox(title: str) -> tuple[bool, str]:
+    """Wie das bewährte AutoHotkey-Skript des Eigentümers: jedes Roblox-Fenster kurz nach vorne (minimierte werden
+    wiederhergestellt und bleiben offen), 4× Esc per SendInput, zusätzlich 1× Esc direkt an das Fenster; danach
+    Roblox-Arbeitsspeicher leeren und das vorherige Fenster zurückholen. Rückgabe (geklappt?, Beschreibung)."""
+    import ctypes
+    from ctypes import wintypes
 
     u32 = ctypes.windll.user32
     u32.GetForegroundWindow.restype = wintypes.HWND
-    u32.SetForegroundWindow.argtypes = [wintypes.HWND]
     u32.IsWindow.argtypes = [wintypes.HWND]
-    hwnd = winapi.find_window(title)
-    if hwnd is None:
+    u32.ShowWindow.argtypes = [wintypes.HWND, ctypes.c_int]
+    u32.PostMessageW.argtypes = [wintypes.HWND, wintypes.UINT, wintypes.WPARAM, wintypes.LPARAM]
+    windows = roblox_windows(title)
+    if not windows:
         return False, tr("Roblox-Fenster nicht gefunden")
-    if winapi.is_minimized(hwnd):
-        return False, tr("Roblox ist minimiert")
     previous = u32.GetForegroundWindow()
-    switched = previous != hwnd
-    if switched and not _bring_to_front(hwnd):
+    done = 0
+    for hwnd in windows:
+        if u32.IsIconic(hwnd):                     # minimiert: wiederherstellen und offen lassen (sonst keine Bilder)
+            u32.ShowWindow(hwnd, 9)                # SW_RESTORE
+            time.sleep(0.15)
+        if not _bring_to_front(hwnd):
+            continue
+        time.sleep(0.05)
+        for _ in range(ESC_PRESSES):
+            _key(0x1B, down=True, scan=0x01)
+            time.sleep(0.03)
+            _key(0x1B, down=False, scan=0x01)
+            time.sleep(0.1)
+        u32.PostMessageW(hwnd, 0x0100, 0x1B, 0x00010001)          # WM_KEYDOWN Esc (wie ControlSend)
+        u32.PostMessageW(hwnd, 0x0101, 0x1B, 0xC0010001)          # WM_KEYUP
+        done += 1
+    trim_roblox_memory()
+    if previous and previous not in windows and u32.IsWindow(previous):
+        _restore(windows[-1], previous)
+    if not done:
         return False, tr("Roblox ließ sich nicht nach vorne holen")
-    time.sleep(0.15)                               # Roblox die Aktivierung verarbeiten lassen
-    _press_space()
-    time.sleep(0.1)
-    if switched:
-        _restore(hwnd, previous)
-    return True, ("mit Fensterwechsel" if switched else "Roblox war schon vorne")
+    return True, f"{done} Fenster"
+
+
+def trim_roblox_memory() -> int:
+    """Arbeitsspeicher der Roblox-Prozesse freigeben (EmptyWorkingSet, wie im AutoHotkey-Skript). Rückgabe: Anzahl."""
+    import ctypes
+    count = 0
+    try:
+        import psutil
+        k32, psapi = ctypes.windll.kernel32, ctypes.windll.psapi
+        k32.OpenProcess.restype = ctypes.c_void_p
+        for p in psutil.process_iter(["name"]):
+            if (p.info.get("name") or "").lower() != ROBLOX_EXE:
+                continue
+            handle = k32.OpenProcess(0x0100 | 0x0400, False, p.pid)   # SET_QUOTA | QUERY_INFORMATION
+            if handle:
+                if psapi.EmptyWorkingSet(ctypes.c_void_p(handle)):
+                    count += 1
+                k32.CloseHandle(ctypes.c_void_p(handle))
+    except Exception:  # noqa: BLE001 – nur eine Zugabe
+        log.debug("Roblox-Speicher leeren fehlgeschlagen", exc_info=True)
+    return count
+
+
+jump_in_roblox = wake_roblox                       # alter Name (Tests, ältere Aufrufer)
 
 
 def _restore(roblox, previous) -> None:

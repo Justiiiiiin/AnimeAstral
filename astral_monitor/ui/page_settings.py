@@ -98,15 +98,16 @@ class SettingsPage(QWidget):
         ps.body.addStretch(1)
 
         afk = Card(tr("Anti-AFK"),
-                   tr("Einschalten in der Kopfzeile. Holt Roblox alle paar Minuten kurz nach vorne, drückt die "
-                      "Leertaste und wechselt zurück. Während du tippst oder klickst, wartet es. Roblox darf nicht "
-                      "minimiert sein.\n\nHinweis: Makros sind laut Roblox-Regeln nicht erlaubt – Nutzung auf "
-                      "eigene Verantwortung."))
+                   tr("Einschalten in der Kopfzeile. Holt alle paar Minuten jedes Roblox-Fenster kurz nach vorne "
+                      "(minimierte werden wiederhergestellt und bleiben offen, damit die Erkennung läuft), drückt "
+                      "4× Esc – das Roblox-Menü geht auf und wieder zu – und wechselt sofort zurück. Danach wird der "
+                      "Arbeitsspeicher von Roblox geleert.\n\nHinweis: Makros sind laut Roblox-Regeln nicht erlaubt – "
+                      "Nutzung auf eigene Verantwortung."))
         ag = form_grid()
         self.afk_minutes = SpinBox()
         self.afk_minutes.setRange(1, 19)
         self.afk_minutes.setSuffix(tr(" Min"))
-        ag.addWidget(label(tr("Springen alle")), 0, 0)
+        ag.addWidget(label(tr("Ausführen alle")), 0, 0)
         ag.addWidget(self.afk_minutes, 0, 1)
         afk.body.addLayout(ag)
         afk.body.addStretch(1)
@@ -142,9 +143,6 @@ class SettingsPage(QWidget):
             for card in cards:
                 lay.addWidget(card)
         root.addLayout(columns(left, right))
-        from .automation_card import AutomationCard
-        self.automation = AutomationCard(main)
-        root.addWidget(self.automation)
 
         # ------------------------------------------------------------------ Überwachung
         root.addWidget(section(tr("Überwachung")))

@@ -1,8 +1,8 @@
-"""Anti-AFK: Zeitplan, Warten auf Ruhe des Nutzers, Fehlerfall – mit künstlicher Uhr, ohne echte Eingaben."""
+"""Anti-AFK: Zeitplan, kein Warten auf den Nutzer, Makro-Pause, Fehlerfall – künstliche Uhr, keine Eingaben."""
 import unittest
 
 import _env  # noqa: F401
-from astral_monitor.antiafk import MAX_WAIT, RETRY_SECONDS, AntiAfk
+from astral_monitor.antiafk import RETRY_SECONDS, AntiAfk
 from astral_monitor.settings import Settings
 
 
@@ -39,25 +39,27 @@ class AntiAfkTests(unittest.TestCase):
         self.assertEqual(len(h.jumps), 2)
         self.assertIsNone(h.afk.next_at)
 
-    def test_waits_while_user_is_typing(self):
-        h = Harness(idle=0.5)
-        h.s.anti_afk_enabled = True
-        h.afk.tick(0)
-        h.afk.tick(600)
-        h.afk.tick(610)
-        self.assertEqual(h.jumps, [])                       # Nutzer tippt: warten
-        h.idle = 5
-        h.afk.tick(611)
-        self.assertEqual(len(h.jumps), 1)                   # Ruhe: jetzt springen
-
-    def test_gives_up_waiting_and_retries_later(self):
+    def test_runs_right_away_even_while_user_is_active(self):
+        """Kein Warten, wenn der Nutzer gerade tippt/spielt (Wunsch des Eigentümers: sonst bleibt Roblox unnötig
+        lange vorne) – sofort zum fälligen Zeitpunkt."""
         h = Harness(idle=0.1)
         h.s.anti_afk_enabled = True
         h.afk.tick(0)
         h.afk.tick(600)
-        h.afk.tick(600 + MAX_WAIT)
-        self.assertEqual(h.jumps, [])
-        self.assertEqual(h.afk.next_at, 600 + MAX_WAIT + RETRY_SECONDS)
+        self.assertEqual(len(h.jumps), 1)
+        self.assertEqual(h.afk.next_at, 1200)
+
+    def test_waits_while_macro_runs(self):
+        h = Harness(idle=5)
+        busy = [True]
+        h.afk._busy = lambda: busy[0]
+        h.s.anti_afk_enabled = True
+        h.afk.tick(0)
+        h.afk.tick(600)
+        self.assertEqual(h.jumps, [])                       # Makro klickt: warten
+        busy[0] = False
+        h.afk.tick(601)
+        self.assertEqual(len(h.jumps), 1)
 
     def test_failure_is_reported_and_retried(self):
         h = Harness(ok=False)

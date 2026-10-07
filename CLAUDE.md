@@ -14,10 +14,15 @@ aktualisierende Statusnachricht, Statistik-Karten). Sie greift nicht in den Robl
 Eingaben an Roblox – einzige Ausnahme ist das optionale Anti-AFK** (`antiafk.py`, Standard aus, Schalter in der
 Kopfzeile, auf ausdrücklichen Wunsch des Eigentümers 06.10.2026): alle N Minuten Roblox kurz nach vorne, einmal
 Leertaste, zurück. Roblox nimmt Tasten nur im Vordergrund an (getestet: `PostMessage` an das Hintergrundfenster wirkt
-nicht). **Seit 0.9.5-beta.1 zweite Ausnahme: Automatik (Beta)** (`automation.py`, Standard aus, Karte unter
+nicht). **Seit 0.9.5-beta.2** nach dem AutoHotkey-Skript des Eigentümers: alle Roblox-Clients (Prozess
+RobloxPlayerBeta.exe), minimierte wiederherstellen und offen lassen (sonst keine Aufnahme), 4× Esc + 1× Esc direkt ans
+Fenster, danach `EmptyWorkingSet` auf Roblox; **kein Warten** auf Ruhe des Nutzers, nur Pause während das Makro
+klickt. **Seit 0.9.5-beta.1 zweite Ausnahme: Automatik (Beta)** (`automation.py`, Standard aus, Karte unter
 Einstellungen → Roblox, Einschalten nur nach Warnung zu den Roblox-Regeln; Wunsch des Eigentümers 07.10.2026, Ziel
 1.0.0): öffnet Menüs anhand der Oberflächen-Karte (`uimap.py` + `astral_monitor/uimap/`, Erkennung `vision.py`) –
-Teleporter auf, per Mausrad zur Welt scrollen, Symbol klicken, Titel prüfen; Pets-Roll „Auto!“ drücken. Eingaben per
+Teleporter auf, per Mausrad zur Welt scrollen, Symbol klicken, Titel prüfen; Pets-Roll „Auto!“ drücken und das
+Menü gleich wieder schließen (Auto-Roll läuft im Hintergrund weiter – nie auf das Rollen warten). Oberfläche: Karte
+„Makro (Beta)“ links oben auf der Startseite (in der Oberfläche heißt es „Makro“). Eingaben per
 SendInput nur mit Roblox im Vordergrund, Not-Aus bei Mausbewegung/Esc. **Kein Laufen/Teleportieren** (TELEPORT!-Knöpfe
 werden nicht benutzt – Wunsch des Eigentümers). Darüber hinaus nichts automatisieren, ohne zu fragen.
 **Oberflächen-Karte:** gepflegt im privaten Entwickler-Werkzeug (`_dev/calibrate.py`: Aufnahme, Baum, Vorlagen),

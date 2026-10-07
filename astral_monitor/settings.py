@@ -219,7 +219,7 @@ class Settings:
     ui_background: str = ""             # eigenes Hintergrundbild (Dateiname im Datenordner, leer = keins)
     ui_background_dim: int = 70         # Abdunkeln in % (Lesbarkeit)
     ui_accent: str = ""                 # eigene Akzentfarbe „#RRGGBB“ (leer = Farbe des Designs)
-    anti_afk_enabled: bool = False      # alle N Minuten kurz zu Roblox, Leertaste, zurück (antiafk.py)
+    anti_afk_enabled: bool = False      # alle N Minuten jedes Roblox-Fenster kurz vor, 4× Esc, zurück (antiafk.py)
     anti_afk_minutes: int = 10
     automation_enabled: bool = False    # Automatik (Beta): Menüs per Oberflächen-Karte öffnen (automation.py)
     auto_rejoin_enabled: bool = False   # nach Disconnect/Kick/Absturz neu beitreten (rejoin.py)

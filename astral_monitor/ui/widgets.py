@@ -252,6 +252,38 @@ class StatCard(Card):
             self.value.setText(text)
 
 
+class ElidedLabel(QLabel):
+    """Einzeiliges Label, das zu langen Text mit „…“ kürzt (voller Text im Tooltip) – verbreitert die Seite nie."""
+
+    def __init__(self, text: str = "") -> None:
+        super().__init__()
+        self._full = ""
+        self.setMinimumWidth(1)
+        self.setText(text)
+
+    def setText(self, text: str) -> None:  # noqa: N802 (Qt-Name)
+        self._full = text
+        self.setToolTip(text)
+        self._elide()
+
+    def full_text(self) -> str:
+        return self._full
+
+    def minimumSizeHint(self):  # noqa: N802
+        hint = super().minimumSizeHint()
+        hint.setWidth(1)
+        return hint
+
+    def resizeEvent(self, event) -> None:  # noqa: N802
+        super().resizeEvent(event)
+        self._elide()
+
+    def _elide(self) -> None:
+        shown = self.fontMetrics().elidedText(self._full, Qt.TextElideMode.ElideRight, max(10, self.width()))
+        if super().text() != shown:
+            super().setText(shown)
+
+
 class QuestRow(QWidget):
     def __init__(self) -> None:
         super().__init__()
@@ -259,7 +291,7 @@ class QuestRow(QWidget):
         theme.track_margins(lay, 0, 2, 0, 2)
         theme.track_spacing(lay, 4)
         top = QHBoxLayout()
-        self.title = QLabel("")
+        self.title = ElidedLabel("")                    # eine Zeile, lange Titel mit „…“ (voller Titel im Tooltip)
         self.value = QLabel("")
         self.value.setObjectName("muted")
         top.addWidget(self.title, 1)

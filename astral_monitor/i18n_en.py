@@ -20,22 +20,14 @@ EN: dict[str, str] = {
     "Alles bereit ✨": "All set ✨",
     "Anime Astral Monitor": "Anime Astral Monitor",
     "Anti-AFK": "Anti-AFK",
-    "Anti-AFK an – alle {minutes} Min. kurz zu Roblox, Leertaste, zurück.":
-        "Anti-AFK on – every {minutes} min briefly to Roblox, space, back.",
     "Anti-AFK aus": "Anti-AFK off",
-    "Anti-AFK: gesprungen": "Anti-AFK: jumped",
     "Anti-AFK: {reason}": "Anti-AFK: {reason}",
     "Der Anti-AFK-Abstand muss zwischen 1 und 19 Minuten liegen (Roblox trennt nach 20 Minuten).":
         "The anti-AFK interval must be between 1 and 19 minutes (Roblox disconnects after 20 minutes).",
     "Roblox ist minimiert": "Roblox is minimized",
     "Roblox ließ sich nicht nach vorne holen": "Roblox could not be brought to the front",
     "Roblox-Fenster nicht gefunden": "Roblox window not found",
-    "Springen alle": "Jump every",
-    "Wechselt alle paar Minuten kurz zu Roblox, drückt einmal die Leertaste und wechselt zurück – gegen die Trennung "
-    "nach 20 Minuten. Abstand: Einstellungen → Anti-AFK.":
-        "Briefly switches to Roblox every few minutes, presses space once and switches back – against the disconnect "
-        "after 20 minutes. Interval: Settings → Anti-AFK.",
-    "nächster Sprung in {time}": "next jump in {time}",
+    "Ausführen alle": "Run every",
     "Anwendungs-ID": "Application ID",
     "Anzahl Versuche je Endwelle": "Attempts per final wave",
     "Anzeigename": "Display name",
@@ -453,8 +445,6 @@ EN: dict[str, str] = {
     "Nach jeder Meldung automatisch wieder ganz nach unten schieben":
         "Automatically move it back to the bottom after every message",
     "Quest-Fortschritt an Raid- und Uptime-Meldungen anhängen": "Attach quest progress to raid and uptime messages",
-    "Hier erscheint nach dem Start der Wellenzähler aus dem Spiel.":
-        "The wave counter from the game appears here once monitoring starts.",
     "Noch keine Ereignisse – Start, Raids, Alarme und Rejoins erscheinen hier.":
         "No events yet – starts, raids, alerts and rejoins appear here.",
     "Privater Server und Auto-Rejoin": "Private server and auto-rejoin",
@@ -582,12 +572,6 @@ EN: dict[str, str] = {
         "browser; share links and classic links work. The links are stored encrypted on this PC only.\n\nAuto-rejoin "
         "(switch in the header): after a disconnect, kick or crash the program rejoins after 15 s – up to 5 "
         "attempts. If you close Roblox yourself, it does not bring you back.",
-    "Einschalten in der Kopfzeile. Holt Roblox alle paar Minuten kurz nach vorne, drückt die Leertaste und wechselt "
-    "zurück. Während du tippst oder klickst, wartet es. Roblox darf nicht minimiert sein.\n\nHinweis: Makros sind laut "
-    "Roblox-Regeln nicht erlaubt – Nutzung auf eigene Verantwortung.":
-        "Turn on in the header. Every few minutes it briefly brings Roblox to the front, presses space and switches "
-        "back. It waits while you type or click. Roblox must not be minimized.\n\nNote: macros are not allowed by the "
-        "Roblox rules – use at your own risk.",
     "Meldet Abstürze (Roblox-Prozess), Disconnects und Kicks (Roblox-Protokoll), einen stehenden Zähler, zu lange kein "
     "beendeter Raid und zu hohen Speicherverbrauch von Roblox. Was davon an Discord geht, stellst du unter "
     "„Meldungen“ ein.":
@@ -906,28 +890,19 @@ EN: dict[str, str] = {
     # 0.9.1: Raids ohne Gesamtzahl
     "Raid beendet · Welle {wave}": "Raid finished · wave {wave}",
     "Raid beendet · #{count} · Welle {wave}": "Raid finished · #{count} · wave {wave}",
-    # 0.9.5: Automatik (Beta)
-    "Automatik (Beta)": "Automation (beta)",
-    "Öffnet Menüs im Spiel anhand der mitgelieferten Oberflächen-Karte: Teleporter auf, zur Welt scrollen, Symbol "
-    "anklicken, Titel prüfen. „Pets rollen“ öffnet das Roll-Menü der Welt und drückt „Auto!“. Kein Laufen, kein "
-    "Teleportieren.\n\nNot-Aus: Maus bewegen oder Esc. Roblox muss sichtbar sein (nicht minimiert) und wird dafür "
-    "nach vorne geholt.\n\nHinweis: Makros und Automatisierung sind laut Roblox-Regeln nicht erlaubt – Nutzung auf "
-    "eigene Verantwortung.":
-        "Opens in-game menus using the bundled UI map: open the teleporter, scroll to the world, click the icon, "
-        "check the title. “Roll pets” opens the world's roll menu and presses “Auto!”. No walking, no "
-        "teleporting.\n\nEmergency stop: move the mouse or press Esc. Roblox must be visible (not minimized) and is "
-        "brought to the front for this.\n\nNote: macros and automation are not allowed by the Roblox rules – use "
-        "at your own risk.",
-    "Automatik erlauben": "Allow automation",
+    # 0.9.5: Makro (Beta)
+    "Makro (Beta)": "Macro (beta)",
+    "Makro erlauben": "Allow macro",
+    "Danach schließen": "Close afterwards",
+    "Das Makro klickt selbst in Roblox (Mausklicks und Mausrad per SendInput, wie AutoHotkey oder ein Autoclicker)."
+    "\n\nMakros sind laut Roblox-Regeln nicht erlaubt. Wer sie nutzt, riskiert eine Sperre – auf eigene "
+    "Verantwortung.\n\nTrotzdem einschalten?":
+        "The macro clicks in Roblox by itself (mouse clicks and wheel via SendInput, like AutoHotkey or an "
+        "autoclicker).\n\nMacros are not allowed by the Roblox rules. Using them risks a ban – at your own risk."
+        "\n\nTurn it on anyway?",
     "Hin navigieren": "Navigate there",
     "Pets rollen (Auto!)": "Roll pets (Auto!)",
     "Stopp": "Stop",
-    "Die Automatik klickt selbst in Roblox (Mausklicks und Mausrad per SendInput, wie AutoHotkey oder ein "
-    "Autoclicker).\n\nMakros und Automatisierung sind laut Roblox-Regeln nicht erlaubt. Wer sie nutzt, riskiert "
-    "eine Sperre – auf eigene Verantwortung.\n\nTrotzdem einschalten?":
-        "The automation clicks in Roblox by itself (mouse clicks and wheel via SendInput, like AutoHotkey or an "
-        "autoclicker).\n\nMacros and automation are not allowed by the Roblox rules. Using them risks a ban – at "
-        "your own risk.\n\nTurn it on anyway?",
     "Läuft schon – erst „Stopp“.": "Already running – press “Stop” first.",
     "Hin navigieren: {target}": "Navigate to: {target}",
     "Pets rollen: {world}": "Roll pets: {world}",
@@ -959,4 +934,36 @@ EN: dict[str, str] = {
     "Abgebrochen (Esc).": "Cancelled (Esc).",
     "Abgebrochen – Maus wurde bewegt.": "Cancelled – the mouse was moved.",
     "Abgebrochen – Roblox ist nicht mehr im Vordergrund.": "Cancelled – Roblox is no longer in the foreground.",
+    # 0.9.5-beta.2: Anti-AFK nach dem AutoHotkey-Skript des Eigentümers
+    "Anti-AFK an – alle {minutes} Min. kurz zu Roblox, 4× Esc, zurück.":
+        "Anti-AFK on – every {minutes} min briefly to Roblox, 4× Esc, back.",
+    "Anti-AFK: Roblox aktiv gehalten ({info})": "Anti-AFK: kept Roblox active ({info})",
+    "nächstes Anti-AFK in {time}": "next anti-AFK in {time}",
+    # 0.9.5-beta.2: Pets sofort schließen, Anti-AFK ohne Warten/Minimieren
+    "Auto-Roll läuft im Hintergrund – schließe das Menü.": "Auto-roll keeps running in the background – closing the menu.",
+    "Klickt nach „Auto!“ gleich „CLOSE“ – Auto-Roll läuft im Hintergrund weiter.":
+        "Clicks “CLOSE” right after “Auto!” – auto-roll keeps running in the background.",
+    "Öffnet Menüs im Spiel anhand der mitgelieferten Oberflächen-Karte: Teleporter auf, zur Welt scrollen, Symbol "
+    "anklicken, Titel prüfen. „Pets rollen“ öffnet das Roll-Menü der Welt, drückt „Auto!“ und schließt das Menü "
+    "gleich wieder – Auto-Roll läuft im Hintergrund weiter. Kein Laufen, kein Teleportieren.\n\nNot-Aus: Maus "
+    "bewegen, Esc oder „Stopp“. Roblox muss sichtbar sein (nicht minimiert) und wird dafür nach vorne geholt.\n\n"
+    "Hinweis: Makros sind laut Roblox-Regeln nicht erlaubt – Nutzung auf eigene Verantwortung.":
+        "Opens in-game menus using the bundled UI map: open the teleporter, scroll to the world, click the icon, "
+        "check the title. “Roll pets” opens the world's roll menu, presses “Auto!” and closes the menu right away – "
+        "auto-roll keeps running in the background. No walking, no teleporting.\n\nEmergency stop: move the mouse, "
+        "Esc or “Stop”. Roblox must be visible (not minimized) and is brought to the front for this.\n\nNote: macros "
+        "are not allowed by the Roblox rules – use at your own risk.",
+    "Holt alle paar Minuten jedes Roblox-Fenster kurz nach vorne (minimierte bleiben danach offen), drückt 4× Esc "
+    "und wechselt zurück – gegen die Trennung nach 20 Minuten. Abstand: Einstellungen → Anti-AFK.":
+        "Every few minutes briefly brings each Roblox window to the front (minimized ones stay open afterwards), "
+        "presses Esc 4 times and switches back – against the disconnect after 20 minutes. Interval: Settings → "
+        "Anti-AFK.",
+    "Einschalten in der Kopfzeile. Holt alle paar Minuten jedes Roblox-Fenster kurz nach vorne (minimierte werden "
+    "wiederhergestellt und bleiben offen, damit die Erkennung läuft), drückt 4× Esc – das Roblox-Menü geht auf und "
+    "wieder zu – und wechselt sofort zurück. Danach wird der Arbeitsspeicher von Roblox geleert.\n\nHinweis: Makros "
+    "sind laut Roblox-Regeln nicht erlaubt – Nutzung auf eigene Verantwortung.":
+        "Turn it on in the header. Every few minutes briefly brings each Roblox window to the front (minimized ones "
+        "are restored and stay open so recognition keeps working), presses Esc 4 times – the Roblox menu opens and "
+        "closes again – and switches right back. Afterwards Roblox's memory is trimmed.\n\nNote: macros are not "
+        "allowed by the Roblox rules – use at your own risk.",
 }

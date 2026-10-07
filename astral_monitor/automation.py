@@ -23,6 +23,14 @@ OPEN_TIMEOUT = 5.0        # so lange darf ein Menü zum Öffnen brauchen
 SCROLL_NOTCHES = 3        # Mausrad-Rasten je Schritt
 MAX_SCROLLS = 60
 USER_MOVE_PX = 25         # Maus so weit von der gesetzten Stelle = der Nutzer greift ein -> Stopp
+AUTO_SETTLE = 0.8         # nach „Auto!“ kurz warten, dann schließen (Auto-Roll läuft im Hintergrund weiter)
+
+
+_ACTIVE = threading.Event()    # ein Makro-Ablauf läuft gerade (Anti-AFK wartet dann)
+
+
+def macro_running() -> bool:
+    return _ACTIVE.is_set()
 
 
 class Stop(Exception):
@@ -67,14 +75,15 @@ class Navigator:
     def navigate(self, target: str) -> bool:
         return self.start(tr("Hin navigieren: {target}", target=target), lambda: self._open(self._window(target)))
 
-    def pets_auto(self, world: str) -> bool:
-        return self.start(tr("Pets rollen: {world}", world=world), lambda: self._pets_auto(world))
+    def pets_auto(self, world: str, close_after: bool = True) -> bool:
+        return self.start(tr("Pets rollen: {world}", world=world), lambda: self._pets_auto(world, close_after))
 
     def close_menu(self) -> bool:
         return self.start(tr("Menü schließen"), self._close_any)
 
     def _run(self, label: str, job: Callable[[], None]) -> None:
         self.log("▶ " + label)
+        _ACTIVE.set()
         try:
             self._prepare()
             job()
@@ -84,6 +93,7 @@ class Navigator:
         except Exception as exc:  # noqa: BLE001 – nie den Thread hart abbrechen lassen
             self.log("✖ " + tr("Fehler: {error}", error=exc))
         finally:
+            _ACTIVE.clear()
             if self._source is not None:
                 try:
                     self._source.stop()
@@ -276,7 +286,7 @@ class Navigator:
             time.sleep(0.6)
         raise Stop(tr("Menü ließ sich nicht schließen."))
 
-    def _pets_auto(self, world: str) -> None:
+    def _pets_auto(self, world: str, close_after: bool = True) -> None:
         window = self._window(f"{world} Pets-Roll")
         self._open(window)
         auto = self.map.element(window, "Auto!")
@@ -288,6 +298,18 @@ class Navigator:
             raise Stop(tr("„Auto!“ fehlt in der Karte."))
         self.log(tr("Klicke „Auto!“."))
         self._click_roi(auto["roi"])
+        if close_after:
+            self._close_after_auto(window)
+
+    def _close_after_auto(self, window: dict) -> None:
+        """Nach „Auto!“ sofort schließen: das Spiel rollt im Hintergrund weiter (bis die Yen alle sind). Warten wäre
+        unnötig lang (Wunsch des Eigentümers 07.10.2026)."""
+        close = self.map.close_element(window)
+        if close is None:
+            return                                        # Karte unvollständig: offen lassen
+        time.sleep(AUTO_SETTLE)                           # Spiel den Klick auf „Auto!“ verarbeiten lassen
+        self.log(tr("Auto-Roll läuft im Hintergrund – schließe das Menü."))
+        self._click_roi(close["roi"])
 
     # ------------------------------------------------------------------ Eingaben (nur mit Roblox vorne)
     def _check(self) -> None:

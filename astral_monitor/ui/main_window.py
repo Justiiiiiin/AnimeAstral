@@ -71,7 +71,13 @@ class MainWindow(QMainWindow):
         self._ui_calls: "queue.Queue[Callable[[], None]]" = queue.Queue()
         self._status_key = None
         self.setWindowTitle(f"Anime Astral Monitor {__version__}")
-        self.resize(1180, 800)
+        # etwas größer als der Entwurf (1180 × 800), vor allem höher: auf der Startseite ist so alles zu sehen
+        screen = QApplication.primaryScreen()
+        avail = screen.availableGeometry() if screen is not None else None
+        width, height = 1260, 900
+        if avail is not None:
+            width, height = min(width, int(avail.width() * 0.95)), min(height, int(avail.height() * 0.92))
+        self.resize(width, height)
         self.setMinimumSize(760, 520)              # kleiner geht, weil die Oberfläche mitskaliert (theme.set_scale)
         self._scale_timer = QTimer(self)
         self._scale_timer.setSingleShot(True)
@@ -108,8 +114,9 @@ class MainWindow(QMainWindow):
         top.addWidget(self.top_toast, 1)
         top.addStretch(1)
         afk_label = label(tr("Anti-AFK"), "muted")
-        afk_label.setToolTip(tr("Wechselt alle paar Minuten kurz zu Roblox, drückt einmal die Leertaste und wechselt "
-                                "zurück – gegen die Trennung nach 20 Minuten. Abstand: Einstellungen → Anti-AFK."))
+        afk_label.setToolTip(tr("Holt alle paar Minuten jedes Roblox-Fenster kurz nach vorne (minimierte bleiben danach offen), "
+                                "drückt 4× Esc und wechselt zurück – gegen die Trennung nach 20 Minuten. Abstand: "
+                                "Einstellungen → Anti-AFK."))
         self.afk_info = label("", "small")
         self.afk_switch = ToggleSwitch()
         self.afk_switch.setToolTip(afk_label.toolTip())
@@ -572,13 +579,13 @@ class MainWindow(QMainWindow):
             pass
         if self.afk_switch.isChecked() != on:
             self.afk_switch.setChecked(on)
-        self.show_toast(tr("Anti-AFK an – alle {minutes} Min. kurz zu Roblox, Leertaste, zurück.",
+        self.show_toast(tr("Anti-AFK an – alle {minutes} Min. kurz zu Roblox, 4× Esc, zurück.",
                            minutes=self.engine.settings.anti_afk_minutes) if on else tr("Anti-AFK aus"))
         self._update_afk_info()
 
     def _update_afk_info(self) -> None:
         left = self.engine.anti_afk.seconds_left()
-        text = "" if left is None else tr("nächster Sprung in {time}", time=messages.fmt_duration(left))
+        text = "" if left is None else tr("nächstes Anti-AFK in {time}", time=messages.fmt_duration(left))
         if self.afk_info.text() != text:
             self.afk_info.setText(text)
         text = self.engine.rejoin.info()

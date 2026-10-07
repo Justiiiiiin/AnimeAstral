@@ -12,7 +12,7 @@ from .. import messages
 from ..i18n import dec, tr
 from ..settings import order_raids
 from . import theme
-from .widgets import Card, ComboBox, EmptyState, QuestRow, StatCard, bgr_to_pixmap, label, smooth
+from .widgets import Card, ComboBox, EmptyState, QuestRow, StatCard, label, smooth
 
 LEVEL_TOKENS = {"ok": "accent", "warn": "warn", "error": "danger", "info": "info"}
 
@@ -35,7 +35,6 @@ class MonitorPage(QWidget):
         super().__init__()
         self.main = main
         self.engine = main.engine
-        self._last_preview_id = None
         self._quest_rows: list[QuestRow] = []
         self._last_snap = 0.0
         self._was_running = None
@@ -48,7 +47,7 @@ class MonitorPage(QWidget):
         head = QHBoxLayout()
         titles = QVBoxLayout()
         titles.addWidget(label(tr("Überwachung"), "h1"))
-        self.subtitle = label("", "muted")
+        self.subtitle = label("", "muted", wrap=True)
         titles.addWidget(self.subtitle)
         head.addLayout(titles, 1)
         raid_box = QVBoxLayout()
@@ -87,18 +86,19 @@ class MonitorPage(QWidget):
             kpis.addWidget(card, 1)
         root.addLayout(kpis)
 
-        # Mitte
+        # Mitte: links Makro + Ereignisse, rechts Live-Erkennung + Quests (Wunsch des Eigentümers 07.10.2026)
         mid = QHBoxLayout()
         theme.track_spacing(mid, 16)
         left = QVBoxLayout()
         theme.track_spacing(left, 16)
+        right = QVBoxLayout()
+        theme.track_spacing(right, 16)
 
-        live = Card(tr("Live-Erkennung"))
-        self.preview = label(tr("Hier erscheint nach dem Start der Wellenzähler aus dem Spiel."), "preview")
-        self.preview.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.preview.setWordWrap(True)
-        theme.track_min_height(self.preview, 70)
-        live.body.addWidget(self.preview)
+        from .automation_card import AutomationCard
+        self.macro = AutomationCard(main)
+        left.addWidget(self.macro)
+
+        live = Card(tr("Live-Erkennung"))                 # ohne Vorschaubild: Zahl, Balken, Kurzinfos
         self.wave = label("–", "wave")
         self.wave.setAlignment(Qt.AlignmentFlag.AlignCenter)
         live.body.addWidget(self.wave)
@@ -106,16 +106,16 @@ class MonitorPage(QWidget):
         self.wave_bar.setRange(0, 100)
         live.body.addWidget(self.wave_bar)
         info = QHBoxLayout()
-        self.i_read = label("", "small")
-        self.i_mode = label("", "small")
+        self.i_read = label("", "small", wrap=True)
+        self.i_mode = label("", "small", wrap=True)
         for lbl in (self.i_read, self.i_mode):
             info.addWidget(lbl, 1)
         live.body.addLayout(info)
-        self.status_line = label("", "muted")
+        self.status_line = label("", "muted", wrap=True)
         live.body.addWidget(self.status_line)
-        self.i_raid = label("", "small")
-        self.i_proc = label("", "small")
-        self.i_self = label("", "small")
+        self.i_raid = label("", "small", wrap=True)
+        self.i_proc = label("", "small", wrap=True)
+        self.i_self = label("", "small", wrap=True)
         live.body.addWidget(self.i_raid)
         live.body.addWidget(self.i_proc)
         live.body.addWidget(self.i_self)
@@ -131,7 +131,7 @@ class MonitorPage(QWidget):
             self._cpu_count = psutil.cpu_count() or 1
         except Exception:
             self._self_proc = None
-        left.addWidget(live)
+        right.addWidget(live)
 
         quests = Card(tr("Quests"))
         self.quest_box = QVBoxLayout()
@@ -139,18 +139,26 @@ class MonitorPage(QWidget):
         self.quest_empty = EmptyState("quests", tr("Noch keine Quests gelesen."))
         self.quest_box.addWidget(self.quest_empty)
         quests.body.addLayout(self.quest_box)
-        left.addWidget(quests)
-        left.addStretch(1)
-        mid.addLayout(left, 3)
+        right.addWidget(quests)
+        right.addStretch(1)
 
         events = Card(tr("Ereignisse"))
         self.events_empty = EmptyState("events", tr("Noch keine Ereignisse – Start, Raids, Alarme und Rejoins "
                                                     "erscheinen hier."))
         events.body.addWidget(self.events_empty)
-        self.events = QListWidget()
+        self.events = QListWidget()                       # kompakt: eine Zeile je Ereignis, lange Texte gekürzt
+        self.events.setObjectName("events")
+        self.events.setWordWrap(False)
+        self.events.setTextElideMode(Qt.TextElideMode.ElideRight)
+        self.events.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)   # kürzen statt scrollen
+        self.events.setUniformItemSizes(True)
+        self.events.setSpacing(0)
         smooth(self.events)
+        theme.track_min_height(self.events, 90)
         events.body.addWidget(self.events, 1)
-        mid.addWidget(events, 2)
+        left.addWidget(events, 1)
+        mid.addLayout(left, 3)
+        mid.addLayout(right, 2)
         root.addLayout(mid, 1)
 
     def _raid_chosen(self, _index: int) -> None:
@@ -185,8 +193,9 @@ class MonitorPage(QWidget):
 
     # ---------------------------------------------------------------- Ereignisse
     def add_event(self, data: dict) -> None:
-        stamp = time.strftime("%H:%M:%S", time.localtime(data.get("ts", time.time())))
-        item = QListWidgetItem(f"{stamp}   {data['text']}")
+        stamp = time.strftime("%H:%M", time.localtime(data.get("ts", time.time())))
+        item = QListWidgetItem(f"{stamp}  {data['text']}")
+        item.setToolTip(time.strftime("%H:%M:%S", time.localtime(data.get("ts", time.time()))) + "  " + data["text"])
         item.setData(Qt.ItemDataRole.UserRole, data.get("level", "info"))
         item.setForeground(QColor(theme.color(LEVEL_TOKENS.get(data.get("level", "info"), "info"))))
         self.events.insertItem(0, item)
@@ -271,9 +280,6 @@ class MonitorPage(QWidget):
             except Exception:
                 self.i_self.setText("")
 
-        if st.preview is not None and id(st.preview) != self._last_preview_id:
-            self._last_preview_id = id(st.preview)
-            self.preview.setPixmap(bgr_to_pixmap(st.preview, 360))
         self._update_quests(st.quests)
 
     def _update_quests(self, quests: list) -> None:
