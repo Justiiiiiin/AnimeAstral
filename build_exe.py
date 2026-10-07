@@ -238,6 +238,7 @@ def main() -> int:
         "--onedir",                           # Ordner statt Einzeldatei: startet schneller, weniger Virenscanner-Alarme
         "--icon", str(ROOT / "assets" / "app.ico"),
         "--add-data", f"{ROOT / 'assets'}{os.pathsep}assets",
+        "--add-data", f"{ROOT / 'CHANGELOG.md'}{os.pathsep}.",      # „Was ist neu“ nach einem Update
         "--collect-submodules", "astral_monitor",
         "--distpath", str(ROOT / "dist"),
         "--workpath", str(ROOT / "build"),

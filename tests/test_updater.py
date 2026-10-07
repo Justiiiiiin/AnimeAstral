@@ -177,3 +177,17 @@ class ChangelogTests(unittest.TestCase):
         self.assertIsNone(notes.section("9.9.9", "## 1.0\n- x\n"))
         self.assertEqual(notes.section("1.0", "## 1.0\n### Neu\n- x\n## 0.9\n- y\n"), "#### Neu\n- x")
         self.assertTrue(re.search(r"^## 0\.5\.0", (root / "CHANGELOG.md").read_text(encoding="utf-8"), re.M))
+
+
+class WhatsNewTests(unittest.TestCase):
+    def test_highlights_and_when(self):
+        from astral_monitor import changelog
+        from astral_monitor.version import __version__
+        text = "## 1.0.0\n\n### ✨ Neu\n- A\n- B\n\n### 🐞 Behoben\n- C\n\n## 0.9.0\n- alt\n"
+        self.assertEqual(changelog.highlights("1.0.0", 2, text), ["A", "B"])
+        self.assertEqual(changelog.highlights("1.0.0", 9, text), ["A", "B", "C"])
+        self.assertTrue(changelog.highlights(__version__))              # mitgelieferte CHANGELOG.md hat die Version
+        from astral_monitor.ui.whats_new import should_show
+        self.assertTrue(should_show("0.7.5", True))                      # Update
+        self.assertFalse(should_show(__version__, True))                 # schon gesehen
+        self.assertFalse(should_show("", False))                         # Neuinstallation

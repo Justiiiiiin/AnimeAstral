@@ -913,6 +913,10 @@ EN: dict[str, str] = {
     "Was hast du erwartet?": "What did you expect?",
     "Einstellung suchen …": "Search settings …",
     "Keine Einstellung gefunden.": "No setting found.",
+    "Was ist neu": "What's new",
+    "Neu in Version {version}": "New in version {version}",
+    "Alle Änderungen …": "All changes …",
+    "Los geht's": "Let's go",
     # Saison-Designs (0.7.2)
     "Kürbisnacht": "Pumpkin Night",
     "Frost": "Frost",

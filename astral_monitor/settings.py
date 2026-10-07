@@ -163,6 +163,7 @@ class Settings:
     update_check: bool = True
     update_last_check: float = 0.0
     update_skip: str = ""
+    seen_version: str = ""              # „Was ist neu“ zuletzt für diese Version gezeigt
     icons_refreshed: str = ""           # Version, für die der Windows-Symbolspeicher erneuert wurde
     update_beta: bool = False           # Betas (Vorabversionen) anbieten
     rpc_enabled: bool = False

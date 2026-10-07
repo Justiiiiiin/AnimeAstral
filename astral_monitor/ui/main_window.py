@@ -229,6 +229,8 @@ class MainWindow(QMainWindow):
         self._force_close = False
         if not engine.settings.wizard_done:
             QTimer.singleShot(500, self.open_wizard)        # beim ersten Start: Einrichtungsassistent
+        else:
+            QTimer.singleShot(1500, self._whats_new)        # nach einem Update: kurz „Was ist neu“
         QTimer.singleShot(4000, updater.cleanup_downloads)               # Reste früherer Updates entfernen
         QTimer.singleShot(5000, self._refresh_icons_once)
         QTimer.singleShot(6000, lambda: self.check_updates(False))     # leise im Hintergrund (höchstens alle 6 Stunden)
@@ -305,6 +307,11 @@ class MainWindow(QMainWindow):
         tray.setToolTip(f"Anime Astral Monitor {__version__}")
         tray.show()
         return tray
+
+    def _whats_new(self) -> None:
+        if self.isVisible():                            # nicht aufdrängen, wenn das Programm im Tray startet
+            from .whats_new import show_if_updated
+            show_if_updated(self)
 
     def _refresh_icons_once(self) -> None:
         """Nach jedem Update einmal: Windows-Symbolspeicher erneuern (sonst bleibt das alte Logo an Verknüpfungen)."""
@@ -963,6 +970,7 @@ class MainWindow(QMainWindow):
 
     def finish_wizard(self, start: bool) -> None:
         self.engine.settings.wizard_done = True
+        self.engine.settings.seen_version = __version__        # Neuinstallation: kein „Was ist neu“
         self.save_settings(show_message=False)
         if start:
             self.toggle_monitoring()
