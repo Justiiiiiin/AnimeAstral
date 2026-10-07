@@ -299,8 +299,8 @@ class StatsPage(QWidget):
         since, raid = self._since(), self._raid()
         s = stats.summary(since, raid)
 
-        self.k_attempts.set_value(messages.fmt_int(s.attempts))
-        self.k_waves.set_value(messages.fmt_int(s.waves_total))
+        self.k_attempts.set_value(messages.fmt_k(s.attempts))
+        self.k_waves.set_value(messages.fmt_k(s.waves_total))
         self.k_wph.set_value(_num(s.waves_per_hour, 0))
         self.k_avg_wave.set_value(_num(s.avg_wave_all))
         self.k_best_wave.set_value(str(stats.best_wave(raid) or "–"))
@@ -309,7 +309,7 @@ class StatsPage(QWidget):
                                 dur=_dur(s.avg_duration_all),
                                 spw="–" if s.sec_per_wave is None else dec(f"{s.sec_per_wave:.1f} s"),
                                 aph=_num(s.attempts_per_hour),
-                                all=messages.fmt_int(stats.snapshot().total_attempts)))
+                                all=messages.fmt_k(stats.snapshot().total_attempts)))
         wall = stats.wall(raid)
         self.wall_label.setVisible(wall is not None)
         if wall:
@@ -339,7 +339,7 @@ class StatsPage(QWidget):
         self._week_text = PARAGRAPH + tr("Diese Woche: {time} · {attempts} Versuche · {waves} Wellen",
                                          time=fmt_hours(sum(d["farm_s"] for d in week)),
                                          attempts=sum(d["attempts"] for d in week),
-                                         waves=messages.fmt_int(sum(d["waves"] for d in week)))
+                                         waves=messages.fmt_k(sum(d["waves"] for d in week)))
         if self.charts.currentIndex() == 3:
             self._chart_changed(3)
 
@@ -348,7 +348,7 @@ class StatsPage(QWidget):
             per_rows.append([
                 SortItem(item["raid"], item["raid"].lower()),
                 SortItem(str(item["attempts"]), item["attempts"], right=True),
-                SortItem(messages.fmt_int(item["waves_total"]), item["waves_total"], right=True),
+                SortItem(messages.fmt_k(item["waves_total"]), item["waves_total"], right=True),
                 SortItem(_num(item["avg_wave"]), item["avg_wave"], right=True),
                 SortItem(str(item["best_wave"]), item["best_wave"], right=True),
                 SortItem(_dur(item["avg_duration_all"]), item["avg_duration_all"] or -1, right=True),

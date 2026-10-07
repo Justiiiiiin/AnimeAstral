@@ -185,7 +185,7 @@ class Engine:
         self._event(tr("Überwachung gestartet"), "info")
         self.publisher.request_update()
         self._notify("start_stop", tr("Monitor gestartet"), messages.COLOR_INFO,
-                     [(tr("Versuche gesamt"), messages.fmt_int(self.stats.snapshot().total_attempts), True),
+                     [(tr("Versuche gesamt"), messages.fmt_k(self.stats.snapshot().total_attempts), True),
                       (tr("Aufnahme"), source.name, True)])
 
     def stop(self) -> None:
@@ -208,8 +208,8 @@ class Engine:
         self._notify("start_stop", tr("Monitor beendet"), messages.COLOR_GRAY,
                      [(tr("Laufzeit"), messages.fmt_duration(uptime), True),
                       (tr("Versuche Session"), str(snap.session_attempts), True),
-                      (tr("Wellen Session"), messages.fmt_int(snap.session_waves), True),
-                      (tr("Versuche gesamt"), messages.fmt_int(snap.total_attempts), True)])
+                      (tr("Wellen Session"), messages.fmt_k(snap.session_waves), True),
+                      (tr("Versuche gesamt"), messages.fmt_k(snap.total_attempts), True)])
 
     def toggle_pause(self) -> bool:
         if self._pause.is_set():
@@ -692,8 +692,8 @@ class Engine:
         uptime = now - (self.state.started_at or now)
         fields = [(tr("Uptime"), messages.fmt_duration(uptime), True),
                   (tr("Versuche Session"), str(snap.session_attempts), True),
-                  (tr("Wellen Session"), messages.fmt_int(snap.session_waves), True),
-                  (tr("Versuche gesamt"), messages.fmt_int(snap.total_attempts), True)]
+                  (tr("Wellen Session"), messages.fmt_k(snap.session_waves), True),
+                  (tr("Versuche gesamt"), messages.fmt_k(snap.total_attempts), True)]
         quests = self.quest_tracker.snapshot()
         if self.settings.attach_quests and quests:
             fields.append((tr("Quests"), messages.quest_text(quests), False))
@@ -724,7 +724,7 @@ class Engine:
             self._burst_until = 0.0
             lines_txt = "\n".join(
                 f"• {c.quest.title}: {messages.fmt_int(c.old)} → **{messages.fmt_int(c.new)}**"
-                f"/{messages.fmt_int(c.quest.total) if c.quest.total else '?'}" for c in changes)
+                f"/{messages.fmt_k(c.quest.total) if c.quest.total else '?'}" for c in changes)
             self._notify("quest_update", tr("Quest-Fortschritt"), messages.COLOR_INFO,
                          [(tr("Änderungen"), lines_txt, False),
                           (tr("Alle Quests"), messages.quest_text(self.state.quests), False)])

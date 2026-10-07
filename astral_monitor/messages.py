@@ -54,11 +54,26 @@ def fmt_int(value: int) -> str:
     return thousands(f"{value:,}")
 
 
+def fmt_k(value: int) -> str:
+    """Mengen kurz mit k/M: 950 → „950“, 18 109 → „18,1k“, 843 231 → „843k“, 1 250 000 → „1,25M“.
+    Zählstände (aktueller Wert bei Quests, Raid-Nummer) bleiben genau (fmt_int)."""
+    v = abs(value)
+    if v < 1000:
+        return str(value)
+    if v < 1_000_000:
+        n, unit = value / 1000, "k"
+    else:
+        n, unit = value / 1_000_000, "M"
+    digits = 0 if abs(n) >= 100 else 1 if abs(n) >= 10 or unit == "k" else 2
+    text = f"{n:.{digits}f}".rstrip("0").rstrip(".") if digits else f"{n:.0f}"
+    return dec(text) + unit
+
+
 def quest_text(quests: list[dict], limit: int = 6) -> str:
     lines = []
     for q in quests[:limit]:
         cur = "?" if q["cur"] is None else fmt_int(q["cur"])
-        tot = "?" if not q["total"] else fmt_int(q["total"])
+        tot = "?" if not q["total"] else fmt_k(q["total"])
         pct = f" ({q['percent']} %)" if q["percent"] is not None else ""
         lines.append(f"• {q['title']} — **{cur}/{tot}**{pct}")
     return "\n".join(lines) or "–"
@@ -138,8 +153,8 @@ def build_status(settings: Settings, snap: dict) -> dict:
     wph, avg_wave = snap.get("waves_per_hour"), snap.get("avg_wave")
     fields = [
         ("🔁 " + tr("Versuche"), f"**{snap.get('session_attempts', 0)}**\n-# "
-         + tr("gesamt {count}", count=fmt_int(snap.get("total_attempts", 0))), True),
-        ("🌊 " + tr("Wellen"), f"**{fmt_int(snap.get('session_waves', 0))}**", True),
+         + tr("gesamt {count}", count=fmt_k(snap.get("total_attempts", 0))), True),
+        ("🌊 " + tr("Wellen"), f"**{fmt_k(snap.get('session_waves', 0))}**", True),
         ("⚡ " + tr("Wellen/Std"), f"**{wph:.0f}**" if wph else "–", True),
         ("📈 " + tr("Ø Endwelle"), f"**{dec(f'{avg_wave:.1f}')}**" if avg_wave else "–", True),
         ("🏆 " + tr("Bestwelle"), f"**{snap['best_wave']}**" if snap.get("best_wave") else "–", True),

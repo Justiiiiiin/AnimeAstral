@@ -113,7 +113,7 @@ class RaidsPage(QWidget):
         attempts = summary.attempts
         best = self.engine.stats.best_wave(name)
         self.sel_stats.setText(tr("{attempts} Versuche · Bestwelle {best} · Ø Endwelle {avg}",
-                                  attempts=messages.fmt_int(attempts), best=best or "–",
+                                  attempts=messages.fmt_k(attempts), best=best or "–",
                                   avg=dec(f"{summary.avg_wave_all:.1f}") if summary.avg_wave_all else "–"))
         data = self.store.settings(name)
         trigger = data.get("trigger_offset")
