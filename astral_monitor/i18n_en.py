@@ -905,6 +905,12 @@ EN: dict[str, str] = {
     "Bild wählen …": "Choose image …",
     "Abdunkeln ": "Dim ",
     "Entfernen": "Remove",
+    # Über / Fehler melden (0.7.6)
+    "GitHub": "GitHub",
+    "Fehler melden": "Report a bug",
+    "Verwendete Komponenten": "Third-party components",
+    "Was ist passiert?": "What happened?",
+    "Was hast du erwartet?": "What did you expect?",
     # Saison-Designs (0.7.2)
     "Kürbisnacht": "Pumpkin Night",
     "Frost": "Frost",

@@ -1,7 +1,10 @@
 """Seite „Einstellungen": Roblox-Helfer, Überwachung, Programm."""
 from __future__ import annotations
 
+import platform
+import sys
 from pathlib import Path
+from urllib.parse import urlencode
 
 from PySide6.QtCore import QUrl, Qt
 from PySide6.QtGui import QDesktopServices
@@ -16,6 +19,15 @@ from . import theme
 from .server_dialog import ServerDialog
 from .widgets import (Card, ComboBox, DoubleSpinBox, InfoButton, SpinBox, columns, form_grid, label, section,
                       short_field, smooth)
+
+
+
+def bug_report_url(repo: str) -> str:
+    """Neue GitHub-Meldung, vorausgefüllt mit Version und System – ohne persönliche Daten (keine IDs, Links, Pfade)."""
+    body = "\n\n\n".join([f"**{tr('Was ist passiert?')}**", f"**{tr('Was hast du erwartet?')}**",
+                          f"---\nVersion {__version__} · {platform.system()} {platform.release()} "
+                          f"({platform.version()})"])
+    return f"https://github.com/{repo}/issues/new?" + urlencode({"title": "", "body": body})
 
 
 class SettingsPage(QWidget):
@@ -381,6 +393,28 @@ class SettingsPage(QWidget):
         data.body.addStretch(1)
         root.addLayout(columns(upd, data))
         root.addStretch(1)
+        root.addLayout(self._about_row())
+
+    # ------------------------------------------------------------------ Über (klein, ganz unten)
+    def _about_row(self) -> QHBoxLayout:
+        from .. import updater
+        row = QHBoxLayout()
+        theme.track_spacing(row, 14)
+        row.addWidget(label(f"Anime Astral Monitor {__version__}", "small"))
+        repo = updater.current_repo()
+        links = []
+        if repo:
+            links.append((tr("GitHub"), f"https://github.com/{repo}"))
+            links.append((tr("Fehler melden"), bug_report_url(repo)))
+        third = Path(sys.executable).resolve().parent / "THIRD_PARTY.txt"
+        if third.is_file():
+            links.append((tr("Verwendete Komponenten"), QUrl.fromLocalFile(str(third)).toString()))
+        for text, url in links:
+            link = label(f"<a href='{url}'>{text}</a>", "small")
+            link.setOpenExternalLinks(True)
+            row.addWidget(link)
+        row.addStretch(1)
+        return row
 
     # ------------------------------------------------------------------ Server-Favoriten
     def load_servers(self, s) -> None:
