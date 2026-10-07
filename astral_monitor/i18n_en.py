@@ -957,6 +957,7 @@ EN: dict[str, str] = {
         "available under ⋯ → View archive.",
     "Noch nichts zu archivieren": "Nothing to archive yet",
     "Archiviert ✓ – die Statistik beginnt neu": "Archived ✓ – statistics start over",
+    "Karte wird erstellt …": "Creating card …",
     "Was ist neu": "What's new",
     "Neu in Version {version}": "New in version {version}",
     "Alle Änderungen …": "All changes …",

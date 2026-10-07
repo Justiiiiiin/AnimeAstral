@@ -306,17 +306,23 @@ class Engine:
         self.publisher.request_resend()
 
     def send_report(self, since: Optional[float], raid: Optional[str], title: str, stats=None) -> bool:
-        """Statistik-Karte erzeugen und an Discord senden."""
-        if not self.settings.webhook_url:
+        """Statistik-Karte erzeugen und an Discord senden. Gezeichnet wird im Hintergrund (~0,2 s), damit weder die
+        Oberfläche noch die Erkennung wartet. Rückgabe: wird gesendet (Webhook und Ereignis eingeschaltet)."""
+        if not self.settings.webhook_url or not self.settings.events.get("report", {"send": True}).get("send"):
             return False
-        from .report_card import render_card
-        png = render_card(stats or self.stats, since, raid, title)
-        entry = self.settings.events.get("report", {"send": True})
-        if not entry.get("send"):
-            return False
-        payload, files = messages.build_message(self.settings, "report", title, messages.COLOR_OK,
-                                                image=("bericht.png", png, "image/png"))
-        self.sender.submit(payload, files)
+
+        def work() -> None:
+            from .report_card import render_card
+            try:
+                png = render_card(stats or self.stats, since, raid, title)
+            except Exception:
+                log.exception("Statistik-Karte konnte nicht gezeichnet werden")
+                return
+            payload, files = messages.build_message(self.settings, "report", title, messages.COLOR_OK,
+                                                    image=("bericht.png", png, "image/png"))
+            self.sender.submit(payload, files)
+
+        threading.Thread(target=work, name="card", daemon=True).start()
         return True
 
     def send_month(self, year: int, month: int, stats=None) -> bool:
@@ -324,11 +330,19 @@ class Engine:
         if not self.settings.webhook_url or not self.settings.events.get("report", {"send": True}).get("send"):
             return False
         from .report_card import month_title, render_month_card
-        png = render_month_card(stats or self.stats, year, month)
         title = "📅 " + tr("Monatsrückblick {month}", month=month_title(year, month))
-        payload, files = messages.build_message(self.settings, "report", title, messages.COLOR_INFO,
-                                                image=("monat.png", png, "image/png"))
-        self.sender.submit(payload, files)
+
+        def work() -> None:
+            try:
+                png = render_month_card(stats or self.stats, year, month)
+            except Exception:
+                log.exception("Monatsrückblick konnte nicht gezeichnet werden")
+                return
+            payload, files = messages.build_message(self.settings, "report", title, messages.COLOR_INFO,
+                                                    image=("monat.png", png, "image/png"))
+            self.sender.submit(payload, files)
+
+        threading.Thread(target=work, name="card", daemon=True).start()
         return True
 
     def _estimate(self, info: dict) -> tuple[Optional[float], str]:

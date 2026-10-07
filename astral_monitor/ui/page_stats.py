@@ -318,13 +318,8 @@ class StatsPage(QWidget):
                                               str(Path.home() / "astral-statistik.png"), tr("Bild (*.png)"))
         if not path:
             return
-        png = render_card(self.store, self._since(), self._raid(), self._report_title())
-        try:
-            Path(path).write_bytes(png)
-        except OSError as exc:
-            QMessageBox.critical(self, tr("Speichern"), tr("Konnte nicht speichern: {error}", error=exc))
-            return
-        self.main.show_toast(tr("Karte gespeichert ✓"))
+        store, since, raid, title = self.store, self._since(), self._raid(), self._report_title()
+        self._save_in_background(path, lambda: render_card(store, since, raid, title))
 
     @staticmethod
     def _month() -> tuple[int, int]:
@@ -341,12 +336,22 @@ class StatsPage(QWidget):
                                               str(Path.home() / f"astral-{year}-{month:02d}.png"), tr("Bild (*.png)"))
         if not path:
             return
-        try:
-            Path(path).write_bytes(render_month_card(self.store, year, month))
-        except OSError as exc:
-            QMessageBox.critical(self, tr("Speichern"), tr("Konnte nicht speichern: {error}", error=exc))
-            return
-        self.main.show_toast(tr("Karte gespeichert ✓"))
+        store = self.store
+        self._save_in_background(path, lambda: render_month_card(store, year, month))
+
+    def _save_in_background(self, path: str, render) -> None:
+        """Karte im Hintergrund zeichnen und speichern (~0,2 s) – die Oberfläche bleibt bedienbar."""
+        self.main.show_toast(tr("Karte wird erstellt …"))
+
+        def work() -> None:
+            try:
+                Path(path).write_bytes(render())
+                self.main.post(lambda: self.main.show_toast(tr("Karte gespeichert ✓")))
+            except OSError as exc:
+                self.main.post(lambda e=exc: QMessageBox.critical(self, tr("Speichern"),
+                                                                  tr("Konnte nicht speichern: {error}", error=e)))
+
+        threading.Thread(target=work, name="card", daemon=True).start()
 
     def _send_month(self) -> None:
         if not self.engine.send_month(*self._month(), stats=self.store):

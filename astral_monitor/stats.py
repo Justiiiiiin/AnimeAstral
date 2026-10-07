@@ -129,13 +129,6 @@ def farm_seconds(recs: list) -> float:
     return total
 
 
-def _opt_float(text) -> Optional[float]:
-    try:
-        return float(text) if text not in ("", None) else None
-    except ValueError:
-        return None
-
-
 def _mean(values) -> Optional[float]:
     values = [v for v in values if v is not None]
     return sum(values) / len(values) if values else None
