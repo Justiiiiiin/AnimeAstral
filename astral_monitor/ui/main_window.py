@@ -199,6 +199,8 @@ class MainWindow(QMainWindow):
         self.notes_btn.clicked.connect(self.open_notes)
         self._notes = None
         self._intro_done = False
+        from .spooky import SpookyScheduler
+        self._spooky = SpookyScheduler(self, lambda: self.engine.settings.ui_spooky)
         self.season_mark = QLabel()                     # Saison-Deko in der Seitenleiste (z. B. Kürbis)
         self.season_mark.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.season_mark.setVisible(False)
@@ -569,7 +571,8 @@ class MainWindow(QMainWindow):
                        zoom: Optional[int] = None, fit: Optional[bool] = None,
                        reduce_motion: Optional[bool] = None, accent: Optional[str] = None,
                        intro: Optional[bool] = None, background: Optional[str] = None,
-                       background_dim: Optional[int] = None, seasonal: Optional[bool] = None) -> None:
+                       background_dim: Optional[int] = None, seasonal: Optional[bool] = None,
+                       spooky: Optional[bool] = None) -> None:
         """Design, Farbschema und UI-Größe – sofort sichtbar und gespeichert (ohne Speichern-Leiste)."""
         s = self.engine.settings
         if design is not None:
@@ -590,6 +593,8 @@ class MainWindow(QMainWindow):
             s.ui_intro = intro
         if seasonal is not None:
             s.ui_seasonal = seasonal
+        if spooky is not None:
+            s.ui_spooky = spooky
         if accent is not None:
             s.ui_accent = accent
             theme.set_accent(accent)

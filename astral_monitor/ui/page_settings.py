@@ -265,6 +265,15 @@ class SettingsPage(QWidget):
                                      "gibt es auch jederzeit oben unter „Design“.")))
         srow.addStretch(1)
         look.body.addLayout(srow)
+        krow = QHBoxLayout()
+        self.spooky = QCheckBox(tr("Kürbisnacht-Überraschung"))
+        self.spooky.toggled.connect(lambda on: self.main.set_appearance(spooky=on))
+        krow.addWidget(self.spooky)
+        krow.addWidget(InfoButton(tr("Nur im Design „Kürbisnacht“: Ab und zu lugt kurz ein gruseliges Gesicht vom "
+                                     "unteren Fensterrand hervor – höchstens einmal pro Stunde, nur bei offenem "
+                                     "Fenster. Ein Klick darauf lässt es verschwinden.")))
+        krow.addStretch(1)
+        look.body.addLayout(krow)
         self.intro = QCheckBox(tr("Logo-Animation beim Start"))
         self.intro.toggled.connect(lambda on: self.main.set_appearance(intro=on))
         look.body.addWidget(self.intro)
@@ -605,7 +614,8 @@ class SettingsPage(QWidget):
 
     def _sync_look(self, s) -> None:
         """Bedienelemente der Darstellung auf den gespeicherten Stand setzen (ohne erneut auszulösen)."""
-        widgets = [self.design, self.zoom, self.auto_fit, self.reduce_motion, self.intro, self.bg_dim, self.seasonal] + [b for _p, b in self.zoom_buttons]
+        widgets = [self.design, self.zoom, self.auto_fit, self.reduce_motion, self.intro, self.bg_dim, self.seasonal,
+                   self.spooky] + [b for _p, b in self.zoom_buttons]
         widgets += self.mode_group.buttons() + self.accent_group.buttons()
         for w in widgets:
             w.blockSignals(True)
@@ -615,6 +625,7 @@ class SettingsPage(QWidget):
         self.reduce_motion.setChecked(s.ui_reduce_motion)
         self.intro.setChecked(s.ui_intro)
         self.seasonal.setChecked(s.ui_seasonal)
+        self.spooky.setChecked(s.ui_spooky)
         self.bg_dim.setValue(s.ui_background_dim)
         self.bg_dim.setEnabled(bool(s.ui_background))
         self.bg_remove.setEnabled(bool(s.ui_background))

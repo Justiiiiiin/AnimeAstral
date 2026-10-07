@@ -173,3 +173,12 @@ class SeasonDecorTests(unittest.TestCase):
         for _ in range(400):                                   # 80 s Bewegung
             seasonal.step(leaves, 0, 0.2)
         self.assertTrue(all(-0.06 <= f.y <= 1.05 for f in leaves))   # fallen unten raus, oben wieder rein
+
+
+class SpookyTests(unittest.TestCase):
+    def test_rare_enough(self):
+        import random
+        from astral_monitor.ui import spooky
+        rnd = random.Random(1)
+        self.assertTrue(all(spooky.FIRST_MIN <= spooky.next_delay(True, rnd) for _ in range(50)))
+        self.assertTrue(all(spooky.next_delay(False, rnd) >= 3600 for _ in range(50)))   # höchstens 1× pro Stunde

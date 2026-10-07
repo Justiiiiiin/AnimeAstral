@@ -946,6 +946,11 @@ EN: dict[str, str] = {
     "Kürbisnacht": "Pumpkin Night",
     "Frost": "Frost",
     "Saison-Designs automatisch": "Seasonal designs automatically",
+    "Kürbisnacht-Überraschung": "Pumpkin Night surprise",
+    "Nur im Design „Kürbisnacht“: Ab und zu lugt kurz ein gruseliges Gesicht vom unteren Fensterrand hervor – "
+    "höchstens einmal pro Stunde, nur bei offenem Fenster. Ein Klick darauf lässt es verschwinden.":
+        "Only in the “Pumpkin Night” design: now and then a creepy face briefly peeks up from the bottom edge of the "
+        "window – at most once an hour, only while the window is open. Click it to make it vanish.",
     "Vom 15. Oktober bis 2. November erscheint „Kürbisnacht“, vom 1. Dezember bis 6. Januar „Frost“ – danach "
     "automatisch wieder dein gewähltes Design. Beide gibt es auch jederzeit oben unter „Design“.":
         "From October 15 to November 2 “Pumpkin Night” appears, from December 1 to January 6 “Frost” – afterwards "

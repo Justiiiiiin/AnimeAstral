@@ -339,30 +339,31 @@ QFrame#statusbox { border-radius: 14px; }
 
 # Saison-Designs (0.7.2): Nebula-Aufbau mit eigenen Farben
 _HALLOWEEN_DARK = dict(_NEBULA_DARK, **{
-    "bg": "#0E0A12", "sidebar": "#120C17", "topbar": "#0E0A12", "card": "#17101D", "cardTop": "#1E1526",
-    "border": "#2A1D33", "borderA": "#4A2B5E", "borderB": "#2A1B33", "line": "#1C1424", "field": "#120D17",
-    "control": "#21162A", "controlHover": "#2B1D36", "controlBorder": "#382646", "navHover": "#1E1426",
-    "navActive": "#2A1834", "softA": "#3A2010", "softB": "#2B1640", "edge": "#6B3F8A", "select": "#3B2450",
-    "accent": "#FF8A2A", "accent2": "#A45BFF", "accentHover": "#FFA04F", "accent2Hover": "#B97BFF",
-    "onAccent": "#1A0D02", "knobOn": "#1A0D02", "okBg": "#1E140D", "okBorder": "#5A3415", "bar": "#8A4A1E",
-    "stepDone": "#8A4A1E", "section": "#A28AB8", "scroll": "#2E2238", "warn": "#FFD25A",
-    "cardGlass": "#D817101D", "cardTopGlass": "#D81E1526",          # leicht durchscheinend (Deko dahinter)
+    "bg": "#120A1A", "sidebar": "#170C21", "topbar": "#120A1A", "card": "#1F1029", "cardTop": "#2A1538",
+    "border": "#3A1F4D", "borderA": "#7A3FA8", "borderB": "#3A1F4D", "line": "#26152F", "field": "#140A1C",
+    "control": "#2A1638", "controlHover": "#36204A", "controlBorder": "#4A2A63", "navHover": "#2A1638",
+    "navActive": "#3D1D52", "softA": "#5A2A0E", "softB": "#3F1A63", "edge": "#B5651D", "select": "#5A2C7A",
+    "accent": "#FF7A1A", "accent2": "#B04DFF", "accentHover": "#FF9442", "accent2Hover": "#C470FF",
+    "onAccent": "#1A0A00", "knobOn": "#1A0A00", "okBg": "#2A1408", "okBorder": "#7A3A12", "bar": "#C0561C",
+    "stepDone": "#C0561C", "section": "#C89BF0", "muted": "#B8A5C9", "scroll": "#3E2550", "warn": "#FFD25A",
+    "cardGlass": "#D81F1029", "cardTopGlass": "#D82A1538",          # leicht durchscheinend (Deko dahinter)
 })
 _WINTER_DARK = dict(_NEBULA_DARK, **{
-    "bg": "#070D16", "sidebar": "#0A1220", "topbar": "#070D16", "card": "#0E1726", "cardTop": "#132036",
-    "border": "#1B2A40", "borderA": "#2B4566", "borderB": "#19263A", "line": "#122033", "field": "#0A1321",
-    "control": "#132034", "controlHover": "#1A2A42", "controlBorder": "#24385A", "navHover": "#111D30",
-    "navActive": "#15273F", "softA": "#12324A", "softB": "#1B2A4D", "edge": "#3D6A99", "select": "#1F3B5E",
-    "accent": "#8FD8FF", "accent2": "#B7A8FF", "accentHover": "#AEE3FF", "accent2Hover": "#CABEFF",
-    "onAccent": "#05121D", "knobOn": "#05121D", "okBg": "#0B1E2B", "okBorder": "#1F4D6B", "bar": "#2E6E99",
-    "stepDone": "#2E6E99", "section": "#8AA6C8", "scroll": "#1C2D45",
-    "cardGlass": "#D80E1726", "cardTopGlass": "#D8132036",
+    "bg": "#06111F", "sidebar": "#081628", "topbar": "#06111F", "card": "#0C1D33", "cardTop": "#122A48",
+    "border": "#1C3557", "borderA": "#3C78B8", "borderB": "#1C3557", "line": "#0F2238", "field": "#081A2E",
+    "control": "#11253F", "controlHover": "#18304F", "controlBorder": "#25456B", "navHover": "#10233B",
+    "navActive": "#16345A", "softA": "#14466B", "softB": "#23336B", "edge": "#5AA8E6", "select": "#1F4C7A",
+    "accent": "#7FE0FF", "accent2": "#A99BFF", "accentHover": "#A3EAFF", "accent2Hover": "#BFB4FF",
+    "onAccent": "#04121D", "knobOn": "#04121D", "okBg": "#0A2236", "okBorder": "#2A6A96", "bar": "#2F86C0",
+    "stepDone": "#2F86C0", "section": "#9CC4EC", "muted": "#93A9C4", "scroll": "#1F3A5C",
+    "cardGlass": "#D80C1D33", "cardTopGlass": "#D8122A48",
 })
 _WINTER_LIGHT = dict(_NEBULA_LIGHT, **{
-    "bg": "#F2F7FC", "topbar": "#F2F7FC", "accent": "#1C8FD0", "accent2": "#6A7BFF", "accentHover": "#2AA0E0",
-    "accent2Hover": "#7D8CFF", "softA": "#DDF0FB", "softB": "#E5E8FD", "edge": "#A9CFEA", "bar": "#9CCBEA",
-    "select": "#CFE7F7", "okBg": "#E6F4FB", "okBorder": "#A9D4EC", "navActive": "#E3F0FA", "stepDone": "#9CCBEA",
-    "cardGlass": "#E0FFFFFF", "cardTopGlass": "#E0FBFBFF",
+    "bg": "#EAF4FD", "topbar": "#EAF4FD", "sidebar": "#F5FAFF", "border": "#D3E4F3", "accent": "#0B86D6",
+    "accent2": "#5E6CFF", "accentHover": "#1C97E6", "accent2Hover": "#7280FF", "softA": "#CDEBFC",
+    "softB": "#DCE0FE", "edge": "#8CC3EC", "bar": "#7DBDEB", "select": "#C2E1F7", "okBg": "#E2F2FC",
+    "okBorder": "#9CCDEE", "navActive": "#D6EBFB", "stepDone": "#7DBDEB", "section": "#5D86AD",
+    "cardGlass": "#E6FFFFFF", "cardTopGlass": "#E6F7FBFF",
 })
 
 # OLED (0.7.6): echtes Schwarz, Nebula-Aufbau
