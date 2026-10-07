@@ -157,19 +157,37 @@ class StatsStore:
     # ------------------------------------------------------------------ Datei
     def _load(self) -> None:
         migrate = False
+        hours: dict = {}                                 # „JJJJ-MM-TT HH“ -> Zeitstempel der Stunde (Ortszeit)
         try:
             with self._path.open(newline="", encoding="utf-8") as fh:
-                reader = csv.DictReader(fh)
-                migrate = reader.fieldnames is not None and "raid" not in reader.fieldnames
+                reader = csv.reader(fh)                  # schneller als DictReader (Spalten per Index)
+                header = next(reader, None) or []
+                migrate = bool(header) and "raid" not in header
+                col = {name: header.index(name) for name in CSV_FIELDS if name in header}
+                width = len(header)
+
+                def cell(row, name, default=""):
+                    i = col.get(name)
+                    return row[i] if i is not None and i < len(row) else default
+                current = header == CSV_FIELDS           # heutiges Format: Spalten direkt entpacken (schnell)
+                append = self.records.append
                 for row in reader:
+                    if len(row) < width - 1:             # alte Zeilen ohne Raid-Spalte sind eine Spalte kürzer
+                        continue
                     try:
-                        ts = datetime.fromisoformat(row["ts_end"]).timestamp()    # ~10× schneller als strptime
-                        self.records.append(RunRecord(
-                            ts, _opt_float(row.get("duration_s")), _opt_float(row.get("cycle_s")),
-                            int(row.get("max_wave") or 0), int(row.get("total_waves") or 0),
-                            row.get("result", "ok") or "ok", row.get("note", "") or "",
-                            row.get("raid", "") or ""))
-                    except (KeyError, ValueError):
+                        if current and len(row) == 8:
+                            stamp, dur, cyc, wave, total, result, note, raid = row
+                        else:
+                            stamp, dur, cyc = cell(row, "ts_end"), cell(row, "duration_s"), cell(row, "cycle_s")
+                            wave, total = cell(row, "max_wave"), cell(row, "total_waves")
+                            result, note, raid = cell(row, "result", "ok"), cell(row, "note"), cell(row, "raid")
+                        base = hours.get(stamp[:13])
+                        if base is None:                 # Umrechnung in Ortszeit nur einmal je Stunde
+                            base = hours[stamp[:13]] = datetime.fromisoformat(stamp[:13] + ":00:00").timestamp()
+                        append(RunRecord(base + int(stamp[14:16]) * 60 + int(stamp[17:19]),
+                                         float(dur) if dur else None, float(cyc) if cyc else None,
+                                         int(wave or 0), int(total or 0), result or "ok", note, raid))
+                    except (IndexError, ValueError):
                         continue
         except FileNotFoundError:
             pass

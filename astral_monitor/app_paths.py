@@ -8,6 +8,9 @@ from pathlib import Path
 APP_NAME = "AnimeAstralMonitor"
 
 
+_made: set = set()                                   # bereits angelegte Ordner (nicht bei jedem Zugriff neu prüfen)
+
+
 def data_dir() -> Path:
     """%APPDATA%/AnimeAstralMonitor (oder ASTRAL_DATA_DIR, z. B. für Tests)."""
     override = os.environ.get("ASTRAL_DATA_DIR")
@@ -16,7 +19,9 @@ def data_dir() -> Path:
     else:
         root = os.environ.get("APPDATA") or str(Path.home() / ".config")
         base = Path(root) / APP_NAME
-    base.mkdir(parents=True, exist_ok=True)
+    if base not in _made:
+        base.mkdir(parents=True, exist_ok=True)
+        _made.add(base)
     return base
 
 
