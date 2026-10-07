@@ -4,6 +4,15 @@ Neueste Version oben. Kurze Stichpunkte, keine Erklärungen (die stehen im Progr
 Der Abschnitt einer Version wird beim Veröffentlichen automatisch als Versionshinweis übernommen
 (`tools/release_notes.py`) und ist im Programm unter Einstellungen → Updates → „Alle Versionen“ lesbar.
 
+## 0.9.5-beta.1
+
+### ✨ Neu (Beta)
+- Automatik (Beta) unter Einstellungen → Roblox, standardmäßig aus
+- Menüs per Karte öffnen: Teleporter, zur Welt scrollen, Symbol
+- Pets rollen: Roll-Menü der Welt öffnen und „Auto!“ drücken
+- Not-Aus: Maus bewegen oder Esc
+- Kein Laufen, kein Teleportieren
+
 ## 0.9.1
 
 ### 🐞 Behoben (Hotfix)

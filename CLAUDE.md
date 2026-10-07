@@ -14,7 +14,17 @@ aktualisierende Statusnachricht, Statistik-Karten). Sie greift nicht in den Robl
 Eingaben an Roblox – einzige Ausnahme ist das optionale Anti-AFK** (`antiafk.py`, Standard aus, Schalter in der
 Kopfzeile, auf ausdrücklichen Wunsch des Eigentümers 06.10.2026): alle N Minuten Roblox kurz nach vorne, einmal
 Leertaste, zurück. Roblox nimmt Tasten nur im Vordergrund an (getestet: `PostMessage` an das Hintergrundfenster wirkt
-nicht). Darüber hinaus keine Automatisierung (kein Klicken, kein Farmen) – diese Grenze bitte beibehalten.
+nicht). **Seit 0.9.5-beta.1 zweite Ausnahme: Automatik (Beta)** (`automation.py`, Standard aus, Karte unter
+Einstellungen → Roblox, Einschalten nur nach Warnung zu den Roblox-Regeln; Wunsch des Eigentümers 07.10.2026, Ziel
+1.0.0): öffnet Menüs anhand der Oberflächen-Karte (`uimap.py` + `astral_monitor/uimap/`, Erkennung `vision.py`) –
+Teleporter auf, per Mausrad zur Welt scrollen, Symbol klicken, Titel prüfen; Pets-Roll „Auto!“ drücken. Eingaben per
+SendInput nur mit Roblox im Vordergrund, Not-Aus bei Mausbewegung/Esc. **Kein Laufen/Teleportieren** (TELEPORT!-Knöpfe
+werden nicht benutzt – Wunsch des Eigentümers). Darüber hinaus nichts automatisieren, ohne zu fragen.
+**Oberflächen-Karte:** gepflegt im privaten Entwickler-Werkzeug (`_dev/calibrate.py`: Aufnahme, Baum, Vorlagen),
+für das Programm ausgegeben mit `_dev/library.export_for_program()` -> `astral_monitor/uimap/` (index.json + nur die
+nötigen Erkennungsbilder als JPG/PNG). Verknüpfung „Knopf öffnet Fenster“ über `opened_by_id` (Kennung), nicht über
+den Namen – „Crafting Unit“, „Progression“ gibt es in jeder Welt. Menüs im Teleporter-Rahmen erkennt man am rosa X
+oben rechts und am Titel im schrägen Banner; Sonder-Menüs (Pets-Roll) über eine Vorlage mit Erkennungsmerkmal.
 **Privater Server** (`roblox_join.py`): Teilen-Link oder klassischer Link -> `roblox://`-Protokoll-Link, `os.startfile`
 (kein Browser, kein Cookie/Passwort). Der Link bleibt lokal (Diagnose schwärzt ihn) – nie ins Repo.
 **Auto-Rejoin** (`rejoin.py`, Standard aus, Schalter in der Kopfzeile, Wunsch des Eigentümers 06.10.2026): liest alle
@@ -72,6 +82,7 @@ nutzen das). Dort: `settings.json`, `raid_history.csv`, `monitor.log`, `profiles
 | `presence.py` | Discord-Profilstatus (pypresence), Spiel-Thumbnail von Roblox als Bild |
 | `updater.py` | Update-Prüfung über GitHub-Releases, Download mit SHA256-Prüfung, leiser Installer-Start |
 | `ocr.py` | Tesseract-Anbindung; **mitgeliefertes** Tesseract (`tesseract/` neben der EXE) hat Vorrang |
+| `uimap.py`, `vision.py`, `automation.py` | Automatik (Beta): Oberflächen-Karte lesen, Zeilen/Menüs erkennen, Wege gehen (eigener Thread, eigene OCR-Instanz); Oberfläche `ui/automation_card.py` |
 | `settings.py` | `Settings`-Dataclass (JSON), `Roi`, Ereignis-Definitionen, Migration über `settings_version` |
 | `i18n.py`, `i18n_en.py` | Sprache: `tr()`, `N_()`, Zahlenformat; englische Texte |
 | `hotkeys.py`, `winapi.py`, `imaging.py`, `diagnostics.py`, `app_paths.py` | Hilfen (globale Hotkeys per `RegisterHotKey`, Fenstersuche per ctypes, Bildverarbeitung, Diagnose-ZIP, Pfade) |

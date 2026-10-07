@@ -12,6 +12,7 @@ from . import theme
 NEW_FEATURES: dict[str, tuple[str, ...]] = {
     "0.8.0": ("nav:1", "nav:2", "nav:5", "tab:Roblox", "tab:Darstellung", "tab:Programm"),
     "0.9.0": ("nav:3", "tab:Roblox"),
+    "0.9.5-beta.1": ("nav:3", "tab:Roblox"),        # Automatik (Beta) unter Einstellungen → Roblox
 }
 
 

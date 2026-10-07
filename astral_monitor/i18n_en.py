@@ -906,4 +906,57 @@ EN: dict[str, str] = {
     # 0.9.1: Raids ohne Gesamtzahl
     "Raid beendet · Welle {wave}": "Raid finished · wave {wave}",
     "Raid beendet · #{count} · Welle {wave}": "Raid finished · #{count} · wave {wave}",
+    # 0.9.5: Automatik (Beta)
+    "Automatik (Beta)": "Automation (beta)",
+    "Öffnet Menüs im Spiel anhand der mitgelieferten Oberflächen-Karte: Teleporter auf, zur Welt scrollen, Symbol "
+    "anklicken, Titel prüfen. „Pets rollen“ öffnet das Roll-Menü der Welt und drückt „Auto!“. Kein Laufen, kein "
+    "Teleportieren.\n\nNot-Aus: Maus bewegen oder Esc. Roblox muss sichtbar sein (nicht minimiert) und wird dafür "
+    "nach vorne geholt.\n\nHinweis: Makros und Automatisierung sind laut Roblox-Regeln nicht erlaubt – Nutzung auf "
+    "eigene Verantwortung.":
+        "Opens in-game menus using the bundled UI map: open the teleporter, scroll to the world, click the icon, "
+        "check the title. “Roll pets” opens the world's roll menu and presses “Auto!”. No walking, no "
+        "teleporting.\n\nEmergency stop: move the mouse or press Esc. Roblox must be visible (not minimized) and is "
+        "brought to the front for this.\n\nNote: macros and automation are not allowed by the Roblox rules – use "
+        "at your own risk.",
+    "Automatik erlauben": "Allow automation",
+    "Hin navigieren": "Navigate there",
+    "Pets rollen (Auto!)": "Roll pets (Auto!)",
+    "Stopp": "Stop",
+    "Die Automatik klickt selbst in Roblox (Mausklicks und Mausrad per SendInput, wie AutoHotkey oder ein "
+    "Autoclicker).\n\nMakros und Automatisierung sind laut Roblox-Regeln nicht erlaubt. Wer sie nutzt, riskiert "
+    "eine Sperre – auf eigene Verantwortung.\n\nTrotzdem einschalten?":
+        "The automation clicks in Roblox by itself (mouse clicks and wheel via SendInput, like AutoHotkey or an "
+        "autoclicker).\n\nMacros and automation are not allowed by the Roblox rules. Using them risks a ban – at "
+        "your own risk.\n\nTurn it on anyway?",
+    "Läuft schon – erst „Stopp“.": "Already running – press “Stop” first.",
+    "Hin navigieren: {target}": "Navigate to: {target}",
+    "Pets rollen: {world}": "Roll pets: {world}",
+    "Menü schließen": "Close menu",
+    "Fertig.": "Done.",
+    "Keine Oberflächen-Karte vorhanden.": "No UI map available.",
+    "Roblox ließ sich nicht nach vorne holen.": "Could not bring Roblox to the front.",
+    "Die Karte hat keinen Teleporter mit Welten.": "The map has no teleporter with worlds.",
+    "Der Karte fehlen Erkennungsbilder.": "The map is missing recognition images.",
+    "Kein Bild vom Roblox-Fenster.": "No image from the Roblox window.",
+    "„{name}“ steht nicht in der Karte.": "“{name}” is not in the map.",
+    "„{name}“ ist schon offen.": "“{name}” is already open.",
+    "Für „{name}“ ist kein Knopf hinterlegt.": "No button is set for “{name}”.",
+    "Welt „{world}“ gefunden – klicke „{button}“.": "Found world “{world}” – clicking “{button}”.",
+    "Klicke „{button}“.": "Clicking “{button}”.",
+    "Öffne „{name}“.": "Opening “{name}”.",
+    "„{name}“ ging nicht auf.": "“{name}” did not open.",
+    "Welt „{world}“ nicht gefunden (Ende der Liste).": "World “{world}” not found (end of list).",
+    "Welt „{world}“ nicht gefunden.": "World “{world}” not found.",
+    "„{name}“ ist offen.": "“{name}” is open.",
+    "Offen ist „{title}“ – passt der Name „{name}“?": "“{title}” is open – does the name “{name}” match?",
+    "Kein Schließen-Knopf in „{name}“.": "No close button in “{name}”.",
+    "Schließe „{name}“.": "Closing “{name}”.",
+    "Menü ließ sich nicht schließen.": "Could not close the menu.",
+    "Kosten pro Pet: {cost}": "Cost per pet: {cost}",
+    "„Auto!“ fehlt in der Karte.": "“Auto!” is missing from the map.",
+    "Klicke „Auto!“.": "Clicking “Auto!”.",
+    "Gestoppt.": "Stopped.",
+    "Abgebrochen (Esc).": "Cancelled (Esc).",
+    "Abgebrochen – Maus wurde bewegt.": "Cancelled – the mouse was moved.",
+    "Abgebrochen – Roblox ist nicht mehr im Vordergrund.": "Cancelled – Roblox is no longer in the foreground.",
 }

@@ -142,6 +142,9 @@ class SettingsPage(QWidget):
             for card in cards:
                 lay.addWidget(card)
         root.addLayout(columns(left, right))
+        from .automation_card import AutomationCard
+        self.automation = AutomationCard(main)
+        root.addWidget(self.automation)
 
         # ------------------------------------------------------------------ Überwachung
         root.addWidget(section(tr("Überwachung")))

@@ -1,0 +1,7764 @@
+[
+ {
+  "name": "Teleporter Fenster",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "Erst Sichtbar nach klick auf Teleporter",
+  "file": "Fenster_Bereich/Teleporter_Fenster_20261007_153205_719.png",
+  "roi": [
+   0.2097,
+   0.1902,
+   0.7827,
+   0.7963
+  ],
+  "rel": null,
+  "window": [
+   2560,
+   1440
+  ],
+  "opened_by_id": "Teleporter_Fenster/Teleporter_20261007_153520_883.png",
+  "opened_by": "Teleporter",
+  "img": "img/Fenster_Bereich_Teleporter_Fenster_20261.jpg"
+ },
+ {
+  "name": "Teleporter",
+  "kind": "Knopf",
+  "parent": "",
+  "note": "",
+  "file": "Teleporter_Fenster/Teleporter_20261007_153520_883.png",
+  "roi": [
+   0.0645,
+   0.4482,
+   0.0903,
+   0.4958
+  ],
+  "rel": null,
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Scrollbalken",
+  "kind": "Scrollbalken",
+  "parent": "Teleporter Fenster",
+  "note": "",
+  "file": "Teleporter_Fenster/Scrollbalken_20261007_153611_807.png",
+  "roi": [
+   0.7397,
+   0.3237,
+   0.7441,
+   0.742
+  ],
+  "rel": [
+   0.9249,
+   0.2202,
+   0.9326,
+   0.9104
+  ],
+  "window": [
+   2560,
+   1440
+  ],
+  "extra": {
+   "direction": "senkrecht"
+  }
+ },
+ {
+  "name": "Lobby",
+  "kind": "Zeile (Vorlage)",
+  "parent": "Teleporter Fenster",
+  "note": "Lobby",
+  "file": "Teleporter_Fenster/Lobby_20261007_153642_101.png",
+  "roi": [
+   0.2615,
+   0.3608,
+   0.7391,
+   0.4629
+  ],
+  "rel": [
+   0.0903,
+   0.2814,
+   0.9238,
+   0.4499
+  ],
+  "window": [
+   2560,
+   1440
+  ],
+  "img": "img/Teleporter_Fenster_Lobby_20261007_153642.jpg"
+ },
+ {
+  "name": "Sword 1",
+  "kind": "Knopf",
+  "parent": "Lobby",
+  "note": "Sword1",
+  "file": "Teleporter_Fenster/Sword_1_20261007_153713_326.png",
+  "roi": [
+   0.3222,
+   0.4089,
+   0.3471,
+   0.4533
+  ],
+  "rel": [
+   0.1271,
+   0.4711,
+   0.1792,
+   0.906
+  ],
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Reach",
+  "kind": "Knopf",
+  "parent": "Lobby",
+  "note": "Reach",
+  "file": "Teleporter_Fenster/Reach_20261007_153730_240.png",
+  "roi": [
+   0.3498,
+   0.4099,
+   0.3726,
+   0.4504
+  ],
+  "rel": [
+   0.1849,
+   0.4809,
+   0.2326,
+   0.8776
+  ],
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "TimeTrial Shop",
+  "kind": "Knopf",
+  "parent": "Lobby",
+  "note": "TimeTrial Shop",
+  "file": "Teleporter_Fenster/TimeTrial_Shop_20261007_153759_148.png",
+  "roi": [
+   0.3759,
+   0.4099,
+   0.3997,
+   0.4504
+  ],
+  "rel": [
+   0.2395,
+   0.4809,
+   0.2894,
+   0.8776
+  ],
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "TimeTrial Upgrades",
+  "kind": "Knopf",
+  "parent": "Lobby",
+  "note": "Upgrades",
+  "file": "Teleporter_Fenster/TimeTrial_Upgrades_20261007_153813_698.png",
+  "roi": [
+   0.4019,
+   0.4099,
+   0.4274,
+   0.4523
+  ],
+  "rel": [
+   0.294,
+   0.4809,
+   0.3474,
+   0.8962
+  ],
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Token Exchange",
+  "kind": "Knopf",
+  "parent": "Lobby",
+  "note": "",
+  "file": "Teleporter_Fenster/Token_Exchange_20261007_153822_351.png",
+  "roi": [
+   0.4301,
+   0.4118,
+   0.4523,
+   0.4494
+  ],
+  "rel": [
+   0.353,
+   0.4995,
+   0.3995,
+   0.8678
+  ],
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Garden Arts",
+  "kind": "Knopf",
+  "parent": "Lobby",
+  "note": "",
+  "file": "Teleporter_Fenster/Garden_Arts_20261007_153829_901.png",
+  "roi": [
+   0.4566,
+   0.4099,
+   0.4789,
+   0.4504
+  ],
+  "rel": [
+   0.4085,
+   0.4809,
+   0.4552,
+   0.8776
+  ],
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Cosmic Scale",
+  "kind": "Knopf",
+  "parent": "Lobby",
+  "note": "",
+  "file": "Teleporter_Fenster/Cosmic_Scale_20261007_153846_608.png",
+  "roi": [
+   0.4837,
+   0.4099,
+   0.506,
+   0.4484
+  ],
+  "rel": [
+   0.4652,
+   0.4809,
+   0.5119,
+   0.858
+  ],
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Timeless Raid",
+  "kind": "Knopf",
+  "parent": "Lobby",
+  "note": "Raid",
+  "file": "Teleporter_Fenster/Timeless_Raid_20261007_153856_736.png",
+  "roi": [
+   0.5103,
+   0.4109,
+   0.5325,
+   0.4513
+  ],
+  "rel": [
+   0.5209,
+   0.4907,
+   0.5674,
+   0.8864
+  ],
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Timeless Shop",
+  "kind": "Knopf",
+  "parent": "Lobby",
+  "note": "",
+  "file": "Teleporter_Fenster/Timeless_Shop_20261007_153903_302.png",
+  "roi": [
+   0.5363,
+   0.4099,
+   0.5602,
+   0.4504
+  ],
+  "rel": [
+   0.5754,
+   0.4809,
+   0.6254,
+   0.8776
+  ],
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Titel",
+  "kind": "Knopf",
+  "parent": "Lobby",
+  "note": "",
+  "file": "Teleporter_Fenster/Titel_20261007_153908_880.png",
+  "roi": [
+   0.5634,
+   0.4118,
+   0.5867,
+   0.4504
+  ],
+  "rel": [
+   0.6321,
+   0.4995,
+   0.6809,
+   0.8776
+  ],
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Lobby Professions",
+  "kind": "Knopf",
+  "parent": "Lobby",
+  "note": "",
+  "file": "Teleporter_Fenster/Lobby_Professions_20261007_153924_151.png",
+  "roi": [
+   0.5894,
+   0.4099,
+   0.6133,
+   0.4504
+  ],
+  "rel": [
+   0.6866,
+   0.4809,
+   0.7366,
+   0.8776
+  ],
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Teleport to Lobby",
+  "kind": "Knopf",
+  "parent": "Lobby",
+  "note": "Lobby tp",
+  "file": "Lobby/Teleport_to_Lobby_20261007_155210_535.png",
+  "roi": [
+   0.6347,
+   0.4041,
+   0.7302,
+   0.4499
+  ],
+  "rel": [
+   0.7813,
+   0.4238,
+   0.9813,
+   0.8729
+  ],
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "W1 Ninja Village",
+  "kind": "Zeile (Vorlage)",
+  "parent": "Teleporter Fenster",
+  "note": "W1",
+  "file": "Teleporter_Fenster/W1_Ninja_Village_20261007_155242_023.png",
+  "roi": [
+   0.2632,
+   0.4669,
+   0.7368,
+   0.5654
+  ],
+  "rel": [
+   0.0933,
+   0.4565,
+   0.92,
+   0.619
+  ],
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "W1 Pets",
+  "kind": "Knopf",
+  "parent": "W1 Ninja Village",
+  "note": "Pets",
+  "file": "W1_Ninja_Village/W1_Pets_20261007_155315_271.png",
+  "roi": [
+   0.3242,
+   0.5181,
+   0.3432,
+   0.5519
+  ],
+  "rel": [
+   0.1288,
+   0.5201,
+   0.1689,
+   0.8627
+  ],
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Swords 1",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "",
+  "file": "Fenster_Bereich/Swords_1_20261007_155643_002.png",
+  "roi": [
+   0.225,
+   0.2105,
+   0.7731,
+   0.7759
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "opened_by_id": "Teleporter_Fenster/Sword_1_20261007_153713_326.png",
+  "opened_by": "Sword 1"
+ },
+ {
+  "name": "Auto Roll Swords",
+  "kind": "Knopf",
+  "parent": "Swords 1",
+  "note": "Roll Swords",
+  "file": "Swords_1/Auto_Roll_Swords_20261007_155707_979.png",
+  "roi": [
+   0.6203,
+   0.7029,
+   0.7445,
+   0.7555
+  ],
+  "rel": [
+   0.7213,
+   0.8709,
+   0.9478,
+   0.964
+  ],
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Reach",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "",
+  "file": "Fenster_Bereich/Reach_20261007_155741_733.png",
+  "roi": [
+   0.225,
+   0.2105,
+   0.7741,
+   0.7725
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "opened_by_id": "Teleporter_Fenster/Reach_20261007_153730_240.png",
+  "opened_by": "Reach"
+ },
+ {
+  "name": "Upgrade Reach",
+  "kind": "Knopf",
+  "parent": "Reach",
+  "note": "",
+  "file": "Reach/Upgrade_Reach_20261007_155756_674.png",
+  "roi": [
+   0.415,
+   0.674,
+   0.5936,
+   0.7504
+  ],
+  "rel": [
+   2.8596,
+   6.5215,
+   10.6925,
+   8.4079
+  ],
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Level",
+  "kind": "Text (lesen)",
+  "parent": "",
+  "note": "",
+  "file": "Text_lesen/Level_20261007_155813_676.png",
+  "roi": [
+   0.2546,
+   0.3328,
+   0.394,
+   0.3888
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Trial Shop",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "",
+  "file": "Fenster_Bereich/Trial_Shop_20261007_155904_162.png",
+  "roi": [
+   0.2259,
+   0.2139,
+   0.7731,
+   0.7725
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "opened_by_id": "Teleporter_Fenster/TimeTrial_Shop_20261007_153759_148.png",
+  "opened_by": "TimeTrial Shop"
+ },
+ {
+  "name": "Crafting Unit",
+  "kind": "Knopf",
+  "parent": "W1 Ninja Village",
+  "note": "automatisch erfasst",
+  "file": "W1_Ninja_Village/W1_Ninja_Village_Platz_2_20261007_163347_839.png",
+  "roi": [
+   0.3497,
+   0.5143,
+   0.3728,
+   0.5533
+  ],
+  "rel": [
+   0.1827,
+   0.4809,
+   0.2315,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Doujutsu",
+  "kind": "Knopf",
+  "parent": "W1 Ninja Village",
+  "note": "automatisch erfasst",
+  "file": "W1_Ninja_Village/W1_Ninja_Village_Platz_3_20261007_163347_857.png",
+  "roi": [
+   0.3761,
+   0.5143,
+   0.3992,
+   0.5533
+  ],
+  "rel": [
+   0.2383,
+   0.4809,
+   0.2871,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Young Tailed Beasts",
+  "kind": "Knopf",
+  "parent": "W1 Ninja Village",
+  "note": "automatisch erfasst",
+  "file": "W1_Ninja_Village/W1_Ninja_Village_Platz_4_20261007_163347_866.png",
+  "roi": [
+   0.4024,
+   0.5143,
+   0.4255,
+   0.5533
+  ],
+  "rel": [
+   0.2939,
+   0.4809,
+   0.3427,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Rank UP",
+  "kind": "Knopf",
+  "parent": "W1 Ninja Village",
+  "note": "automatisch erfasst",
+  "file": "W1_Ninja_Village/W1_Ninja_Village_Platz_5_20261007_163347_874.png",
+  "roi": [
+   0.4287,
+   0.5143,
+   0.4518,
+   0.5533
+  ],
+  "rel": [
+   0.3495,
+   0.4809,
+   0.3983,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Ninja Raid",
+  "kind": "Knopf",
+  "parent": "W1 Ninja Village",
+  "note": "automatisch erfasst",
+  "file": "W1_Ninja_Village/W1_Ninja_Village_Platz_6_20261007_163347_880.png",
+  "roi": [
+   0.4551,
+   0.5143,
+   0.4782,
+   0.5533
+  ],
+  "rel": [
+   0.4051,
+   0.4809,
+   0.4539,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Avatars",
+  "kind": "Knopf",
+  "parent": "W1 Ninja Village",
+  "note": "automatisch erfasst",
+  "file": "W1_Ninja_Village/W1_Ninja_Village_Platz_7_20261007_163347_886.png",
+  "roi": [
+   0.4814,
+   0.5143,
+   0.5045,
+   0.5533
+  ],
+  "rel": [
+   0.4607,
+   0.4809,
+   0.5095,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Progression",
+  "kind": "Knopf",
+  "parent": "W1 Ninja Village",
+  "note": "automatisch erfasst",
+  "file": "W1_Ninja_Village/W1_Ninja_Village_Platz_8_20261007_163347_894.png",
+  "roi": [
+   0.5077,
+   0.5143,
+   0.5308,
+   0.5533
+  ],
+  "rel": [
+   0.5163,
+   0.4809,
+   0.5651,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Tomb Raid",
+  "kind": "Knopf",
+  "parent": "W1 Ninja Village",
+  "note": "automatisch erfasst",
+  "file": "W1_Ninja_Village/W1_Ninja_Village_Platz_9_20261007_163347_901.png",
+  "roi": [
+   0.5341,
+   0.5143,
+   0.5572,
+   0.5533
+  ],
+  "rel": [
+   0.5719,
+   0.4809,
+   0.6207,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Medal",
+  "kind": "Knopf",
+  "parent": "W1 Ninja Village",
+  "note": "automatisch erfasst",
+  "file": "W1_Ninja_Village/W1_Ninja_Village_Platz_10_20261007_163347_907.png",
+  "roi": [
+   0.5604,
+   0.5143,
+   0.5835,
+   0.5533
+  ],
+  "rel": [
+   0.6275,
+   0.4809,
+   0.6763,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "W2 Namek City",
+  "kind": "Zeile (Vorlage)",
+  "parent": "Teleporter Fenster",
+  "note": "automatisch erfasst",
+  "file": "Teleporter_Fenster/W2_Namek_City_20261007_163347_913.png",
+  "roi": [
+   0.2609,
+   0.5715,
+   0.7387,
+   0.6736
+  ],
+  "rel": [
+   0.0894,
+   0.6291,
+   0.9232,
+   0.7976
+  ],
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "TELEPORT!",
+  "kind": "Knopf",
+  "parent": "W2 Namek City",
+  "note": "automatisch erfasst",
+  "file": "W2_Namek_City/TELEPORT_20261007_163347_926.png",
+  "roi": [
+   0.6343,
+   0.6148,
+   0.7298,
+   0.6606
+  ],
+  "rel": [
+   0.7814,
+   0.4241,
+   0.9814,
+   0.8727
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "W2 Pets",
+  "kind": "Knopf",
+  "parent": "W2 Namek City",
+  "note": "automatisch erfasst",
+  "file": "W2_Namek_City/W2_Pets_20261007_163347_933.png",
+  "roi": [
+   0.3216,
+   0.6206,
+   0.3449,
+   0.6611
+  ],
+  "rel": [
+   0.1271,
+   0.4809,
+   0.1759,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Crafting Unit",
+  "kind": "Knopf",
+  "parent": "W2 Namek City",
+  "note": "automatisch erfasst",
+  "file": "W2_Namek_City/W2_Namek_City_Platz_2_20261007_163347_940.png",
+  "roi": [
+   0.3482,
+   0.6206,
+   0.3715,
+   0.6611
+  ],
+  "rel": [
+   0.1827,
+   0.4809,
+   0.2315,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Races",
+  "kind": "Knopf",
+  "parent": "W2 Namek City",
+  "note": "automatisch erfasst",
+  "file": "W2_Namek_City/W2_Namek_City_Platz_3_20261007_163347_947.png",
+  "roi": [
+   0.3748,
+   0.6206,
+   0.3981,
+   0.6611
+  ],
+  "rel": [
+   0.2383,
+   0.4809,
+   0.2871,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Divine Techniques",
+  "kind": "Knopf",
+  "parent": "W2 Namek City",
+  "note": "automatisch erfasst",
+  "file": "W2_Namek_City/W2_Namek_City_Platz_4_20261007_163347_953.png",
+  "roi": [
+   0.4013,
+   0.6206,
+   0.4246,
+   0.6611
+  ],
+  "rel": [
+   0.2939,
+   0.4809,
+   0.3427,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Player Passive",
+  "kind": "Knopf",
+  "parent": "W2 Namek City",
+  "note": "automatisch erfasst",
+  "file": "W2_Namek_City/W2_Namek_City_Platz_5_20261007_163347_960.png",
+  "roi": [
+   0.4279,
+   0.6206,
+   0.4512,
+   0.6611
+  ],
+  "rel": [
+   0.3495,
+   0.4809,
+   0.3983,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Progression",
+  "kind": "Knopf",
+  "parent": "W2 Namek City",
+  "note": "automatisch erfasst",
+  "file": "W2_Namek_City/W2_Namek_City_Platz_6_20261007_163347_967.png",
+  "roi": [
+   0.4545,
+   0.6206,
+   0.4778,
+   0.6611
+  ],
+  "rel": [
+   0.4051,
+   0.4809,
+   0.4539,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Ki Evolution",
+  "kind": "Knopf",
+  "parent": "W2 Namek City",
+  "note": "automatisch erfasst",
+  "file": "W2_Namek_City/W2_Namek_City_Platz_7_20261007_163347_973.png",
+  "roi": [
+   0.481,
+   0.6206,
+   0.5043,
+   0.6611
+  ],
+  "rel": [
+   0.4607,
+   0.4809,
+   0.5095,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Zenkai",
+  "kind": "Knopf",
+  "parent": "W2 Namek City",
+  "note": "automatisch erfasst",
+  "file": "W2_Namek_City/W2_Namek_City_Platz_8_20261007_163347_980.png",
+  "roi": [
+   0.5076,
+   0.6206,
+   0.5309,
+   0.6611
+  ],
+  "rel": [
+   0.5163,
+   0.4809,
+   0.5651,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "W3 Wano Island",
+  "kind": "Zeile (Vorlage)",
+  "parent": "Teleporter Fenster",
+  "note": "automatisch erfasst",
+  "file": "Teleporter_Fenster/W3_Wano_Island_20261007_163803_849.png",
+  "roi": [
+   0.2609,
+   0.5382,
+   0.7387,
+   0.6403
+  ],
+  "rel": [
+   0.0894,
+   0.5742,
+   0.9232,
+   0.7426
+  ],
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "TELEPORT!",
+  "kind": "Knopf",
+  "parent": "W3 Wano Island",
+  "note": "automatisch erfasst",
+  "file": "W3_Wano_Island/TELEPORT_20261007_163803_859.png",
+  "roi": [
+   0.6343,
+   0.5815,
+   0.7298,
+   0.6273
+  ],
+  "rel": [
+   0.7814,
+   0.4241,
+   0.9814,
+   0.8727
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "W3 Pets",
+  "kind": "Knopf",
+  "parent": "W3 Wano Island",
+  "note": "automatisch erfasst",
+  "file": "W3_Wano_Island/W3_Pets_20261007_163803_867.png",
+  "roi": [
+   0.3216,
+   0.5873,
+   0.3449,
+   0.6278
+  ],
+  "rel": [
+   0.1271,
+   0.4809,
+   0.1759,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Crafting Unit",
+  "kind": "Knopf",
+  "parent": "W3 Wano Island",
+  "note": "automatisch erfasst",
+  "file": "W3_Wano_Island/Crafting_Unit_20261007_163803_873.png",
+  "roi": [
+   0.3482,
+   0.5873,
+   0.3715,
+   0.6278
+  ],
+  "rel": [
+   0.1827,
+   0.4809,
+   0.2315,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Hakis",
+  "kind": "Knopf",
+  "parent": "W3 Wano Island",
+  "note": "automatisch erfasst",
+  "file": "W3_Wano_Island/W3_Wano_Island_Platz_3_20261007_163803_894.png",
+  "roi": [
+   0.3748,
+   0.5873,
+   0.3981,
+   0.6278
+  ],
+  "rel": [
+   0.2383,
+   0.4809,
+   0.2871,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Demon Fruits",
+  "kind": "Knopf",
+  "parent": "W3 Wano Island",
+  "note": "automatisch erfasst",
+  "file": "W3_Wano_Island/W3_Wano_Island_Platz_4_20261007_163803_902.png",
+  "roi": [
+   0.4013,
+   0.5873,
+   0.4246,
+   0.6278
+  ],
+  "rel": [
+   0.2939,
+   0.4809,
+   0.3427,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Progression",
+  "kind": "Knopf",
+  "parent": "W3 Wano Island",
+  "note": "automatisch erfasst",
+  "file": "W3_Wano_Island/W3_Wano_Island_Platz_5_20261007_163803_909.png",
+  "roi": [
+   0.4279,
+   0.5873,
+   0.4512,
+   0.6278
+  ],
+  "rel": [
+   0.3495,
+   0.4809,
+   0.3983,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "TimeTrial Upgrades",
+  "kind": "Knopf",
+  "parent": "W3 Wano Island",
+  "note": "automatisch erfasst",
+  "file": "W3_Wano_Island/TimeTrial_Upgrades_20261007_163803_916.png",
+  "roi": [
+   0.4545,
+   0.5873,
+   0.4778,
+   0.6278
+  ],
+  "rel": [
+   0.4051,
+   0.4809,
+   0.4539,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Haki Specializaztions",
+  "kind": "Knopf",
+  "parent": "W3 Wano Island",
+  "note": "automatisch erfasst",
+  "file": "W3_Wano_Island/W3_Wano_Island_Platz_7_20261007_163803_923.png",
+  "roi": [
+   0.481,
+   0.5873,
+   0.5043,
+   0.6278
+  ],
+  "rel": [
+   0.4607,
+   0.4809,
+   0.5095,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Upgrades",
+  "kind": "Knopf",
+  "parent": "W3 Wano Island",
+  "note": "automatisch erfasst",
+  "file": "W3_Wano_Island/W3_Wano_Island_Platz_8_20261007_163803_930.png",
+  "roi": [
+   0.5076,
+   0.5873,
+   0.5309,
+   0.6278
+  ],
+  "rel": [
+   0.5163,
+   0.4809,
+   0.5651,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "W4 Titan Wall",
+  "kind": "Zeile (Vorlage)",
+  "parent": "Teleporter Fenster",
+  "note": "automatisch erfasst",
+  "file": "Teleporter_Fenster/W4_Titan_Wall_20261007_163803_935.png",
+  "roi": [
+   0.2609,
+   0.575,
+   0.7387,
+   0.6771
+  ],
+  "rel": [
+   0.0894,
+   0.6349,
+   0.9232,
+   0.8033
+  ],
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "TELEPORT!",
+  "kind": "Knopf",
+  "parent": "W4 Titan Wall",
+  "note": "automatisch erfasst",
+  "file": "W4_Titan_Wall/TELEPORT_20261007_163803_948.png",
+  "roi": [
+   0.6343,
+   0.6183,
+   0.7298,
+   0.6641
+  ],
+  "rel": [
+   0.7814,
+   0.4241,
+   0.9814,
+   0.8727
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "W4 Pets",
+  "kind": "Knopf",
+  "parent": "W4 Titan Wall",
+  "note": "automatisch erfasst",
+  "file": "W4_Titan_Wall/W4_Pets_20261007_163803_955.png",
+  "roi": [
+   0.3216,
+   0.6241,
+   0.3449,
+   0.6646
+  ],
+  "rel": [
+   0.1271,
+   0.4809,
+   0.1759,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Crafting Unit",
+  "kind": "Knopf",
+  "parent": "W4 Titan Wall",
+  "note": "automatisch erfasst",
+  "file": "W4_Titan_Wall/Crafting_Unit_20261007_163803_963.png",
+  "roi": [
+   0.3482,
+   0.6241,
+   0.3715,
+   0.6646
+  ],
+  "rel": [
+   0.1827,
+   0.4809,
+   0.2315,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Family",
+  "kind": "Knopf",
+  "parent": "W4 Titan Wall",
+  "note": "automatisch erfasst",
+  "file": "W4_Titan_Wall/W4_Titan_Wall_Platz_3_20261007_163803_970.png",
+  "roi": [
+   0.3748,
+   0.6241,
+   0.3981,
+   0.6646
+  ],
+  "rel": [
+   0.2383,
+   0.4809,
+   0.2871,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Titans",
+  "kind": "Knopf",
+  "parent": "W4 Titan Wall",
+  "note": "automatisch erfasst",
+  "file": "W4_Titan_Wall/W4_Titan_Wall_Platz_4_20261007_163803_977.png",
+  "roi": [
+   0.4013,
+   0.6241,
+   0.4246,
+   0.6646
+  ],
+  "rel": [
+   0.2939,
+   0.4809,
+   0.3427,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Titan Defense",
+  "kind": "Knopf",
+  "parent": "W4 Titan Wall",
+  "note": "automatisch erfasst",
+  "file": "W4_Titan_Wall/W4_Titan_Wall_Platz_5_20261007_163803_984.png",
+  "roi": [
+   0.4279,
+   0.6241,
+   0.4512,
+   0.6646
+  ],
+  "rel": [
+   0.3495,
+   0.4809,
+   0.3983,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Titan Defense Shop",
+  "kind": "Knopf",
+  "parent": "W4 Titan Wall",
+  "note": "automatisch erfasst",
+  "file": "W4_Titan_Wall/W4_Titan_Wall_Platz_6_20261007_163803_991.png",
+  "roi": [
+   0.4545,
+   0.6241,
+   0.4778,
+   0.6646
+  ],
+  "rel": [
+   0.4051,
+   0.4809,
+   0.4539,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Progression",
+  "kind": "Knopf",
+  "parent": "W4 Titan Wall",
+  "note": "automatisch erfasst",
+  "file": "W4_Titan_Wall/W4_Titan_Wall_Platz_7_20261007_163803_998.png",
+  "roi": [
+   0.481,
+   0.6241,
+   0.5043,
+   0.6646
+  ],
+  "rel": [
+   0.4607,
+   0.4809,
+   0.5095,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Humanity Arsenal",
+  "kind": "Knopf",
+  "parent": "W4 Titan Wall",
+  "note": "automatisch erfasst",
+  "file": "W4_Titan_Wall/W4_Titan_Wall_Platz_8_20261007_163804_007.png",
+  "roi": [
+   0.5076,
+   0.6241,
+   0.5309,
+   0.6646
+  ],
+  "rel": [
+   0.5163,
+   0.4809,
+   0.5651,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "? W4 Titan Wall · Platz 9",
+  "kind": "Knopf",
+  "parent": "W4 Titan Wall",
+  "note": "automatisch erfasst",
+  "file": "W4_Titan_Wall/W4_Titan_Wall_Platz_9_20261007_163804_013.png",
+  "roi": [
+   0.5342,
+   0.6241,
+   0.5575,
+   0.6646
+  ],
+  "rel": [
+   0.5719,
+   0.4809,
+   0.6207,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "? W4 Titan Wall · Platz 10",
+  "kind": "Knopf",
+  "parent": "W4 Titan Wall",
+  "note": "automatisch erfasst",
+  "file": "W4_Titan_Wall/W4_Titan_Wall_Platz_10_20261007_163804_020.png",
+  "roi": [
+   0.5607,
+   0.6241,
+   0.584,
+   0.6646
+  ],
+  "rel": [
+   0.6275,
+   0.4809,
+   0.6763,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "W5 Solo City",
+  "kind": "Zeile (Vorlage)",
+  "parent": "Teleporter Fenster",
+  "note": "automatisch erfasst",
+  "file": "Teleporter_Fenster/W5_Solo_City_20261007_163804_026.png",
+  "roi": [
+   0.2609,
+   0.6111,
+   0.7387,
+   0.7132
+  ],
+  "rel": [
+   0.0894,
+   0.6945,
+   0.9232,
+   0.8629
+  ],
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "TELEPORT!",
+  "kind": "Knopf",
+  "parent": "W5 Solo City",
+  "note": "automatisch erfasst",
+  "file": "W5_Solo_City/TELEPORT_20261007_163804_039.png",
+  "roi": [
+   0.6343,
+   0.6544,
+   0.7298,
+   0.7002
+  ],
+  "rel": [
+   0.7814,
+   0.4241,
+   0.9814,
+   0.8727
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "W5 Pets",
+  "kind": "Knopf",
+  "parent": "W5 Solo City",
+  "note": "automatisch erfasst",
+  "file": "W5_Solo_City/W5_Pets_20261007_163804_046.png",
+  "roi": [
+   0.3216,
+   0.6602,
+   0.3449,
+   0.7007
+  ],
+  "rel": [
+   0.1271,
+   0.4809,
+   0.1759,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Crafting Unit",
+  "kind": "Knopf",
+  "parent": "W5 Solo City",
+  "note": "automatisch erfasst",
+  "file": "W5_Solo_City/Crafting_Unit_20261007_163804_053.png",
+  "roi": [
+   0.3482,
+   0.6602,
+   0.3715,
+   0.7007
+  ],
+  "rel": [
+   0.1827,
+   0.4809,
+   0.2315,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Hunter Class",
+  "kind": "Knopf",
+  "parent": "W5 Solo City",
+  "note": "automatisch erfasst",
+  "file": "W5_Solo_City/W5_Solo_City_Platz_3_20261007_163804_060.png",
+  "roi": [
+   0.3748,
+   0.6602,
+   0.3981,
+   0.7007
+  ],
+  "rel": [
+   0.2383,
+   0.4809,
+   0.2871,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Gates",
+  "kind": "Knopf",
+  "parent": "W5 Solo City",
+  "note": "automatisch erfasst",
+  "file": "W5_Solo_City/W5_Solo_City_Platz_4_20261007_163804_068.png",
+  "roi": [
+   0.4013,
+   0.6602,
+   0.4246,
+   0.7007
+  ],
+  "rel": [
+   0.2939,
+   0.4809,
+   0.3427,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Progression",
+  "kind": "Knopf",
+  "parent": "W5 Solo City",
+  "note": "automatisch erfasst",
+  "file": "W5_Solo_City/W5_Solo_City_Platz_5_20261007_163804_076.png",
+  "roi": [
+   0.4279,
+   0.6602,
+   0.4512,
+   0.7007
+  ],
+  "rel": [
+   0.3495,
+   0.4809,
+   0.3983,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Upgrade Tree",
+  "kind": "Knopf",
+  "parent": "W5 Solo City",
+  "note": "automatisch erfasst",
+  "file": "W5_Solo_City/W5_Solo_City_Platz_6_20261007_163804_082.png",
+  "roi": [
+   0.4545,
+   0.6602,
+   0.4778,
+   0.7007
+  ],
+  "rel": [
+   0.4051,
+   0.4809,
+   0.4539,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Elixir of Life Artefact",
+  "kind": "Knopf",
+  "parent": "W5 Solo City",
+  "note": "automatisch erfasst",
+  "file": "W5_Solo_City/W5_Solo_City_Platz_7_20261007_163804_089.png",
+  "roi": [
+   0.481,
+   0.6602,
+   0.5043,
+   0.7007
+  ],
+  "rel": [
+   0.4607,
+   0.4809,
+   0.5095,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Powerful Monarchs",
+  "kind": "Knopf",
+  "parent": "W5 Solo City",
+  "note": "automatisch erfasst",
+  "file": "W5_Solo_City/W5_Solo_City_Platz_8_20261007_163804_097.png",
+  "roi": [
+   0.5076,
+   0.6602,
+   0.5309,
+   0.7007
+  ],
+  "rel": [
+   0.5163,
+   0.4809,
+   0.5651,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "W6 Slayer Village",
+  "kind": "Zeile (Vorlage)",
+  "parent": "Teleporter Fenster",
+  "note": "automatisch erfasst",
+  "file": "Teleporter_Fenster/W6_Slayer_Village_20261007_163804_102.png",
+  "roi": [
+   0.2609,
+   0.5785,
+   0.7387,
+   0.6806
+  ],
+  "rel": [
+   0.0894,
+   0.6406,
+   0.9232,
+   0.809
+  ],
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "TELEPORT!",
+  "kind": "Knopf",
+  "parent": "W6 Slayer Village",
+  "note": "automatisch erfasst",
+  "file": "W6_Slayer_Village/TELEPORT_20261007_163804_116.png",
+  "roi": [
+   0.6343,
+   0.6218,
+   0.7298,
+   0.6676
+  ],
+  "rel": [
+   0.7814,
+   0.4241,
+   0.9814,
+   0.8727
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "W6 Pets",
+  "kind": "Knopf",
+  "parent": "W6 Slayer Village",
+  "note": "automatisch erfasst",
+  "file": "W6_Slayer_Village/W6_Pets_20261007_163804_123.png",
+  "roi": [
+   0.3216,
+   0.6276,
+   0.3449,
+   0.6681
+  ],
+  "rel": [
+   0.1271,
+   0.4809,
+   0.1759,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Crafting Unit",
+  "kind": "Knopf",
+  "parent": "W6 Slayer Village",
+  "note": "automatisch erfasst",
+  "file": "W6_Slayer_Village/Crafting_Unit_20261007_163804_130.png",
+  "roi": [
+   0.3482,
+   0.6276,
+   0.3715,
+   0.6681
+  ],
+  "rel": [
+   0.1827,
+   0.4809,
+   0.2315,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Demon Moons",
+  "kind": "Knopf",
+  "parent": "W6 Slayer Village",
+  "note": "automatisch erfasst",
+  "file": "W6_Slayer_Village/W6_Slayer_Village_Platz_3_20261007_163804_137.png",
+  "roi": [
+   0.3748,
+   0.6276,
+   0.3981,
+   0.6681
+  ],
+  "rel": [
+   0.2383,
+   0.4809,
+   0.2871,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Progression",
+  "kind": "Knopf",
+  "parent": "W6 Slayer Village",
+  "note": "automatisch erfasst",
+  "file": "W6_Slayer_Village/W6_Slayer_Village_Platz_4_20261007_163804_145.png",
+  "roi": [
+   0.4013,
+   0.6276,
+   0.4246,
+   0.6681
+  ],
+  "rel": [
+   0.2939,
+   0.4809,
+   0.3427,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Infinity Castle",
+  "kind": "Knopf",
+  "parent": "W6 Slayer Village",
+  "note": "automatisch erfasst",
+  "file": "W6_Slayer_Village/W6_Slayer_Village_Platz_5_20261007_163804_152.png",
+  "roi": [
+   0.4279,
+   0.6276,
+   0.4512,
+   0.6681
+  ],
+  "rel": [
+   0.3495,
+   0.4809,
+   0.3983,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "TimeTrial Upgrades",
+  "kind": "Knopf",
+  "parent": "W6 Slayer Village",
+  "note": "automatisch erfasst",
+  "file": "W6_Slayer_Village/TimeTrial_Upgrades_20261007_163804_160.png",
+  "roi": [
+   0.4545,
+   0.6276,
+   0.4778,
+   0.6681
+  ],
+  "rel": [
+   0.4051,
+   0.4809,
+   0.4539,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Sword Passives",
+  "kind": "Knopf",
+  "parent": "W6 Slayer Village",
+  "note": "automatisch erfasst",
+  "file": "W6_Slayer_Village/W6_Slayer_Village_Platz_7_20261007_163804_166.png",
+  "roi": [
+   0.481,
+   0.6276,
+   0.5043,
+   0.6681
+  ],
+  "rel": [
+   0.4607,
+   0.4809,
+   0.5095,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "TimeTrial Shop",
+  "kind": "Knopf",
+  "parent": "W6 Slayer Village",
+  "note": "automatisch erfasst",
+  "file": "W6_Slayer_Village/TimeTrial_Shop_20261007_163804_173.png",
+  "roi": [
+   0.5076,
+   0.6276,
+   0.5309,
+   0.6681
+  ],
+  "rel": [
+   0.5163,
+   0.4809,
+   0.5651,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Nichirin Saya",
+  "kind": "Knopf",
+  "parent": "W6 Slayer Village",
+  "note": "automatisch erfasst",
+  "file": "W6_Slayer_Village/W6_Slayer_Village_Platz_9_20261007_163804_181.png",
+  "roi": [
+   0.5342,
+   0.6276,
+   0.5575,
+   0.6681
+  ],
+  "rel": [
+   0.5719,
+   0.4809,
+   0.6207,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "? W6 Slayer Village · Platz 10",
+  "kind": "Knopf",
+  "parent": "W6 Slayer Village",
+  "note": "automatisch erfasst",
+  "file": "W6_Slayer_Village/W6_Slayer_Village_Platz_10_20261007_163804_189.png",
+  "roi": [
+   0.5607,
+   0.6276,
+   0.584,
+   0.6681
+  ],
+  "rel": [
+   0.6275,
+   0.4809,
+   0.6763,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "? W6 Slayer Village · Platz 11",
+  "kind": "Knopf",
+  "parent": "W6 Slayer Village",
+  "note": "automatisch erfasst",
+  "file": "W6_Slayer_Village/W6_Slayer_Village_Platz_11_20261007_163804_196.png",
+  "roi": [
+   0.5873,
+   0.6276,
+   0.6106,
+   0.6681
+  ],
+  "rel": [
+   0.6831,
+   0.4809,
+   0.7319,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "W7 Clover Island",
+  "kind": "Zeile (Vorlage)",
+  "parent": "Teleporter Fenster",
+  "note": "automatisch erfasst",
+  "file": "Teleporter_Fenster/W7_Clover_Island_20261007_163804_201.png",
+  "roi": [
+   0.2609,
+   0.5597,
+   0.7387,
+   0.6618
+  ],
+  "rel": [
+   0.0894,
+   0.6097,
+   0.9232,
+   0.7781
+  ],
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "TELEPORT!",
+  "kind": "Knopf",
+  "parent": "W7 Clover Island",
+  "note": "automatisch erfasst",
+  "file": "W7_Clover_Island/TELEPORT_20261007_163804_215.png",
+  "roi": [
+   0.6343,
+   0.603,
+   0.7298,
+   0.6488
+  ],
+  "rel": [
+   0.7814,
+   0.4241,
+   0.9814,
+   0.8727
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "W7 Pets",
+  "kind": "Knopf",
+  "parent": "W7 Clover Island",
+  "note": "automatisch erfasst",
+  "file": "W7_Clover_Island/W7_Pets_20261007_163804_222.png",
+  "roi": [
+   0.3216,
+   0.6088,
+   0.3449,
+   0.6493
+  ],
+  "rel": [
+   0.1271,
+   0.4809,
+   0.1759,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Crafting Unit",
+  "kind": "Knopf",
+  "parent": "W7 Clover Island",
+  "note": "automatisch erfasst",
+  "file": "W7_Clover_Island/Crafting_Unit_20261007_163804_229.png",
+  "roi": [
+   0.3482,
+   0.6088,
+   0.3715,
+   0.6493
+  ],
+  "rel": [
+   0.1827,
+   0.4809,
+   0.2315,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Magic Attribute",
+  "kind": "Knopf",
+  "parent": "W7 Clover Island",
+  "note": "automatisch erfasst",
+  "file": "W7_Clover_Island/W7_Clover_Island_Platz_3_20261007_163804_236.png",
+  "roi": [
+   0.3748,
+   0.6088,
+   0.3981,
+   0.6493
+  ],
+  "rel": [
+   0.2383,
+   0.4809,
+   0.2871,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Progression",
+  "kind": "Knopf",
+  "parent": "W7 Clover Island",
+  "note": "automatisch erfasst",
+  "file": "W7_Clover_Island/W7_Clover_Island_Platz_4_20261007_163804_243.png",
+  "roi": [
+   0.4013,
+   0.6088,
+   0.4246,
+   0.6493
+  ],
+  "rel": [
+   0.2939,
+   0.4809,
+   0.3427,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Clover Raid",
+  "kind": "Knopf",
+  "parent": "W7 Clover Island",
+  "note": "automatisch erfasst",
+  "file": "W7_Clover_Island/W7_Clover_Island_Platz_5_20261007_163804_250.png",
+  "roi": [
+   0.4279,
+   0.6088,
+   0.4512,
+   0.6493
+  ],
+  "rel": [
+   0.3495,
+   0.4809,
+   0.3983,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Clover Merchant",
+  "kind": "Knopf",
+  "parent": "W7 Clover Island",
+  "note": "automatisch erfasst",
+  "file": "W7_Clover_Island/W7_Clover_Island_Platz_6_20261007_163804_257.png",
+  "roi": [
+   0.4545,
+   0.6088,
+   0.4778,
+   0.6493
+  ],
+  "rel": [
+   0.4051,
+   0.4809,
+   0.4539,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "TimeTrial Shop",
+  "kind": "Knopf",
+  "parent": "W7 Clover Island",
+  "note": "automatisch erfasst",
+  "file": "W7_Clover_Island/TimeTrial_Shop_20261007_163804_264.png",
+  "roi": [
+   0.481,
+   0.6088,
+   0.5043,
+   0.6493
+  ],
+  "rel": [
+   0.4607,
+   0.4809,
+   0.5095,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Grimoires",
+  "kind": "Knopf",
+  "parent": "W7 Clover Island",
+  "note": "automatisch erfasst",
+  "file": "W7_Clover_Island/W7_Clover_Island_Platz_8_20261007_163804_272.png",
+  "roi": [
+   0.5076,
+   0.6088,
+   0.5309,
+   0.6493
+  ],
+  "rel": [
+   0.5163,
+   0.4809,
+   0.5651,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Magic Squad",
+  "kind": "Knopf",
+  "parent": "W7 Clover Island",
+  "note": "automatisch erfasst",
+  "file": "W7_Clover_Island/W7_Clover_Island_Platz_9_20261007_163804_279.png",
+  "roi": [
+   0.5342,
+   0.6088,
+   0.5575,
+   0.6493
+  ],
+  "rel": [
+   0.5719,
+   0.4809,
+   0.6207,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "W8 Summer Art Online",
+  "kind": "Zeile (Vorlage)",
+  "parent": "Teleporter Fenster",
+  "note": "automatisch erfasst",
+  "file": "Teleporter_Fenster/W8_Summer_Art_Online_20261007_163804_284.png",
+  "roi": [
+   0.2609,
+   0.5639,
+   0.7387,
+   0.666
+  ],
+  "rel": [
+   0.0894,
+   0.6165,
+   0.9232,
+   0.785
+  ],
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "TELEPORT!",
+  "kind": "Knopf",
+  "parent": "W8 Summer Art Online",
+  "note": "automatisch erfasst",
+  "file": "W8_Summer_Art_Online/TELEPORT_20261007_163804_297.png",
+  "roi": [
+   0.6343,
+   0.6072,
+   0.7298,
+   0.653
+  ],
+  "rel": [
+   0.7814,
+   0.4241,
+   0.9814,
+   0.8727
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "W8 Pets",
+  "kind": "Knopf",
+  "parent": "W8 Summer Art Online",
+  "note": "automatisch erfasst",
+  "file": "W8_Summer_Art_Online/W8_Pets_20261007_163804_305.png",
+  "roi": [
+   0.3216,
+   0.613,
+   0.3449,
+   0.6535
+  ],
+  "rel": [
+   0.1271,
+   0.4809,
+   0.1759,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Crafting Unit",
+  "kind": "Knopf",
+  "parent": "W8 Summer Art Online",
+  "note": "automatisch erfasst",
+  "file": "W8_Summer_Art_Online/Crafting_Unit_20261007_163804_312.png",
+  "roi": [
+   0.3482,
+   0.613,
+   0.3715,
+   0.6535
+  ],
+  "rel": [
+   0.1827,
+   0.4809,
+   0.2315,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Races SAO",
+  "kind": "Knopf",
+  "parent": "W8 Summer Art Online",
+  "note": "automatisch erfasst",
+  "file": "W8_Summer_Art_Online/W8_Summer_Art_Online_Platz_3_20261007_163804_319.png",
+  "roi": [
+   0.3748,
+   0.613,
+   0.3981,
+   0.6535
+  ],
+  "rel": [
+   0.2383,
+   0.4809,
+   0.2871,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Progression",
+  "kind": "Knopf",
+  "parent": "W8 Summer Art Online",
+  "note": "automatisch erfasst",
+  "file": "W8_Summer_Art_Online/W8_Summer_Art_Online_Platz_4_20261007_163804_327.png",
+  "roi": [
+   0.4013,
+   0.613,
+   0.4246,
+   0.6535
+  ],
+  "rel": [
+   0.2939,
+   0.4809,
+   0.3427,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Beach Defense",
+  "kind": "Knopf",
+  "parent": "W8 Summer Art Online",
+  "note": "automatisch erfasst",
+  "file": "W8_Summer_Art_Online/W8_Summer_Art_Online_Platz_5_20261007_163804_334.png",
+  "roi": [
+   0.4279,
+   0.613,
+   0.4512,
+   0.6535
+  ],
+  "rel": [
+   0.3495,
+   0.4809,
+   0.3983,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Beach Defense Shop",
+  "kind": "Knopf",
+  "parent": "W8 Summer Art Online",
+  "note": "automatisch erfasst",
+  "file": "W8_Summer_Art_Online/W8_Summer_Art_Online_Platz_6_20261007_163804_342.png",
+  "roi": [
+   0.4545,
+   0.613,
+   0.4778,
+   0.6535
+  ],
+  "rel": [
+   0.4051,
+   0.4809,
+   0.4539,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "TimeTrial Shop",
+  "kind": "Knopf",
+  "parent": "W8 Summer Art Online",
+  "note": "automatisch erfasst",
+  "file": "W8_Summer_Art_Online/TimeTrial_Shop_20261007_163804_348.png",
+  "roi": [
+   0.481,
+   0.613,
+   0.5043,
+   0.6535
+  ],
+  "rel": [
+   0.4607,
+   0.4809,
+   0.5095,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Swords 2",
+  "kind": "Knopf",
+  "parent": "W8 Summer Art Online",
+  "note": "automatisch erfasst",
+  "file": "W8_Summer_Art_Online/W8_Summer_Art_Online_Platz_8_20261007_163804_356.png",
+  "roi": [
+   0.5076,
+   0.613,
+   0.5309,
+   0.6535
+  ],
+  "rel": [
+   0.5163,
+   0.4809,
+   0.5651,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Aincrad Spoils",
+  "kind": "Knopf",
+  "parent": "W8 Summer Art Online",
+  "note": "automatisch erfasst",
+  "file": "W8_Summer_Art_Online/W8_Summer_Art_Online_Platz_9_20261007_163804_363.png",
+  "roi": [
+   0.5342,
+   0.613,
+   0.5575,
+   0.6535
+  ],
+  "rel": [
+   0.5719,
+   0.4809,
+   0.6207,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "W9 Fire City",
+  "kind": "Zeile (Vorlage)",
+  "parent": "Teleporter Fenster",
+  "note": "automatisch erfasst",
+  "file": "Teleporter_Fenster/W9_Fire_City_20261007_163804_369.png",
+  "roi": [
+   0.2609,
+   0.6181,
+   0.7387,
+   0.7201
+  ],
+  "rel": [
+   0.0894,
+   0.7059,
+   0.9232,
+   0.8743
+  ],
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "TELEPORT!",
+  "kind": "Knopf",
+  "parent": "W9 Fire City",
+  "note": "automatisch erfasst",
+  "file": "W9_Fire_City/TELEPORT_20261007_163804_382.png",
+  "roi": [
+   0.6343,
+   0.6614,
+   0.7298,
+   0.7071
+  ],
+  "rel": [
+   0.7814,
+   0.4241,
+   0.9814,
+   0.8727
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "W9 Pets",
+  "kind": "Knopf",
+  "parent": "W9 Fire City",
+  "note": "automatisch erfasst",
+  "file": "W9_Fire_City/W9_Pets_20261007_163804_389.png",
+  "roi": [
+   0.3216,
+   0.6672,
+   0.3449,
+   0.7076
+  ],
+  "rel": [
+   0.1271,
+   0.4809,
+   0.1759,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Crafting Unit",
+  "kind": "Knopf",
+  "parent": "W9 Fire City",
+  "note": "automatisch erfasst",
+  "file": "W9_Fire_City/Crafting_Unit_20261007_163804_397.png",
+  "roi": [
+   0.3482,
+   0.6672,
+   0.3715,
+   0.7076
+  ],
+  "rel": [
+   0.1827,
+   0.4809,
+   0.2315,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Battalion",
+  "kind": "Knopf",
+  "parent": "W9 Fire City",
+  "note": "automatisch erfasst",
+  "file": "W9_Fire_City/W9_Fire_City_Platz_3_20261007_163804_404.png",
+  "roi": [
+   0.3748,
+   0.6672,
+   0.3981,
+   0.7076
+  ],
+  "rel": [
+   0.2383,
+   0.4809,
+   0.2871,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Progression",
+  "kind": "Knopf",
+  "parent": "W9 Fire City",
+  "note": "automatisch erfasst",
+  "file": "W9_Fire_City/W9_Fire_City_Platz_4_20261007_163804_411.png",
+  "roi": [
+   0.4013,
+   0.6672,
+   0.4246,
+   0.7076
+  ],
+  "rel": [
+   0.2939,
+   0.4809,
+   0.3427,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Pet Passives",
+  "kind": "Knopf",
+  "parent": "W9 Fire City",
+  "note": "automatisch erfasst",
+  "file": "W9_Fire_City/W9_Fire_City_Platz_5_20261007_163804_418.png",
+  "roi": [
+   0.4279,
+   0.6672,
+   0.4512,
+   0.7076
+  ],
+  "rel": [
+   0.3495,
+   0.4809,
+   0.3983,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "TimeTrial Upgrades",
+  "kind": "Knopf",
+  "parent": "W9 Fire City",
+  "note": "automatisch erfasst",
+  "file": "W9_Fire_City/TimeTrial_Upgrades_20261007_163804_426.png",
+  "roi": [
+   0.4545,
+   0.6672,
+   0.4778,
+   0.7076
+  ],
+  "rel": [
+   0.4051,
+   0.4809,
+   0.4539,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Flame Core",
+  "kind": "Knopf",
+  "parent": "W9 Fire City",
+  "note": "automatisch erfasst",
+  "file": "W9_Fire_City/W9_Fire_City_Platz_7_20261007_163804_433.png",
+  "roi": [
+   0.481,
+   0.6672,
+   0.5043,
+   0.7076
+  ],
+  "rel": [
+   0.4607,
+   0.4809,
+   0.5095,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "? W9 Fire City · Platz 8",
+  "kind": "Knopf",
+  "parent": "W9 Fire City",
+  "note": "automatisch erfasst",
+  "file": "W9_Fire_City/W9_Fire_City_Platz_8_20261007_163804_440.png",
+  "roi": [
+   0.5076,
+   0.6672,
+   0.5309,
+   0.7076
+  ],
+  "rel": [
+   0.5163,
+   0.4809,
+   0.5651,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "W10 Hueco World",
+  "kind": "Zeile (Vorlage)",
+  "parent": "Teleporter Fenster",
+  "note": "automatisch erfasst",
+  "file": "Teleporter_Fenster/W10_Hueco_World_20261007_163804_445.png",
+  "roi": [
+   0.2609,
+   0.5854,
+   0.7387,
+   0.6875
+  ],
+  "rel": [
+   0.0894,
+   0.6521,
+   0.9232,
+   0.8205
+  ],
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "TELEPORT!",
+  "kind": "Knopf",
+  "parent": "W10 Hueco World",
+  "note": "automatisch erfasst",
+  "file": "W10_Hueco_World/TELEPORT_20261007_163804_458.png",
+  "roi": [
+   0.6343,
+   0.6287,
+   0.7298,
+   0.6745
+  ],
+  "rel": [
+   0.7814,
+   0.4241,
+   0.9814,
+   0.8727
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "W10 Pets",
+  "kind": "Knopf",
+  "parent": "W10 Hueco World",
+  "note": "automatisch erfasst",
+  "file": "W10_Hueco_World/W10_Pets_20261007_163804_466.png",
+  "roi": [
+   0.3216,
+   0.6345,
+   0.3449,
+   0.675
+  ],
+  "rel": [
+   0.1271,
+   0.4809,
+   0.1759,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Crafting Unit",
+  "kind": "Knopf",
+  "parent": "W10 Hueco World",
+  "note": "automatisch erfasst",
+  "file": "W10_Hueco_World/Crafting_Unit_20261007_163804_473.png",
+  "roi": [
+   0.3482,
+   0.6345,
+   0.3715,
+   0.675
+  ],
+  "rel": [
+   0.1827,
+   0.4809,
+   0.2315,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Soul Artifacts",
+  "kind": "Knopf",
+  "parent": "W10 Hueco World",
+  "note": "automatisch erfasst",
+  "file": "W10_Hueco_World/W10_Hueco_World_Platz_3_20261007_163804_480.png",
+  "roi": [
+   0.3748,
+   0.6345,
+   0.3981,
+   0.675
+  ],
+  "rel": [
+   0.2383,
+   0.4809,
+   0.2871,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Progression",
+  "kind": "Knopf",
+  "parent": "W10 Hueco World",
+  "note": "automatisch erfasst",
+  "file": "W10_Hueco_World/W10_Hueco_World_Platz_4_20261007_163804_488.png",
+  "roi": [
+   0.4013,
+   0.6345,
+   0.4246,
+   0.675
+  ],
+  "rel": [
+   0.2939,
+   0.4809,
+   0.3427,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Soul Raid",
+  "kind": "Knopf",
+  "parent": "W10 Hueco World",
+  "note": "automatisch erfasst",
+  "file": "W10_Hueco_World/W10_Hueco_World_Platz_5_20261007_163804_496.png",
+  "roi": [
+   0.4279,
+   0.6345,
+   0.4512,
+   0.675
+  ],
+  "rel": [
+   0.3495,
+   0.4809,
+   0.3983,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "TimeTrial Upgrades",
+  "kind": "Knopf",
+  "parent": "W10 Hueco World",
+  "note": "automatisch erfasst",
+  "file": "W10_Hueco_World/TimeTrial_Upgrades_20261007_163804_503.png",
+  "roi": [
+   0.4545,
+   0.6345,
+   0.4778,
+   0.675
+  ],
+  "rel": [
+   0.4051,
+   0.4809,
+   0.4539,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "TimeTrial Shop",
+  "kind": "Knopf",
+  "parent": "W10 Hueco World",
+  "note": "automatisch erfasst",
+  "file": "W10_Hueco_World/TimeTrial_Shop_20261007_163804_510.png",
+  "roi": [
+   0.481,
+   0.6345,
+   0.5043,
+   0.675
+  ],
+  "rel": [
+   0.4607,
+   0.4809,
+   0.5095,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Zanpakuto",
+  "kind": "Knopf",
+  "parent": "W10 Hueco World",
+  "note": "automatisch erfasst",
+  "file": "W10_Hueco_World/W10_Hueco_World_Platz_8_20261007_163804_518.png",
+  "roi": [
+   0.5076,
+   0.6345,
+   0.5309,
+   0.675
+  ],
+  "rel": [
+   0.5163,
+   0.4809,
+   0.5651,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Bankai",
+  "kind": "Knopf",
+  "parent": "W10 Hueco World",
+  "note": "automatisch erfasst",
+  "file": "W10_Hueco_World/W10_Hueco_World_Platz_9_20261007_163804_525.png",
+  "roi": [
+   0.5342,
+   0.6345,
+   0.5575,
+   0.675
+  ],
+  "rel": [
+   0.5719,
+   0.4809,
+   0.6207,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "W11 Cursed School",
+  "kind": "Zeile (Vorlage)",
+  "parent": "Teleporter Fenster",
+  "note": "automatisch erfasst",
+  "file": "Teleporter_Fenster/W11_Cursed_School_20261007_163804_531.png",
+  "roi": [
+   0.2609,
+   0.5542,
+   0.7387,
+   0.6562
+  ],
+  "rel": [
+   0.0894,
+   0.6005,
+   0.9232,
+   0.7689
+  ],
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "TELEPORT!",
+  "kind": "Knopf",
+  "parent": "W11 Cursed School",
+  "note": "automatisch erfasst",
+  "file": "W11_Cursed_School/TELEPORT_20261007_163804_545.png",
+  "roi": [
+   0.6343,
+   0.5975,
+   0.7298,
+   0.6432
+  ],
+  "rel": [
+   0.7814,
+   0.4241,
+   0.9814,
+   0.8727
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "W11 Pets",
+  "kind": "Knopf",
+  "parent": "W11 Cursed School",
+  "note": "automatisch erfasst",
+  "file": "W11_Cursed_School/W11_Pets_20261007_163804_552.png",
+  "roi": [
+   0.3216,
+   0.6033,
+   0.3449,
+   0.6437
+  ],
+  "rel": [
+   0.1271,
+   0.4809,
+   0.1759,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Crafting Unit",
+  "kind": "Knopf",
+  "parent": "W11 Cursed School",
+  "note": "automatisch erfasst",
+  "file": "W11_Cursed_School/Crafting_Unit_20261007_163804_559.png",
+  "roi": [
+   0.3482,
+   0.6033,
+   0.3715,
+   0.6437
+  ],
+  "rel": [
+   0.1827,
+   0.4809,
+   0.2315,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Innate Techniques",
+  "kind": "Knopf",
+  "parent": "W11 Cursed School",
+  "note": "automatisch erfasst",
+  "file": "W11_Cursed_School/W11_Cursed_School_Platz_3_20261007_163804_567.png",
+  "roi": [
+   0.3748,
+   0.6033,
+   0.3981,
+   0.6437
+  ],
+  "rel": [
+   0.2383,
+   0.4809,
+   0.2871,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Progression",
+  "kind": "Knopf",
+  "parent": "W11 Cursed School",
+  "note": "automatisch erfasst",
+  "file": "W11_Cursed_School/W11_Cursed_School_Platz_4_20261007_163804_575.png",
+  "roi": [
+   0.4013,
+   0.6033,
+   0.4246,
+   0.6437
+  ],
+  "rel": [
+   0.2939,
+   0.4809,
+   0.3427,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Cursed Upgrade Tree",
+  "kind": "Knopf",
+  "parent": "W11 Cursed School",
+  "note": "automatisch erfasst",
+  "file": "W11_Cursed_School/W11_Cursed_School_Platz_5_20261007_163804_582.png",
+  "roi": [
+   0.4279,
+   0.6033,
+   0.4512,
+   0.6437
+  ],
+  "rel": [
+   0.3495,
+   0.4809,
+   0.3983,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Cursed Rush/King of Curses Rush",
+  "kind": "Knopf",
+  "parent": "W11 Cursed School",
+  "note": "automatisch erfasst",
+  "file": "W11_Cursed_School/W11_Cursed_School_Platz_6_20261007_163804_590.png",
+  "roi": [
+   0.4545,
+   0.6033,
+   0.4778,
+   0.6437
+  ],
+  "rel": [
+   0.4051,
+   0.4809,
+   0.4539,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Accessoires Curses",
+  "kind": "Knopf",
+  "parent": "W11 Cursed School",
+  "note": "automatisch erfasst",
+  "file": "W11_Cursed_School/W11_Cursed_School_Platz_7_20261007_163804_597.png",
+  "roi": [
+   0.481,
+   0.6033,
+   0.5043,
+   0.6437
+  ],
+  "rel": [
+   0.4607,
+   0.4809,
+   0.5095,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Shadow Shikigami",
+  "kind": "Knopf",
+  "parent": "W11 Cursed School",
+  "note": "automatisch erfasst",
+  "file": "W11_Cursed_School/W11_Cursed_School_Platz_8_20261007_163804_604.png",
+  "roi": [
+   0.5076,
+   0.6033,
+   0.5309,
+   0.6437
+  ],
+  "rel": [
+   0.5163,
+   0.4809,
+   0.5651,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "W12 Lion Kingdom",
+  "kind": "Zeile (Vorlage)",
+  "parent": "Teleporter Fenster",
+  "note": "automatisch erfasst",
+  "file": "Teleporter_Fenster/W12_Lion_Kingdom_20261007_163804_610.png",
+  "roi": [
+   0.2609,
+   0.5229,
+   0.7387,
+   0.625
+  ],
+  "rel": [
+   0.0894,
+   0.5489,
+   0.9232,
+   0.7174
+  ],
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "TELEPORT!",
+  "kind": "Knopf",
+  "parent": "W12 Lion Kingdom",
+  "note": "automatisch erfasst",
+  "file": "W12_Lion_Kingdom/TELEPORT_20261007_163804_625.png",
+  "roi": [
+   0.6343,
+   0.5662,
+   0.7298,
+   0.612
+  ],
+  "rel": [
+   0.7814,
+   0.4241,
+   0.9814,
+   0.8727
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "W12 Pets",
+  "kind": "Knopf",
+  "parent": "W12 Lion Kingdom",
+  "note": "automatisch erfasst",
+  "file": "W12_Lion_Kingdom/W12_Pets_20261007_163804_632.png",
+  "roi": [
+   0.3216,
+   0.572,
+   0.3449,
+   0.6125
+  ],
+  "rel": [
+   0.1271,
+   0.4809,
+   0.1759,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Crafting Unit",
+  "kind": "Knopf",
+  "parent": "W12 Lion Kingdom",
+  "note": "automatisch erfasst",
+  "file": "W12_Lion_Kingdom/Crafting_Unit_20261007_163804_641.png",
+  "roi": [
+   0.3482,
+   0.572,
+   0.3715,
+   0.6125
+  ],
+  "rel": [
+   0.1827,
+   0.4809,
+   0.2315,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Legendary Orders",
+  "kind": "Knopf",
+  "parent": "W12 Lion Kingdom",
+  "note": "automatisch erfasst",
+  "file": "W12_Lion_Kingdom/W12_Lion_Kingdom_Platz_3_20261007_163804_649.png",
+  "roi": [
+   0.3748,
+   0.572,
+   0.3981,
+   0.6125
+  ],
+  "rel": [
+   0.2383,
+   0.4809,
+   0.2871,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Progression",
+  "kind": "Knopf",
+  "parent": "W12 Lion Kingdom",
+  "note": "automatisch erfasst",
+  "file": "W12_Lion_Kingdom/W12_Lion_Kingdom_Platz_4_20261007_163804_657.png",
+  "roi": [
+   0.4013,
+   0.572,
+   0.4246,
+   0.6125
+  ],
+  "rel": [
+   0.2939,
+   0.4809,
+   0.3427,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Commandments",
+  "kind": "Knopf",
+  "parent": "W12 Lion Kingdom",
+  "note": "automatisch erfasst",
+  "file": "W12_Lion_Kingdom/W12_Lion_Kingdom_Platz_5_20261007_163804_664.png",
+  "roi": [
+   0.4279,
+   0.572,
+   0.4512,
+   0.6125
+  ],
+  "rel": [
+   0.3495,
+   0.4809,
+   0.3983,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Sins Upgrade Tree",
+  "kind": "Knopf",
+  "parent": "W12 Lion Kingdom",
+  "note": "automatisch erfasst",
+  "file": "W12_Lion_Kingdom/W12_Lion_Kingdom_Platz_6_20261007_163804_673.png",
+  "roi": [
+   0.4545,
+   0.572,
+   0.4778,
+   0.6125
+  ],
+  "rel": [
+   0.4051,
+   0.4809,
+   0.4539,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Sins Raid",
+  "kind": "Knopf",
+  "parent": "W12 Lion Kingdom",
+  "note": "automatisch erfasst",
+  "file": "W12_Lion_Kingdom/W12_Lion_Kingdom_Platz_7_20261007_163804_680.png",
+  "roi": [
+   0.481,
+   0.572,
+   0.5043,
+   0.6125
+  ],
+  "rel": [
+   0.4607,
+   0.4809,
+   0.5095,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Sins Raid Shop",
+  "kind": "Knopf",
+  "parent": "W12 Lion Kingdom",
+  "note": "automatisch erfasst",
+  "file": "W12_Lion_Kingdom/W12_Lion_Kingdom_Platz_8_20261007_163804_687.png",
+  "roi": [
+   0.5076,
+   0.572,
+   0.5309,
+   0.6125
+  ],
+  "rel": [
+   0.5163,
+   0.4809,
+   0.5651,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Offerings",
+  "kind": "Knopf",
+  "parent": "W12 Lion Kingdom",
+  "note": "automatisch erfasst",
+  "file": "W12_Lion_Kingdom/W12_Lion_Kingdom_Platz_9_20261007_163804_695.png",
+  "roi": [
+   0.5342,
+   0.572,
+   0.5575,
+   0.6125
+  ],
+  "rel": [
+   0.5719,
+   0.4809,
+   0.6207,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Offerings",
+  "kind": "Knopf",
+  "parent": "W12 Lion Kingdom",
+  "note": "automatisch erfasst",
+  "file": "W12_Lion_Kingdom/W12_Lion_Kingdom_Platz_10_20261007_163804_703.png",
+  "roi": [
+   0.5607,
+   0.572,
+   0.584,
+   0.6125
+  ],
+  "rel": [
+   0.6275,
+   0.4809,
+   0.6763,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Legendary Weapons",
+  "kind": "Knopf",
+  "parent": "W12 Lion Kingdom",
+  "note": "automatisch erfasst",
+  "file": "W12_Lion_Kingdom/W12_Lion_Kingdom_Platz_11_20261007_163804_710.png",
+  "roi": [
+   0.5873,
+   0.572,
+   0.6106,
+   0.6125
+  ],
+  "rel": [
+   0.6831,
+   0.4809,
+   0.7319,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "W13 Z City",
+  "kind": "Zeile (Vorlage)",
+  "parent": "Teleporter Fenster",
+  "note": "automatisch erfasst",
+  "file": "Teleporter_Fenster/W13_Z_City_20261007_163804_716.png",
+  "roi": [
+   0.2609,
+   0.6257,
+   0.7387,
+   0.7278
+  ],
+  "rel": [
+   0.0894,
+   0.7185,
+   0.9232,
+   0.8869
+  ],
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "TELEPORT!",
+  "kind": "Knopf",
+  "parent": "W13 Z City",
+  "note": "automatisch erfasst",
+  "file": "W13_Z_City/TELEPORT_20261007_163804_731.png",
+  "roi": [
+   0.6343,
+   0.669,
+   0.7298,
+   0.7148
+  ],
+  "rel": [
+   0.7814,
+   0.4241,
+   0.9814,
+   0.8727
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "W13 Pets",
+  "kind": "Knopf",
+  "parent": "W13 Z City",
+  "note": "automatisch erfasst",
+  "file": "W13_Z_City/W13_Pets_20261007_163804_740.png",
+  "roi": [
+   0.3216,
+   0.6748,
+   0.3449,
+   0.7153
+  ],
+  "rel": [
+   0.1271,
+   0.4809,
+   0.1759,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Crafting Unit",
+  "kind": "Knopf",
+  "parent": "W13 Z City",
+  "note": "automatisch erfasst",
+  "file": "W13_Z_City/Crafting_Unit_20261007_163804_748.png",
+  "roi": [
+   0.3482,
+   0.6748,
+   0.3715,
+   0.7153
+  ],
+  "rel": [
+   0.1827,
+   0.4809,
+   0.2315,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Hero Arsenal",
+  "kind": "Knopf",
+  "parent": "W13 Z City",
+  "note": "automatisch erfasst",
+  "file": "W13_Z_City/W13_Z_City_Platz_3_20261007_163804_756.png",
+  "roi": [
+   0.3748,
+   0.6748,
+   0.3981,
+   0.7153
+  ],
+  "rel": [
+   0.2383,
+   0.4809,
+   0.2871,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Progression",
+  "kind": "Knopf",
+  "parent": "W13 Z City",
+  "note": "automatisch erfasst",
+  "file": "W13_Z_City/W13_Z_City_Platz_4_20261007_163804_764.png",
+  "roi": [
+   0.4013,
+   0.6748,
+   0.4246,
+   0.7153
+  ],
+  "rel": [
+   0.2939,
+   0.4809,
+   0.3427,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "TimeTrial Shop",
+  "kind": "Knopf",
+  "parent": "W13 Z City",
+  "note": "automatisch erfasst",
+  "file": "W13_Z_City/TimeTrial_Shop_20261007_163804_772.png",
+  "roi": [
+   0.4279,
+   0.6748,
+   0.4512,
+   0.7153
+  ],
+  "rel": [
+   0.3495,
+   0.4809,
+   0.3983,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Monster Cell Absorb",
+  "kind": "Knopf",
+  "parent": "W13 Z City",
+  "note": "automatisch erfasst",
+  "file": "W13_Z_City/W13_Z_City_Platz_6_20261007_163804_779.png",
+  "roi": [
+   0.4545,
+   0.6748,
+   0.4778,
+   0.7153
+  ],
+  "rel": [
+   0.4051,
+   0.4809,
+   0.4539,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "TimeTrial Upgrades",
+  "kind": "Knopf",
+  "parent": "W13 Z City",
+  "note": "automatisch erfasst",
+  "file": "W13_Z_City/TimeTrial_Upgrades_20261007_163804_788.png",
+  "roi": [
+   0.481,
+   0.6748,
+   0.5043,
+   0.7153
+  ],
+  "rel": [
+   0.4607,
+   0.4809,
+   0.5095,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Hero Defense",
+  "kind": "Knopf",
+  "parent": "W13 Z City",
+  "note": "automatisch erfasst",
+  "file": "W13_Z_City/W13_Z_City_Platz_8_20261007_163804_795.png",
+  "roi": [
+   0.5076,
+   0.6748,
+   0.5309,
+   0.7153
+  ],
+  "rel": [
+   0.5163,
+   0.4809,
+   0.5651,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Genos",
+  "kind": "Knopf",
+  "parent": "W13 Z City",
+  "note": "automatisch erfasst",
+  "file": "W13_Z_City/W13_Z_City_Platz_9_20261007_163804_803.png",
+  "roi": [
+   0.5342,
+   0.6748,
+   0.5575,
+   0.7153
+  ],
+  "rel": [
+   0.5719,
+   0.4809,
+   0.6207,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "? W13 Z City · Platz 10",
+  "kind": "Knopf",
+  "parent": "W13 Z City",
+  "note": "automatisch erfasst",
+  "file": "W13_Z_City/W13_Z_City_Platz_10_20261007_163804_811.png",
+  "roi": [
+   0.5607,
+   0.6748,
+   0.584,
+   0.7153
+  ],
+  "rel": [
+   0.6275,
+   0.4809,
+   0.6763,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "W14 Tempest Federation",
+  "kind": "Zeile (Vorlage)",
+  "parent": "Teleporter Fenster",
+  "note": "automatisch erfasst",
+  "file": "Teleporter_Fenster/W14_Tempest_Federation_20261007_163804_817.png",
+  "roi": [
+   0.2609,
+   0.5924,
+   0.7387,
+   0.6944
+  ],
+  "rel": [
+   0.0894,
+   0.6635,
+   0.9232,
+   0.8319
+  ],
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "TELEPORT!",
+  "kind": "Knopf",
+  "parent": "W14 Tempest Federation",
+  "note": "automatisch erfasst",
+  "file": "W14_Tempest_Federation/TELEPORT_20261007_163804_831.png",
+  "roi": [
+   0.6343,
+   0.6357,
+   0.7298,
+   0.6814
+  ],
+  "rel": [
+   0.7814,
+   0.4241,
+   0.9814,
+   0.8727
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "W14 Pets",
+  "kind": "Knopf",
+  "parent": "W14 Tempest Federation",
+  "note": "automatisch erfasst",
+  "file": "W14_Tempest_Federation/W14_Pets_20261007_163804_839.png",
+  "roi": [
+   0.3216,
+   0.6415,
+   0.3449,
+   0.6819
+  ],
+  "rel": [
+   0.1271,
+   0.4809,
+   0.1759,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Crafting Unit",
+  "kind": "Knopf",
+  "parent": "W14 Tempest Federation",
+  "note": "automatisch erfasst",
+  "file": "W14_Tempest_Federation/Crafting_Unit_20261007_163804_847.png",
+  "roi": [
+   0.3482,
+   0.6415,
+   0.3715,
+   0.6819
+  ],
+  "rel": [
+   0.1827,
+   0.4809,
+   0.2315,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Spirits",
+  "kind": "Knopf",
+  "parent": "W14 Tempest Federation",
+  "note": "automatisch erfasst",
+  "file": "W14_Tempest_Federation/W14_Tempest_Federation_Platz_3_20261007_163804_855.png",
+  "roi": [
+   0.3748,
+   0.6415,
+   0.3981,
+   0.6819
+  ],
+  "rel": [
+   0.2383,
+   0.4809,
+   0.2871,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Progression",
+  "kind": "Knopf",
+  "parent": "W14 Tempest Federation",
+  "note": "automatisch erfasst",
+  "file": "W14_Tempest_Federation/W14_Tempest_Federation_Platz_4_20261007_163804_863.png",
+  "roi": [
+   0.4013,
+   0.6415,
+   0.4246,
+   0.6819
+  ],
+  "rel": [
+   0.2939,
+   0.4809,
+   0.3427,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Titan Passives",
+  "kind": "Knopf",
+  "parent": "W14 Tempest Federation",
+  "note": "automatisch erfasst",
+  "file": "W14_Tempest_Federation/W14_Tempest_Federation_Platz_5_20261007_163804_871.png",
+  "roi": [
+   0.4279,
+   0.6415,
+   0.4512,
+   0.6819
+  ],
+  "rel": [
+   0.3495,
+   0.4809,
+   0.3983,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Primordials",
+  "kind": "Knopf",
+  "parent": "W14 Tempest Federation",
+  "note": "automatisch erfasst",
+  "file": "W14_Tempest_Federation/W14_Tempest_Federation_Platz_6_20261007_163804_880.png",
+  "roi": [
+   0.4545,
+   0.6415,
+   0.4778,
+   0.6819
+  ],
+  "rel": [
+   0.4051,
+   0.4809,
+   0.4539,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Renaming",
+  "kind": "Knopf",
+  "parent": "W14 Tempest Federation",
+  "note": "automatisch erfasst",
+  "file": "W14_Tempest_Federation/W14_Tempest_Federation_Platz_7_20261007_163804_887.png",
+  "roi": [
+   0.481,
+   0.6415,
+   0.5043,
+   0.6819
+  ],
+  "rel": [
+   0.4607,
+   0.4809,
+   0.5095,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Tower",
+  "kind": "Knopf",
+  "parent": "W14 Tempest Federation",
+  "note": "automatisch erfasst",
+  "file": "W14_Tempest_Federation/W14_Tempest_Federation_Platz_8_20261007_163804_895.png",
+  "roi": [
+   0.5076,
+   0.6415,
+   0.5309,
+   0.6819
+  ],
+  "rel": [
+   0.5163,
+   0.4809,
+   0.5651,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "? W14 Tempest Federation · Platz 9",
+  "kind": "Knopf",
+  "parent": "W14 Tempest Federation",
+  "note": "automatisch erfasst",
+  "file": "W14_Tempest_Federation/W14_Tempest_Federation_Platz_9_20261007_163804_903.png",
+  "roi": [
+   0.5342,
+   0.6415,
+   0.5575,
+   0.6819
+  ],
+  "rel": [
+   0.5719,
+   0.4809,
+   0.6207,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "? W14 Tempest Federation · Platz 11",
+  "kind": "Knopf",
+  "parent": "W14 Tempest Federation",
+  "note": "automatisch erfasst",
+  "file": "W14_Tempest_Federation/W14_Tempest_Federation_Platz_11_20261007_163804_911.png",
+  "roi": [
+   0.5873,
+   0.6415,
+   0.6106,
+   0.6819
+  ],
+  "rel": [
+   0.6831,
+   0.4809,
+   0.7319,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "? W14 Tempest Federation · Platz 12",
+  "kind": "Knopf",
+  "parent": "W14 Tempest Federation",
+  "note": "automatisch erfasst",
+  "file": "W14_Tempest_Federation/W14_Tempest_Federation_Platz_12_20261007_163804_920.png",
+  "roi": [
+   0.6139,
+   0.6415,
+   0.6372,
+   0.6819
+  ],
+  "rel": [
+   0.7387,
+   0.4809,
+   0.7875,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "W15 Zaban City",
+  "kind": "Zeile (Vorlage)",
+  "parent": "Teleporter Fenster",
+  "note": "automatisch erfasst",
+  "file": "Teleporter_Fenster/W15_Zaban_City_20261007_163804_926.png",
+  "roi": [
+   0.2609,
+   0.5597,
+   0.7387,
+   0.6618
+  ],
+  "rel": [
+   0.0894,
+   0.6097,
+   0.9232,
+   0.7781
+  ],
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "TELEPORT!",
+  "kind": "Knopf",
+  "parent": "W15 Zaban City",
+  "note": "automatisch erfasst",
+  "file": "W15_Zaban_City/TELEPORT_20261007_163804_941.png",
+  "roi": [
+   0.6343,
+   0.603,
+   0.7298,
+   0.6488
+  ],
+  "rel": [
+   0.7814,
+   0.4241,
+   0.9814,
+   0.8727
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "W15 Pets",
+  "kind": "Knopf",
+  "parent": "W15 Zaban City",
+  "note": "automatisch erfasst",
+  "file": "W15_Zaban_City/W15_Pets_20261007_163804_949.png",
+  "roi": [
+   0.3216,
+   0.6088,
+   0.3449,
+   0.6493
+  ],
+  "rel": [
+   0.1271,
+   0.4809,
+   0.1759,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Crafting Unit",
+  "kind": "Knopf",
+  "parent": "W15 Zaban City",
+  "note": "automatisch erfasst",
+  "file": "W15_Zaban_City/Crafting_Unit_20261007_163804_957.png",
+  "roi": [
+   0.3482,
+   0.6088,
+   0.3715,
+   0.6493
+  ],
+  "rel": [
+   0.1827,
+   0.4809,
+   0.2315,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Hunter Badges",
+  "kind": "Knopf",
+  "parent": "W15 Zaban City",
+  "note": "automatisch erfasst",
+  "file": "W15_Zaban_City/W15_Zaban_City_Platz_3_20261007_163804_965.png",
+  "roi": [
+   0.3748,
+   0.6088,
+   0.3981,
+   0.6493
+  ],
+  "rel": [
+   0.2383,
+   0.4809,
+   0.2871,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Progression",
+  "kind": "Knopf",
+  "parent": "W15 Zaban City",
+  "note": "automatisch erfasst",
+  "file": "W15_Zaban_City/W15_Zaban_City_Platz_4_20261007_163804_973.png",
+  "roi": [
+   0.4013,
+   0.6088,
+   0.4246,
+   0.6493
+  ],
+  "rel": [
+   0.2939,
+   0.4809,
+   0.3427,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Hunter Specialization",
+  "kind": "Knopf",
+  "parent": "W15 Zaban City",
+  "note": "automatisch erfasst",
+  "file": "W15_Zaban_City/W15_Zaban_City_Platz_5_20261007_163804_982.png",
+  "roi": [
+   0.4279,
+   0.6088,
+   0.4512,
+   0.6493
+  ],
+  "rel": [
+   0.3495,
+   0.4809,
+   0.3983,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Nen Awakening",
+  "kind": "Knopf",
+  "parent": "W15 Zaban City",
+  "note": "automatisch erfasst",
+  "file": "W15_Zaban_City/W15_Zaban_City_Platz_6_20261007_163804_991.png",
+  "roi": [
+   0.4545,
+   0.6088,
+   0.4778,
+   0.6493
+  ],
+  "rel": [
+   0.4051,
+   0.4809,
+   0.4539,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Nen Upgrade Tree",
+  "kind": "Knopf",
+  "parent": "W15 Zaban City",
+  "note": "automatisch erfasst",
+  "file": "W15_Zaban_City/W15_Zaban_City_Platz_7_20261007_163804_998.png",
+  "roi": [
+   0.481,
+   0.6088,
+   0.5043,
+   0.6493
+  ],
+  "rel": [
+   0.4607,
+   0.4809,
+   0.5095,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Zaban Raid",
+  "kind": "Knopf",
+  "parent": "W15 Zaban City",
+  "note": "automatisch erfasst",
+  "file": "W15_Zaban_City/W15_Zaban_City_Platz_8_20261007_163805_006.png",
+  "roi": [
+   0.5076,
+   0.6088,
+   0.5309,
+   0.6493
+  ],
+  "rel": [
+   0.5163,
+   0.4809,
+   0.5651,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "W16 Tokyo Ward",
+  "kind": "Zeile (Vorlage)",
+  "parent": "Teleporter Fenster",
+  "note": "automatisch erfasst",
+  "file": "Teleporter_Fenster/W16_Tokyo_Ward_20261007_163805_012.png",
+  "roi": [
+   0.2609,
+   0.5424,
+   0.7387,
+   0.6444
+  ],
+  "rel": [
+   0.0894,
+   0.581,
+   0.9232,
+   0.7495
+  ],
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "TELEPORT!",
+  "kind": "Knopf",
+  "parent": "W16 Tokyo Ward",
+  "note": "automatisch erfasst",
+  "file": "W16_Tokyo_Ward/TELEPORT_20261007_163805_029.png",
+  "roi": [
+   0.6343,
+   0.5857,
+   0.7298,
+   0.6314
+  ],
+  "rel": [
+   0.7814,
+   0.4241,
+   0.9814,
+   0.8727
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "W16 Pets",
+  "kind": "Knopf",
+  "parent": "W16 Tokyo Ward",
+  "note": "automatisch erfasst",
+  "file": "W16_Tokyo_Ward/W16_Pets_20261007_163805_037.png",
+  "roi": [
+   0.3216,
+   0.5915,
+   0.3449,
+   0.6319
+  ],
+  "rel": [
+   0.1271,
+   0.4809,
+   0.1759,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Crafting Unit",
+  "kind": "Knopf",
+  "parent": "W16 Tokyo Ward",
+  "note": "automatisch erfasst",
+  "file": "W16_Tokyo_Ward/Crafting_Unit_20261007_163805_045.png",
+  "roi": [
+   0.3482,
+   0.5915,
+   0.3715,
+   0.6319
+  ],
+  "rel": [
+   0.1827,
+   0.4809,
+   0.2315,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "CCG Extermination",
+  "kind": "Knopf",
+  "parent": "W16 Tokyo Ward",
+  "note": "automatisch erfasst",
+  "file": "W16_Tokyo_Ward/W16_Tokyo_Ward_Platz_3_20261007_163805_053.png",
+  "roi": [
+   0.3748,
+   0.5915,
+   0.3981,
+   0.6319
+  ],
+  "rel": [
+   0.2383,
+   0.4809,
+   0.2871,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Progression",
+  "kind": "Knopf",
+  "parent": "W16 Tokyo Ward",
+  "note": "automatisch erfasst",
+  "file": "W16_Tokyo_Ward/W16_Tokyo_Ward_Platz_4_20261007_163805_062.png",
+  "roi": [
+   0.4013,
+   0.5915,
+   0.4246,
+   0.6319
+  ],
+  "rel": [
+   0.2939,
+   0.4809,
+   0.3427,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Owl Suppression Raid",
+  "kind": "Knopf",
+  "parent": "W16 Tokyo Ward",
+  "note": "automatisch erfasst",
+  "file": "W16_Tokyo_Ward/W16_Tokyo_Ward_Platz_5_20261007_163805_069.png",
+  "roi": [
+   0.4279,
+   0.5915,
+   0.4512,
+   0.6319
+  ],
+  "rel": [
+   0.3495,
+   0.4809,
+   0.3983,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "TimeTrial Shop",
+  "kind": "Knopf",
+  "parent": "W16 Tokyo Ward",
+  "note": "automatisch erfasst",
+  "file": "W16_Tokyo_Ward/TimeTrial_Shop_20261007_163805_078.png",
+  "roi": [
+   0.4545,
+   0.5915,
+   0.4778,
+   0.6319
+  ],
+  "rel": [
+   0.4051,
+   0.4809,
+   0.4539,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Kagune Upgraid",
+  "kind": "Knopf",
+  "parent": "W16 Tokyo Ward",
+  "note": "automatisch erfasst",
+  "file": "W16_Tokyo_Ward/W16_Tokyo_Ward_Platz_7_20261007_163805_086.png",
+  "roi": [
+   0.481,
+   0.5915,
+   0.5043,
+   0.6319
+  ],
+  "rel": [
+   0.4607,
+   0.4809,
+   0.5095,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Quinque",
+  "kind": "Knopf",
+  "parent": "W16 Tokyo Ward",
+  "note": "automatisch erfasst",
+  "file": "W16_Tokyo_Ward/W16_Tokyo_Ward_Platz_8_20261007_163805_095.png",
+  "roi": [
+   0.5076,
+   0.5915,
+   0.5309,
+   0.6319
+  ],
+  "rel": [
+   0.5163,
+   0.4809,
+   0.5651,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "W17 Kingdom of Lugunica",
+  "kind": "Zeile (Vorlage)",
+  "parent": "Teleporter Fenster",
+  "note": "automatisch erfasst",
+  "file": "Teleporter_Fenster/W17_Kingdom_of_Lugunica_20261007_163805_101.png",
+  "roi": [
+   0.2609,
+   0.6326,
+   0.7387,
+   0.7347
+  ],
+  "rel": [
+   0.0894,
+   0.73,
+   0.9232,
+   0.8984
+  ],
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "TELEPORT!",
+  "kind": "Knopf",
+  "parent": "W17 Kingdom of Lugunica",
+  "note": "automatisch erfasst",
+  "file": "W17_Kingdom_of_Lugunica/TELEPORT_20261007_163805_115.png",
+  "roi": [
+   0.6343,
+   0.6759,
+   0.7298,
+   0.7217
+  ],
+  "rel": [
+   0.7814,
+   0.4241,
+   0.9814,
+   0.8727
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "W17 Pets",
+  "kind": "Knopf",
+  "parent": "W17 Kingdom of Lugunica",
+  "note": "automatisch erfasst",
+  "file": "W17_Kingdom_of_Lugunica/W17_Pets_20261007_163805_123.png",
+  "roi": [
+   0.3216,
+   0.6817,
+   0.3449,
+   0.7222
+  ],
+  "rel": [
+   0.1271,
+   0.4809,
+   0.1759,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Crafting Unit",
+  "kind": "Knopf",
+  "parent": "W17 Kingdom of Lugunica",
+  "note": "automatisch erfasst",
+  "file": "W17_Kingdom_of_Lugunica/Crafting_Unit_20261007_163805_132.png",
+  "roi": [
+   0.3482,
+   0.6817,
+   0.3715,
+   0.7222
+  ],
+  "rel": [
+   0.1827,
+   0.4809,
+   0.2315,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Relics of the Otherworld",
+  "kind": "Knopf",
+  "parent": "W17 Kingdom of Lugunica",
+  "note": "automatisch erfasst",
+  "file": "W17_Kingdom_of_Lugunica/W17_Kingdom_of_Lugunica_Platz_3_20261007_163805_140.png",
+  "roi": [
+   0.3748,
+   0.6817,
+   0.3981,
+   0.7222
+  ],
+  "rel": [
+   0.2383,
+   0.4809,
+   0.2871,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Progression",
+  "kind": "Knopf",
+  "parent": "W17 Kingdom of Lugunica",
+  "note": "automatisch erfasst",
+  "file": "W17_Kingdom_of_Lugunica/W17_Kingdom_of_Lugunica_Platz_4_20261007_163805_147.png",
+  "roi": [
+   0.4013,
+   0.6817,
+   0.4246,
+   0.7222
+  ],
+  "rel": [
+   0.2939,
+   0.4809,
+   0.3427,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Sanctuary of the Past/Present/Future",
+  "kind": "Knopf",
+  "parent": "W17 Kingdom of Lugunica",
+  "note": "automatisch erfasst",
+  "file": "W17_Kingdom_of_Lugunica/W17_Kingdom_of_Lugunica_Platz_5_20261007_163805_156.png",
+  "roi": [
+   0.4279,
+   0.6817,
+   0.4512,
+   0.7222
+  ],
+  "rel": [
+   0.3495,
+   0.4809,
+   0.3983,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Spirits",
+  "kind": "Knopf",
+  "parent": "W17 Kingdom of Lugunica",
+  "note": "automatisch erfasst",
+  "file": "W17_Kingdom_of_Lugunica/W17_Kingdom_of_Lugunica_Platz_6_20261007_163805_164.png",
+  "roi": [
+   0.4545,
+   0.6817,
+   0.4778,
+   0.7222
+  ],
+  "rel": [
+   0.4051,
+   0.4809,
+   0.4539,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "TimeTrial Upgrades",
+  "kind": "Knopf",
+  "parent": "W17 Kingdom of Lugunica",
+  "note": "automatisch erfasst",
+  "file": "W17_Kingdom_of_Lugunica/TimeTrial_Upgrades_20261007_163805_173.png",
+  "roi": [
+   0.481,
+   0.6817,
+   0.5043,
+   0.7222
+  ],
+  "rel": [
+   0.4607,
+   0.4809,
+   0.5095,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Witch Tome Awakening",
+  "kind": "Knopf",
+  "parent": "W17 Kingdom of Lugunica",
+  "note": "automatisch erfasst",
+  "file": "W17_Kingdom_of_Lugunica/W17_Kingdom_of_Lugunica_Platz_8_20261007_163805_180.png",
+  "roi": [
+   0.5076,
+   0.6817,
+   0.5309,
+   0.7222
+  ],
+  "rel": [
+   0.5163,
+   0.4809,
+   0.5651,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "W18 New Leaf Village",
+  "kind": "Zeile (Vorlage)",
+  "parent": "Teleporter Fenster",
+  "note": "automatisch erfasst",
+  "file": "Teleporter_Fenster/W18_New_Leaf_Village_20261007_163805_188.png",
+  "roi": [
+   0.2609,
+   0.5993,
+   0.7387,
+   0.7014
+  ],
+  "rel": [
+   0.0894,
+   0.675,
+   0.9232,
+   0.8434
+  ],
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "TELEPORT!",
+  "kind": "Knopf",
+  "parent": "W18 New Leaf Village",
+  "note": "automatisch erfasst",
+  "file": "W18_New_Leaf_Village/TELEPORT_20261007_163805_203.png",
+  "roi": [
+   0.6343,
+   0.6426,
+   0.7298,
+   0.6884
+  ],
+  "rel": [
+   0.7814,
+   0.4241,
+   0.9814,
+   0.8727
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "W18 Pets",
+  "kind": "Knopf",
+  "parent": "W18 New Leaf Village",
+  "note": "automatisch erfasst",
+  "file": "W18_New_Leaf_Village/W18_Pets_20261007_163805_211.png",
+  "roi": [
+   0.3216,
+   0.6484,
+   0.3449,
+   0.6889
+  ],
+  "rel": [
+   0.1271,
+   0.4809,
+   0.1759,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Crafting Unit",
+  "kind": "Knopf",
+  "parent": "W18 New Leaf Village",
+  "note": "automatisch erfasst",
+  "file": "W18_New_Leaf_Village/Crafting_Unit_20261007_163805_220.png",
+  "roi": [
+   0.3482,
+   0.6484,
+   0.3715,
+   0.6889
+  ],
+  "rel": [
+   0.1827,
+   0.4809,
+   0.2315,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Scientitfic Ninja Tool",
+  "kind": "Knopf",
+  "parent": "W18 New Leaf Village",
+  "note": "automatisch erfasst",
+  "file": "W18_New_Leaf_Village/W18_New_Leaf_Village_Platz_3_20261007_163805_229.png",
+  "roi": [
+   0.3748,
+   0.6484,
+   0.3981,
+   0.6889
+  ],
+  "rel": [
+   0.2383,
+   0.4809,
+   0.2871,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Progression",
+  "kind": "Knopf",
+  "parent": "W18 New Leaf Village",
+  "note": "automatisch erfasst",
+  "file": "W18_New_Leaf_Village/W18_New_Leaf_Village_Platz_4_20261007_163805_236.png",
+  "roi": [
+   0.4013,
+   0.6484,
+   0.4246,
+   0.6889
+  ],
+  "rel": [
+   0.2939,
+   0.4809,
+   0.3427,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Chakra",
+  "kind": "Knopf",
+  "parent": "W18 New Leaf Village",
+  "note": "automatisch erfasst",
+  "file": "W18_New_Leaf_Village/W18_New_Leaf_Village_Platz_5_20261007_163805_245.png",
+  "roi": [
+   0.4279,
+   0.6484,
+   0.4512,
+   0.6889
+  ],
+  "rel": [
+   0.3495,
+   0.4809,
+   0.3983,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "New Leaf Defense",
+  "kind": "Knopf",
+  "parent": "W18 New Leaf Village",
+  "note": "automatisch erfasst",
+  "file": "W18_New_Leaf_Village/W18_New_Leaf_Village_Platz_6_20261007_163805_253.png",
+  "roi": [
+   0.4545,
+   0.6484,
+   0.4778,
+   0.6889
+  ],
+  "rel": [
+   0.4051,
+   0.4809,
+   0.4539,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Karma",
+  "kind": "Knopf",
+  "parent": "W18 New Leaf Village",
+  "note": "automatisch erfasst",
+  "file": "W18_New_Leaf_Village/W18_New_Leaf_Village_Platz_7_20261007_163805_261.png",
+  "roi": [
+   0.481,
+   0.6484,
+   0.5043,
+   0.6889
+  ],
+  "rel": [
+   0.4607,
+   0.4809,
+   0.5095,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Ninja Exam",
+  "kind": "Knopf",
+  "parent": "W18 New Leaf Village",
+  "note": "automatisch erfasst",
+  "file": "W18_New_Leaf_Village/W18_New_Leaf_Village_Platz_8_20261007_163805_269.png",
+  "roi": [
+   0.5076,
+   0.6484,
+   0.5309,
+   0.6889
+  ],
+  "rel": [
+   0.5163,
+   0.4809,
+   0.5651,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Otsutsuki Shrine",
+  "kind": "Knopf",
+  "parent": "W18 New Leaf Village",
+  "note": "automatisch erfasst",
+  "file": "W18_New_Leaf_Village/W18_New_Leaf_Village_Platz_9_20261007_163805_277.png",
+  "roi": [
+   0.5342,
+   0.6484,
+   0.5575,
+   0.6889
+  ],
+  "rel": [
+   0.5719,
+   0.4809,
+   0.6207,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Scientific Modifications",
+  "kind": "Knopf",
+  "parent": "W18 New Leaf Village",
+  "note": "automatisch erfasst",
+  "file": "W18_New_Leaf_Village/W18_New_Leaf_Village_Platz_10_20261007_163805_285.png",
+  "roi": [
+   0.5607,
+   0.6484,
+   0.584,
+   0.6889
+  ],
+  "rel": [
+   0.6275,
+   0.4809,
+   0.6763,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Vessels",
+  "kind": "Knopf",
+  "parent": "W18 New Leaf Village",
+  "note": "automatisch erfasst",
+  "file": "W18_New_Leaf_Village/W18_New_Leaf_Village_Platz_11_20261007_163805_293.png",
+  "roi": [
+   0.5873,
+   0.6484,
+   0.6106,
+   0.6889
+  ],
+  "rel": [
+   0.6831,
+   0.4809,
+   0.7319,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "W19 Fuyuki City",
+  "kind": "Zeile (Vorlage)",
+  "parent": "Teleporter Fenster",
+  "note": "automatisch erfasst",
+  "file": "Teleporter_Fenster/W19_Fuyuki_City_20261007_163805_299.png",
+  "roi": [
+   0.2609,
+   0.5667,
+   0.7387,
+   0.6687
+  ],
+  "rel": [
+   0.0894,
+   0.6211,
+   0.9232,
+   0.7896
+  ],
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "TELEPORT!",
+  "kind": "Knopf",
+  "parent": "W19 Fuyuki City",
+  "note": "automatisch erfasst",
+  "file": "W19_Fuyuki_City/TELEPORT_20261007_163805_314.png",
+  "roi": [
+   0.6343,
+   0.61,
+   0.7298,
+   0.6557
+  ],
+  "rel": [
+   0.7814,
+   0.4241,
+   0.9814,
+   0.8727
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "W19 Pets",
+  "kind": "Knopf",
+  "parent": "W19 Fuyuki City",
+  "note": "automatisch erfasst",
+  "file": "W19_Fuyuki_City/W19_Pets_20261007_163805_323.png",
+  "roi": [
+   0.3216,
+   0.6158,
+   0.3449,
+   0.6562
+  ],
+  "rel": [
+   0.1271,
+   0.4809,
+   0.1759,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Crafting Unit",
+  "kind": "Knopf",
+  "parent": "W19 Fuyuki City",
+  "note": "automatisch erfasst",
+  "file": "W19_Fuyuki_City/Crafting_Unit_20261007_163805_331.png",
+  "roi": [
+   0.3482,
+   0.6158,
+   0.3715,
+   0.6562
+  ],
+  "rel": [
+   0.1827,
+   0.4809,
+   0.2315,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Mystic Code",
+  "kind": "Knopf",
+  "parent": "W19 Fuyuki City",
+  "note": "automatisch erfasst",
+  "file": "W19_Fuyuki_City/W19_Fuyuki_City_Platz_3_20261007_163805_340.png",
+  "roi": [
+   0.3748,
+   0.6158,
+   0.3981,
+   0.6562
+  ],
+  "rel": [
+   0.2383,
+   0.4809,
+   0.2871,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Progressions",
+  "kind": "Knopf",
+  "parent": "W19 Fuyuki City",
+  "note": "automatisch erfasst",
+  "file": "W19_Fuyuki_City/W19_Fuyuki_City_Platz_4_20261007_163805_350.png",
+  "roi": [
+   0.4013,
+   0.6158,
+   0.4246,
+   0.6562
+  ],
+  "rel": [
+   0.2939,
+   0.4809,
+   0.3427,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Shadow Passive",
+  "kind": "Knopf",
+  "parent": "W19 Fuyuki City",
+  "note": "automatisch erfasst",
+  "file": "W19_Fuyuki_City/W19_Fuyuki_City_Platz_5_20261007_163805_358.png",
+  "roi": [
+   0.4279,
+   0.6158,
+   0.4512,
+   0.6562
+  ],
+  "rel": [
+   0.3495,
+   0.4809,
+   0.3983,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Swords 3",
+  "kind": "Knopf",
+  "parent": "W19 Fuyuki City",
+  "note": "automatisch erfasst",
+  "file": "W19_Fuyuki_City/W19_Fuyuki_City_Platz_6_20261007_163805_366.png",
+  "roi": [
+   0.4545,
+   0.6158,
+   0.4778,
+   0.6562
+  ],
+  "rel": [
+   0.4051,
+   0.4809,
+   0.4539,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Servants",
+  "kind": "Knopf",
+  "parent": "W19 Fuyuki City",
+  "note": "automatisch erfasst",
+  "file": "W19_Fuyuki_City/W19_Fuyuki_City_Platz_7_20261007_163805_375.png",
+  "roi": [
+   0.481,
+   0.6158,
+   0.5043,
+   0.6562
+  ],
+  "rel": [
+   0.4607,
+   0.4809,
+   0.5095,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Mana Contract",
+  "kind": "Knopf",
+  "parent": "W19 Fuyuki City",
+  "note": "automatisch erfasst",
+  "file": "W19_Fuyuki_City/W19_Fuyuki_City_Platz_8_20261007_163805_382.png",
+  "roi": [
+   0.5076,
+   0.6158,
+   0.5309,
+   0.6562
+  ],
+  "rel": [
+   0.5163,
+   0.4809,
+   0.5651,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Holy Grail War",
+  "kind": "Knopf",
+  "parent": "W19 Fuyuki City",
+  "note": "automatisch erfasst",
+  "file": "W19_Fuyuki_City/W19_Fuyuki_City_Platz_9_20261007_163805_390.png",
+  "roi": [
+   0.5342,
+   0.6158,
+   0.5575,
+   0.6562
+  ],
+  "rel": [
+   0.5719,
+   0.4809,
+   0.6207,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "TimeTrial Shop",
+  "kind": "Knopf",
+  "parent": "W19 Fuyuki City",
+  "note": "automatisch erfasst",
+  "file": "W19_Fuyuki_City/TimeTrial_Shop_20261007_163805_398.png",
+  "roi": [
+   0.5607,
+   0.6158,
+   0.584,
+   0.6562
+  ],
+  "rel": [
+   0.6275,
+   0.4809,
+   0.6763,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Genos",
+  "kind": "Knopf",
+  "parent": "W19 Fuyuki City",
+  "note": "automatisch erfasst",
+  "file": "W19_Fuyuki_City/W19_Fuyuki_City_Platz_11_20261007_163805_406.png",
+  "roi": [
+   0.5873,
+   0.6158,
+   0.6106,
+   0.6562
+  ],
+  "rel": [
+   0.6831,
+   0.4809,
+   0.7319,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Prana Upgrade Tree",
+  "kind": "Knopf",
+  "parent": "W19 Fuyuki City",
+  "note": "automatisch erfasst",
+  "file": "W19_Fuyuki_City/W19_Fuyuki_City_Platz_12_20261007_163805_414.png",
+  "roi": [
+   0.6139,
+   0.6158,
+   0.6372,
+   0.6562
+  ],
+  "rel": [
+   0.7387,
+   0.4809,
+   0.7875,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "W20 Magnolia Town",
+  "kind": "Zeile (Vorlage)",
+  "parent": "Teleporter Fenster",
+  "note": "automatisch erfasst",
+  "file": "Teleporter_Fenster/W20_Magnolia_Town_20261007_163805_420.png",
+  "roi": [
+   0.2609,
+   0.5368,
+   0.7387,
+   0.6389
+  ],
+  "rel": [
+   0.0894,
+   0.5719,
+   0.9232,
+   0.7403
+  ],
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "TELEPORT!",
+  "kind": "Knopf",
+  "parent": "W20 Magnolia Town",
+  "note": "automatisch erfasst",
+  "file": "W20_Magnolia_Town/TELEPORT_20261007_163805_434.png",
+  "roi": [
+   0.6343,
+   0.5801,
+   0.7298,
+   0.6259
+  ],
+  "rel": [
+   0.7814,
+   0.4241,
+   0.9814,
+   0.8727
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "W20 Pets",
+  "kind": "Knopf",
+  "parent": "W20 Magnolia Town",
+  "note": "automatisch erfasst",
+  "file": "W20_Magnolia_Town/W20_Pets_20261007_163805_442.png",
+  "roi": [
+   0.3216,
+   0.5859,
+   0.3449,
+   0.6264
+  ],
+  "rel": [
+   0.1271,
+   0.4809,
+   0.1759,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Crafting Unit",
+  "kind": "Knopf",
+  "parent": "W20 Magnolia Town",
+  "note": "automatisch erfasst",
+  "file": "W20_Magnolia_Town/Crafting_Unit_20261007_163805_450.png",
+  "roi": [
+   0.3482,
+   0.5859,
+   0.3715,
+   0.6264
+  ],
+  "rel": [
+   0.1827,
+   0.4809,
+   0.2315,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Classic Emblem",
+  "kind": "Knopf",
+  "parent": "W20 Magnolia Town",
+  "note": "automatisch erfasst",
+  "file": "W20_Magnolia_Town/W20_Magnolia_Town_Platz_3_20261007_163805_458.png",
+  "roi": [
+   0.3748,
+   0.5859,
+   0.3981,
+   0.6264
+  ],
+  "rel": [
+   0.2383,
+   0.4809,
+   0.2871,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Progression",
+  "kind": "Knopf",
+  "parent": "W20 Magnolia Town",
+  "note": "automatisch erfasst",
+  "file": "W20_Magnolia_Town/W20_Magnolia_Town_Platz_4_20261007_163805_466.png",
+  "roi": [
+   0.4013,
+   0.5859,
+   0.4246,
+   0.6264
+  ],
+  "rel": [
+   0.2939,
+   0.4809,
+   0.3427,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Celestial Keys",
+  "kind": "Knopf",
+  "parent": "W20 Magnolia Town",
+  "note": "automatisch erfasst",
+  "file": "W20_Magnolia_Town/W20_Magnolia_Town_Platz_5_20261007_163805_474.png",
+  "roi": [
+   0.4279,
+   0.5859,
+   0.4512,
+   0.6264
+  ],
+  "rel": [
+   0.3495,
+   0.4809,
+   0.3983,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Alvarez War",
+  "kind": "Knopf",
+  "parent": "W20 Magnolia Town",
+  "note": "automatisch erfasst",
+  "file": "W20_Magnolia_Town/W20_Magnolia_Town_Platz_6_20261007_163805_482.png",
+  "roi": [
+   0.4545,
+   0.5859,
+   0.4778,
+   0.6264
+  ],
+  "rel": [
+   0.4051,
+   0.4809,
+   0.4539,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Merchant",
+  "kind": "Knopf",
+  "parent": "W20 Magnolia Town",
+  "note": "automatisch erfasst",
+  "file": "W20_Magnolia_Town/W20_Magnolia_Town_Platz_7_20261007_163805_489.png",
+  "roi": [
+   0.481,
+   0.5859,
+   0.5043,
+   0.6264
+  ],
+  "rel": [
+   0.4607,
+   0.4809,
+   0.5095,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Dragon Slayer",
+  "kind": "Knopf",
+  "parent": "W20 Magnolia Town",
+  "note": "automatisch erfasst",
+  "file": "W20_Magnolia_Town/W20_Magnolia_Town_Platz_8_20261007_163805_497.png",
+  "roi": [
+   0.5076,
+   0.5859,
+   0.5309,
+   0.6264
+  ],
+  "rel": [
+   0.5163,
+   0.4809,
+   0.5651,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "W20 Upgrades",
+  "kind": "Knopf",
+  "parent": "W20 Magnolia Town",
+  "note": "automatisch erfasst",
+  "file": "W20_Magnolia_Town/W20_Magnolia_Town_Platz_9_20261007_163805_505.png",
+  "roi": [
+   0.5342,
+   0.5859,
+   0.5575,
+   0.6264
+  ],
+  "rel": [
+   0.5719,
+   0.4809,
+   0.6207,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "W21 Night City",
+  "kind": "Zeile (Vorlage)",
+  "parent": "Teleporter Fenster",
+  "note": "automatisch erfasst",
+  "file": "Teleporter_Fenster/W21_Night_City_20261007_163805_511.png",
+  "roi": [
+   0.2609,
+   0.6396,
+   0.7387,
+   0.7417
+  ],
+  "rel": [
+   0.0894,
+   0.7414,
+   0.9232,
+   0.9099
+  ],
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "TELEPORT!",
+  "kind": "Knopf",
+  "parent": "W21 Night City",
+  "note": "automatisch erfasst",
+  "file": "W21_Night_City/TELEPORT_20261007_163805_525.png",
+  "roi": [
+   0.6343,
+   0.6829,
+   0.7298,
+   0.7287
+  ],
+  "rel": [
+   0.7814,
+   0.4241,
+   0.9814,
+   0.8727
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "W21 Pets",
+  "kind": "Knopf",
+  "parent": "W21 Night City",
+  "note": "automatisch erfasst",
+  "file": "W21_Night_City/W21_Pets_20261007_163805_534.png",
+  "roi": [
+   0.3216,
+   0.6887,
+   0.3449,
+   0.7292
+  ],
+  "rel": [
+   0.1271,
+   0.4809,
+   0.1759,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Crafting Unit",
+  "kind": "Knopf",
+  "parent": "W21 Night City",
+  "note": "automatisch erfasst",
+  "file": "W21_Night_City/Crafting_Unit_20261007_163805_542.png",
+  "roi": [
+   0.3482,
+   0.6887,
+   0.3715,
+   0.7292
+  ],
+  "rel": [
+   0.1827,
+   0.4809,
+   0.2315,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Cyberware",
+  "kind": "Knopf",
+  "parent": "W21 Night City",
+  "note": "automatisch erfasst",
+  "file": "W21_Night_City/W21_Night_City_Platz_3_20261007_163805_550.png",
+  "roi": [
+   0.3748,
+   0.6887,
+   0.3981,
+   0.7292
+  ],
+  "rel": [
+   0.2383,
+   0.4809,
+   0.2871,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Progression",
+  "kind": "Knopf",
+  "parent": "W21 Night City",
+  "note": "automatisch erfasst",
+  "file": "W21_Night_City/W21_Night_City_Platz_4_20261007_163805_558.png",
+  "roi": [
+   0.4013,
+   0.6887,
+   0.4246,
+   0.7292
+  ],
+  "rel": [
+   0.2939,
+   0.4809,
+   0.3427,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Ripperdoc",
+  "kind": "Knopf",
+  "parent": "W21 Night City",
+  "note": "automatisch erfasst",
+  "file": "W21_Night_City/W21_Night_City_Platz_5_20261007_163805_566.png",
+  "roi": [
+   0.4279,
+   0.6887,
+   0.4512,
+   0.7292
+  ],
+  "rel": [
+   0.3495,
+   0.4809,
+   0.3983,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Militech Convoy Defense",
+  "kind": "Knopf",
+  "parent": "W21 Night City",
+  "note": "automatisch erfasst",
+  "file": "W21_Night_City/W21_Night_City_Platz_6_20261007_163805_575.png",
+  "roi": [
+   0.4545,
+   0.6887,
+   0.4778,
+   0.7292
+  ],
+  "rel": [
+   0.4051,
+   0.4809,
+   0.4539,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Quickhacks",
+  "kind": "Knopf",
+  "parent": "W21 Night City",
+  "note": "automatisch erfasst",
+  "file": "W21_Night_City/W21_Night_City_Platz_7_20261007_163805_582.png",
+  "roi": [
+   0.481,
+   0.6887,
+   0.5043,
+   0.7292
+  ],
+  "rel": [
+   0.4607,
+   0.4809,
+   0.5095,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "MaxTac Call",
+  "kind": "Knopf",
+  "parent": "W21 Night City",
+  "note": "automatisch erfasst",
+  "file": "W21_Night_City/W21_Night_City_Platz_8_20261007_163805_590.png",
+  "roi": [
+   0.5076,
+   0.6887,
+   0.5309,
+   0.7292
+  ],
+  "rel": [
+   0.5163,
+   0.4809,
+   0.5651,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Fixer Gigs",
+  "kind": "Knopf",
+  "parent": "W21 Night City",
+  "note": "automatisch erfasst",
+  "file": "W21_Night_City/W21_Night_City_Platz_9_20261007_163805_599.png",
+  "roi": [
+   0.5342,
+   0.6887,
+   0.5575,
+   0.7292
+  ],
+  "rel": [
+   0.5719,
+   0.4809,
+   0.6207,
+   0.8776
+  ],
+  "src": "parent",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Lobby Upgrades",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "automatisch erfasst (Aufnahme)",
+  "file": "Fenster_Bereich/Lobby_Upgrades_20261007_171508_331.png",
+  "roi": [
+   0.2097,
+   0.1902,
+   0.7827,
+   0.7963
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "opened_by_id": "Teleporter_Fenster/TimeTrial_Upgrades_20261007_153813_698.png",
+  "opened_by": "TimeTrial Upgrades"
+ },
+ {
+  "name": "Exchange",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "automatisch erfasst (Aufnahme)",
+  "file": "Fenster_Bereich/Exchange_20261007_171508_360.png",
+  "roi": [
+   0.2097,
+   0.1902,
+   0.7827,
+   0.7963
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "opened_by_id": "Teleporter_Fenster/Token_Exchange_20261007_153822_351.png",
+  "opened_by": "Token Exchange"
+ },
+ {
+  "name": "Garden Art",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "automatisch erfasst (Aufnahme)",
+  "file": "Fenster_Bereich/Garden_Art_20261007_171508_392.png",
+  "roi": [
+   0.196,
+   0.2034,
+   0.769,
+   0.8095
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "opened_by_id": "Teleporter_Fenster/Garden_Arts_20261007_153829_901.png",
+  "opened_by": "Garden Arts"
+ },
+ {
+  "name": "Cosmic Scale",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "automatisch erfasst (Aufnahme)",
+  "file": "Fenster_Bereich/Cosmic_Scale_20261007_171508_423.png",
+  "roi": [
+   0.2097,
+   0.1902,
+   0.7827,
+   0.7963
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "opened_by_id": "Teleporter_Fenster/Cosmic_Scale_20261007_153846_608.png",
+  "opened_by": "Cosmic Scale"
+ },
+ {
+  "name": "Lobby Merchant",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "automatisch erfasst (Aufnahme)",
+  "file": "Fenster_Bereich/Lobby_Merchant_20261007_171508_461.png",
+  "roi": [
+   0.2097,
+   0.1902,
+   0.7827,
+   0.7963
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "opened_by_id": "Teleporter_Fenster/Timeless_Shop_20261007_153903_302.png",
+  "opened_by": "Timeless Shop"
+ },
+ {
+  "name": "Titles",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "automatisch erfasst (Aufnahme)",
+  "file": "Fenster_Bereich/Titles_20261007_171508_497.png",
+  "roi": [
+   0.2097,
+   0.1902,
+   0.7827,
+   0.7963
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "opened_by_id": "Teleporter_Fenster/Titel_20261007_153908_880.png",
+  "opened_by": "Titel"
+ },
+ {
+  "name": "Professions",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "automatisch erfasst (Aufnahme)",
+  "file": "Fenster_Bereich/Professions_20261007_171508_529.png",
+  "roi": [
+   0.2097,
+   0.1902,
+   0.7827,
+   0.7963
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "opened_by_id": "Teleporter_Fenster/Lobby_Professions_20261007_153924_151.png",
+  "opened_by": "Lobby Professions"
+ },
+ {
+  "name": "DOUJUTSU",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "automatisch erfasst (Aufnahme)",
+  "file": "Fenster_Bereich/DOUJUTSU_20261007_171508_559.png",
+  "roi": [
+   0.2097,
+   0.1902,
+   0.7827,
+   0.7963
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "opened_by_id": "W1_Ninja_Village/W1_Ninja_Village_Platz_3_20261007_163347_857.png",
+  "opened_by": "Doujutsu"
+ },
+ {
+  "name": "Young Tailed Beasts",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "automatisch erfasst (Aufnahme)",
+  "file": "Fenster_Bereich/Young_Tailed_Beasts_20261007_171508_596.png",
+  "roi": [
+   0.2097,
+   0.1902,
+   0.7827,
+   0.7963
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "opened_by_id": "W1_Ninja_Village/W1_Ninja_Village_Platz_4_20261007_163347_866.png",
+  "opened_by": "Young Tailed Beasts"
+ },
+ {
+  "name": "Ninja Progression",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "automatisch erfasst (Aufnahme)",
+  "file": "Fenster_Bereich/Ninja_Progression_20261007_171508_649.png",
+  "roi": [
+   0.2097,
+   0.1902,
+   0.7827,
+   0.7963
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "opened_by_id": "W1_Ninja_Village/W1_Ninja_Village_Platz_8_20261007_163347_894.png",
+  "opened_by": "Progression"
+ },
+ {
+  "name": "RACES",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "automatisch erfasst (Aufnahme)",
+  "file": "Fenster_Bereich/RACES_20261007_171508_684.png",
+  "roi": [
+   0.2097,
+   0.1902,
+   0.7827,
+   0.7963
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "opened_by_id": "W2_Namek_City/W2_Namek_City_Platz_3_20261007_163347_947.png",
+  "opened_by": "Races"
+ },
+ {
+  "name": "Divine Techniques",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "automatisch erfasst (Aufnahme)",
+  "file": "Fenster_Bereich/Divine_Techniques_20261007_171508_721.png",
+  "roi": [
+   0.2097,
+   0.1902,
+   0.7827,
+   0.7963
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "opened_by_id": "W2_Namek_City/W2_Namek_City_Platz_4_20261007_163347_953.png",
+  "opened_by": "Divine Techniques"
+ },
+ {
+  "name": "Ki Progression",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "automatisch erfasst (Aufnahme)",
+  "file": "Fenster_Bereich/Ki_Progression_20261007_171508_759.png",
+  "roi": [
+   0.2097,
+   0.1902,
+   0.7827,
+   0.7963
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "opened_by_id": "W2_Namek_City/W2_Namek_City_Platz_6_20261007_163347_967.png",
+  "opened_by": "Progression"
+ },
+ {
+  "name": "Ki Evolution Fenster",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "automatisch erfasst (Aufnahme)",
+  "file": "Fenster_Bereich/Ki_Evolution_Fenster_20261007_171508_794.png",
+  "roi": [
+   0.2097,
+   0.1902,
+   0.7827,
+   0.7963
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "opened_by_id": "W2_Namek_City/W2_Namek_City_Platz_7_20261007_163347_973.png",
+  "opened_by": "Ki Evolution"
+ },
+ {
+  "name": "Zenkai",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "automatisch erfasst (Aufnahme)",
+  "file": "Fenster_Bereich/Zenkai_20261007_171508_863.png",
+  "roi": [
+   0.2097,
+   0.1902,
+   0.7827,
+   0.7963
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "opened_by_id": "W2_Namek_City/W2_Namek_City_Platz_8_20261007_163347_980.png",
+  "opened_by": "Zenkai"
+ },
+ {
+  "name": "HAKIS",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "automatisch erfasst (Aufnahme)",
+  "file": "Fenster_Bereich/HAKIS_20261007_171508_898.png",
+  "roi": [
+   0.2097,
+   0.1902,
+   0.7827,
+   0.7963
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "opened_by_id": "W3_Wano_Island/W3_Wano_Island_Platz_3_20261007_163803_894.png",
+  "opened_by": "Hakis"
+ },
+ {
+  "name": "Haki specializations",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "automatisch erfasst (Aufnahme)",
+  "file": "Fenster_Bereich/Haki_specializations_20261007_171508_936.png",
+  "roi": [
+   0.2097,
+   0.1902,
+   0.7827,
+   0.7963
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "opened_by_id": "W3_Wano_Island/W3_Wano_Island_Platz_7_20261007_163803_923.png",
+  "opened_by": "Haki Specializaztions"
+ },
+ {
+  "name": "W1 Crafting",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "automatisch erfasst (Aufnahme)",
+  "file": "Fenster_Bereich/Crafting_20261007_171508_967.png",
+  "roi": [
+   0.2097,
+   0.1902,
+   0.7827,
+   0.7963
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "opened_by_id": "W1_Ninja_Village/W1_Ninja_Village_Platz_2_20261007_163347_839.png",
+  "opened_by": "Crafting Unit"
+ },
+ {
+  "name": "W2 Crafting",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "automatisch erfasst (Aufnahme)",
+  "file": "Fenster_Bereich/Crafting_20261007_171509_018.png",
+  "roi": [
+   0.2097,
+   0.1902,
+   0.7827,
+   0.7963
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "opened_by_id": "W2_Namek_City/W2_Namek_City_Platz_2_20261007_163347_940.png",
+  "opened_by": "Crafting Unit"
+ },
+ {
+  "name": "W4 Crafting",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "automatisch erfasst (Aufnahme)",
+  "file": "Fenster_Bereich/Crafting_20261007_171509_055.png",
+  "roi": [
+   0.2093,
+   0.1902,
+   0.7823,
+   0.7963
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "opened_by_id": "W4_Titan_Wall/Crafting_Unit_20261007_163803_963.png",
+  "opened_by": "Crafting Unit"
+ },
+ {
+  "name": "FAMILY",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "automatisch erfasst (Aufnahme)",
+  "file": "Fenster_Bereich/FAMILY_20261007_171509_094.png",
+  "roi": [
+   0.2097,
+   0.1902,
+   0.7827,
+   0.7963
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "opened_by_id": "W4_Titan_Wall/W4_Titan_Wall_Platz_3_20261007_163803_970.png",
+  "opened_by": "Family"
+ },
+ {
+  "name": "Titans",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "automatisch erfasst (Aufnahme)",
+  "file": "Fenster_Bereich/Titans_20261007_171509_130.png",
+  "roi": [
+   0.2097,
+   0.1902,
+   0.7827,
+   0.7963
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "opened_by_id": "W4_Titan_Wall/W4_Titan_Wall_Platz_4_20261007_163803_977.png",
+  "opened_by": "Titans"
+ },
+ {
+  "name": "Defense Mode",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "automatisch erfasst (Aufnahme)",
+  "file": "Fenster_Bereich/Defense_Mode_20261007_171509_163.png",
+  "roi": [
+   0.2105,
+   0.1916,
+   0.7835,
+   0.7977
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "opened_by_id": "W4_Titan_Wall/W4_Titan_Wall_Platz_5_20261007_163803_984.png",
+  "opened_by": "Titan Defense"
+ },
+ {
+  "name": "Defense Shop",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "automatisch erfasst (Aufnahme)",
+  "file": "Fenster_Bereich/Defense_Shop_20261007_171509_201.png",
+  "roi": [
+   0.2097,
+   0.1902,
+   0.7827,
+   0.7963
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "opened_by_id": "W4_Titan_Wall/W4_Titan_Wall_Platz_6_20261007_163803_991.png",
+  "opened_by": "Titan Defense Shop"
+ },
+ {
+  "name": "DMT Progression",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "automatisch erfasst (Aufnahme)",
+  "file": "Fenster_Bereich/DMT_Progression_20261007_171509_234.png",
+  "roi": [
+   0.2097,
+   0.1902,
+   0.7827,
+   0.7963
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "opened_by_id": "W4_Titan_Wall/W4_Titan_Wall_Platz_7_20261007_163803_998.png",
+  "opened_by": "Progression"
+ },
+ {
+  "name": "HUMANITY ARSENAL",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "automatisch erfasst (Aufnahme)",
+  "file": "Fenster_Bereich/HUMANITY_ARSENAL_20261007_171509_270.png",
+  "roi": [
+   0.2097,
+   0.1902,
+   0.7827,
+   0.7963
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "opened_by_id": "W4_Titan_Wall/W4_Titan_Wall_Platz_8_20261007_163804_007.png",
+  "opened_by": "Humanity Arsenal"
+ },
+ {
+  "name": "W5 Crafting",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "automatisch erfasst (Aufnahme)",
+  "file": "Fenster_Bereich/Crafting_20261007_171509_308.png",
+  "roi": [
+   0.2097,
+   0.1902,
+   0.7827,
+   0.7963
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "opened_by_id": "W5_Solo_City/Crafting_Unit_20261007_163804_053.png",
+  "opened_by": "Crafting Unit"
+ },
+ {
+  "name": "Mana Progression",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "automatisch erfasst (Aufnahme)",
+  "file": "Fenster_Bereich/Mana_Progression_20261007_171509_345.png",
+  "roi": [
+   0.2097,
+   0.1902,
+   0.7827,
+   0.7963
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "opened_by_id": "W5_Solo_City/W5_Solo_City_Platz_5_20261007_163804_076.png",
+  "opened_by": "Progression"
+ },
+ {
+  "name": "Solo Upgrade Tree",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "automatisch erfasst (Aufnahme)",
+  "file": "Fenster_Bereich/Solo_Upgrade_Tree_20261007_171509_380.png",
+  "roi": [
+   0.0,
+   0.0,
+   0.7781,
+   1.0
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "opened_by_id": "W5_Solo_City/W5_Solo_City_Platz_6_20261007_163804_082.png",
+  "opened_by": "Upgrade Tree"
+ },
+ {
+  "name": "Elixir of life",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "automatisch erfasst (Aufnahme)",
+  "file": "Fenster_Bereich/Elixir_of_life_20261007_171509_410.png",
+  "roi": [
+   0.4297,
+   0.0,
+   1.0,
+   0.4139
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "opened_by_id": "W5_Solo_City/W5_Solo_City_Platz_7_20261007_163804_089.png",
+  "opened_by": "Elixir of Life Artefact"
+ },
+ {
+  "name": "POWERFUL MONARCHS",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "automatisch erfasst (Aufnahme)",
+  "file": "Fenster_Bereich/POWERFUL_MONARCHS_20261007_171509_450.png",
+  "roi": [
+   0.2097,
+   0.1902,
+   0.7827,
+   0.7963
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "opened_by_id": "W5_Solo_City/W5_Solo_City_Platz_8_20261007_163804_097.png",
+  "opened_by": "Powerful Monarchs"
+ },
+ {
+  "name": "Slayer Progression",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "automatisch erfasst (Aufnahme)",
+  "file": "Fenster_Bereich/Slayer_Progression_20261007_171509_487.png",
+  "roi": [
+   0.2097,
+   0.1902,
+   0.7827,
+   0.7963
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "opened_by_id": "W6_Slayer_Village/W6_Slayer_Village_Platz_4_20261007_163804_145.png",
+  "opened_by": "Progression"
+ },
+ {
+  "name": "Slayer Upgrades",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "automatisch erfasst (Aufnahme)",
+  "file": "Fenster_Bereich/Slayer_Upgrades_20261007_171509_521.png",
+  "roi": [
+   0.2097,
+   0.1902,
+   0.7827,
+   0.7963
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "opened_by_id": "W6_Slayer_Village/TimeTrial_Upgrades_20261007_163804_160.png",
+  "opened_by": "TimeTrial Upgrades"
+ },
+ {
+  "name": "Sword Passive",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "automatisch erfasst (Aufnahme)",
+  "file": "Fenster_Bereich/Sword_Passive_20261007_171509_551.png",
+  "roi": [
+   0.2097,
+   0.1902,
+   0.7827,
+   0.7963
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "opened_by_id": "W6_Slayer_Village/W6_Slayer_Village_Platz_7_20261007_163804_166.png",
+  "opened_by": "Sword Passives"
+ },
+ {
+  "name": "Battlepass Infinity Castle",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "automatisch erfasst (Aufnahme)",
+  "file": "Fenster_Bereich/Battlepass_Infinity_Castle_20261007_171509_587.png",
+  "roi": [
+   0.2097,
+   0.1902,
+   0.7827,
+   0.7963
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "opened_by_id": "W6_Slayer_Village/TimeTrial_Shop_20261007_163804_173.png",
+  "opened_by": "TimeTrial Shop"
+ },
+ {
+  "name": "NICHIRIN SAYA",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "automatisch erfasst (Aufnahme)",
+  "file": "Fenster_Bereich/NICHIRIN_SAYA_20261007_171509_623.png",
+  "roi": [
+   0.2097,
+   0.1902,
+   0.7827,
+   0.7963
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "opened_by_id": "W6_Slayer_Village/W6_Slayer_Village_Platz_9_20261007_163804_181.png",
+  "opened_by": "Nichirin Saya"
+ },
+ {
+  "name": "W7 Crafting",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "automatisch erfasst (Aufnahme)",
+  "file": "Fenster_Bereich/Crafting_20261007_171509_661.png",
+  "roi": [
+   0.2097,
+   0.1902,
+   0.7827,
+   0.7963
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "opened_by_id": "W7_Clover_Island/Crafting_Unit_20261007_163804_229.png",
+  "opened_by": "Crafting Unit"
+ },
+ {
+  "name": "MAGIC ATTRIBUTES",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "automatisch erfasst (Aufnahme)",
+  "file": "Fenster_Bereich/MAGIC_ATTRIBUTES_20261007_171509_699.png",
+  "roi": [
+   0.2097,
+   0.1902,
+   0.7827,
+   0.7963
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "opened_by_id": "W7_Clover_Island/W7_Clover_Island_Platz_3_20261007_163804_236.png",
+  "opened_by": "Magic Attribute"
+ },
+ {
+  "name": "Clover Raid",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "automatisch erfasst (Aufnahme)",
+  "file": "Fenster_Bereich/Clover_Raid_20261007_171509_737.png",
+  "roi": [
+   0.2105,
+   0.1916,
+   0.7835,
+   0.7977
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "opened_by_id": "W7_Clover_Island/W7_Clover_Island_Platz_5_20261007_163804_250.png",
+  "opened_by": "Clover Raid"
+ },
+ {
+  "name": "Merchant Clover",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "automatisch erfasst (Aufnahme)",
+  "file": "Fenster_Bereich/Merchant_Clover_20261007_171509_776.png",
+  "roi": [
+   0.2097,
+   0.1902,
+   0.7827,
+   0.7963
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "opened_by_id": "W7_Clover_Island/W7_Clover_Island_Platz_6_20261007_163804_257.png",
+  "opened_by": "Clover Merchant"
+ },
+ {
+  "name": "Battlepass Clover",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "automatisch erfasst (Aufnahme)",
+  "file": "Fenster_Bereich/Battlepass_Clover_20261007_171509_813.png",
+  "roi": [
+   0.2097,
+   0.1902,
+   0.7827,
+   0.7963
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "opened_by_id": "W7_Clover_Island/TimeTrial_Shop_20261007_163804_264.png",
+  "opened_by": "TimeTrial Shop"
+ },
+ {
+  "name": "Grimoires",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "automatisch erfasst (Aufnahme)",
+  "file": "Fenster_Bereich/Grimoires_20261007_171509_850.png",
+  "roi": [
+   0.2097,
+   0.1902,
+   0.7827,
+   0.7963
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "opened_by_id": "W7_Clover_Island/W7_Clover_Island_Platz_8_20261007_163804_272.png",
+  "opened_by": "Grimoires"
+ },
+ {
+  "name": "MAGIC SQUAD",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "automatisch erfasst (Aufnahme)",
+  "file": "Fenster_Bereich/MAGIC_SQUAD_20261007_171509_888.png",
+  "roi": [
+   0.2097,
+   0.1902,
+   0.7827,
+   0.7963
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "opened_by_id": "W7_Clover_Island/W7_Clover_Island_Platz_9_20261007_163804_279.png",
+  "opened_by": "Magic Squad"
+ },
+ {
+  "name": "Pets-Roll (Vorlage)",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "Roll-Menü der Pets – gleich in jeder Welt. Auto! rollt, bis die Yen nicht reichen; Kosten = Yen pro Pet; CLOSE führt zum Spielbild (danach wieder Teleporter).",
+  "file": "Fenster_Bereich/Pets-Roll_Vorlage_20261007_195150_203.png",
+  "roi": [
+   0.3492,
+   0.0389,
+   0.6508,
+   0.6319
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "extra": {
+   "template": true,
+   "closes_to": "Spielbild"
+  }
+ },
+ {
+  "name": "Mythical Pity",
+  "kind": "Text (lesen)",
+  "parent": "Pets-Roll (Vorlage)",
+  "note": "",
+  "file": "Pets-Roll_Vorlage/Mythical_Pity_20261007_195150_219.png",
+  "roi": [
+   0.3531,
+   0.0417,
+   0.6469,
+   0.0736
+  ],
+  "rel": [
+   0.0129,
+   0.0047,
+   0.9871,
+   0.0585
+  ],
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Kosten (Yen)",
+  "kind": "Text (lesen)",
+  "parent": "Pets-Roll (Vorlage)",
+  "note": "",
+  "file": "Pets-Roll_Vorlage/Kosten_Yen_20261007_195150_228.png",
+  "roi": [
+   0.4594,
+   0.4292,
+   0.5406,
+   0.4667
+  ],
+  "rel": [
+   0.3654,
+   0.6582,
+   0.6346,
+   0.7214
+  ],
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Animation",
+  "kind": "Knopf",
+  "parent": "Pets-Roll (Vorlage)",
+  "note": "",
+  "file": "Pets-Roll_Vorlage/Animation_20261007_195150_237.png",
+  "roi": [
+   0.3531,
+   0.4681,
+   0.4344,
+   0.5028
+  ],
+  "rel": [
+   0.0129,
+   0.7238,
+   0.2825,
+   0.7823
+  ],
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "Open!",
+  "kind": "Knopf",
+  "parent": "Pets-Roll (Vorlage)",
+  "note": "",
+  "file": "Pets-Roll_Vorlage/Open_20261007_195150_246.png",
+  "roi": [
+   0.4508,
+   0.4681,
+   0.4969,
+   0.5542
+  ],
+  "rel": [
+   0.3369,
+   0.7238,
+   0.4897,
+   0.869
+  ],
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "extra": {
+   "marker": true
+  },
+  "img": "img/Pets-Roll_Vorlage_Open_20261007_195150_2.png"
+ },
+ {
+  "name": "Auto!",
+  "kind": "Knopf",
+  "parent": "Pets-Roll (Vorlage)",
+  "note": "",
+  "file": "Pets-Roll_Vorlage/Auto_20261007_195150_254.png",
+  "roi": [
+   0.5016,
+   0.4681,
+   0.5469,
+   0.5542
+  ],
+  "rel": [
+   0.5053,
+   0.7238,
+   0.6555,
+   0.869
+  ],
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ]
+ },
+ {
+  "name": "CLOSE",
+  "kind": "Knopf",
+  "parent": "Pets-Roll (Vorlage)",
+  "note": "",
+  "file": "Pets-Roll_Vorlage/CLOSE_20261007_195150_262.png",
+  "roi": [
+   0.4117,
+   0.5667,
+   0.5883,
+   0.6278
+  ],
+  "rel": [
+   0.2072,
+   0.8901,
+   0.7928,
+   0.9931
+  ],
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "extra": {
+   "close": true
+  }
+ },
+ {
+  "name": "W1 Pets-Roll",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "Bild = Vorlage (Aufbau gleich, andere Pets)",
+  "file": "Fenster_Bereich/W1_Pets-Roll_20261007_195150_277.png",
+  "roi": [
+   0.3492,
+   0.0389,
+   0.6508,
+   0.6319
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "extra": {
+   "layout_of": "Pets-Roll (Vorlage)",
+   "closes_to": "Spielbild"
+  },
+  "opened_by_id": "W1_Ninja_Village/W1_Pets_20261007_155315_271.png",
+  "opened_by": "W1 Pets"
+ },
+ {
+  "name": "W2 Pets-Roll",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "Bild = Vorlage (Aufbau gleich, andere Pets)",
+  "file": "Fenster_Bereich/W2_Pets-Roll_20261007_195150_303.png",
+  "roi": [
+   0.3492,
+   0.0389,
+   0.6508,
+   0.6319
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "extra": {
+   "layout_of": "Pets-Roll (Vorlage)",
+   "closes_to": "Spielbild"
+  },
+  "opened_by_id": "W2_Namek_City/W2_Pets_20261007_163347_933.png",
+  "opened_by": "W2 Pets"
+ },
+ {
+  "name": "W3 Pets-Roll",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "Bild = Vorlage (Aufbau gleich, andere Pets)",
+  "file": "Fenster_Bereich/W3_Pets-Roll_20261007_195150_330.png",
+  "roi": [
+   0.3492,
+   0.0389,
+   0.6508,
+   0.6319
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "extra": {
+   "layout_of": "Pets-Roll (Vorlage)",
+   "closes_to": "Spielbild"
+  },
+  "opened_by_id": "W3_Wano_Island/W3_Pets_20261007_163803_867.png",
+  "opened_by": "W3 Pets"
+ },
+ {
+  "name": "W4 Pets-Roll",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "Bild = Vorlage (Aufbau gleich, andere Pets)",
+  "file": "Fenster_Bereich/W4_Pets-Roll_20261007_195150_356.png",
+  "roi": [
+   0.3492,
+   0.0389,
+   0.6508,
+   0.6319
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "extra": {
+   "layout_of": "Pets-Roll (Vorlage)",
+   "closes_to": "Spielbild"
+  },
+  "opened_by_id": "W4_Titan_Wall/W4_Pets_20261007_163803_955.png",
+  "opened_by": "W4 Pets"
+ },
+ {
+  "name": "W5 Pets-Roll",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "Bild = Vorlage (Aufbau gleich, andere Pets)",
+  "file": "Fenster_Bereich/W5_Pets-Roll_20261007_195150_383.png",
+  "roi": [
+   0.3492,
+   0.0389,
+   0.6508,
+   0.6319
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "extra": {
+   "layout_of": "Pets-Roll (Vorlage)",
+   "closes_to": "Spielbild"
+  },
+  "opened_by_id": "W5_Solo_City/W5_Pets_20261007_163804_046.png",
+  "opened_by": "W5 Pets"
+ },
+ {
+  "name": "W6 Pets-Roll",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "Bild = Vorlage (Aufbau gleich, andere Pets)",
+  "file": "Fenster_Bereich/W6_Pets-Roll_20261007_195150_409.png",
+  "roi": [
+   0.3492,
+   0.0389,
+   0.6508,
+   0.6319
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "extra": {
+   "layout_of": "Pets-Roll (Vorlage)",
+   "closes_to": "Spielbild"
+  },
+  "opened_by_id": "W6_Slayer_Village/W6_Pets_20261007_163804_123.png",
+  "opened_by": "W6 Pets"
+ },
+ {
+  "name": "W7 Pets-Roll",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "Bild = Vorlage (Aufbau gleich, andere Pets)",
+  "file": "Fenster_Bereich/W7_Pets-Roll_20261007_195150_437.png",
+  "roi": [
+   0.3492,
+   0.0389,
+   0.6508,
+   0.6319
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "extra": {
+   "layout_of": "Pets-Roll (Vorlage)",
+   "closes_to": "Spielbild"
+  },
+  "opened_by_id": "W7_Clover_Island/W7_Pets_20261007_163804_222.png",
+  "opened_by": "W7 Pets"
+ },
+ {
+  "name": "W8 Pets-Roll",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "Bild = Vorlage (Aufbau gleich, andere Pets)",
+  "file": "Fenster_Bereich/W8_Pets-Roll_20261007_195150_463.png",
+  "roi": [
+   0.3492,
+   0.0389,
+   0.6508,
+   0.6319
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "extra": {
+   "layout_of": "Pets-Roll (Vorlage)",
+   "closes_to": "Spielbild"
+  },
+  "opened_by_id": "W8_Summer_Art_Online/W8_Pets_20261007_163804_305.png",
+  "opened_by": "W8 Pets"
+ },
+ {
+  "name": "W9 Pets-Roll",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "Bild = Vorlage (Aufbau gleich, andere Pets)",
+  "file": "Fenster_Bereich/W9_Pets-Roll_20261007_195150_490.png",
+  "roi": [
+   0.3492,
+   0.0389,
+   0.6508,
+   0.6319
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "extra": {
+   "layout_of": "Pets-Roll (Vorlage)",
+   "closes_to": "Spielbild"
+  },
+  "opened_by_id": "W9_Fire_City/W9_Pets_20261007_163804_389.png",
+  "opened_by": "W9 Pets"
+ },
+ {
+  "name": "W10 Pets-Roll",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "Bild = Vorlage (Aufbau gleich, andere Pets)",
+  "file": "Fenster_Bereich/W10_Pets-Roll_20261007_195150_516.png",
+  "roi": [
+   0.3492,
+   0.0389,
+   0.6508,
+   0.6319
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "extra": {
+   "layout_of": "Pets-Roll (Vorlage)",
+   "closes_to": "Spielbild"
+  },
+  "opened_by_id": "W10_Hueco_World/W10_Pets_20261007_163804_466.png",
+  "opened_by": "W10 Pets"
+ },
+ {
+  "name": "W11 Pets-Roll",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "Bild = Vorlage (Aufbau gleich, andere Pets)",
+  "file": "Fenster_Bereich/W11_Pets-Roll_20261007_195150_543.png",
+  "roi": [
+   0.3492,
+   0.0389,
+   0.6508,
+   0.6319
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "extra": {
+   "layout_of": "Pets-Roll (Vorlage)",
+   "closes_to": "Spielbild"
+  },
+  "opened_by_id": "W11_Cursed_School/W11_Pets_20261007_163804_552.png",
+  "opened_by": "W11 Pets"
+ },
+ {
+  "name": "W12 Pets-Roll",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "Bild = Vorlage (Aufbau gleich, andere Pets)",
+  "file": "Fenster_Bereich/W12_Pets-Roll_20261007_195150_571.png",
+  "roi": [
+   0.3492,
+   0.0389,
+   0.6508,
+   0.6319
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "extra": {
+   "layout_of": "Pets-Roll (Vorlage)",
+   "closes_to": "Spielbild"
+  },
+  "opened_by_id": "W12_Lion_Kingdom/W12_Pets_20261007_163804_632.png",
+  "opened_by": "W12 Pets"
+ },
+ {
+  "name": "W13 Pets-Roll",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "Bild = Vorlage (Aufbau gleich, andere Pets)",
+  "file": "Fenster_Bereich/W13_Pets-Roll_20261007_195150_599.png",
+  "roi": [
+   0.3492,
+   0.0389,
+   0.6508,
+   0.6319
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "extra": {
+   "layout_of": "Pets-Roll (Vorlage)",
+   "closes_to": "Spielbild"
+  },
+  "opened_by_id": "W13_Z_City/W13_Pets_20261007_163804_740.png",
+  "opened_by": "W13 Pets"
+ },
+ {
+  "name": "W14 Pets-Roll",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "Bild = Vorlage (Aufbau gleich, andere Pets)",
+  "file": "Fenster_Bereich/W14_Pets-Roll_20261007_195150_628.png",
+  "roi": [
+   0.3492,
+   0.0389,
+   0.6508,
+   0.6319
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "extra": {
+   "layout_of": "Pets-Roll (Vorlage)",
+   "closes_to": "Spielbild"
+  },
+  "opened_by_id": "W14_Tempest_Federation/W14_Pets_20261007_163804_839.png",
+  "opened_by": "W14 Pets"
+ },
+ {
+  "name": "W15 Pets-Roll",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "Bild = Vorlage (Aufbau gleich, andere Pets)",
+  "file": "Fenster_Bereich/W15_Pets-Roll_20261007_195150_655.png",
+  "roi": [
+   0.3492,
+   0.0389,
+   0.6508,
+   0.6319
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "extra": {
+   "layout_of": "Pets-Roll (Vorlage)",
+   "closes_to": "Spielbild"
+  },
+  "opened_by_id": "W15_Zaban_City/W15_Pets_20261007_163804_949.png",
+  "opened_by": "W15 Pets"
+ },
+ {
+  "name": "W16 Pets-Roll",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "Bild = Vorlage (Aufbau gleich, andere Pets)",
+  "file": "Fenster_Bereich/W16_Pets-Roll_20261007_195150_682.png",
+  "roi": [
+   0.3492,
+   0.0389,
+   0.6508,
+   0.6319
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "extra": {
+   "layout_of": "Pets-Roll (Vorlage)",
+   "closes_to": "Spielbild"
+  },
+  "opened_by_id": "W16_Tokyo_Ward/W16_Pets_20261007_163805_037.png",
+  "opened_by": "W16 Pets"
+ },
+ {
+  "name": "W17 Pets-Roll",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "Bild = Vorlage (Aufbau gleich, andere Pets)",
+  "file": "Fenster_Bereich/W17_Pets-Roll_20261007_195150_709.png",
+  "roi": [
+   0.3492,
+   0.0389,
+   0.6508,
+   0.6319
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "extra": {
+   "layout_of": "Pets-Roll (Vorlage)",
+   "closes_to": "Spielbild"
+  },
+  "opened_by_id": "W17_Kingdom_of_Lugunica/W17_Pets_20261007_163805_123.png",
+  "opened_by": "W17 Pets"
+ },
+ {
+  "name": "W18 Pets-Roll",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "Bild = Vorlage (Aufbau gleich, andere Pets)",
+  "file": "Fenster_Bereich/W18_Pets-Roll_20261007_195150_736.png",
+  "roi": [
+   0.3492,
+   0.0389,
+   0.6508,
+   0.6319
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "extra": {
+   "layout_of": "Pets-Roll (Vorlage)",
+   "closes_to": "Spielbild"
+  },
+  "opened_by_id": "W18_New_Leaf_Village/W18_Pets_20261007_163805_211.png",
+  "opened_by": "W18 Pets"
+ },
+ {
+  "name": "W19 Pets-Roll",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "Bild = Vorlage (Aufbau gleich, andere Pets)",
+  "file": "Fenster_Bereich/W19_Pets-Roll_20261007_195150_763.png",
+  "roi": [
+   0.3492,
+   0.0389,
+   0.6508,
+   0.6319
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "extra": {
+   "layout_of": "Pets-Roll (Vorlage)",
+   "closes_to": "Spielbild"
+  },
+  "opened_by_id": "W19_Fuyuki_City/W19_Pets_20261007_163805_323.png",
+  "opened_by": "W19 Pets"
+ },
+ {
+  "name": "W20 Pets-Roll",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "Bild = Vorlage (Aufbau gleich, andere Pets)",
+  "file": "Fenster_Bereich/W20_Pets-Roll_20261007_195150_791.png",
+  "roi": [
+   0.3492,
+   0.0389,
+   0.6508,
+   0.6319
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "extra": {
+   "layout_of": "Pets-Roll (Vorlage)",
+   "closes_to": "Spielbild"
+  },
+  "opened_by_id": "W20_Magnolia_Town/W20_Pets_20261007_163805_442.png",
+  "opened_by": "W20 Pets"
+ },
+ {
+  "name": "W21 Pets-Roll",
+  "kind": "Fenster / Bereich",
+  "parent": "",
+  "note": "Bild = Vorlage (Aufbau gleich, andere Pets)",
+  "file": "Fenster_Bereich/W21_Pets-Roll_20261007_195150_818.png",
+  "roi": [
+   0.3492,
+   0.0389,
+   0.6508,
+   0.6319
+  ],
+  "rel": null,
+  "src": "live",
+  "window": [
+   2560,
+   1440
+  ],
+  "extra": {
+   "layout_of": "Pets-Roll (Vorlage)",
+   "closes_to": "Spielbild"
+  },
+  "opened_by_id": "W21_Night_City/W21_Pets_20261007_163805_534.png",
+  "opened_by": "W21 Pets"
+ }
+]
