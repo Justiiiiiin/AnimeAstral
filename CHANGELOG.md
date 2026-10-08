@@ -4,11 +4,23 @@ Neueste Version oben. Kurze Stichpunkte, keine Erklärungen (die stehen im Progr
 Der Abschnitt einer Version wird beim Veröffentlichen automatisch als Versionshinweis übernommen
 (`tools/release_notes.py`) und ist im Programm unter Einstellungen → Updates → „Alle Versionen“ lesbar.
 
+## 0.9.9-beta.4
+
+### ✨ Neu (Beta)
+- Funde prüfen: Fensterbild groß, Rahmen ziehen und beschriften
+- Arten: Knopf, nie drücken, Schalter, Wert, Liste, Reiter, Info
+- Beschreibung und Name je Fenster selbst eintragen
+- „Nie drücken“ wird Sperrzone, „Liste“ wird gezielt gescrollt
+- Erkunden öffnet jedes Fenster einmal, bis es geprüft ist
+
+### 🔧 Verbessert
+- Werte wie „514δU / MAX“ werden zusammen gelesen
+
 ## 0.9.9-beta.3
 
 ### ✨ Neu (Beta)
 - Funde prüfen: nach dem Erkunden jedes Fenster bestätigen
-- Erkunden öffnet jedes Fenster nur einmal (außer „nochmal prüfen“)
+- Erkunden öffnet jedes Fenster nur einmal (außer bei Rückfrage)
 
 ### 🔧 Verbessert
 - Erkunden findet scrollbare Listen selbst (nicht mehr blind)
