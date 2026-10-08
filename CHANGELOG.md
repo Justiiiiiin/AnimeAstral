@@ -8,6 +8,7 @@ Der Abschnitt einer Version wird beim Veröffentlichen automatisch als Versionsh
 
 ### 🔧 Verbessert
 - Mana Contract (W19) auch vor hellem Hintergrund erkannt
+- Farm-Routine: Schritt „Progressions“ entfernt (Knopf unter Abholen)
 
 ## 0.9.9-beta.10
 

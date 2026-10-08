@@ -20,9 +20,9 @@ from . import theme
 from .widgets import Card, label, smooth
 
 # Ein Raid-Schritt mit Ende-Bedingung (Eigentümer 08.10.2026): verlassen wird nur, wenn danach ein anderer Raid/Modus
-# folgt (automation.leave_before). Fixer Gigs, Gilde und Progressions stehen unter „Automatisch abholen“.
-KINDS = [("raid", N_("Raid / Defense farmen")), ("autoroll", N_("Auto Roll starten")),
-         ("progression", N_("Progressions: Auto All")), ("wait", N_("Pause"))]
+# folgt (automation.leave_before). Fixer Gigs, Gilde und Progressions („Auto All“ als Knopf) stehen unter
+# „Automatisch abholen“ – keine Schritte der Routine (Eigentümer 08.10.2026). Alte „progression“-Schritte laufen weiter.
+KINDS = [("raid", N_("Raid / Defense farmen")), ("autoroll", N_("Auto Roll starten")), ("wait", N_("Pause"))]
 UNTIL = [("runs", N_("nach Anzahl Raids")), ("minutes", N_("nach Minuten")), ("never", N_("nie (bis Stopp)"))]
 RAID_CATS = ("raid", "defense")
 ROLL_CATS = ("gacha", "pets")
@@ -119,8 +119,6 @@ class MacroQueueCard(Card):
         self.options.addWidget(raid_page)
         self.options.addWidget(self._note(tr("Öffnet das Fenster, drückt „Auto Roll“ und schließt es wieder – das "
                                              "Spiel rollt im Hintergrund weiter.")))
-        self.options.addWidget(self._note(tr("Drückt „Auto All“ in der ersten Progression – das gilt für die "
-                                             "Progressions aller Welten.")))
         wait_page = QWidget()
         wp = QHBoxLayout(wait_page)
         wp.setContentsMargins(0, 0, 0, 0)
@@ -217,7 +215,7 @@ class MacroQueueCard(Card):
             idx = self.target.findData(current)
             self.target.setCurrentIndex(max(0, idx))
         else:
-            self.target.addItem(tr("– (gilt überall)") if kind == "progression" else "–", None)
+            self.target.addItem("–", None)
         self.target.setEnabled(kind in ("raid", "autoroll") and self.macro.enabled)
         if kind == "raid":
             self._until_changed()
