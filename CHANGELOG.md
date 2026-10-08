@@ -4,6 +4,12 @@ Neueste Version oben. Kurze Stichpunkte, keine Erklärungen (die stehen im Progr
 Der Abschnitt einer Version wird beim Veröffentlichen automatisch als Versionshinweis übernommen
 (`tools/release_notes.py`) und ist im Programm unter Einstellungen → Updates → „Alle Versionen“ lesbar.
 
+## Unveröffentlicht
+
+### 🔧 Verbessert
+- Erkunden: Weltnamen trotz Lesefehlern erkannt („2 City“ = „Z City“)
+- Erkunden: Zeile wird in beide Richtungen gesucht, keine Welt übersprungen
+
 ## 0.9.9-beta.9
 
 ### 🔧 Verbessert

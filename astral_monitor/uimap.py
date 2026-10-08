@@ -250,11 +250,19 @@ def world_number(name: str) -> Optional[int]:
 
 def match_row(read: str, rows: list[dict]) -> Optional[dict]:
     """Gelesenen Weltnamen („Ninja Village“, „Lobby Arena“) der gespeicherten Zeile zuordnen („W1 Ninja Village“)."""
-    words = set(re.findall(r"[a-z0-9]+", read.lower()))
+    words = {_ocr_fold(w) for w in re.findall(r"[a-z0-9]+", read.lower())}
     if not words:
         return None
     for r in rows:
-        have = {w for w in re.findall(r"[a-z0-9]+", r["name"].lower()) if not re.fullmatch(r"w\d+", w)}
+        have = {_ocr_fold(w) for w in re.findall(r"[a-z0-9]+", r["name"].lower()) if not re.fullmatch(r"w\d+", w)}
         if have and (have <= words or words <= have):
             return r
     return None
+
+
+_FOLD = str.maketrans("0125869", "olzsbgg")
+
+
+def _ocr_fold(word: str) -> str:
+    """Leicht verwechselte Zeichen gleichsetzen („2 City“ gelesen, „Z City“ gespeichert; 0/O, 1/l, 5/S …)."""
+    return word.translate(_FOLD)

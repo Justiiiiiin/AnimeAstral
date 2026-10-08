@@ -114,7 +114,7 @@ class Explorer:
         self._scroll_top(lw, over)
         done: set[str] = set()
         stuck, last = 0, None
-        reopened, last_read = 0, ""
+        reopened, last_read, last_world = 0, "", ""
         while True:
             self._left()
             frame = nav._frame()
@@ -124,7 +124,7 @@ class Explorer:
                 nav._close_any()
                 nav._open_list(lw)
                 if last_read:
-                    self._find_row(lw, last_read)
+                    self._find_row(lw, last_read, last_world)
                 continue
             layout = tuple((name, round(roi[1], 3)) for name, roi, _img, _m in rows)
             for i, (name, roi, img, known) in enumerate(rows):
@@ -141,8 +141,10 @@ class Explorer:
                     self._left()
                     self._explore_slot(lw, world, name, index, rel, entry)
                 done.add(name)
-                last_read = name
+                last_read, last_world = name, world
                 frame = nav._frame()                       # Lage kann sich nach dem Schließen geändert haben
+            if last_read:
+                self._find_row(lw, last_read, last_world)   # an der zuletzt bearbeiteten Welt weiter (nicht springen)
             if layout == last:
                 stuck += 1
                 if stuck >= 2:
@@ -212,28 +214,35 @@ class Explorer:
             out.append((i, rel))
         return out
 
-    def _find_row(self, lw: dict, read: str) -> Optional[list[float]]:
-        """Zeile wiederfinden (nach dem Schließen ist der Teleporter evtl. zu oder verschoben)."""
+    def _find_row(self, lw: dict, read: str, world: str = "") -> Optional[list[float]]:
+        """Zeile wiederfinden (nach dem Schließen ist der Teleporter evtl. zu oder verschoben). Gleich ist eine Zeile
+        mit demselben gelesenen Namen oder derselben Welt der Karte (Lesungen schwanken: „2 City“/„Z City“).
+        Richtung über die Weltnummern: Ziel weiter oben -> hoch scrollen, sonst runter (vorher nur runter – eine nicht
+        wiedergefundene Zeile schob die Liste ans Ende und W14–W18 wurden übersprungen)."""
         nav = self.nav
         nav._open_list(lw)
         over = ((lw["roi"][0] + lw["roi"][2]) / 2, (lw["roi"][1] + lw["roi"][3]) / 2)
+        target = world_number(world) if world else None
         last = None
         for _ in range(30):
             rows = self._rows(nav._frame(), lw)
-            for name, roi, _img, _m in rows:
-                if name == read:
+            for name, roi, _img, m in rows:
+                if name == read or (world and m is not None and m["name"] == world):
                     return roi
             layout = tuple((n, round(r[1], 3)) for n, r, _i, _m in rows)
             if layout == last:
                 return None
             last = layout
-            nav._wheel(over, -vision_scroll())
+            seen = [world_number(m["name"]) for _n, _r, _i, m in rows if m is not None
+                    and world_number(m["name"]) is not None]
+            up = target is not None and seen and min(seen) > target
+            nav._wheel(over, vision_scroll() if up else -vision_scroll())
             time.sleep(0.4)
         return None
 
     def _explore_slot(self, lw: dict, world: str, read: str, index: int, rel: list[float], entry: dict) -> None:
         nav = self.nav
-        box = self._find_row(lw, read)
+        box = self._find_row(lw, read, world)
         if box is None:
             self.report["skipped"].append(f"{world} · {index + 1}: Zeile nicht wiedergefunden")
             return

@@ -62,3 +62,11 @@ class ProbeTest(unittest.TestCase):
         words = [("TELEPORT!", [0, 0, 0.1, 0.1]), ("RESPAWN!", [0, 0.2, 0.1, 0.3]), ("Lobby", [0, 0, 0.1, 0.1])]
         self.assertTrue(explorer._is_teleporter(words))
         self.assertFalse(explorer._is_teleporter([("Create", [0, 0, 0.1, 0.1])]))
+
+
+class RowMatchTest(unittest.TestCase):
+    def test_ocr_confusion(self):
+        from astral_monitor.uimap import match_row
+        rows = [{"name": "W13 Z City"}, {"name": "W12 Lion Kingdom"}]
+        self.assertEqual(match_row("2 City", rows)["name"], "W13 Z City")    # „2“ statt „Z“ gelesen
+        self.assertIsNone(match_row("Fire City", rows))
