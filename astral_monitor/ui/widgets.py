@@ -252,6 +252,59 @@ class StatCard(Card):
             self.value.setText(text)
 
 
+def media_icon(kind: str, token: str = "text", size: int = 64):
+    """Start (▶), Stopp (■) oder Pause (❚❚) als gezeichnetes Symbol – unabhängig von der Schrift."""
+    from PySide6.QtCore import QPointF, QRectF
+    from PySide6.QtGui import QColor, QIcon, QPainter, QPixmap, QPolygonF
+    pix = QPixmap(size, size)
+    pix.fill(Qt.GlobalColor.transparent)
+    p = QPainter(pix)
+    p.setRenderHint(QPainter.RenderHint.Antialiasing)
+    p.setPen(Qt.PenStyle.NoPen)
+    p.setBrush(QColor(theme.color(token)))
+    s = size / 24.0
+    if kind == "play":
+        p.drawPolygon(QPolygonF([QPointF(7 * s, 4.5 * s), QPointF(19.5 * s, 12 * s), QPointF(7 * s, 19.5 * s)]))
+    elif kind == "stop":
+        p.drawRoundedRect(QRectF(6 * s, 6 * s, 12 * s, 12 * s), 2 * s, 2 * s)
+    else:                                               # pause
+        p.drawRoundedRect(QRectF(6 * s, 5 * s, 4.2 * s, 14 * s), 1.2 * s, 1.2 * s)
+        p.drawRoundedRect(QRectF(13.8 * s, 5 * s, 4.2 * s, 14 * s), 1.2 * s, 1.2 * s)
+    p.end()
+    return QIcon(pix)
+
+
+def discord_icon(size: int = 64):
+    """Discord-Symbol (vereinfachte Spielfigur „Clyde“) in der Akzentfarbe – gezeichnet, keine Bilddatei."""
+    from PySide6.QtGui import QColor, QIcon, QPainter, QPainterPath, QPixmap
+    pix = QPixmap(size, size)
+    pix.fill(Qt.GlobalColor.transparent)
+    p = QPainter(pix)
+    p.setRenderHint(QPainter.RenderHint.Antialiasing)
+    s = size / 24.0
+    body = QPainterPath()                               # Kopf: breit, oben rund, unten zwei „Füße“
+    body.moveTo(5.0 * s, 6.0 * s)
+    body.cubicTo(7.5 * s, 4.6 * s, 9.6 * s, 4.4 * s, 10.2 * s, 4.6 * s)
+    body.lineTo(10.6 * s, 5.6 * s)
+    body.cubicTo(11.6 * s, 5.4 * s, 12.4 * s, 5.4 * s, 13.4 * s, 5.6 * s)
+    body.lineTo(13.8 * s, 4.6 * s)
+    body.cubicTo(14.4 * s, 4.4 * s, 16.5 * s, 4.6 * s, 19.0 * s, 6.0 * s)
+    body.cubicTo(21.0 * s, 9.2 * s, 21.8 * s, 12.6 * s, 21.6 * s, 16.4 * s)
+    body.cubicTo(19.8 * s, 17.8 * s, 18.0 * s, 18.6 * s, 16.4 * s, 19.0 * s)
+    body.lineTo(15.4 * s, 17.4 * s)
+    body.cubicTo(14.2 * s, 17.8 * s, 9.8 * s, 17.8 * s, 8.6 * s, 17.4 * s)
+    body.lineTo(7.6 * s, 19.0 * s)
+    body.cubicTo(6.0 * s, 18.6 * s, 4.2 * s, 17.8 * s, 2.4 * s, 16.4 * s)
+    body.cubicTo(2.2 * s, 12.6 * s, 3.0 * s, 9.2 * s, 5.0 * s, 6.0 * s)
+    body.closeSubpath()
+    eyes = QPainterPath()
+    eyes.addEllipse(7.4 * s, 10.4 * s, 3.0 * s, 3.4 * s)
+    eyes.addEllipse(13.6 * s, 10.4 * s, 3.0 * s, 3.4 * s)
+    p.fillPath(body.subtracted(eyes), QColor(theme.color("accent")))
+    p.end()
+    return QIcon(pix)
+
+
 class ElidedLabel(QLabel):
     """Einzeiliges Label, das zu langen Text mit „…“ kürzt (voller Text im Tooltip) – verbreitert die Seite nie."""
 

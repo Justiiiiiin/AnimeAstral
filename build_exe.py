@@ -240,6 +240,7 @@ def main() -> int:
         "--add-data", f"{ROOT / 'assets'}{os.pathsep}assets",
         "--add-data", f"{ROOT / 'CHANGELOG.md'}{os.pathsep}.",      # „Was ist neu“ nach einem Update
         "--add-data", f"{ROOT / 'astral_monitor' / 'uimap'}{os.pathsep}astral_monitor/uimap",   # Karte (Automatik)
+        "--add-data", f"{ROOT / 'astral_monitor' / 'uimap_static'}{os.pathsep}astral_monitor/uimap_static",  # Zahnrad …
         "--add-data", f"{ROOT / 'astral_monitor' / 'regions.json'}{os.pathsep}astral_monitor",  # Erkennungsbereiche
         "--collect-submodules", "astral_monitor",
         "--distpath", str(ROOT / "dist"),

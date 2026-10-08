@@ -23,6 +23,7 @@ from . import knowledge, vision
 from .i18n import tr
 from .uimap import LOCAL_FILE, ROW, match_row, save_local, world_number
 
+AVOID_HIT = 0.9          # so ähnlich wie ein „nicht drücken“-Symbol = auslassen (gleiche Symbole ~0,99)
 OBSERVE_WAIT = 4.0        # so lange darf ein Fenster nach dem Klick zum Aufgehen brauchen
 HUD_ORDER = ("Equip Best", "Guild", "Boosts", "G. Quests", "Promotion", "Shop", "Items", "Achiev", "Index", "Pets")
 FULL = [0.0, 0.0, 1.0, 1.0]
@@ -42,6 +43,9 @@ class Explorer:
         self.report: dict = {"started": stamp, "worlds": [], "hud": [], "skipped": []}
         self.local: list[dict] = []
         self.count = 0
+        # „nicht drücken“ (Gates, Totenkopf in W21: zeitbasierte Modi, Klick schließt den Teleporter)
+        self.avoid = [img for e in nav.map.entries if (e.get("extra") or {}).get("avoid")
+                      for img in [nav.map.image(e)] if img is not None]
 
     # ------------------------------------------------------------------ Ablauf
     def run(self) -> None:
@@ -87,10 +91,18 @@ class Explorer:
         self._scroll_top(lw, over)
         done: set[str] = set()
         stuck, last = 0, None
+        reopened, last_read = 0, ""
         while True:
             self._left()
             frame = nav._frame()
             rows = self._rows(frame, lw)
+            if not rows and reopened < 3:                  # Teleporter zu (Fenster/Teleport dazwischen): wieder auf,
+                reopened += 1                              # zur letzten Welt zurück, weiter
+                nav._close_any()
+                nav._open_list(lw)
+                if last_read:
+                    self._find_row(lw, last_read)
+                continue
             layout = tuple((name, round(roi[1], 3)) for name, roi, _img, _m in rows)
             for i, (name, roi, img, known) in enumerate(rows):
                 if name in done:
@@ -106,6 +118,7 @@ class Explorer:
                     self._left()
                     self._explore_slot(lw, world, name, index, rel, entry)
                 done.add(name)
+                last_read = name
                 frame = nav._frame()                       # Lage kann sich nach dem Schließen geändert haben
             if layout == last:
                 stuck += 1
@@ -151,17 +164,27 @@ class Explorer:
         return f"W{prev + 1} {read}" if prev is not None else f"W? {read}"
 
     def _unknown_slots(self, known: Optional[dict], img: np.ndarray, slots: vision.SlotLayout, world: str):
-        """Belegte Plätze ohne bekanntes Fenster (bei neuen Welten: alle)."""
+        """Belegte Plätze ohne bekanntes Fenster (bei neuen Welten: alle) – ohne „nicht drücken“-Symbole."""
         found = slots.slots(img)
-        if known is None:
-            return found
         done = set()
-        for e in self.nav.map.children(known):
-            if e.get("kind") in ("Knopf", "Symbol") and e.get("rel") and self.nav.map_opened(e):
+        if known is not None:
+            for e in self.nav.map.children(known):
+                if e.get("kind") not in ("Knopf", "Symbol") or not e.get("rel"):
+                    continue
                 i = slots.index_of(e["rel"])
-                if i is not None:
+                if i is not None and (self.nav.map_opened(e) or (e.get("extra") or {}).get("avoid")):
                     done.add(i)
-        return [(i, rel) for i, rel in found if i not in done]
+        out = []
+        h, w = img.shape[:2]
+        for i, rel in found:
+            if i in done:
+                continue
+            crop = img[int(rel[1] * h):int(rel[3] * h), int(rel[0] * w):int(rel[2] * w)]
+            if any(vision.same_icon(crop, a) >= AVOID_HIT for a in self.avoid):
+                self.report["skipped"].append(f"{world} · Platz {i + 1}: zeitbasierter Modus – nicht gedrückt")
+                continue
+            out.append((i, rel))
+        return out
 
     def _find_row(self, lw: dict, read: str) -> Optional[list[float]]:
         """Zeile wiederfinden (nach dem Schließen ist der Teleporter evtl. zu oder verschoben)."""
@@ -193,13 +216,14 @@ class Explorer:
         seen = self._observe(before)
         if seen is None:
             self.report["skipped"].append(f"{world} · Platz {index + 1}: nichts geöffnet")
+            self._snap(f"nichts_{world}_{index + 1}", before, nav._frame())
             return
         kind, roi, title, frame, template = seen
         analysis = self._analyse(frame, roi, title, template)
-        name = self._window_name(world, analysis, index)
+        button = self._button_for(world, index, rel, box)
+        name = self._window_name(world, analysis, index, button)
         nav.log(tr("{world} · Platz {n}: {title} ({kind})", world=world, n=index + 1,
                    title=analysis.title or "?", kind=analysis.label))
-        button = self._button_for(world, index, rel, box)
         self._record_window(name, roi, button, analysis, template, frame)
         entry["windows"].append({"slot": index + 1, "window": name, **analysis.as_dict()})
         self._close(kind, roi, template, frame)
@@ -241,11 +265,13 @@ class Explorer:
         frame = nav._frame()
         if not self._hud_visible(button, frame):
             self.report["skipped"].append(f"{name}: Knopf nicht gefunden")
+            self._snap(f"knopf_fehlt_{name}", frame, frame)
             return
         nav._click_roi(button["roi"])
         seen = self._observe(frame)
         if seen is None:
             self.report["skipped"].append(f"{name}: nichts geöffnet")
+            self._snap(f"nichts_{name}", frame, nav._frame())
             return
         kind, roi, title, frame, template = seen
         analysis = self._analyse(frame, roi, title or name, template)
@@ -255,8 +281,12 @@ class Explorer:
             analysis.category, analysis.label = "guild", tr("Gilde")
         window = analysis.title if analysis.title and analysis.title != name else f"{name} Fenster"
         nav.log(tr("{button}: {title} ({kind})", button=name, title=analysis.title or "?", kind=analysis.label))
-        words = [w for w, _r in vision.words_in(frame, roi, nav._ocr)]
-        self.report["hud"].append({"button": name, "window": window, "words": words[:80], **analysis.as_dict()})
+        found = vision.words_in(frame, roi, nav._ocr)
+        claims = knowledge.claimables(found)
+        if claims:
+            nav.log(tr("{button}: {count}× „Claim“ gefunden (nicht geklickt)", button=name, count=len(claims)))
+        self.report["hud"].append({"button": name, "window": window, "words": [w for w, _r in found][:80],
+                                   "claim": [[round(v, 4) for v in r] for r in claims], **analysis.as_dict()})
         self._record_window(window, roi, button, analysis, template, frame)
         self._close(kind, roi, template, frame)
 
@@ -272,7 +302,13 @@ class Explorer:
         region = frame[max(0, int(y0 * fh) - my):int(y1 * fh) + my, max(0, int(x0 * fw) - mx):int(x1 * fw) + mx]
         if region.shape[0] < tpl.shape[0] or region.shape[1] < tpl.shape[1]:
             return False
-        return float(cv2.minMaxLoc(cv2.matchTemplate(region, tpl, cv2.TM_CCOEFF_NORMED))[1]) >= 0.55
+        if float(cv2.minMaxLoc(cv2.matchTemplate(region, tpl, cv2.TM_CCOEFF_NORMED))[1]) >= 0.4:
+            return True
+        # Prüfbild stammt aus einer verkleinerten Aufnahme – im scharfen Live-Bild auch die Beschriftung zulassen
+        area = [max(0.0, x0 - 0.01), max(0.0, y0 - 0.01), min(1.0, x1 + 0.01), min(1.0, y1 + 0.02)]
+        want = re.sub(r"[^a-z]", "", button["name"].lower())[:5]
+        return any(want and want in re.sub(r"[^a-z]", "", w.lower())
+                   for w, _b in vision.words_in(frame, area, self.nav._ocr))
 
     # ------------------------------------------------------------------ Beobachten, einordnen, schließen
     def _observe(self, before: np.ndarray):
@@ -309,7 +345,13 @@ class Explorer:
         words = vision.words_in(frame, roi, self.nav._ocr)
         return knowledge.classify(title, words, template.window["name"] if template else "")
 
-    def _window_name(self, world: str, analysis: knowledge.Analysis, index: int) -> str:
+    def _window_name(self, world: str, analysis: knowledge.Analysis, index: int, button: dict) -> str:
+        named = button.get("name", "")
+        if named and not named.startswith("?") and "Platz" not in named:
+            name = named                                   # vom Eigentümer benannt („Ninja Raid“) – eindeutiger
+            if self.nav.map.container(name) is not None:   # als ein Titel wie „Raid“ oder „Crafting“
+                name = f"{name} Fenster"
+            return name
         base = analysis.title or analysis.label or f"Platz {index + 1}"
         if analysis.category == "pets":
             base = "Pets-Roll"
@@ -318,6 +360,15 @@ class Explorer:
         if self.nav.map.container(name) is not None:
             name = f"{name} ({index + 1})"
         return name
+
+    def _snap(self, tag: str, before: np.ndarray, after: np.ndarray) -> None:
+        """Bilder vorher/nachher speichern (halbe Größe) – damit sich unklare Fälle später klären lassen."""
+        self.out.mkdir(parents=True, exist_ok=True)
+        safe = re.sub(r"[^\w-]+", "_", tag)[:60]
+        for suffix, img in (("vorher", before), ("nachher", after)):
+            small = cv2.resize(img, None, fx=0.5, fy=0.5, interpolation=cv2.INTER_AREA)
+            cv2.imencode(".jpg", small, [cv2.IMWRITE_JPEG_QUALITY, 80])[1].tofile(
+                str(self.out / f"{safe}_{suffix}.jpg"))
 
     def _record_window(self, name: str, roi: list[float], button: dict, analysis: knowledge.Analysis, template,
                        frame: np.ndarray) -> None:

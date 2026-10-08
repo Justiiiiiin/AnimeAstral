@@ -82,7 +82,7 @@ class AutomationCard(Card):
 
         self.log = QListWidget()
         smooth(self.log)
-        theme.track_fixed_height(self.log, 66)
+        theme.track_fixed_height(self.log, 58)
         self.body.addWidget(self.log)
         if not self.map.entries:
             self.body.addWidget(label(tr("Keine Oberflächen-Karte vorhanden."), "muted"))
@@ -131,6 +131,8 @@ class AutomationCard(Card):
                 ocr_factory=lambda: OcrEngine(s.tesseract_path),
                 log=lambda text: self.main.post(lambda: self._add_log(text)),
                 uimap=self.map)
+            self.navigator.raid_count = lambda: engine.stats.snapshot().total_attempts   # Raid-Enden (Überwachung)
+            self.navigator.monitoring = lambda: engine.running
         return self.navigator
 
     def _start(self, what: str, arg) -> None:

@@ -5,13 +5,13 @@ from __future__ import annotations
 
 import time
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QSize, Qt
 from PySide6.QtWidgets import QHBoxLayout, QProgressBar, QPushButton, QVBoxLayout, QWidget
 
 from .. import messages
 from ..i18n import dec, tr
 from . import theme
-from .widgets import Card, EmptyState, QuestRow, StatCard, label
+from .widgets import Card, EmptyState, QuestRow, StatCard, discord_icon, label, media_icon
 
 
 def wave_token(wave: int, best: int) -> str:
@@ -41,13 +41,20 @@ class MonitorPage(QWidget):
         theme.track_spacing(root, 16)
 
         # Steuerung: in der Kopfzeile des Hauptfensters (hier nur erzeugt, Zustand pflegt refresh())
-        self.btn_status = QPushButton(tr("Status neu senden"))
-        self.btn_status.setToolTip(tr("Löscht die Statusnachricht in Discord und sendet sie ganz unten im Chat neu."))
+        self.btn_status = QPushButton()                     # nur Symbol (Kopfzeile ist schmal)
+        self.btn_status.setIcon(discord_icon())
+        theme.track(self.btn_status, lambda o, f: o.setIconSize(QSize(round(20 * f), round(20 * f))))
+        self.btn_status.setToolTip(tr("Status neu senden: löscht die Statusnachricht in Discord und sendet sie ganz "
+                                      "unten im Chat neu."))
         self.btn_status.clicked.connect(self.main.resend_status)
-        self.btn_pause = QPushButton(tr("Pause"))
+        self.btn_pause = QPushButton()
+        self.btn_pause.setToolTip(tr("Pause"))
         self.btn_pause.clicked.connect(self.main.toggle_pause)
-        self.btn_start = QPushButton(tr("Starten"))
-        self.btn_start.setObjectName("primary")
+        self.btn_start = QPushButton()
+        self.btn_start.setToolTip(tr("Starten"))
+        for btn in (self.btn_start, self.btn_pause, self.btn_status):
+            theme.track_fixed_width(btn, 40)                # nur Symbole: ▶/■, ❚❚, Discord
+            theme.track(btn, lambda o, f: o.setIconSize(QSize(round(18 * f), round(18 * f))))
         self.btn_start.clicked.connect(self.main.toggle_monitoring)
 
         # Kennzahlen
@@ -126,8 +133,11 @@ class MonitorPage(QWidget):
         root.addLayout(mid, 1)
 
     def recolor(self) -> None:
-        """Nach Design-/Farbwechsel: Wellenzahl in den neuen Farben."""
+        """Nach Design-/Farbwechsel: Wellenzahl und Start-Symbol in den neuen Farben."""
         self._wave_color = None
+        self._was_running = None
+        self._paused = None
+        self.btn_status.setIcon(discord_icon())
 
     def reload_raids(self) -> None:
         """Raid-Auswahl gibt es auf der Startseite nicht mehr (kommt neu) – Aufrufer bleiben gültig."""
@@ -140,12 +150,15 @@ class MonitorPage(QWidget):
 
         if running != self._was_running:
             self._was_running = running
-            self.btn_start.setText(tr("Stoppen") if running else tr("Starten"))
-            self.btn_start.setObjectName("danger" if running else "primary")
-            self.btn_start.style().unpolish(self.btn_start)
-            self.btn_start.style().polish(self.btn_start)
+            # normaler Knopf-Rahmen (der Stil „primary“ greift in der Kopfzeile nicht), Symbol gezeichnet + gefärbt
+            self.btn_start.setIcon(media_icon("stop", "danger") if running else media_icon("play", "accent"))
+            self.btn_start.setToolTip(tr("Stoppen") if running else tr("Starten"))
+            self._paused = None
             self.btn_pause.setVisible(running)
-        self.btn_pause.setText(tr("Fortsetzen") if st.paused else tr("Pause"))
+        if st.paused != getattr(self, "_paused", None):
+            self._paused = st.paused
+            self.btn_pause.setIcon(media_icon("play" if st.paused else "pause", "accent" if st.paused else "text"))
+            self.btn_pause.setToolTip(tr("Fortsetzen") if st.paused else tr("Pause"))
 
         now = time.monotonic()
         if now - self._last_snap > 1.5:

@@ -32,8 +32,14 @@ den Teleporter durch, öffnet in neuen Welten und bei Symbolen ohne Fenster jede
 (Titel + gelesene Wörter), schließt (X, Vorlage-Close oder „Close“/„Exit“ bei ganzen Bildschirmen), danach die
 Knöpfe am Bildschirmrand (`extra.hud`, feste Lage mit Bildprüfung). Nie Aktions-Knöpfe klicken
 (`knowledge.ACTION_WORDS`). Ergebnis: `uimap_local.json` im Datenordner (mitgelieferte Karte hat Vorrang) +
-`explore/<zeit>/report.json` mit Bildern. Offen: Raid-Zahnrad (Auto Retry / Auto Leave ab Welle N) – mit Auto Retry an
-kann man nicht verlassen; vor einem Raid-Wechsel also erst Auto Retry aus.
+`explore/<zeit>/report.json` mit Bildern. **„Nicht drücken“** (`extra.avoid` in der Karte, Bildvergleich
+`vision.same_icon`): Gates (W5) und Totenkopf/MaxTac Call (W21) sind zeitbasierte Modi – Klick schließt den Teleporter.
+**Raid-Steuerung (seit 0.9.7-beta.2):** Zahnrad oben rechts neben Welle/Timer (`uimap_static/raid_gear.png`, Suche in
+mehreren Größen) öffnet „Auto Retry“/„Auto Leave“ + Feld „Wave N“; Schalterzustand an der Farbe des Knopfs (größter
+grüner vs. rosa Fleck, `vision.toggle_state` – „Wave cleared!“-Meldungen liegen oft darüber). Mit Auto Retry an kann
+man nicht verlassen: `_leave_raid` = Auto Retry aus, dann „LEAVE!“. Aufgabe „Raid farmen“ wartet auf N Raid-Enden der
+Überwachung (`engine.stats.snapshot().total_attempts`). Kopfzeile: Start/Stopp/Pause/Status nur als gezeichnete
+Symbole (`widgets.media_icon`, `discord_icon`), Countdowns klein über den Schaltern (`MainWindow._stacked`).
 **Startseite seit 0.9.5-beta.4:** kein Titel/Fenster-Info/Raid-Auswahl; Start/Pause/Status als Knöpfe links in der
 Kopfzeile (`MainWindow._mount_controls`); Ereignisse als Debug-Karte unter Einstellungen → Programm
 (`ui/events_card.py`, gesammelt in `MainWindow.event_log`). Die Raid-Auswahl kommt neu (Eigentümer ändert das). Eingaben per

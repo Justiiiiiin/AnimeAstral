@@ -290,6 +290,72 @@ class SlotLayout:
         return i if 0 <= i < self.count else None
 
 
+def find_multiscale(frame: np.ndarray, tpl: np.ndarray, region: list[float],
+                    scales=(0.6, 0.75, 0.9, 1.0, 1.15, 1.3, 1.5, 1.75, 2.0)) -> tuple[float, Optional[list[float]]]:
+    """Bild in einem Bereich in mehreren Größen suchen (Vorlage aus einem Bildschirmfoto unbekannter Größe).
+    Rückgabe (Ähnlichkeit, Lage im Roblox-Fenster)."""
+    fh, fw = frame.shape[:2]
+    x0, y0 = int(region[0] * fw), int(region[1] * fh)
+    area = cv2.cvtColor(frame[y0:int(region[3] * fh), x0:int(region[2] * fw)], cv2.COLOR_BGR2GRAY)
+    gray = cv2.cvtColor(tpl, cv2.COLOR_BGR2GRAY)
+    best, box = -1.0, None
+    for s in scales:
+        t = cv2.resize(gray, None, fx=s * fw / 2560, fy=s * fw / 2560, interpolation=cv2.INTER_AREA)
+        if t.shape[0] < 8 or t.shape[0] > area.shape[0] or t.shape[1] > area.shape[1]:
+            continue
+        _a, score, _b, (lx, ly) = cv2.minMaxLoc(cv2.matchTemplate(area, t, cv2.TM_CCOEFF_NORMED))
+        if score > best:
+            best = score
+            box = [(x0 + lx) / fw, (y0 + ly) / fh, (x0 + lx + t.shape[1]) / fw, (y0 + ly + t.shape[0]) / fh]
+    return best, box
+
+
+def toggle_state(frame: np.ndarray, label: list[float]) -> Optional[bool]:
+    """Schalter rechts neben einer Beschriftung (Raid-Zahnrad: „Auto Retry“, „Auto Leave“): grün = an, rosa/rot =
+    aus, None = nicht erkennbar (verdeckt)."""
+    fh, fw = frame.shape[:2]
+    h = label[3] - label[1]
+    cy = (label[1] + label[3]) / 2
+    # nur der Streifen, in dem der Schalter sitzt (gemessen: 0,035–0,06 rechts der Beschriftung bei 2560 px) –
+    # Meldungen wie „Wave cleared!“ (grün) liegen oft darüber und dürfen nicht mitzählen
+    x0, x1 = label[2] + 0.02, min(1.0, label[2] + 0.08)
+    y0, y1 = max(0.0, cy - 0.7 * h), min(1.0, cy + 0.7 * h)
+    crop = frame[int(y0 * fh):int(y1 * fh), int(x0 * fw):int(x1 * fw)].astype(np.int16)
+    if crop.size == 0:
+        return None
+    g, r = crop[..., 1], crop[..., 2]
+
+    def blob(mask: np.ndarray) -> int:
+        """Größter zusammenhängender Fleck: der runde Knopf des Schalters – nicht die dünne grüne Linie einer
+        „Wave cleared!“-Meldung, die quer durch die Zeile laufen kann."""
+        n, _lab, st, _c = cv2.connectedComponentsWithStats(mask.astype(np.uint8), 8)
+        return max((int(st[i, cv2.CC_STAT_AREA]) for i in range(1, n)
+                    if st[i, cv2.CC_STAT_HEIGHT] >= 0.35 * mask.shape[0]), default=0)
+
+    green = blob((g > 150) & (r < 140) & (g - r > 60))
+    pink = blob((r > 150) & (g < 110) & (r - g > 80))
+    if max(green, pink) < 15 or min(green, pink) > 0.5 * max(green, pink):
+        return None                                   # nichts oder beides deutlich (verdeckt): später nochmal
+    return green > pink
+
+
+def same_icon(a: np.ndarray, b: np.ndarray) -> float:
+    """Ähnlichkeit zweier Symbol-Bilder: Kern (ohne Rand und ohne die rechte obere Ecke mit dem spielerabhängigen
+    Häkchen) des einen im anderen gesucht, beide Richtungen. Gleiche Symbole ~0,99, ähnliche andere bis ~0,9."""
+    if a is None or b is None or a.size == 0 or b.size == 0:
+        return -1.0
+    if abs(a.shape[0] - b.shape[0]) > 0.25 * max(a.shape[0], b.shape[0]):
+        b = cv2.resize(b, (int(b.shape[1] * a.shape[0] / b.shape[0]), a.shape[0]), interpolation=cv2.INTER_AREA)
+    best = -1.0
+    for x, y in ((a, b), (b, a)):
+        h, w = y.shape[:2]
+        core = y[int(0.30 * h):int(0.88 * h), int(0.14 * w):int(0.64 * w)]
+        if core.size == 0 or core.shape[0] > x.shape[0] or core.shape[1] > x.shape[1]:
+            continue
+        best = max(best, float(cv2.minMaxLoc(cv2.matchTemplate(x, core, cv2.TM_CCOEFF_NORMED))[1]))
+    return best
+
+
 def read_text(frame: np.ndarray, roi: list[float], ocr) -> str:
     """Text in einem Bereich lesen (z. B. „Kosten (Yen)“ im Pets-Roll-Menü)."""
     fh, fw = frame.shape[:2]

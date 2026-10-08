@@ -47,6 +47,15 @@ class ClassifyTest(unittest.TestCase):
     def test_pets_template(self):
         self.assertEqual(knowledge.classify("", W("Open!", "Auto!"), "Pets-Roll (Vorlage)").category, "pets")
 
+    def test_real_run_titles(self):
+        """Aus dem ersten echten Erkunden: Quests erwähnen Raids, sind aber Quests."""
+        quests = W("Glo", "ests", "AUTO", "CLAIM", "Complete", "MaxTac", "Call", "times", "Join", "Timeless", "Raid")
+        a = knowledge.classify("Global Quests", quests)
+        self.assertEqual(a.category, "quests")
+        self.assertEqual(len(knowledge.claimables(quests)), 1)
+        self.assertEqual(knowledge.classify("Inventory", W("Rarity", "Key")).category, "inventory")
+        self.assertEqual(knowledge.classify("Achievements", W("Claim", "Veteran")).category, "achievements")
+
     def test_unknown_and_safety(self):
         self.assertEqual(knowledge.classify("", W("Hello")).category, "unknown")
         for word in ("Roll", "Auto", "Craft", "Buy", "Claim", "Equip"):
@@ -83,6 +92,16 @@ class LocalMapTest(unittest.TestCase):
             save_local(local, [dict(first, name="Überschrieben")])
             m = UiMap.load(local=local)
             self.assertEqual(m.by_id(first["file"])["name"], first["name"])
+
+
+class AvoidTest(unittest.TestCase):
+    def test_avoid_icons(self):
+        """Zeitbasierte Modi (Gates, Totenkopf W21) – nicht drücken; untereinander nicht verwechseln."""
+        m = UiMap.load(local=Path(tempfile.gettempdir()) / "gibt_es_nicht.json")
+        imgs = [m.image(e) for e in m.entries if (e.get("extra") or {}).get("avoid")]
+        self.assertEqual(len(imgs), 2)
+        self.assertGreater(vision.same_icon(imgs[0], imgs[0]), 0.98)
+        self.assertLess(vision.same_icon(imgs[0], imgs[1]), 0.9)
 
 
 class SlotLayoutTest(unittest.TestCase):

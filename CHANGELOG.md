@@ -4,6 +4,22 @@ Neueste Version oben. Kurze Stichpunkte, keine Erklärungen (die stehen im Progr
 Der Abschnitt einer Version wird beim Veröffentlichen automatisch als Versionshinweis übernommen
 (`tools/release_notes.py`) und ist im Programm unter Einstellungen → Updates → „Alle Versionen“ lesbar.
 
+## 0.9.7-beta.2
+
+### ✨ Neu (Beta)
+- Warteschlange: „Raid farmen“ – starten, N Raids, dann verlassen
+- Makro stellt Auto Retry und Auto Leave (ab Welle N) selbst ein
+- „Raid verlassen“: erst Auto Retry aus, dann LEAVE!
+- Erkunden lässt Gates und Totenkopf (zeitbasierte Modi) aus
+
+### 🔧 Verbessert
+- Erkunden: Teleporter zu? Wieder öffnen und weitermachen
+- Fenster heißen wie deine Knöpfe („Ninja Raid“ statt „Raid“)
+- Neu erkannt: Quests, Inventar, Achievements, Index, Ranks …
+- Claim-Knöpfe werden im Bericht gezählt (nie geklickt)
+- Kopfzeile: Start/Stopp, Pause und Status nur als Symbole
+- Anti-AFK-Countdown klein über dem Schalter
+
 ## 0.9.7-beta.1
 
 ### ✨ Neu (Beta)

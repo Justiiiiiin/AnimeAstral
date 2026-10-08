@@ -36,6 +36,15 @@ CATEGORIES: dict[str, tuple[str, tuple[str, ...], tuple[str, ...]]] = {
     "passive": (N_("Passiv"), ("passive", "passives"), ("passive", "reroll", "lock")),
     "equip_best": (N_("Equip Best"), ("equip",), ("equip", "best", "power", "damage", "yen", "luck", "drop")),
     "guild": (N_("Gilde"), ("guild",), ("guild", "members", "claim", "rewards", "quests", "donate")),
+    # aus dem ersten echten Erkunden (07.10.2026): Knöpfe am Bildschirmrand und weitere Welt-Symbole
+    "quests": (N_("Quests"), ("quests", "quest"), ("claim", "complete", "times", "quests")),
+    "promotion": (N_("Promotion"), ("promotion", "promotions"), ("promote", "promotion", "missions", "boost")),
+    "inventory": (N_("Inventar"), ("inventory",), ("rarity", "key", "inventory", "items")),
+    "achievements": (N_("Achievements"), ("achievements", "achievement"), ("claim", "achievements", "veteran")),
+    "index": (N_("Index"), ("index",), ("worlds", "collections", "index", "complete")),
+    "ranks": (N_("Ranks"), ("ranks", "rank"), ("rank", "max", "auto")),
+    "avatars": (N_("Avatare"), ("avatars", "avatar"), ("avatar", "equip")),
+    "event": (N_("Event"), ("event", "medal"), ("event", "medal")),
 }
 
 # Knöpfe, die beim Erkunden nur gemerkt, nie geklickt werden (kosten etwas oder ändern den Spielstand)
@@ -90,6 +99,11 @@ def classify(title: str, words: list[tuple[str, list[float]]], template: str = "
             best = Analysis("unknown", tr("Unbekannt"), best.score, best.matched, title=title)
     best.buttons = [(w, r) for w, r in words if _norm(w) in ACTION_WORDS or _norm(w) in CLOSE_WORDS]
     return best
+
+
+def claimables(words: list[tuple[str, list[float]]]) -> list[list[float]]:
+    """Lagen aller „Claim“-Knöpfe (Quests, Achievements, Gilde) – nur gemerkt, nie geklickt."""
+    return [r for w, r in words if _norm(w) == "claim"]
 
 
 def close_word(words: list[tuple[str, list[float]]]) -> list[float] | None:

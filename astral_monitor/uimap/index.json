@@ -1655,7 +1655,7 @@
   "name": "Gates",
   "kind": "Knopf",
   "parent": "W5 Solo City",
-  "note": "automatisch erfasst",
+  "note": "zeitbasierter Sondermodus – Klick schließt den Teleporter; beim Erkunden nicht drücken",
   "file": "W5_Solo_City/W5_Solo_City_Platz_4_20261007_163804_068.png",
   "roi": [
    0.4013,
@@ -1673,7 +1673,11 @@
   "window": [
    2560,
    1440
-  ]
+  ],
+  "extra": {
+   "avoid": true
+  },
+  "img": "img/W5_Solo_City_W5_Solo_City_Platz_4_202610.png"
  },
  {
   "name": "Progression",
@@ -6119,7 +6123,7 @@
   "name": "MaxTac Call",
   "kind": "Knopf",
   "parent": "W21 Night City",
-  "note": "automatisch erfasst",
+  "note": "zeitbasierter Sondermodus – Klick schließt den Teleporter; beim Erkunden nicht drücken",
   "file": "W21_Night_City/W21_Night_City_Platz_8_20261007_163805_590.png",
   "roi": [
    0.5076,
@@ -6137,7 +6141,11 @@
   "window": [
    2560,
    1440
-  ]
+  ],
+  "extra": {
+   "avoid": true
+  },
+  "img": "img/W21_Night_City_W21_Night_City_Platz_8_20.png"
  },
  {
   "name": "Fixer Gigs",

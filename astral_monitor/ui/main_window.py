@@ -137,9 +137,8 @@ class MainWindow(QMainWindow):
         self.join_btn.clicked.connect(lambda: self.join_private_server())
         top.addWidget(self.join_btn)
         top.addSpacing(theme.px(12))
-        top.addWidget(self.afk_info)
         top.addWidget(afk_label)
-        top.addWidget(self.afk_switch)
+        top.addLayout(self._stacked(self.afk_info, self.afk_switch))   # Countdown klein über dem Schalter
         top.addSpacing(theme.px(12))
         rejoin_label = label(tr("Auto-Rejoin"), "muted")
         rejoin_label.setToolTip(tr("Tritt nach Verbindungsabbruch, Kick oder Absturz automatisch wieder deinem privaten "
@@ -150,9 +149,8 @@ class MainWindow(QMainWindow):
         self.rejoin_switch.setToolTip(rejoin_label.toolTip())
         self.rejoin_switch.setChecked(engine.settings.auto_rejoin_enabled)
         self.rejoin_switch.toggled.connect(self.set_auto_rejoin)
-        top.addWidget(self.rejoin_info)
         top.addWidget(rejoin_label)
-        top.addWidget(self.rejoin_switch)
+        top.addLayout(self._stacked(self.rejoin_info, self.rejoin_switch))
         top.addSpacing(theme.px(12))
         auto_label = label(tr("Auto-Start"), "muted")
         auto_label.setToolTip(tr("Startet die Überwachung, sobald du Anime Astral betrittst, pausiert bei "
@@ -163,9 +161,8 @@ class MainWindow(QMainWindow):
         self.auto_switch.setToolTip(auto_label.toolTip())
         self.auto_switch.setChecked(engine.settings.auto_monitor)
         self.auto_switch.toggled.connect(self.set_auto_monitor)
-        top.addWidget(self.auto_info)
         top.addWidget(auto_label)
-        top.addWidget(self.auto_switch)
+        top.addLayout(self._stacked(self.auto_info, self.auto_switch))
         self.auto = AutoMonitor()
         self._auto_error = ""
         outer.addWidget(topbar)
@@ -589,7 +586,7 @@ class MainWindow(QMainWindow):
 
     def _update_afk_info(self) -> None:
         left = self.engine.anti_afk.seconds_left()
-        text = "" if left is None else tr("nächstes Anti-AFK in {time}", time=messages.fmt_duration(left))
+        text = "" if left is None else f"{int(left) // 60}:{int(left) % 60:02d}"    # nur die Zeit (über dem Schalter)
         if self.afk_info.text() != text:
             self.afk_info.setText(text)
         text = self.engine.rejoin.info()
@@ -953,6 +950,17 @@ class MainWindow(QMainWindow):
         for lbl in (self.toast, self.top_toast):
             lbl.setText(text)
         QTimer.singleShot(3000, lambda: [lbl.setText("") for lbl in (self.toast, self.top_toast)])
+
+    @staticmethod
+    def _stacked(info, switch) -> QVBoxLayout:
+        """Kurze Zusatzinfo (z. B. Anti-AFK-Countdown) klein über dem Schalter statt daneben – spart Breite."""
+        box = QVBoxLayout()
+        box.setContentsMargins(0, 0, 0, 0)
+        box.setSpacing(0)
+        info.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        box.addWidget(info, 0, Qt.AlignmentFlag.AlignHCenter)
+        box.addWidget(switch, 0, Qt.AlignmentFlag.AlignHCenter)
+        return box
 
     def _mount_controls(self) -> None:
         """Start/Stopp, Pause und „Status neu senden“ als Knöpfe links oben in die Kopfzeile (Wunsch des Eigentümers

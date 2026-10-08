@@ -12,6 +12,7 @@ import re
 import threading
 import time
 from ctypes import wintypes
+from pathlib import Path
 from typing import Callable, Optional
 
 import cv2
@@ -39,7 +40,12 @@ def macro_running() -> bool:
     return _ACTIVE.is_set()
 
 
-TASK_KINDS = ("autoroll", "raid_create", "raid_join", "wait", "navigate", "pets", "close")   # letzte 3: alt
+TASK_KINDS = ("autoroll", "raid_farm", "raid_leave", "raid_create", "raid_join", "wait", "navigate", "pets",
+              "close")                                  # die letzten drei: ältere Warteschlangen
+RAID_GEAR = Path(__file__).with_name("uimap_static") / "raid_gear.png"   # Zahnrad oben rechts im Raid (fest, nicht aus der Karte)
+GEAR_REGION = [0.4, 0.0, 0.9, 0.16]
+LEAVE_REGION = [0.35, 0.0, 0.75, 0.2]
+GEAR_HIT = 0.75
 
 
 def task_label(task: dict) -> str:
@@ -47,6 +53,13 @@ def task_label(task: dict) -> str:
     kind = task.get("kind")
     if kind == "autoroll":
         return tr("Auto Roll: {target}", target=task.get("target", "?"))
+    if kind == "raid_farm":
+        text = tr("Raid farmen: {target} × {runs}", target=task.get("target", "?"), runs=int(task.get("runs", 1)))
+        if int(task.get("leave_wave", 0)):
+            text += " · " + tr("Leave ab Welle {wave}", wave=int(task["leave_wave"]))
+        return text + (" · " + tr("beitreten") if task.get("join") else "")
+    if kind == "raid_leave":
+        return tr("Raid verlassen")
     if kind == "raid_create":
         return tr("Raid starten: {target}", target=task.get("target", "?"))
     if kind == "raid_join":
@@ -86,6 +99,8 @@ class Navigator:
         self._menu: Optional[vision.MenuFrame] = None
         self._rows: Optional[vision.RowFinder] = None
         self._templates: list = []
+        self.raid_count: Optional[Callable[[], int]] = None     # Anzahl gezählter Raid-Enden (Überwachung)
+        self.monitoring: Optional[Callable[[], bool]] = None    # läuft die Überwachung?
 
     def log(self, text: str) -> None:
         _log.info("Makro: %s", text)
@@ -153,6 +168,11 @@ class Navigator:
         self._focus()                                     # nach Warten/Anti-AFK wieder Roblox vorne
         if kind == "autoroll":
             self._autoroll(self._window(task.get("target", "")))
+        elif kind == "raid_farm":
+            self._raid_farm(self._window(task.get("target", "")), bool(task.get("join")), int(task.get("runs", 1)),
+                            int(task.get("leave_wave", 0)))
+        elif kind == "raid_leave":
+            self._leave_raid()
         elif kind in ("raid_create", "raid_join"):
             self._raid(self._window(task.get("target", "")), join=kind == "raid_join")
         elif kind == "navigate":
@@ -237,6 +257,164 @@ class Navigator:
             cv2.imencode(".jpg", small, [cv2.IMWRITE_JPEG_QUALITY, 80])[1].tofile(str(path))
         except Exception:  # noqa: BLE001 – nur Hilfe für die Fehlersuche
             pass
+
+    # ------------------------------------------------------------------ Raid: Zahnrad, Auto Retry, Auto Leave
+    def _gear(self, frame: np.ndarray) -> Optional[list[float]]:
+        """Zahnrad oben rechts neben Welle/Timer – nur im Raid sichtbar."""
+        if not hasattr(self, "_gear_tpl"):
+            self._gear_tpl = cv2.imdecode(np.fromfile(str(RAID_GEAR), dtype=np.uint8), cv2.IMREAD_COLOR)
+        score, box = vision.find_multiscale(frame, self._gear_tpl, GEAR_REGION)
+        return box if score >= GEAR_HIT else None
+
+    def _labels(self, frame: np.ndarray) -> dict:
+        """Beschriftungen im Zahnrad-Menü: {"retry": Lage, "leave": Lage, "wave": Lage des Wellen-Felds}."""
+        words = vision.words_in(frame, [0.2, 0.1, 0.8, 0.9], self._ocr)
+        norm = [(re.sub(r"[^a-z0-9]", "", w.lower()), b) for w, b in words]
+        out = {}
+        for key, second in (("retry", "retry"), ("leave", "leave")):
+            for w, b in norm:
+                if w != "auto":
+                    continue
+                nxt = next((b2 for w2, b2 in norm if w2 == second and 0 <= b2[0] - b[2] < 0.03
+                            and abs((b2[1] + b2[3]) / 2 - (b[1] + b[3]) / 2) < 0.015), None)
+                if nxt is not None:
+                    out[key] = [b[0], min(b[1], nxt[1]), nxt[2], max(b[3], nxt[3])]
+                    break
+        if "leave" in out:                                # Feld „Wave 85“ direkt unter „Auto Leave“
+            lv = out["leave"]
+            field = next((b for w, b in norm if w == "wave" and 0 < b[1] - lv[3] < 0.08
+                          and abs(b[0] - lv[0]) < 0.12), None)
+            if field is not None:
+                out["wave"] = field
+        return out
+
+    def _open_raid_settings(self) -> dict:
+        frame = self._frame()
+        labels = self._labels(frame)
+        if "retry" in labels or "leave" in labels:
+            return labels
+        gear = self._gear(frame)
+        if gear is None:
+            raise Stop(tr("Kein Raid-Zahnrad gefunden – bist du im Raid?"))
+        self.log(tr("Öffne die Raid-Einstellungen (Zahnrad)."))
+        self._click_roi(gear)
+        end = time.monotonic() + 4
+        while time.monotonic() < end:
+            time.sleep(0.4)
+            labels = self._labels(self._frame())
+            if "retry" in labels and "leave" in labels:
+                return labels
+        raise Stop(tr("Raid-Einstellungen gingen nicht auf."))
+
+    def _set_toggle(self, key: str, on: bool) -> None:
+        """Schalter „Auto Retry“/„Auto Leave“ setzen und nachprüfen (Meldungen verdecken oft – mehrmals lesen)."""
+        name = "Auto Retry" if key == "retry" else "Auto Leave"
+        for _ in range(8):
+            frame = self._frame()
+            label = self._labels(frame).get(key)
+            if label is None:
+                time.sleep(0.4)
+                continue
+            state = vision.toggle_state(frame, label)
+            if state is None:                             # verdeckt: kurz warten, erneut lesen
+                time.sleep(0.5)
+                continue
+            if state == on:
+                self.log(tr("{name}: {state}", name=name, state=tr("an") if on else tr("aus")))
+                return
+            cy = (label[1] + label[3]) / 2
+            self._click((label[2] + 0.05, cy))           # Schalter rechts neben der Beschriftung
+            time.sleep(0.7)
+        raise Stop(tr("„{name}“ ließ sich nicht sicher umschalten.", name=name))
+
+    def _set_leave_wave(self, wave: int) -> None:
+        labels = self._labels(self._frame())
+        field = labels.get("wave")
+        if field is None:
+            raise Stop(tr("Feld für die Welle (Auto Leave) nicht gefunden."))
+        from .antiafk import _key
+        self._click_roi(field)
+        time.sleep(0.3)
+        for _ in range(6):                                # alte Zahl löschen
+            _key(0x08, True, 0x0E)
+            _key(0x08, False, 0x0E)
+            time.sleep(0.04)
+        scans = {"1": 0x02, "2": 0x03, "3": 0x04, "4": 0x05, "5": 0x06, "6": 0x07, "7": 0x08, "8": 0x09, "9": 0x0A,
+                 "0": 0x0B}
+        for ch in str(int(wave)):
+            _key(ord(ch), True, scans[ch])
+            _key(ord(ch), False, scans[ch])
+            time.sleep(0.05)
+        _key(0x0D, True, 0x1C)                            # Enter
+        _key(0x0D, False, 0x1C)
+        self.log(tr("Auto Leave ab Welle {wave}.", wave=wave))
+        time.sleep(0.4)
+
+    def _close_raid_settings(self) -> None:
+        frame = self._frame()
+        labels = self._labels(frame)
+        if not labels:
+            return
+        anchor = labels.get("retry") or labels.get("leave")
+        region = [anchor[0], max(0.0, anchor[1] - 0.2), min(1.0, anchor[2] + 0.25), anchor[1]]
+        score, box = vision.find_multiscale(frame, self._menu.x_tpl, region, (0.4, 0.5, 0.6, 0.7, 0.8, 1.0))
+        if score >= 0.6 and box is not None:
+            self._click_roi(box)                          # rosa X oben rechts am Menü
+        else:
+            gear = self._gear(frame)
+            if gear is not None:
+                self._click_roi(gear)                     # Zahnrad schließt es wieder
+        time.sleep(0.6)
+
+    def _leave_raid(self) -> None:
+        """Raid verlassen: erst Auto Retry aus (sonst wird man wieder hineingeworfen), dann LEAVE!."""
+        self._open_raid_settings()
+        self._set_toggle("retry", False)
+        self._close_raid_settings()
+        box = vision.find_word(self._frame(), LEAVE_REGION, self._ocr, "leave", "leave!")
+        if box is None:
+            raise Stop(tr("„LEAVE!“ nicht gefunden."))
+        self.log(tr("Klicke „{button}“.", button="LEAVE!"))
+        self._click_roi(box)
+        time.sleep(3.0)
+
+    def _raid_farm(self, window: dict, join: bool, runs: int, leave_wave: int) -> None:
+        """Raid starten/beitreten, Auto Retry an (+ Auto Leave ab Welle N), warten bis die Überwachung N Raid-Enden
+        gezählt hat, dann Auto Retry aus und verlassen."""
+        if self.monitoring is None or self.raid_count is None or not self.monitoring():
+            raise Stop(tr("Für „Raid farmen“ muss die Überwachung laufen (sie zählt die Raids)."))
+        self._raid(window, join)
+        end = time.monotonic() + 120                      # bis man im Raid ist (Teleport, Lobby)
+        while self._gear(self._frame()) is None:
+            if time.monotonic() > end:
+                raise Stop(tr("Nicht im Raid angekommen."))
+            time.sleep(1.0)
+        self._open_raid_settings()
+        self._set_toggle("retry", True)
+        self._set_toggle("leave", leave_wave > 0)
+        if leave_wave > 0:
+            self._set_leave_wave(leave_wave)
+        self._close_raid_settings()
+        start = self.raid_count()
+        self.log(tr("Farme {runs} Raids …", runs=runs))
+        _ACTIVE.clear()                                   # beim Warten darf das Anti-AFK laufen
+        try:
+            last = 0
+            while True:
+                done = self.raid_count() - start
+                if done >= runs:
+                    break
+                if done != last:
+                    last = done
+                    self.log(tr("{done}/{runs} Raids", done=done, runs=runs))
+                if self._halt.wait(2.0):
+                    raise Stop(tr("Gestoppt."))
+                if ctypes.windll.user32.GetAsyncKeyState(0x1B) & 0x8000:
+                    raise Stop(tr("Abgebrochen (Esc)."))
+        finally:
+            _ACTIVE.set()
+        self._focus()
+        self._leave_raid()
 
     def _idle_wait(self, seconds: float) -> None:
         """Warten ohne Eingaben: Maus/Fenster frei, Anti-AFK darf in der Zeit laufen; Esc/„Stopp“ brechen ab."""
