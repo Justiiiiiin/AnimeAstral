@@ -603,7 +603,7 @@ class MainWindow(QMainWindow):
             pass
         if self.afk_switch.isChecked() != on:
             self.afk_switch.setChecked(on)
-        self.show_toast(tr("Anti-AFK an – alle {minutes} Min. kurz zu Roblox, 4× Esc, zurück.",
+        self.show_toast(tr("Anti-AFK an – alle {minutes} Min. kurz zu Roblox, 4× Esc und zurück.",
                            minutes=self.engine.settings.anti_afk_minutes) if on else tr("Anti-AFK aus"))
         self._update_afk_info()
 
@@ -1108,9 +1108,9 @@ class MainWindow(QMainWindow):
         repo = updater.current_repo()
         if not repo:
             if manual:
-                QMessageBox.information(self, tr("Updates"), tr("In dieser Version ist keine Update-Quelle hinterlegt. Die "
-                                                         "automatische Prüfung gibt es in der installierten Version "
-                                                         "(Download von GitHub)."))
+                QMessageBox.information(self, tr("Updates"), tr("Diese Version kennt keine Update-Quelle. "
+                                                                "Automatische Updates gibt es nur in der "
+                                                                "installierten Version (Download über GitHub)."))
             return
         if not manual and (not s.update_check or not updater.due(s.update_last_check)):
             return

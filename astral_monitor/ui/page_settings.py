@@ -176,9 +176,9 @@ class SettingsPage(QWidget):
         # ------------------------------------------------------------------ Überwachung
         root.addWidget(section(tr("Überwachung")))
         perf = Card(tr("Leistung"),
-                    tr("Wie oft der Wellenzähler gelesen wird – gleichmäßig, auch kurz vor Raid-Ende. "
-                       "„Ausgewogen“ (alle 0,5 s) erkennt das Raid-Ende sicher und passt für die meisten. Die genauen "
-                       "Zeiten zeigt die Auswahl, wenn du darüberfährst."))
+                    tr("Wie oft der Wellenzähler gelesen wird. „Ausgewogen“ (alle 0,5 s) erkennt das Raid-Ende "
+                       "sicher und passt für fast alle. Die genauen Zeiten siehst du, wenn du mit der Maus über die "
+                       "Auswahl fährst."))
         pg = form_grid()
         self.perf = ComboBox()
         for key, preset in PRESETS.items():
@@ -192,9 +192,9 @@ class SettingsPage(QWidget):
         perf.body.addStretch(1)
 
         guard = Card(tr("Wächter"),
-                     tr("Meldet Abstürze (Roblox-Prozess), Disconnects und Kicks (Roblox-Protokoll), einen "
-                        "stehenden Zähler, zu lange kein beendeter Raid und zu hohen Speicherverbrauch von Roblox. "
-                        "Was davon an Discord geht, stellst du unter „Meldungen“ ein."))
+                     tr("Meldet sich, wenn Roblox abstürzt, die Verbindung abbricht oder du gekickt wirst, der "
+                        "Zähler hängen bleibt, lange kein Raid endet oder Roblox zu viel Speicher belegt. Was davon "
+                        "an Discord geht, stellst du unter „Meldungen“ ein."))
         self.guard_enabled = QCheckBox(tr("Wächter aktiv"))
         guard.body.addWidget(self.guard_enabled)
         gg = form_grid()
@@ -498,13 +498,13 @@ class SettingsPage(QWidget):
         mrow.addStretch(1)
         macro.body.addLayout(mrow)
         explore = Card(tr("Erkunden"),
-                       tr("Das Makro übernimmt Roblox für die eingestellte Zeit und lernt das Spiel kennen: zuerst die "
-                          "Welten im Teleporter (Pets, Crafting, Raids, Gachas – neue Welten und Fenster mit "
-                          "Problemen), danach die Knöpfe am Rand (Shop, Gilde, Achievements …) – Reiter durchklicken, "
-                          "scrollbare Bereiche finden, reine Ansichts-Knöpfe testen.\n\nNie gedrückt: Aktions-Knöpfe (Claim, Buy, Roll, Max …) und gefährliche "
-                          "(Leave, Kick, Delete …) – um die bleibt eine Sperrzone, dort wird auch nicht gescrollt oder "
-                          "gehovert; in der Gilde ist die ganze Ecke unten links gesperrt. Anti-AFK pausiert solange.\n\n"
-                          "Not-Aus: Maus bewegen oder Esc."))
+                       tr("Das Makro übernimmt Roblox für die eingestellte Zeit und lernt das Spiel kennen: erst "
+                          "die Welten im Teleporter (Pets, Crafting, Raids, Gachas), dann die Knöpfe am "
+                          "Bildschirmrand (Shop, Gilde, Achievements …). Es klickt Reiter durch, sucht scrollbare "
+                          "Listen und testet reine Ansichts-Knöpfe. Bereits geprüfte Fenster lässt es aus.\n\nNie "
+                          "gedrückt werden Aktions-Knöpfe (Claim, Buy, Roll, Max …) und gefährliche (Leave, Kick, "
+                          "Delete …) – um sie herum wird weder geklickt noch gescrollt; in der Gilde ist die ganze "
+                          "Ecke unten links tabu. Anti-AFK pausiert so lange.\n\nNot-Aus: Maus bewegen oder Esc."))
         eg = form_grid()
         self.explore_minutes = SpinBox()
         self.explore_minutes.setRange(1, 60)
@@ -512,7 +512,7 @@ class SettingsPage(QWidget):
         eg.addWidget(label(tr("Höchstens")), 0, 0)
         eg.addWidget(self.explore_minutes, 0, 1)
         explore.body.addLayout(eg)
-        self.explore_revisit = QCheckBox(tr("Fenster mit Problemen erneut öffnen (unbekannt, noch nicht gescrollt)"))
+        self.explore_revisit = QCheckBox(tr("Noch nicht geprüfte Fenster erneut öffnen"))
         explore.body.addWidget(self.explore_revisit)
         erow = QHBoxLayout()
         start_explore = QPushButton(tr("Jetzt erkunden …"))
@@ -538,11 +538,11 @@ class SettingsPage(QWidget):
 
         root.addWidget(section(tr("Discord-Bot")))
         bot = Card(tr("Discord-Bot"),
-                   tr("Steuere das Programm aus Discord – mit deinem EIGENEN Bot (ein gemeinsamer Bot ginge nicht: "
-                      "sein Schlüssel stünde sonst öffentlich im Programm). Der Bot läuft nur, solange das Programm "
-                      "offen ist, und gehorcht nur den erlaubten Discord-IDs.\n\nEinrichten (2 Minuten): "
+                   tr("Steuere das Programm aus Discord – mit deinem eigenen Bot. Ein gemeinsamer Bot geht nicht, "
+                      "weil sein Schlüssel sonst öffentlich im Programm stünde. Der Bot läuft nur, solange das "
+                      "Programm offen ist, und hört nur auf die erlaubten Discord-IDs.\n\nEinrichten (2 Minuten): "
                       "discord.com/developers/applications → New Application → links „Bot“ → „Reset Token“ → Token "
-                      "kopieren und hier eintragen, speichern. Dann „Einladungslink öffnen“ und den Bot in deinen "
+                      "kopieren, hier eintragen und speichern. Dann „Einladungslink öffnen“ und den Bot in deinen "
                       "Server holen. Besondere Rechte (Intents) braucht er nicht.\n\nBefehle: /status, /start, "
                       "/stop, /pause, /screenshot, /raid, /makro, /antiafk, /autorejoin, /join, /pc, /hilfe."))
         self.bot_enabled = QCheckBox(tr("Discord-Bot aktiv"))

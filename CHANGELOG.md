@@ -4,13 +4,15 @@ Neueste Version oben. Kurze Stichpunkte, keine Erklärungen (die stehen im Progr
 Der Abschnitt einer Version wird beim Veröffentlichen automatisch als Versionshinweis übernommen
 (`tools/release_notes.py`) und ist im Programm unter Einstellungen → Updates → „Alle Versionen“ lesbar.
 
-## Unveröffentlicht
+## 0.9.9-beta.11
 
 ### 🔧 Verbessert
 - Mana Contract (W19) auch vor hellem Hintergrund erkannt
 - Farm-Routine: Schritt „Progressions“ entfernt (Knopf unter Abholen)
 - Automatisch abholen: Schalter wirken auch nach dem Speichern
 - Automatisch abholen: Klick auf den Text schaltet um
+- Texte im Programm natürlicher formuliert
+- Startseite arbeitet nicht mehr, wenn das Fenster minimiert ist
 
 ## 0.9.9-beta.10
 

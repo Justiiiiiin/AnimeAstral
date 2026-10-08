@@ -26,6 +26,7 @@ NEW_FEATURES: dict[str, tuple[str, ...]] = {
     "0.9.9-beta.8": ("nav:3", "tab:Makro"),          # Funde ohne Dopplungen
     "0.9.9-beta.9": ("nav:0",),                      # Progressions: Auto All
     "0.9.9-beta.10": ("nav:3", "tab:Makro"),         # Erkunden: alle Welten, seitliche Listen
+    "0.9.9-beta.11": ("nav:0",),                     # Automatisch abholen repariert, Routine ohne Progressions
 }
 
 

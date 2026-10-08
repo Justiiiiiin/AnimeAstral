@@ -406,7 +406,7 @@ class Navigator:
         """Erstes Progression-Fenster öffnen, „Auto All“ drücken, schließen – gilt für alle Progressions."""
         window = self.map.first_progression()
         if window is None:
-            raise Stop(tr("Kein Progression-Fenster in der Karte (einmal Erkunden laufen lassen)."))
+            raise Stop(tr("Noch keine Progression bekannt – lass einmal „Erkunden“ laufen."))
         self._open(window)
         try:
             self._press(window, ("auto", "all"), ("autoall",))
@@ -635,7 +635,7 @@ class Navigator:
             cy = (label[1] + label[3]) / 2
             self._click((label[2] + 0.05, cy))           # Schalter rechts neben der Beschriftung
             time.sleep(0.7)
-        raise Stop(tr("„{name}“ ließ sich nicht sicher umschalten.", name=name))
+        raise Stop(tr("„{name}“ ließ sich nicht zuverlässig umschalten.", name=name))
 
     def _set_leave_wave(self, wave: int) -> None:
         labels = self._labels(self._frame())
@@ -840,7 +840,7 @@ class Navigator:
         runs, minutes = int(task.get("runs", 1)), float(task.get("minutes", 30))
         start, t0 = self.raid_count(), time.monotonic()
         self.log({"runs": tr("Farme {runs} Raids …", runs=runs),
-                  "minutes": tr("Farme {minutes} Min. …", minutes=int(minutes))}.get(until, tr("Farme ohne Ende …")))
+                  "minutes": tr("Farme {minutes} Min. …", minutes=int(minutes))}.get(until, tr("Farme, bis du stoppst …")))
         _ACTIVE.clear()                                   # beim Warten darf das Anti-AFK laufen
         try:
             last = 0
@@ -914,7 +914,7 @@ class Navigator:
         """Gilde öffnen (Knopf unten links) → „Missions“ → „Personal“ und „Guild Weekly“ abholen → schließen."""
         button = next((e for e in self.map.hud() if e["name"] == "Guild"), None)
         if button is None:
-            raise Stop(tr("Der Gilden-Knopf steht nicht in der Karte."))
+            raise Stop(tr("Der Gilden-Knopf ist noch unbekannt."))
         self._close_any()
         self.log(tr("Klicke „{button}“.", button="Guild"))
         self._click_roi(self.hud_roi(button))
@@ -955,11 +955,11 @@ class Navigator:
         Pets-Fenster), Laufzeiten merken – vor Ablauf wird die Aufgabe übersprungen."""
         wait = self.gigs_next - time.time()
         if wait > 0:
-            self.log(tr("Fixer Gigs: nichts fertig – nächster Besuch in {time}.", time=fmt_wait(wait)))
+            self.log(tr("Fixer Gigs: noch nichts fertig – ich schaue in {time} wieder vorbei.", time=fmt_wait(wait)))
             return
         window = self._gigs_window()
         if window is None:
-            raise Stop(tr("Fixer Gigs steht nicht in der Karte (einmal Erkunden laufen lassen)."))
+            raise Stop(tr("Fixer Gigs ist noch unbekannt – lass einmal „Erkunden“ laufen."))
         self._open(window)
         time.sleep(0.8)
         self._claim_all("Fixer Gigs")
@@ -993,7 +993,7 @@ class Navigator:
         if parts:
             self.log(tr("Fixer Gigs: {cards}", cards=" · ".join(parts)))
         else:
-            self.log(tr("Fixer Gigs: keine Karten erkannt – Bild gespeichert (debug)."))
+            self.log(tr("Fixer Gigs: Karten nicht erkannt – das Bild liegt im Debug-Ordner."))
             self._snap("gigs")
         wait = max(60, gig_next_due(cards, timers) + 20)
         self.gigs_next = time.time() + wait
@@ -1093,7 +1093,7 @@ class Navigator:
                 if self._is_open(gigs, frame) or self._screen(frame)[0] == "none":
                     self.log(tr("Pet losgeschickt."))
                     return
-        self.log(tr("Kein Pet ließ sich losschicken – Bild gespeichert (debug)."))
+        self.log(tr("Kein Pet ließ sich losschicken – das Bild liegt im Debug-Ordner."))
         self._snap("gigs_pets_offen")
         self._close_any_quiet()
 
@@ -1152,7 +1152,7 @@ class Navigator:
 
     def _prepare(self) -> None:
         if not self.map.entries:
-            raise Stop(tr("Keine Oberflächen-Karte vorhanden."))
+            raise Stop(tr("Die Oberflächen-Karte fehlt."))
         self._hwnd = winapi.find_window(self.window_title)
         if self._hwnd is None:
             raise Stop(tr("Roblox-Fenster nicht gefunden"))
@@ -1200,7 +1200,7 @@ class Navigator:
     def _window(self, name: str) -> dict:
         w = self.map.container(name)
         if w is None:
-            raise Stop(tr("„{name}“ steht nicht in der Karte.", name=name))
+            raise Stop(tr("„{name}“ ist noch unbekannt.", name=name))
         return w
 
     def _open(self, window: dict) -> None:
@@ -1211,7 +1211,7 @@ class Navigator:
             return
         button = self.map.opener_of(window)
         if button is None:
-            raise Stop(tr("Für „{name}“ ist kein Knopf hinterlegt.", name=window["name"]))
+            raise Stop(tr("Für „{name}“ ist kein Knopf bekannt.", name=window["name"]))
         holder = self.map.parent(button)
         if holder is not None and holder.get("name") == window.get("name"):
             holder = None                                 # Knopf versehentlich „im“ eigenen Fenster eingetragen
@@ -1239,7 +1239,7 @@ class Navigator:
             self._close_any()
         opener = self.map.opener_of(row_list)
         if opener is None:
-            raise Stop(tr("Für „{name}“ ist kein Knopf hinterlegt.", name=row_list["name"]))
+            raise Stop(tr("Für „{name}“ ist kein Knopf bekannt.", name=row_list["name"]))
         self.log(tr("Öffne „{name}“.", name=row_list["name"]))
         self._click_roi(opener["roi"])
         end = time.monotonic() + OPEN_TIMEOUT
@@ -1382,14 +1382,14 @@ class Navigator:
             if kind == "menu" and st[1] and not self._menu.is_base(st[1]):
                 seen = st[1]
         if seen:                                          # ein Menü ist offen, Titel passt aber nicht genau
-            self.log(tr("Offen ist „{title}“ – passt der Name „{name}“?", title=seen, name=window["name"]))
+            self.log(tr("Offen ist „{title}“ – gesucht war „{name}“.", title=seen, name=window["name"]))
             return
         raise Stop(tr("„{name}“ ging nicht auf.", name=window["name"]))
 
     def _unlock_camera(self) -> None:
         """Ich-Perspektive verlassen: Hält Roblox den Zeiger in der Mitte fest (Kamera ganz herangezoomt), lassen
         sich Fenster nicht mehr anklicken. Mausrad zurück = Kamera herauszoomen."""
-        self.log(tr("Kamera ist ganz herangezoomt (Zeiger festgehalten) – zoome heraus."))
+        self.log(tr("Die Kamera hängt in der Ich-Perspektive fest – ich zoome heraus."))
         for _ in range(4):
             self._wheel((0.5, 0.5), -5)
             time.sleep(0.15)
@@ -1413,7 +1413,7 @@ class Navigator:
                 self.log(tr("Schließe „{name}“.", name=st[1] or "?"))
                 self._click(st[2])
             time.sleep(0.6)
-        raise Stop(tr("Menü ließ sich nicht schließen."))
+        raise Stop(tr("Das Menü geht nicht zu."))
 
     def _pets_auto(self, world: str, close_after: bool = True) -> None:
         window = self._window(f"{world} Pets-Roll")
@@ -1480,7 +1480,7 @@ class Navigator:
         die Maus springt direkt zum Ziel, fährt also nie über andere Knöpfe."""
         from .knowledge import inside
         if inside(pos, self.forbidden):
-            raise Stop(tr("Gesperrter Bereich (z. B. „Leave“) – nicht angesteuert."))
+            raise Stop(tr("Gesperrter Bereich (z. B. „Leave“) – wird nicht angeklickt."))
 
     def _click(self, pos: tuple[float, float]) -> None:
         self._check()

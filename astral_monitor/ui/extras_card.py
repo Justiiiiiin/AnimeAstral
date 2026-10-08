@@ -16,6 +16,11 @@ from ..i18n import tr
 from .widgets import Card, ToggleSwitch, label
 
 
+def _shown(widget) -> bool:
+    """Nur zeichnen, wenn man es sieht (Fenster offen, nicht minimiert) – spart Last im Hintergrund."""
+    return widget.isVisible() and not widget.window().isMinimized()
+
+
 class _ClickLabel(QLabel):
     """Beschriftung eines Schalters: ein Klick darauf schaltet um (wie der Text neben einem Häkchen)."""
 
@@ -33,13 +38,13 @@ class _ClickLabel(QLabel):
 class ExtrasCard(Card):
     def __init__(self, main) -> None:
         super().__init__(tr("Automatisch abholen"),
-                         tr("Fixer Gigs (W21): fertige Gigs abholen („Claim“) und neue mit je einem Pet losschicken "
-                            "(eins der letzten drei). Jede Karte hat ihre eigene Zeit (20 Min., 1 Std. oder 3 Std.) – "
-                            "das Makro liest sie und kommt erst wieder, wenn einer fertig ist. „Finish Now“ wird nie "
-                            "gedrückt.\n\nGilden-Missionen: einmal am Tag „Personal“ und „Guild Weekly“ abholen.\n\n"
-                            "Progressions: „Auto All“ einmal drücken (gilt für alle Welten).\n\nAlles nur mit "
-                            "„Makro erlauben“ – zwischen den Schritten der Farm-Routine, während ein Raid farmt "
-                            "oder für sich allein."))
+                         tr("Fixer Gigs (W21): Das Makro holt fertige Gigs ab („Claim“) und schickt neue mit je "
+                            "einem Pet los – eins der letzten drei. Jeder Gig dauert 20 Min., 1 Std. oder 3 Std.; "
+                            "das Makro liest die Restzeit und kommt erst wieder, wenn einer fertig ist. „Finish "
+                            "Now“ drückt es nie.\n\nGilden-Missionen: einmal am Tag „Personal“ und „Guild Weekly“ "
+                            "abholen.\n\nProgressions: drückt einmal „Auto All“ – das gilt für alle "
+                            "Welten.\n\nFunktioniert nur mit „Makro erlauben“ – zwischen den Schritten der "
+                            "Farm-Routine, während ein Raid farmt oder ganz für sich."))
         self.main = main
         self.macro = main.macro
         s = main.engine.settings
@@ -58,7 +63,8 @@ class ExtrasCard(Card):
         grid.addWidget(_ClickLabel(tr("Gilden-Missionen"), self.guild), 1, 1)
         grid.addWidget(self.guild_state, 1, 2)
         self.prog = QPushButton(tr("Progressions: Auto All"))
-        self.prog.setToolTip(tr("Einmal ausführen: erste Progression öffnen, „Auto All“ drücken, schließen"))
+        self.prog.setToolTip(tr("Einmal ausführen: öffnet die erste Progression, drückt „Auto All“ und schließt "
+                                "wieder"))
         self.prog.clicked.connect(self._progression)
         self.prog_state = label("", "small")
         grid.addWidget(self.prog, 2, 0, 1, 2)
@@ -73,7 +79,7 @@ class ExtrasCard(Card):
         self.timer.start()
         self.fast = QTimer(self)                          # Anzeige (Knopf/Zeiten) öfter als der Takt
         self.fast.setInterval(1000)
-        self.fast.timeout.connect(self._update_state)
+        self.fast.timeout.connect(lambda: self._update_state() if _shown(self) else None)
         self.fast.start()
         self._update_state()
 
@@ -90,7 +96,7 @@ class ExtrasCard(Card):
 
     def _progression(self) -> None:
         if self.macro.run_progression():
-            self.prog_state.setText(tr("gestartet {time}", time=time.strftime("%H:%M")))
+            self.prog_state.setText(tr("zuletzt {time}", time=time.strftime("%H:%M")))
 
     def _update_state(self) -> None:
         on = self.macro.enabled

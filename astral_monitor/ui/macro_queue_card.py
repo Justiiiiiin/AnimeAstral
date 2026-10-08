@@ -53,13 +53,14 @@ def _fixed(combo: QComboBox, chars: int) -> QComboBox:
 class MacroQueueCard(Card):
     def __init__(self, main) -> None:
         super().__init__(tr("Farm-Routine"),
-                         tr("Deine Schritte im Spiel, von oben nach unten – mit „Wiederholen“ immer wieder von vorn, "
-                            "bis „Stopp“, Esc oder Mausbewegung.\n\nRaid / Defense farmen: startet (oder tritt bei), "
-                            "stellt Auto Retry und Auto Leave ein und zählt die Raids über die Überwachung. Verlassen "
-                            "wird nur, wenn danach ein anderer Raid kommt.\nAuto Roll: öffnet Gacha/Pets-Roll, "
-                            "drückt Auto Roll und schließt – das Spiel rollt weiter.\nPause: Roblox ist frei, "
-                            "Anti-AFK läuft.\n\nFixer Gigs und Gilden-Missionen holt das Makro zwischendurch "
-                            "selbst ab (Karte „Automatisch abholen“). Doppelklick entfernt einen Schritt."))
+                         tr("Das Makro arbeitet deine Schritte von oben nach unten ab – mit „Wiederholen“ immer "
+                            "wieder, bis du „Stopp“ drückst, Esc oder die Maus bewegst.\n\nRaid / Defense farmen: "
+                            "startet den Raid (oder tritt bei), stellt Auto Retry und Auto Leave ein und zählt die "
+                            "Raids über die Überwachung. Verlassen wird er nur, wenn danach ein anderer Raid "
+                            "kommt.\nAuto Roll: öffnet Gacha oder Pets-Roll, drückt Auto Roll und schließt wieder – "
+                            "das Spiel rollt weiter.\nPause: Roblox ist frei, Anti-AFK läuft.\n\nFixer Gigs und "
+                            "Gilden-Missionen holt das Makro zwischendurch selbst ab (Karte „Automatisch abholen“). "
+                            "Ein Doppelklick entfernt einen Schritt."))
         self.main = main
         self.macro = main.macro
         s = main.engine.settings
@@ -105,8 +106,8 @@ class MacroQueueCard(Card):
         self.leave_wave = QSpinBox()
         self.leave_wave.setRange(0, 2000)
         self.leave_wave.setSpecialValueText(tr("aus"))
-        self.leave_wave.setToolTip(tr("Auto Leave ab dieser Welle (aus = bis zum Ende) – spart Zeit, wenn man nicht "
-                                      "weiter kommt"))
+        self.leave_wave.setToolTip(tr("Ab dieser Welle verlässt Auto Leave den Raid (aus = bis zum Ende) – spart "
+                                      "Zeit, wenn du ohnehin nicht weiterkommst"))
         self.join = QCheckBox(tr("beitreten statt starten"))
         self.join.setToolTip(tr("„Join“ statt „Create/Start“ (ein eigener Raid kostet einen Schlüssel)"))
         rp.addWidget(_caption(tr("Ende")), 0, 0)
@@ -330,7 +331,9 @@ class MacroQueueCard(Card):
         self._kind_changed()
 
     def _tick(self) -> None:
-        """Laufenden Schritt hervorheben, Zustand darunter."""
+        """Laufenden Schritt hervorheben, Zustand darunter (nur sichtbar – im Hintergrund keine Arbeit)."""
+        if not self.isVisible() or self.window().isMinimized():
+            return
         nav = self.macro.navigator
         busy = self.macro.busy
         pos = nav.queue_pos if busy and nav is not None and nav.queue_pos is not None else -1
@@ -345,13 +348,17 @@ class MacroQueueCard(Card):
         elif pos >= 0:
             text = tr("Läuft: Schritt {n} von {count}", n=pos + 1, count=self.list.count())
         elif busy:
-            text = tr("Das Makro arbeitet gerade (Abholen oder Erkunden).")
+            text = tr("Das Makro ist gerade beschäftigt (Abholen oder Erkunden).")
         else:
             text = tr("Bereit – {count} Schritte.", count=self.list.count()) if self.list.count() else \
-                tr("Noch keine Schritte – oben auswählen und hinzufügen.")
+                tr("Noch keine Schritte – wähle oben aus und füge sie hinzu.")
         if text != self.state.text():
             self.state.setText(text)
         self.run.setEnabled(self.macro.enabled and not busy)
+
+    def showEvent(self, event) -> None:
+        super().showEvent(event)
+        QTimer.singleShot(0, self._tick)                  # Zustand sofort zeigen, nicht erst nach dem Takt
 
     def _start(self) -> None:
         self.macro.start_queue(self._tasks(), self.loop.isChecked())

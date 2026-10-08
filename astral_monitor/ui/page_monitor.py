@@ -45,8 +45,8 @@ class MonitorPage(QWidget):
         self.btn_status = QPushButton()                     # nur Symbol (Kopfzeile ist schmal)
         self.btn_status.setIcon(discord_icon())
         theme.track(self.btn_status, lambda o, f: o.setIconSize(QSize(round(20 * f), round(20 * f))))
-        self.btn_status.setToolTip(tr("Status neu senden: löscht die Statusnachricht in Discord und sendet sie ganz "
-                                      "unten im Chat neu."))
+        self.btn_status.setToolTip(tr("Status neu senden: Die Statusnachricht in Discord wird gelöscht und ganz "
+                                      "unten neu gesendet."))
         self.btn_status.clicked.connect(self.main.resend_status)
         self.btn_pause = QPushButton()
         self.btn_pause.setToolTip(tr("Pause"))
@@ -111,8 +111,8 @@ class MonitorPage(QWidget):
         self.raid_pick = ComboBox()
         self.raid_pick.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
         self.raid_pick.setMinimumContentsLength(8)
-        self.raid_pick.setToolTip(tr("Zu welchem Raid die Versuche zählen. Startet das Makro einen Raid, stellt es "
-                                     "ihn selbst ein; spielst du selbst, wähle ihn hier."))
+        self.raid_pick.setToolTip(tr("Zu diesem Raid zählen die Versuche. Startet das Makro einen Raid, stellt es "
+                                     "ihn selbst ein – spielst du selbst, wählst du ihn hier."))
         self.raid_pick.activated.connect(lambda _i: self.main.select_raid(self.raid_pick.currentData() or ""))
         raid_row.addWidget(self.raid_pick, 1)
         self.i_raid = label("", "small", wrap=True)       # Wand des gewählten Raids
@@ -196,7 +196,6 @@ class MonitorPage(QWidget):
     def refresh(self) -> None:
         st = self.engine.state
         s = self.engine.settings
-        running = st.running
 
         now = time.monotonic()
         if now - self._last_snap > 1.5:
@@ -224,7 +223,7 @@ class MonitorPage(QWidget):
             self.wave.setStyleSheet(f"color: {color};" if color else "")
             self.wave.setToolTip(tr("Bestwelle: {wave}", wave=self._best) if self._best else "")
         self.i_read.setText(tr("Lesezeit: {ms} ms", ms=f"{st.read_ms:.0f}"))
-        self.i_mode.setText(tr("Takt: alle {interval} s", interval=dec(f"{s.preset()['interval']:g}")))
+        self.i_mode.setText(tr("Prüft alle {interval} s", interval=dec(f"{s.preset()['interval']:g}")))
         self.status_line.setText(tr(st.info))
         raid_text = ""
         if self.raid_pick.currentData() != (st.profile or None) and not self.raid_pick.view().isVisible():
@@ -240,13 +239,13 @@ class MonitorPage(QWidget):
         self.i_raid.setText(raid_text)
         self.i_raid.setVisible(bool(raid_text))
         if st.roblox_alive is None:
-            self.i_proc.setText(tr("Roblox-Prozess: nicht gefunden"))
+            self.i_proc.setText(tr("Roblox: nicht gestartet"))
         elif st.roblox_alive is False:
-            self.i_proc.setText(tr("Roblox-Prozess: beendet"))
+            self.i_proc.setText(tr("Roblox: beendet"))
         else:
             ram = dec(f"{st.roblox_ram_mb / 1024:.1f} GB RAM") if st.roblox_ram_mb else "–"
             cpu = f"{st.roblox_cpu:.0f} % CPU" if st.roblox_cpu is not None else "–"
-            self.i_proc.setText(tr("Roblox-Prozess: läuft · {ram} · {cpu}", ram=ram, cpu=cpu))
+            self.i_proc.setText(tr("Roblox: läuft · {ram} · {cpu}", ram=ram, cpu=cpu))
         if self._self_proc is not None and now >= self._next_self:
             self._next_self = now + 3.0                 # eigene Auslastung (gleich gemessen wie bei Roblox)
             try:

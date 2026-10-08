@@ -128,8 +128,8 @@ class ReviewDialog(QDialog):
         mid = QWidget()
         mv = QVBoxLayout(mid)
         mv.setContentsMargins(0, 0, 0, 0)
-        mv.addWidget(label(tr("Rahmen mit der Maus ziehen, dann rechts Art und Text eintragen. Klick in einen Rahmen "
-                              "wählt ihn aus."), "small", wrap=True))
+        mv.addWidget(label(tr("Ziehe mit der Maus einen Rahmen und trage rechts Art und Text ein. Ein Klick in "
+                              "einen Rahmen wählt ihn aus."), "small", wrap=True))
         self.canvas = AnnotCanvas()
         self.canvas.created.connect(self._new_annot)
         self.canvas.selected.connect(lambda i: self.annot_list.setCurrentRow(i))
@@ -176,10 +176,10 @@ class ReviewDialog(QDialog):
         buttons = QHBoxLayout()
         ok = QPushButton(tr("Stimmt ✓"))
         ok.setObjectName("primary")
-        ok.setToolTip(tr("Speichern; das Fenster wird beim Erkunden nicht mehr geöffnet."))
+        ok.setToolTip(tr("Speichern – das Erkunden öffnet dieses Fenster nicht mehr."))
         ok.clicked.connect(lambda: self._decide(review.OK))
         again = QPushButton(tr("Nochmal prüfen"))
-        again.setToolTip(tr("Beim nächsten Erkunden wird dieses Fenster erneut gründlich gescannt."))
+        again.setToolTip(tr("Das nächste Erkunden sieht sich dieses Fenster noch einmal genau an."))
         again.clicked.connect(lambda: self._decide(review.RECHECK))
         close = QPushButton(tr("Schließen"))
         close.clicked.connect(self._close)
