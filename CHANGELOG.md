@@ -4,6 +4,11 @@ Neueste Version oben. Kurze Stichpunkte, keine Erklärungen (die stehen im Progr
 Der Abschnitt einer Version wird beim Veröffentlichen automatisch als Versionshinweis übernommen
 (`tools/release_notes.py`) und ist im Programm unter Einstellungen → Updates → „Alle Versionen“ lesbar.
 
+## 0.9.7-beta.6
+
+### 🔧 Verbessert
+- Erkunden schaltet Anti-AFK aus und danach wieder an
+
 ## 0.9.7-beta.5
 
 ### ✨ Neu

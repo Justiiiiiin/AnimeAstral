@@ -1061,4 +1061,6 @@ EN: dict[str, str] = {
     'Alle angezeigten Zeilen in die Zwischenablage': 'Copy all shown lines to the clipboard',
     'Leeren': 'Clear',
     'Debug ist aus – oben rechts einschalten, wenn du etwas testen oder einen Fehler suchen willst.': 'Debug is off – switch it on at the top right when you want to test something or track down a bug.',
+    'Anti-AFK pausiert, solange das Erkunden läuft.': 'Anti-AFK paused while exploring.',
+    'Anti-AFK wieder an.': 'Anti-AFK back on.',
 }

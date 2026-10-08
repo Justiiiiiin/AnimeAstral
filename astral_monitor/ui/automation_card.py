@@ -165,6 +165,11 @@ class AutomationCard(Card):
             self._add_log(tr("Läuft schon – erst „Stopp“."))
             return
         from ..app_paths import data_dir
+        # Anti-AFK während des Erkundens aus (das Makro klickt ohnehin), danach wieder an (Wunsch des Eigentümers)
+        self._afk_restore = self.main.engine.settings.anti_afk_enabled
+        if self._afk_restore:
+            self.main.set_anti_afk(False)
+            self._add_log(tr("Anti-AFK pausiert, solange das Erkunden läuft."))
         nav.explore(minutes, data_dir())
         self._watch_explore()
 
@@ -174,6 +179,10 @@ class AutomationCard(Card):
         if self.navigator is not None and self.navigator.busy:
             QTimer.singleShot(1000, self._watch_explore)
             return
+        if getattr(self, "_afk_restore", False):
+            self._afk_restore = False
+            self.main.set_anti_afk(True)                   # Zähler beginnt neu mit einem vollen Intervall
+            self._add_log(tr("Anti-AFK wieder an."))
         self.reload_map()
 
     def reload_map(self) -> None:
