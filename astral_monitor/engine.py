@@ -498,7 +498,10 @@ class Engine:
             crops = {name: crop for (name, _roi), crop in zip(request, result.crops)}
             self._process_wave(crops["wave"], now)
             if "quest" in crops:
-                self._process_quests(crops["quest"], now)
+                if _macro_busy():                            # Makro öffnet Menüs (ganze Bildschirme verdecken die
+                    self._next_quest = now + BURST_INTERVAL  # Quest-Liste): später lesen statt Unsinn zu werten
+                else:
+                    self._process_quests(crops["quest"], now)
 
         guard.poll_process(now)
         guard.check_stall(now, self.tracker.run is not None)

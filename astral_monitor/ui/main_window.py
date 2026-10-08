@@ -11,7 +11,7 @@ from typing import Callable, Optional
 
 from PySide6.QtCore import (QEasingCurve, QEvent, QLibraryInfo, QLockFile, QProcess, QPropertyAnimation, QSize,
                             Qt, QTimer, QTranslator)
-from PySide6.QtGui import QIcon
+from PySide6.QtGui import QIcon, QKeySequence, QShortcut
 from PySide6.QtWidgets import (QApplication, QButtonGroup, QFrame, QGraphicsOpacityEffect, QHBoxLayout, QLabel,
                                QMainWindow, QMenu, QMessageBox, QPushButton, QSizePolicy, QStackedWidget,
                                QSystemTrayIcon, QToolButton, QVBoxLayout, QWidget)
@@ -290,6 +290,7 @@ class MainWindow(QMainWindow):
         self.timer.setInterval(400)
         self.timer.timeout.connect(self._tick)
         self.timer.start()
+        QShortcut(QKeySequence.StandardKey.Find, self, activated=self.open_search)   # Strg+F: Einstellung suchen
 
         # Speicher aufräumen: nach dem Start, danach alle 10 Minuten und beim Minimieren (siehe winapi.trim_memory)
         self.trim_timer = QTimer(self)
@@ -570,6 +571,13 @@ class MainWindow(QMainWindow):
             self.pages.built(PAGE_SETTINGS).raids.refresh_list()
 
     # --------------------------------------------------------------- Anti-AFK
+    def open_search(self) -> None:
+        """Strg+F von jeder Seite: Einstellungen öffnen und ins Suchfeld springen."""
+        self.nav.button(PAGE_SETTINGS).click()
+        search = self.pages[PAGE_SETTINGS].search
+        search.setFocus()
+        search.selectAll()
+
     def set_anti_afk(self, on: bool) -> None:
         """Schalter oben / im Tray-Menü: sofort wirksam und gespeichert."""
         if self.engine.settings.anti_afk_enabled == on:

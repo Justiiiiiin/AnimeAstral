@@ -19,6 +19,7 @@ X_WIDE_HIT = 0.78     # kleinere Fenster (X weiter links/unten, etwas kleiner): 
 X_WIDE = (0.45, 0.08, 0.92, 0.55)    # Suchbereich dafür im Roblox-Fenster
 MARKER_HIT = 0.80     # Erkennungsmerkmal eines Sonder-Menüs
 BAND = (0.03, 0.55, 0.22)   # Titel-Banner im Menürahmen: x von, x bis, y bis
+X_BAND = 0.04         # so weit links/rechts vom gewohnten Zeilenanfang wird nach dem Herz gesucht
 
 
 def _scaled(img: np.ndarray, f: float) -> np.ndarray:
@@ -41,6 +42,10 @@ class RowFinder:
         self.marker_off = (0.01, 0.05)
         self.marker = image[int(0.05 * h):int(0.45 * h), int(0.01 * w):int(0.07 * w)]
         self.bottom = image[int(0.86 * h):, :int(0.10 * w)]
+        # Zeilen beginnen immer an derselben Stelle: nur ein schmaler Streifen um den linken Rand wird abgesucht
+        # (gemessen: ~6× schneller als die ganze Liste, gleiche Treffer)
+        roi = row.get("roi")
+        self.x_band = (roi[0] - X_BAND, roi[0] + 0.07 * (roi[2] - roi[0]) + X_BAND) if roi else None
 
     def find(self, frame: np.ndarray, area: list[float]) -> list[Row]:
         fh, fw = frame.shape[:2]
@@ -48,6 +53,9 @@ class RowFinder:
         marker = _scaled(self.marker, f)
         rw, rh = int(self.size[0] * f), int(self.size[1] * f)
         ax0, ay0, ax1, ay1 = int(area[0] * fw), int(area[1] * fh), int(area[2] * fw), int(area[3] * fh)
+        if self.x_band is not None:
+            ax0 = max(ax0, int(self.x_band[0] * fw))
+            ax1 = min(ax1, int(self.x_band[1] * fw) + marker.shape[1])
         region = frame[ay0:ay1, ax0:ax1]
         if region.shape[0] < marker.shape[0] or region.shape[1] < marker.shape[1]:
             return []
@@ -176,16 +184,74 @@ def read_title(window_img: np.ndarray, ocr) -> str:
     best = max(chains, key=lambda c: sum(st[i, cv2.CC_STAT_AREA] for i in c), default=[])
     if not best:
         return ""
+    best = _join_words(best, chains, st, mid, hmax)
     x0 = min(st[i, cv2.CC_STAT_LEFT] for i in best)
     x1 = max(st[i, cv2.CC_STAT_LEFT] + st[i, cv2.CC_STAT_WIDTH] for i in best)
     y0 = min(st[i, cv2.CC_STAT_TOP] for i in best)
     y1 = max(st[i, cv2.CC_STAT_TOP] + st[i, cv2.CC_STAT_HEIGHT] for i in best)
-    crop = 255 - (np.isin(lab, best).astype(np.uint8) * 255)[max(0, y0 - 10):y1 + 10, max(0, x0 - 10):x1 + 10]
-    f = 48 / max(1, y1 - y0)
-    crop = cv2.resize(crop, None, fx=f, fy=f, interpolation=cv2.INTER_AREA)
-    crop = cv2.copyMakeBorder(crop, 20, 20, 20, 20, cv2.BORDER_CONSTANT, value=255)
-    text = re.sub(r"^[^A-Za-z0-9]+|[^A-Za-z0-9!?)]+$", "", ocr.line(crop, psm=7)).strip()
+    ink = np.isin(lab, best).astype(np.uint8) * 255
+    text = ""
+    if len(best) >= 3:                                    # schräge Zeile gerade drehen (Tesseract liest sonst oft nichts)
+        xs = [st[i, cv2.CC_STAT_LEFT] + st[i, cv2.CC_STAT_WIDTH] / 2 for i in best]
+        slope = float(np.polyfit(xs, [mid[i] for i in best], 1)[0])
+        letter_h = float(np.median([st[i, cv2.CC_STAT_HEIGHT] for i in best]))
+        part = ink[max(0, y0 - 10):y1 + 10, max(0, x0 - 10):x1 + 10]
+        part = cv2.copyMakeBorder(part, 20, 20, 20, 20, cv2.BORDER_CONSTANT, value=0)
+        m = cv2.getRotationMatrix2D((part.shape[1] / 2, part.shape[0] / 2), np.degrees(np.arctan(slope)), 1.0)
+        part = cv2.warpAffine(part, m, (part.shape[1], part.shape[0]), flags=cv2.INTER_LINEAR)
+        ys, xs2 = np.nonzero(part > 127)
+        if ys.size:
+            part = 255 - part[ys.min():ys.max() + 1, xs2.min():xs2.max() + 1]
+            f = 40 / max(1.0, letter_h)
+            part = cv2.resize(part, None, fx=f, fy=f, interpolation=cv2.INTER_AREA)
+            part = cv2.copyMakeBorder(part, 20, 20, 20, 20, cv2.BORDER_CONSTANT, value=255)
+            text = re.sub(r"^[^A-Za-z0-9]+|[^A-Za-z0-9!?)]+$", "", ocr.line(part, psm=7)).strip()
+    if not text:                                          # bisheriger Weg (ungedreht)
+        crop = 255 - ink[max(0, y0 - 10):y1 + 10, max(0, x0 - 10):x1 + 10]
+        f = 48 / max(1, y1 - y0)
+        crop = cv2.resize(crop, None, fx=f, fy=f, interpolation=cv2.INTER_AREA)
+        crop = cv2.copyMakeBorder(crop, 20, 20, 20, 20, cv2.BORDER_CONSTANT, value=255)
+        text = re.sub(r"^[^A-Za-z0-9]+|[^A-Za-z0-9!?)]+$", "", ocr.line(crop, psm=7)).strip()
+    text = re.sub(r"\s+", " ", re.sub(r"[^\w !?'&.()/-]", " ", text)).strip()    # Sonderzeichen-Reste weg
     return text[:1].upper() + text[1:]
+
+
+def _join_words(best: list[int], chains: list[list[int]], st, mid: dict, hmax: float) -> list[int]:
+    """Weitere Wörter derselben (schrägen) Titelzeile anhängen: „AINCRAD“ + „SPOILS“, „RELICS OF THE“ + „OTHERWORLD“.
+    Bedingung: ähnliche Buchstabenhöhe, Lücke < 3,5 Buchstabenhöhen, Zeilenmitte passt am nächstgelegenen Buchstaben."""
+    def height(c):
+        return float(np.median([st[i, cv2.CC_STAT_HEIGHT] for i in c]))
+
+    def left(c):
+        return min(st[i, cv2.CC_STAT_LEFT] for i in c)
+
+    def right(c):
+        return max(st[i, cv2.CC_STAT_LEFT] + st[i, cv2.CC_STAT_WIDTH] for i in c)
+
+    best = list(best)
+    rest = [c for c in chains if c is not best and set(c).isdisjoint(best) and len(c) >= 2]
+    changed = True
+    while changed:
+        changed = False
+        hb = height(best)
+        for c in list(rest):
+            if abs(height(c) - hb) > 0.3 * hb:
+                continue
+            if left(c) >= right(best):                     # rechts daneben
+                gap = left(c) - right(best)
+                a = max(best, key=lambda i: st[i, cv2.CC_STAT_LEFT])
+                b = min(c, key=lambda i: st[i, cv2.CC_STAT_LEFT])
+            elif right(c) <= left(best):                   # links daneben
+                gap = left(best) - right(c)
+                a = min(best, key=lambda i: st[i, cv2.CC_STAT_LEFT])
+                b = max(c, key=lambda i: st[i, cv2.CC_STAT_LEFT])
+            else:
+                continue
+            if gap < 3.5 * hb and abs(mid[a] - mid[b]) < 0.6 * hb:
+                best += c
+                rest.remove(c)
+                changed = True
+    return best
 
 
 def read_title_loose(window_img: np.ndarray, ocr) -> str:

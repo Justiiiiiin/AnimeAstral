@@ -41,6 +41,7 @@ class SettingsPage(QWidget):
         theme.track_spacing(root, 14)
         self.search = short_field(QLineEdit(), 300)
         self.search.setPlaceholderText(tr("Einstellung suchen …"))
+        self.search.setToolTip(tr("Sucht in allen Reitern – auch in den ⓘ-Erklärungen. Von überall: Strg+F"))
         self.search.setClearButtonEnabled(True)
         self.search.textChanged.connect(self._filter)
         tabs = QHBoxLayout()
@@ -556,6 +557,7 @@ class SettingsPage(QWidget):
 
     # ------------------------------------------------------------------ Suche
     def _build_index(self) -> None:
+        from ..search import Haystack
         import re
         from PySide6.QtWidgets import QAbstractButton, QComboBox, QLabel
         tags = re.compile(r"<[^>]+>")
@@ -571,11 +573,14 @@ class SettingsPage(QWidget):
                 elif isinstance(w, QComboBox):
                     parts += [w.itemText(i) for i in range(w.count())]
                 parts.append(w.toolTip())                    # auch die Erklärungen hinter ⓘ
-            self._search_index.append((card, tags.sub(" ", " ".join(parts)).casefold()))
+            self._search_index.append((card, Haystack(tags.sub(" ", " ".join(parts)))))
 
     def _filter(self, text: str) -> None:
-        """Nur Karten zeigen, in denen alle Suchwörter vorkommen (Titel, Beschriftungen, ⓘ-Erklärungen)."""
+        """Nur Karten zeigen, in denen alle Suchwörter vorkommen (Titel, Beschriftungen, ⓘ-Erklärungen) – tolerant
+        gegen Umlaute, Bindestriche und kleine Tippfehler (search.py)."""
         from PySide6.QtWidgets import QLabel
+
+        from ..search import matches
         if not self._search_index:
             self._build_index()
         words = text.casefold().split()
@@ -585,7 +590,7 @@ class SettingsPage(QWidget):
             return
         shown = 0
         for card, haystack in self._search_index:
-            match = all(w in haystack for w in words)
+            match = matches(text, haystack)
             card.setVisible(match)
             shown += match
         for sec, holders in self._holders.items():

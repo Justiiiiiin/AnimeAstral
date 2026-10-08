@@ -109,6 +109,8 @@ nutzen das). Dort: `settings.json`, `raid_history.csv`, `monitor.log`, `profiles
 | `ocr.py` | Tesseract-Anbindung; **mitgeliefertes** Tesseract (`tesseract/` neben der EXE) hat Vorrang |
 | `uimap.py`, `vision.py`, `automation.py` | Automatik (Beta): Oberflächen-Karte lesen, Zeilen/Menüs erkennen, Wege gehen (eigener Thread, eigene OCR-Instanz); Oberfläche `ui/automation_card.py` |
 | `settings.py` | `Settings`-Dataclass (JSON), `Roi`, Ereignis-Definitionen, Migration über `settings_version` |
+| `debuglog.py` | Debug-Reiter: `BUFFER` hängt nur bei `settings.debug_view` (Standard aus) am Logger, lädt das Ende von monitor.log vor; Anzeige `ui/events_card.py` |
+| `search.py` | Einstellungssuche: Umlaute/Bindestriche egal, kleine Tippfehler erlaubt (difflib); Strg+F = `MainWindow.open_search` |
 | `i18n.py`, `i18n_en.py` | Sprache: `tr()`, `N_()`, Zahlenformat; englische Texte |
 | `hotkeys.py`, `winapi.py`, `imaging.py`, `diagnostics.py`, `app_paths.py` | Hilfen (globale Hotkeys per `RegisterHotKey`, Fenstersuche per ctypes, Bildverarbeitung, Diagnose-ZIP, Pfade) |
 | `ui/` | PySide6-Oberfläche: `main_window.py` (Seitenleiste, Hotkeys, Update-Start, Assistent), Seiten `page_*.py`, `wizard.py` (Einrichtung), `update_dialog.py`, `widgets.py` (Bausteine, **Tabellen** `make_table`/`SortItem`), `theme.py` (dunkles QSS) |
@@ -190,6 +192,17 @@ Wichtige Entwurfsentscheidungen:
   „Server beitreten“ und Auto-Rejoin). Änderungen werden sofort gespeichert (`MainWindow.set_server_favorites`), nicht
   über die Speichern-Leiste. Kopfzeilen-Knopf mit Pfeil-Menü und Tray-Untermenü. Diagnose schwärzt die Links.
 - **Zeitangaben:** Die Engine nutzt `time.monotonic()` für Takt/Dauer; in Tests wird die Uhr teils künstlich gesetzt.
+- **Seit 0.9.7-beta.4/0.9.8 – Seiten ohne Scrollen** (Wunsch des Eigentümers): Seitenkopf `widgets.page_header`
+  (Titel + ⓘ + Bedienelemente in einer Zeile), Statistik-Listen als Reiter, Meldungen zweispaltig, Einstellungen mit
+  Reitern Roblox/Überwachung/Darstellung/Programm/Debug (`_assign_groups` packt Kartenreihen in Widgets, damit
+  ausgeblendete Reihen keinen Abstand lassen). Prüfen: `_shots/pages_fit.py [breite hoehe]` (meldet Scrollbedarf
+  je Seite/Reiter). Kopfzeilen-Knöpfe aktualisiert `MonitorPage.refresh_controls` auf jeder Seite.
+- **Erkennung (0.9.7-beta.4):** `WaveTracker` wertet „4“ nach „53/54“ (vordere Ziffer verdeckt, `_cut_digits`) erst
+  nach `CUT_CONFIRM` s als Neustart; solange das Makro klickt (`antiafk._macro_busy`), ruft die Engine nur
+  `tracker.hold()` auf und liest keine Quests. Makro-Bilderkennung: Zeilensuche nur im Streifen `X_BAND` um den
+  Zeilenanfang (~4× schneller), Titel werden vor der Texterkennung gerade gedreht (`read_title`), Wörter einer
+  Titelzeile verbunden (`_join_words`); Prüfung `_shots/title_regress.py` (136 echte Titel), Laufzeit
+  `_shots/bench_vision.py`. RapidOCR wurde verglichen und verworfen (nicht genauer, 18× langsamer, +60 MB).
 
 ## Release-Ablauf (GitHub, dieses Repository – der Build liest den Namen selbst aus `github.repository`)
 

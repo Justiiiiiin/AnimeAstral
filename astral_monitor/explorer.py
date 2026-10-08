@@ -285,7 +285,7 @@ class Explorer:
             analysis.category, analysis.label = "guild", tr("Gilde")
         window = analysis.title if analysis.title and analysis.title != name else f"{name} Fenster"
         nav.log(tr("{button}: {title} ({kind})", button=name, title=analysis.title or "?", kind=analysis.label))
-        found = vision.words_in(frame, roi, nav._ocr)
+        found = analysis.words
         claims = knowledge.claimables(found)
         if claims:
             nav.log(tr("{button}: {count}× „Claim“ gefunden (nicht geklickt)", button=name, count=len(claims)))
@@ -350,6 +350,7 @@ class Explorer:
     def _analyse(self, frame: np.ndarray, roi: list[float], title: str, template) -> knowledge.Analysis:
         words = vision.words_in(frame, roi, self.nav._ocr)
         analysis = knowledge.classify(title, words, template.window["name"] if template else "")
+        analysis.words = words                              # für Claim-Suche wiederverwenden (OCR ~150 ms)
         if analysis.category in ("raid", "defense"):
             fh, fw = frame.shape[:2]
             crop = frame[int(roi[1] * fh):int(roi[3] * fh), int(roi[0] * fw):int(roi[2] * fw)]

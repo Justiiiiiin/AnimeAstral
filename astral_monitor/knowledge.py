@@ -78,6 +78,7 @@ class Analysis:
     buttons: list[tuple[str, list[float]]] = field(default_factory=list)   # (Wort, Lage im Roblox-Fenster)
     title: str = ""
     mode: str = ""                                    # Banner-Titel, wenn darunter ein eigener Name steht („Raid“)
+    words: list = field(default_factory=list, repr=False)   # gelesene Wörter (nicht im Bericht)
 
     def as_dict(self) -> dict:
         return {"category": self.category, "label": self.label, "score": round(self.score, 2),

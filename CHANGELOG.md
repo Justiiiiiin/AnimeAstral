@@ -4,6 +4,26 @@ Neueste Version oben. Kurze Stichpunkte, keine Erklärungen (die stehen im Progr
 Der Abschnitt einer Version wird beim Veröffentlichen automatisch als Versionshinweis übernommen
 (`tools/release_notes.py`) und ist im Programm unter Einstellungen → Updates → „Alle Versionen“ lesbar.
 
+## 0.9.8
+
+### ✨ Neu seit 0.9.1 (Kurzfassung der Betas)
+- Makro (Beta, Startseite): Menüs öffnen, Auto Roll, Raids
+- Makro-Warteschlange mit Schleife: Auto Roll, Raid farmen, Warten
+- Raid farmen: Auto Retry/Auto Leave einstellen, danach verlassen
+- Erkunden: das Makro lernt Welten und Menüs selbst kennen
+- Anti-AFK neu (alle Roblox-Fenster, 4× Esc), pausiert beim Makro
+- Alle Seiten ohne Scrollen, Statistik und Meldungen neu geordnet
+- Debug-Reiter: ganzes Protokoll live, standardmäßig aus
+
+### 🔧 Verbessert in dieser Version
+- Fenstertitel werden gerade gedreht gelesen (21 von 136 besser)
+- Titel aus mehreren Wörtern werden ganz gelesen
+- Zeilensuche im Teleporter ~4× schneller
+- Quests werden nicht gelesen, solange das Makro Menüs öffnet
+- Erkunden liest jedes Fenster nur noch einmal (spart ~150 ms)
+- Einstellungssuche verzeiht Umlaute und Tippfehler
+- Strg+F öffnet die Einstellungssuche von jeder Seite
+
 ## 0.9.7-beta.6
 
 ### 🔧 Verbessert

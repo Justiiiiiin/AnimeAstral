@@ -1063,4 +1063,5 @@ EN: dict[str, str] = {
     'Debug ist aus – oben rechts einschalten, wenn du etwas testen oder einen Fehler suchen willst.': 'Debug is off – switch it on at the top right when you want to test something or track down a bug.',
     'Anti-AFK pausiert, solange das Erkunden läuft.': 'Anti-AFK paused while exploring.',
     'Anti-AFK wieder an.': 'Anti-AFK back on.',
+    'Sucht in allen Reitern – auch in den ⓘ-Erklärungen. Von überall: Strg+F': 'Searches all tabs – including the ⓘ explanations. From anywhere: Ctrl+F',
 }
