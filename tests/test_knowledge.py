@@ -72,6 +72,23 @@ class ClassifyTest(unittest.TestCase):
         for title, (category, words) in cases.items():
             self.assertEqual(knowledge.classify(title, words).category, category, title)
 
+    def test_side_tabs_without_leave(self):
+        # Gilde: Reiter links untereinander, „Leave“ ganz unten darf nie gedrückt werden
+        words = [(n, [0.12, 0.3 + i * 0.08, 0.25, 0.34 + i * 0.08]) for i, n in
+                 enumerate(("Home", "Upgrades", "Members", "Missions", "Servers", "Rankings"))]
+        words += [("Leave", [0.12, 0.9, 0.25, 0.94]), ("Claim", [0.85, 0.6, 0.92, 0.64]),
+                  ("Personal", [0.3, 0.35, 0.45, 0.39])]
+        tabs = [n for n, _b in knowledge.side_tabs(words, [0.05, 0.05, 0.95, 0.95])]
+        self.assertEqual(tabs, ["Home", "Upgrades", "Members", "Missions", "Servers", "Rankings"])
+
+    def test_raid_drops(self):
+        words = [("Enemy", [0.1, 0.45, 0.2, 0.49]), ("Drops:", [0.21, 0.45, 0.3, 0.49]),
+                 ("Bankai", [0.1, 0.6, 0.15, 0.62]), ("Token", [0.155, 0.6, 0.19, 0.62]),
+                 ("Grail", [0.3, 0.6, 0.34, 0.62]), ("Shard", [0.345, 0.6, 0.38, 0.62]),
+                 ("Yen", [0.5, 0.6, 0.53, 0.62]), ("50%", [0.1, 0.52, 0.13, 0.54]),
+                 ("Create", [0.1, 0.7, 0.2, 0.74]), ("Join", [0.3, 0.7, 0.35, 0.74])]
+        self.assertEqual(knowledge.raid_drops(words), ["Bankai Token", "Grail Shard"])
+
     def test_unknown_and_safety(self):
         self.assertEqual(knowledge.classify("", W("Hello")).category, "unknown")
         for word in ("Roll", "Auto", "Craft", "Buy", "Claim", "Equip"):

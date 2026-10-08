@@ -1096,4 +1096,5 @@ EN: dict[str, str] = {
     'fällig': 'due',
     'nächste in {minutes} Min.': 'next in {minutes} min',
     '{task}: {reason} – nächster Versuch in 15 Min.': '{task}: {reason} – next try in 15 min',
+    '{window}: Reiter „{tab}“': '{window}: tab “{tab}”',
 }

@@ -27,6 +27,7 @@ from .status import StatusPublisher
 from .quests import QuestReader
 from .settings import DAILY_KINDS, Settings, is_valid_webhook
 from .stats import RunRecord, StatsStore
+from .raidsense import RaidSense, read_raid_window
 from .tracker import QuestTracker, WaveTracker
 from .wave import WaveReader
 
@@ -34,6 +35,7 @@ log = logging.getLogger("engine")
 
 BURST_SECONDS = 30.0        # so lange nach einem Raid wird auf Quest-Änderungen gewartet
 BURST_INTERVAL = 4.0
+RAID_PROBE_SECONDS = 2.0     # so oft nachsehen, ob ein Raid-Fenster offen ist (ganzes Bild, ~15 ms)
 
 
 class EngineError(RuntimeError):
@@ -128,6 +130,9 @@ class Engine:
         # Verlauf der gelesenen Werte für die Diagnose: (Zeit, Welle, Gesamt, höchste Welle im Lauf, Info)
         self.trace: "collections.deque" = collections.deque(maxlen=4000)
         self.profile_store = ProfileStore(app_paths.profiles_dir())
+        self.raid_sense = RaidSense()                     # Raid-Name aus dem Raid-Fenster (raidsense.py)
+        self._raid_menu = None
+        self._next_raid_probe = 0.0
         self.profile_store.remove_reference_images()     # Bilder der früheren Raid-Erkennung (bis 0.6.3) entfernen
         self.guard = Guard(lambda: self.settings, self.state, self._notify, self._event, self._grab_full)
         self._reset_runtime()
@@ -486,7 +491,10 @@ class Engine:
         if s.read_quests and s.quest_roi.is_valid() and now >= self._next_quest:
             request.append(("quest", s.quest_roi))
 
-        result = self._source.grab([roi for _name, roi in request], False, 1.0)
+        probe = now >= self._next_raid_probe and not _macro_busy()     # Makro setzt seinen Raid selbst
+        if probe:
+            self._next_raid_probe = now + RAID_PROBE_SECONDS
+        result = self._source.grab([roi for _name, roi in request], probe, 1.0)
         if result is None:
             self._handle_no_frame(now)
         else:
@@ -496,6 +504,8 @@ class Engine:
             guard.on_frame()
             self.state.frame_size = result.size
             crops = {name: crop for (name, _roi), crop in zip(request, result.crops)}
+            if probe and result.full is not None:
+                self._probe_raid(result.full, now)
             self._process_wave(crops["wave"], now)
             if "quest" in crops:
                 if _macro_busy():                            # Makro öffnet Menüs (ganze Bildschirme verdecken die
@@ -550,6 +560,7 @@ class Engine:
             self.state.info = tr("Kein Wellenzähler im Bild")
 
         self.guard.on_wave(reading.value if reading else None, now)
+        self.raid_sense.wave_visible(reading is not None, now)
         if _macro_busy():
             self.tracker.hold()                              # Makro öffnet Menüs: Lesungen nicht werten
             events = []
@@ -557,6 +568,10 @@ class Engine:
             events = self.tracker.update(reading.value if reading else None,
                                          reading.total if reading else None, now)
         run = self.tracker.run
+        if run is not None and run.profile is None:
+            seen = self.raid_sense.take(now)               # Raid-Fenster kurz vorher offen + teleportiert
+            if seen:
+                self._adopt_raid(seen)
         if run is None:
             self.state.profile = self.settings.current_raid
         elif run.profile is None and self.settings.current_raid:
@@ -567,6 +582,41 @@ class Engine:
                 self._on_candidate(now)
             elif kind == "run_end":
                 self._on_run_end(data, now)
+
+    def _probe_raid(self, frame: np.ndarray, now: float) -> None:
+        """Ist ein Raid-Fenster offen? Dann Namen merken (raidsense). Fehler hier dürfen die Überwachung nie stören."""
+        try:
+            if self._raid_menu is None:
+                from . import vision
+                from .uimap import UiMap
+                umap = UiMap.load()
+                lists = umap.list_windows()
+                image = umap.image(lists[0]) if lists else None
+                if image is None:
+                    self._next_raid_probe = float("inf")     # ohne Karte keine Fenster-Erkennung
+                    return
+                self._raid_menu = vision.MenuFrame(lists[0], image, None)
+            name = read_raid_window(frame, self._raid_menu, self.get_ocr())
+            if name:
+                self.raid_sense.seen_name(name, self.profile_store.names(), now)
+        except Exception as exc:  # noqa: BLE001
+            log.debug("Raid-Fenster nicht lesbar: %s", exc)
+
+    def _adopt_raid(self, name: str) -> None:
+        """Gelesenen Raid übernehmen – neu anlegen, falls es ihn noch nicht gibt."""
+        try:
+            if not any(n.lower() == name.lower() for n in self.profile_store.names()):
+                name = self.profile_store.create(name)
+                log.info("Neuer Raid angelegt: %s", name)
+        except ValueError:
+            pass
+        if self.settings.current_raid != name:
+            log.info("Raid erkannt (Raid-Fenster): %s", name)
+            self.set_current_raid(name)
+            try:
+                self.settings.save()
+            except OSError:
+                pass
 
     def _trace_wave(self, reading, now: float) -> None:
         """Protokolliert Wechsel „sichtbar/unsichtbar“ und merkt sich den Wertverlauf für die Diagnose."""

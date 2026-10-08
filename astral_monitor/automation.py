@@ -626,7 +626,6 @@ class Navigator:
                     raise Stop(tr("Nicht im Raid angekommen."))
                 time.sleep(1.0)
             self._in_raid = target
-            self._raid_sample(target)
         self._open_raid_settings()
         self._set_toggle("retry", True)
         self._set_toggle("leave", leave_wave > 0)
@@ -664,24 +663,6 @@ class Navigator:
             self._in_raid = None
         else:
             self.log(tr("Bleibe im Raid (Auto Retry farmt weiter)."))
-
-    def _raid_sample(self, target: str) -> None:
-        """Beispielbild je Raid sammeln (Datenordner/raid_samples/<Raid>/, höchstens 6 je Raid) – Grundlage, um später
-        im Raid selbst zu erkennen, in welchem Raid man ist (das Makro weiß es hier, weil es ihn gestartet hat)."""
-        try:
-            from .app_paths import data_dir
-            folder = data_dir() / "raid_samples" / re.sub(r"[^\w -]+", "_", target)[:60]
-            folder.mkdir(parents=True, exist_ok=True)
-            if len(list(folder.glob("*.jpg"))) >= 6:
-                return
-            time.sleep(4.0)                               # Teleport-Effekte abklingen lassen
-            frame = self._frame()
-            cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 85])[1].tofile(
-                str(folder / f"{time.strftime('%Y%m%d_%H%M%S')}.jpg"))
-        except Stop:
-            raise
-        except Exception:  # noqa: BLE001 – nur Sammelhilfe
-            pass
 
     # ------------------------------------------------------------------ Claim-Hilfen
     def _words(self) -> tuple[list[tuple[str, list[float]]], list[float]]:

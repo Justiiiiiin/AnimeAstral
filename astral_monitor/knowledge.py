@@ -67,6 +67,9 @@ CATEGORIES: dict[str, tuple[str, tuple[str, ...], tuple[str, ...]]] = {
 ACTION_WORDS = ("roll", "auto", "craft", "buy", "claim", "equip", "upgrade", "open", "sell", "delete", "confirm",
                 "yes", "use", "donate", "start", "create", "join", "enter", "trade", "exchange", "reroll", "max")
 CLOSE_WORDS = ("close", "exit")
+# Reiter, die beim Durchklicken NIE gedrückt werden (Gilde verlassen, Mitglieder rauswerfen …)
+NEVER_TABS = ("leave", "kick", "disband", "delete", "reset", "logout", "quit", "sell", "rebirth", "remove", "ban")
+DROP_IGNORE = ("yen", "xp", "coins", "coin", "gems", "gem")       # in fast jedem Raid – sagt nichts über den Raid
 
 
 @dataclass
@@ -79,12 +82,15 @@ class Analysis:
     title: str = ""
     mode: str = ""                                    # Banner-Titel, wenn darunter ein eigener Name steht („Raid“)
     words: list = field(default_factory=list, repr=False)   # gelesene Wörter (nicht im Bericht)
+    drops: list = field(default_factory=list)                # Raid-Fenster: „Enemy Drops“
+    tabs: list = field(default_factory=list)                 # Reiter links (durchgeklickt): Name, Einordnung
 
     def as_dict(self) -> dict:
         return {"category": self.category, "label": self.label, "score": round(self.score, 2),
                 "matched": self.matched, "buttons": [{"text": t, "roi": [round(v, 4) for v in r]}
                                                      for t, r in self.buttons], "title": self.title,
-                **({"mode": self.mode} if self.mode else {})}
+                **({"mode": self.mode} if self.mode else {}), **({"drops": self.drops} if self.drops else {}),
+                **({"tabs": self.tabs} if self.tabs else {})}
 
 
 def _norm(text: str) -> str:
@@ -134,6 +140,54 @@ def close_word(words: list[tuple[str, list[float]]]) -> list[float] | None:
     """Lage eines „Close“/„Exit“-Knopfs (ganze Bildschirme ohne rosa X), sonst None."""
     hits = [r for w, r in words if _norm(w) in CLOSE_WORDS]
     return max(hits, key=lambda r: r[1]) if hits else None     # der unterste (Knöpfe sitzen unten)
+
+
+def side_tabs(words: list[tuple[str, list[float]]], roi: list[float]) -> list[tuple[str, list[float]]]:
+    """Reiter links im Fenster (Gilde: Home, Upgrades, Members, Missions …): untereinander, gleiche Spalte, mindestens
+    drei – ohne Aktions- und Gefahren-Wörter (Leave, Kick …). Rückgabe: (Name, Lage) von oben nach unten."""
+    x0, _y0, x1, _y1 = roi
+    left = x0 + 0.30 * (x1 - x0)
+    cand = [(w, b) for w, b in words if b[2] <= left and len(re.sub(r"[^A-Za-z]", "", w)) >= 4
+            and is_safe_to_click(w) and _norm(w) not in NEVER_TABS]
+    if len(cand) < 3:
+        return []
+    xs = sorted((b[0] + b[2]) / 2 for _w, b in cand)
+    mid = xs[len(xs) // 2]
+    col = [(w, b) for w, b in cand if abs((b[0] + b[2]) / 2 - mid) < 0.06 * (x1 - x0)]
+    rows: list[tuple[str, list[float]]] = []
+    for w, b in sorted(col, key=lambda c: c[1][1]):
+        if rows and abs(rows[-1][1][1] - b[1]) < 0.02:
+            continue                                      # zweites Wort derselben Zeile
+        rows.append((w, b))
+    return rows if len(rows) >= 3 else []
+
+
+def raid_drops(words: list[tuple[str, list[float]]]) -> list[str]:
+    """„Enemy Drops“ eines Raid-Fensters: Beschriftungen unter den Symbolen zwischen „Enemy Drops:“ und den Knöpfen
+    Create/Join/Start. Wörter einer Kachel werden zusammengefasst („Grail Shard“). Yen/XP fallen weg."""
+    head = next((b for w, b in words if _norm(w) in ("drops", "enemydrops")), None)
+    foot = min((b[1] for w, b in words if _norm(w) in ("create", "join", "start")), default=None)
+    if head is None or foot is None or foot <= head[3]:
+        return []
+    band = [(w, b) for w, b in words if head[3] < b[1] < foot and "%" not in w and len(_norm(w)) >= 3]
+    # je Kachel eine Spalte: Wörter nach ihrer Mitte gruppieren (Beschriftung kann zwei Zeilen haben)
+    band.sort(key=lambda c: (c[1][0] + c[1][2]) / 2)
+    cols: list[list] = []
+    for w, b in band:
+        cx = (b[0] + b[2]) / 2
+        if cols and cx - cols[-1][0] < 0.05:
+            cols[-1][1].append((w, b))
+            cols[-1][0] = cx                                # Kette: nächstes Wort derselben Beschriftung
+        else:
+            cols.append([cx, [(w, b)]])
+    names = [[" ".join(w for w, _b in sorted(ws, key=lambda c: (int(c[1][1] / 0.015), c[1][0]))), None]
+             for _cx, ws in cols]
+    out = []
+    for text, _b in names:
+        clean = re.sub(r"[^A-Za-z0-9' ]", "", text).strip()
+        if len(clean) >= 3 and _norm(clean) not in DROP_IGNORE and clean not in out:
+            out.append(clean)
+    return out
 
 
 def is_safe_to_click(word: str) -> bool:

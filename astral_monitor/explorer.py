@@ -34,8 +34,9 @@ class TimeUp(Exception):
 
 
 class Explorer:
-    def __init__(self, nav, minutes: float, data_dir: Path) -> None:
+    def __init__(self, nav, minutes: float, data_dir: Path, full: bool = True) -> None:
         self.nav = nav
+        self.full = full                                  # auch Bekanntes öffnen (Standard seit 0.9.9)
         self.deadline = time.monotonic() + max(0.5, minutes) * 60
         self.data_dir = data_dir
         stamp = time.strftime("%Y%m%d_%H%M%S")
@@ -166,14 +167,16 @@ class Explorer:
     def _unknown_slots(self, known: Optional[dict], img: np.ndarray, slots: vision.SlotLayout, world: str):
         """Belegte Plätze ohne bekanntes Fenster (bei neuen Welten: alle) – ohne „nicht drücken“-Symbole."""
         found = slots.slots(img)
-        done = set()
+        done = set()                                      # „alles öffnen“ (Wunsch des Eigentümers): bekannte Fenster
+        # werden erneut geöffnet und gelesen – ausgelassen werden nur „nicht drücken“ und Plätze ohne Fenster
         if known is not None:
             for e in self.nav.map.children(known):
                 if e.get("kind") not in ("Knopf", "Symbol") or not e.get("rel"):
                     continue
                 i = slots.index_of(e["rel"])
                 extra = e.get("extra") or {}
-                if i is not None and (self.nav.map_opened(e) or extra.get("avoid") or extra.get("no_window")):
+                if i is not None and (extra.get("avoid") or extra.get("no_window")
+                                      or (not self.full and self.nav.map_opened(e))):
                     done.add(i)
         out = []
         h, w = img.shape[:2]
@@ -228,6 +231,8 @@ class Explorer:
         name = self._window_name(world, analysis, index, button)
         nav.log(tr("{world} · Platz {n}: {title} ({kind})", world=world, n=index + 1,
                    title=analysis.title or "?", kind=analysis.label))
+        self._scan_tabs(name, roi, analysis)
+        frame = nav._frame()
         self._record_window(name, roi, button, analysis, template, frame)
         entry["windows"].append({"slot": index + 1, "window": name, **analysis.as_dict()})
         self._close(kind, roi, template, frame)
@@ -262,7 +267,7 @@ class Explorer:
         self._left()
         nav = self.nav
         button = next((e for e in nav.map.hud() if e["name"] == name), None)
-        if button is None or nav.map_opened(button):
+        if button is None or (not self.full and nav.map_opened(button)):
             return
         nav._focus()
         nav._close_any()
@@ -289,6 +294,8 @@ class Explorer:
         claims = knowledge.claimables(found)
         if claims:
             nav.log(tr("{button}: {count}× „Claim“ gefunden (nicht geklickt)", button=name, count=len(claims)))
+        self._scan_tabs(window, roi, analysis)
+        frame = nav._frame()                              # nach den Reitern: aktuelles Bild zum Schließen
         self.report["hud"].append({"button": name, "window": window, "words": [w for w, _r in found][:80],
                                    "claim": [[round(v, 4) for v in r] for r in claims], **analysis.as_dict()})
         self._record_window(window, roi, button, analysis, template, frame)
@@ -352,12 +359,37 @@ class Explorer:
         analysis = knowledge.classify(title, words, template.window["name"] if template else "")
         analysis.words = words                              # für Claim-Suche wiederverwenden (OCR ~150 ms)
         if analysis.category in ("raid", "defense"):
+            analysis.drops = knowledge.raid_drops(words)  # Grundlage für die Raid-Erkennung über Drops
             fh, fw = frame.shape[:2]
             crop = frame[int(roi[1] * fh):int(roi[3] * fh), int(roi[0] * fw):int(roi[2] * fw)]
             name = vision.read_name_below_banner(crop, self.nav._ocr) if crop.size else ""
             if name:                                       # „Raid“/„Boss Rush“ -> „Holy Grail War“
                 analysis.mode, analysis.title = analysis.title, name
         return analysis
+
+    def _scan_tabs(self, window: str, roi: list[float], analysis: knowledge.Analysis) -> None:
+        """Reiter links im Fenster einmal durchklicken (Gilde: Home, Upgrades, Members, Missions …) und lesen – nie
+        Aktions- oder Gefahren-Reiter (Leave, Kick …). Ergebnis: analysis.tabs + Knöpfe in der lokalen Karte."""
+        nav = self.nav
+        tabs = knowledge.side_tabs(analysis.words, roi)
+        for label, box in tabs[:9]:
+            self._left()
+            nav.log(tr("{window}: Reiter „{tab}“", window=window, tab=label))
+            nav._click_roi(box)
+            time.sleep(1.0)
+            frame = nav._frame()
+            words = vision.words_in(frame, roi, nav._ocr)
+            sub = knowledge.classify(label, words)
+            claims = knowledge.claimables(words)
+            analysis.tabs.append({"tab": label, "category": sub.category, "label": sub.label,
+                                  "claim": len(claims), "words": [w for w, _r in words][:50]})
+            self._snap(f"reiter_{window}_{label}", frame, frame)
+            entry = {"name": f"{window} · {label}", "kind": "Knopf", "parent": window,
+                     "roi": [round(v, 4) for v in box], "file": f"local:tab:{window}:{label}", "note": "erkundet",
+                     "extra": {"tab": True, "category": sub.category}}
+            if nav.map.container(entry["name"]) is None:
+                self.local.append(entry)
+                nav.map.add(entry)
 
     def _window_name(self, world: str, analysis: knowledge.Analysis, index: int, button: dict) -> str:
         named = button.get("name", "")
