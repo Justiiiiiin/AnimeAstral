@@ -17,8 +17,8 @@ from .widgets import Card, smooth
 
 # Eine Raid-Aufgabe mit Ende-Bedingung statt starten/farmen/verlassen einzeln (Eigentümer 08.10.2026): verlassen wird
 # nur, wenn danach ein anderer Raid/Modus folgt (automation.leave_before). Ältere Aufgaben laufen weiter.
-KINDS = [("raid", N_("Raid")), ("autoroll", N_("Auto Roll")), ("gigs", N_("Fixer Gigs abholen")),
-         ("guild_claim", N_("Gilde: Missionen")), ("wait", N_("Warten (Min.)"))]
+KINDS = [("raid", N_("Raid")), ("autoroll", N_("Auto Roll")), ("wait", N_("Warten (Min.)"))]
+# Fixer Gigs und Gilden-Missionen sind eigene Schalter (Karte „Automatisch abholen“), keine Aufgaben der Schlange
 UNTIL = [("runs", N_("Anzahl Raids")), ("minutes", N_("Minuten")), ("never", N_("ohne Ende"))]
 
 

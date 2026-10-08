@@ -6,12 +6,12 @@ from __future__ import annotations
 import time
 
 from PySide6.QtCore import QSize, Qt
-from PySide6.QtWidgets import QHBoxLayout, QProgressBar, QPushButton, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QComboBox, QHBoxLayout, QProgressBar, QPushButton, QVBoxLayout, QWidget
 
 from .. import messages
 from ..i18n import dec, tr
 from . import theme
-from .widgets import Card, EmptyState, QuestRow, StatCard, discord_icon, label, media_icon
+from .widgets import Card, ComboBox, EmptyState, QuestRow, StatCard, discord_icon, label, media_icon
 
 
 def wave_token(wave: int, best: int) -> str:
@@ -69,17 +69,23 @@ class MonitorPage(QWidget):
             kpis.addWidget(card, 1)
         root.addLayout(kpis)
 
-        # Mitte: links Makro + Ereignisse, rechts Live-Erkennung + Quests (Wunsch des Eigentümers 07.10.2026)
+        # Mitte: Startseite ist vor allem Makro (Wunsch des Eigentümers 08.10.2026) – links Makro + Automatisch
+        # abholen, Mitte Warteschlange, rechts schmal Live-Erkennung + Quests
         mid = QHBoxLayout()
         theme.track_spacing(mid, 16)
         left = QVBoxLayout()
         theme.track_spacing(left, 16)
+        center = QVBoxLayout()
+        theme.track_spacing(center, 16)
         right = QVBoxLayout()
         theme.track_spacing(right, 16)
 
         from .automation_card import AutomationCard
+        from .extras_card import ExtrasCard
         self.macro = AutomationCard(main)
-        left.addWidget(self.macro)
+        left.addWidget(self.macro, 1)
+        self.extras = ExtrasCard(main, self.macro)
+        left.addWidget(self.extras)
 
         live = Card(tr("Live-Erkennung"))                 # ohne Vorschaubild: Zahl, Balken, Kurzinfos
         self.wave = label("–", "wave")
@@ -96,9 +102,20 @@ class MonitorPage(QWidget):
         live.body.addLayout(info)
         self.status_line = label("", "muted", wrap=True)
         live.body.addWidget(self.status_line)
-        self.i_raid = label("", "small", wrap=True)
+        raid_row = QHBoxLayout()                          # Raid zum Selbst-Wählen (wenn man selbst spielt);
+        theme.track_spacing(raid_row, 6)                  # Makro-Raids setzen ihn selbst
+        raid_row.addWidget(label(tr("Raid:"), "small"))
+        self.raid_pick = ComboBox()
+        self.raid_pick.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
+        self.raid_pick.setMinimumContentsLength(8)
+        self.raid_pick.setToolTip(tr("Zu welchem Raid die Versuche zählen. Startet das Makro einen Raid, stellt es "
+                                     "ihn selbst ein; spielst du selbst, wähle ihn hier."))
+        self.raid_pick.activated.connect(lambda _i: self.main.select_raid(self.raid_pick.currentData() or ""))
+        raid_row.addWidget(self.raid_pick, 1)
+        self.i_raid = label("", "small", wrap=True)       # Wand des gewählten Raids
         self.i_proc = label("", "small", wrap=True)
         self.i_self = label("", "small", wrap=True)
+        live.body.addLayout(raid_row)
         live.body.addWidget(self.i_raid)
         live.body.addWidget(self.i_proc)
         live.body.addWidget(self.i_self)
@@ -127,10 +144,12 @@ class MonitorPage(QWidget):
 
         from .macro_queue_card import MacroQueueCard
         self.queue = MacroQueueCard(main, self.macro)
-        left.addWidget(self.queue, 1)
-        mid.addLayout(left, 3)
+        center.addWidget(self.queue, 1)
+        mid.addLayout(left, 4)
+        mid.addLayout(center, 4)
         mid.addLayout(right, 2)
         root.addLayout(mid, 1)
+        self.reload_raids()
 
     def recolor(self) -> None:
         """Nach Design-/Farbwechsel: Wellenzahl und Start-Symbol in den neuen Farben."""
@@ -140,7 +159,18 @@ class MonitorPage(QWidget):
         self.btn_status.setIcon(discord_icon())
 
     def reload_raids(self) -> None:
-        """Raid-Auswahl gibt es auf der Startseite nicht mehr (kommt neu) – Aufrufer bleiben gültig."""
+        """Raid-Auswahl (Live-Karte) mit den Raids aus Einstellungen → Roblox füllen, aktuellen Raid zeigen."""
+        current = self.engine.settings.current_raid or None
+        names = self.engine.profile_store.names()
+        self.raid_pick.blockSignals(True)
+        self.raid_pick.clear()
+        self.raid_pick.addItem("–", None)
+        for name in names:
+            self.raid_pick.addItem(name, name)
+        if current and current not in names:
+            self.raid_pick.addItem(current, current)
+        self.raid_pick.setCurrentIndex(max(0, self.raid_pick.findData(current)) if current else 0)
+        self.raid_pick.blockSignals(False)
 
     # ---------------------------------------------------------------- Aktualisieren
     def refresh_controls(self) -> None:
@@ -192,7 +222,9 @@ class MonitorPage(QWidget):
         self.i_read.setText(tr("Lesezeit: {ms} ms", ms=f"{st.read_ms:.0f}"))
         self.i_mode.setText(tr("Takt: alle {interval} s", interval=dec(f"{s.preset()['interval']:g}")))
         self.status_line.setText(tr(st.info))
-        raid_text = tr("Raid: {name}", name=st.profile or "–")
+        raid_text = ""
+        if self.raid_pick.currentData() != (st.profile or None) and not self.raid_pick.view().isVisible():
+            self.reload_raids()
         if st.profile and now >= self._next_wall:
             self._next_wall = now + 5.0
             self._wall = self.engine.stats.wall(st.profile)
@@ -200,9 +232,9 @@ class MonitorPage(QWidget):
             self._next_best = now + 5.0
             self._best = self.engine.stats.best_wave(st.profile or None)
         if st.profile and self._wall:
-            raid_text += " · " + tr("Wand: Welle {wave} ({streak}× in Folge)", wave=self._wall.wave,
-                                    streak=self._wall.streak)
+            raid_text = tr("Wand: Welle {wave} ({streak}× in Folge)", wave=self._wall.wave, streak=self._wall.streak)
         self.i_raid.setText(raid_text)
+        self.i_raid.setVisible(bool(raid_text))
         if st.roblox_alive is None:
             self.i_proc.setText(tr("Roblox-Prozess: nicht gefunden"))
         elif st.roblox_alive is False:

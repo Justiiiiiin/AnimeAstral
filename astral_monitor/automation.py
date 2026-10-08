@@ -44,7 +44,9 @@ TASK_KINDS = ("raid", "autoroll", "gigs", "guild_claim", "wait",
               "raid_farm", "raid_leave", "raid_create", "raid_join", "navigate", "pets", "close")   # ab raid_farm: ältere
 RAID_KINDS = ("raid", "raid_farm", "raid_create", "raid_join")     # Aufgaben, die in einen Raid/Modus führen
 CLAIM_LIMIT = 8           # höchstens so viele „Claim“ je Seite (Schutz gegen Endlosschleifen)
-GIGS_PETS = 3             # „Send Pets“: so viele der letzten Pets auswählen (Eigentümer: die letzten reichen)
+GIGS_PETS = 3             # „Send Pets“: je Gig 1 Pet, reihum eins der letzten 3 (Eigentümer 08.10.2026)
+GUILD_EVERY = 3 * 3600    # Gilden-Missionen: so oft nachsehen (Tagesaufgaben, Reset einmal am Tag)
+EXTRA_RETRY = 15 * 60     # nach einem Fehlschlag frühestens so viel später erneut
 RAID_GEAR = Path(__file__).with_name("uimap_static") / "raid_gear.png"   # Zahnrad oben rechts im Raid (fest, nicht aus der Karte)
 GEAR_REGION = [0.4, 0.0, 0.9, 0.16]
 LEAVE_REGION = [0.35, 0.0, 0.75, 0.2]
@@ -203,6 +205,9 @@ class Navigator:
         self.set_raid: Optional[Callable[[str], None]] = None        # Raid-Name für die Statistik setzen
         self._in_raid: Optional[str] = None               # Ziel des Raids, in dem das Makro gerade farmt
         self.gigs_next = 0.0                              # Fixer Gigs: frühestens dann wieder nachsehen (monotonic)
+        self.guild_next = 0.0                             # Gilden-Missionen: frühestens dann wieder
+        self.auto_gigs: Callable[[], bool] = lambda: False     # Schalter „Automatisch abholen“ (Einstellungen)
+        self.auto_guild: Callable[[], bool] = lambda: False
 
     def log(self, text: str) -> None:
         _log.info("Makro: %s", text)
@@ -258,6 +263,7 @@ class Navigator:
             for i, task in enumerate(tasks):
                 self.log(f"{i + 1}/{len(tasks)}  {task_label(task)}")
                 following = next_task(tasks, i, loop)
+                self._run_extras()                        # fällige Gigs/Gilde zuerst
                 for attempt in (1, 2):                    # einmal wiederholen, dann überspringen
                     try:
                         self._task(task, following)
@@ -536,6 +542,52 @@ class Navigator:
         self._focus()
         self._leave_raid()
 
+    # ------------------------------------------------------------------ Automatisch abholen (eigene Schalter)
+    def due_extras(self) -> list[str]:
+        """Fällige Zusatzaufgaben: Fixer Gigs (nach ihren Zeiten) und Gilden-Missionen (alle GUILD_EVERY) – keine
+        Aufgaben der Warteschlange, sondern eigene Schalter; laufen zwischen den Aufgaben und während ein Raid farmt."""
+        now = time.monotonic()
+        due = []
+        if self.auto_gigs() and now >= self.gigs_next and self.map.container("Fixer Gigs") is not None:
+            due.append("gigs")
+        if self.auto_guild() and now >= self.guild_next:
+            due.append("guild")
+        return due
+
+    def run_extras(self) -> bool:
+        """Von der Oberfläche, wenn sonst nichts läuft."""
+        return self.start(tr("Automatisch abholen"), self._run_extras)
+
+    def _run_extras(self) -> None:
+        for kind in self.due_extras():
+            self._focus()
+            try:
+                if kind == "gigs":
+                    self._gigs()
+                else:
+                    self._guild_claim()
+                    self.guild_next = time.monotonic() + GUILD_EVERY
+            except UserStop:
+                raise
+            except Stop as exc:
+                self.log("⚠ " + tr("{task}: {reason} – nächster Versuch in 15 Min.",
+                                   task=tr("Fixer Gigs") if kind == "gigs" else tr("Gilde"), reason=exc))
+                if kind == "gigs":
+                    self.gigs_next = time.monotonic() + EXTRA_RETRY
+                else:
+                    self.guild_next = time.monotonic() + EXTRA_RETRY
+                self._close_any_quiet()
+
+    def _extras_while_waiting(self) -> None:
+        """Beim Warten (Raid farmt, „Warten“): fällige Zusatzaufgaben einschieben, danach weiter warten."""
+        if not self.due_extras():
+            return
+        _ACTIVE.set()
+        try:
+            self._run_extras()
+        finally:
+            _ACTIVE.clear()
+
     # ------------------------------------------------------------------ Raid (eine Aufgabe statt vier)
     def _ensure_monitoring(self) -> None:
         if self.monitoring is None or self.raid_count is None:
@@ -574,6 +626,7 @@ class Navigator:
                     raise Stop(tr("Nicht im Raid angekommen."))
                 time.sleep(1.0)
             self._in_raid = target
+            self._raid_sample(target)
         self._open_raid_settings()
         self._set_toggle("retry", True)
         self._set_toggle("leave", leave_wave > 0)
@@ -597,6 +650,7 @@ class Navigator:
                 if done != last:
                     last = done
                     self.log(tr("{done} Raids fertig", done=done))
+                self._extras_while_waiting()
                 if self._halt.wait(2.0):
                     raise UserStop(tr("Gestoppt."))
                 if ctypes.windll.user32.GetAsyncKeyState(0x1B) & 0x8000:
@@ -610,6 +664,24 @@ class Navigator:
             self._in_raid = None
         else:
             self.log(tr("Bleibe im Raid (Auto Retry farmt weiter)."))
+
+    def _raid_sample(self, target: str) -> None:
+        """Beispielbild je Raid sammeln (Datenordner/raid_samples/<Raid>/, höchstens 6 je Raid) – Grundlage, um später
+        im Raid selbst zu erkennen, in welchem Raid man ist (das Makro weiß es hier, weil es ihn gestartet hat)."""
+        try:
+            from .app_paths import data_dir
+            folder = data_dir() / "raid_samples" / re.sub(r"[^\w -]+", "_", target)[:60]
+            folder.mkdir(parents=True, exist_ok=True)
+            if len(list(folder.glob("*.jpg"))) >= 6:
+                return
+            time.sleep(4.0)                               # Teleport-Effekte abklingen lassen
+            frame = self._frame()
+            cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 85])[1].tofile(
+                str(folder / f"{time.strftime('%Y%m%d_%H%M%S')}.jpg"))
+        except Stop:
+            raise
+        except Exception:  # noqa: BLE001 – nur Sammelhilfe
+            pass
 
     # ------------------------------------------------------------------ Claim-Hilfen
     def _words(self) -> tuple[list[tuple[str, list[float]]], list[float]]:
@@ -695,7 +767,7 @@ class Navigator:
         self._open(window)
         time.sleep(0.8)
         self._claim_all("Fixer Gigs")
-        for _ in range(3):                                # je freiem Platz: „Send Pets“
+        for nth in range(1, GIGS_PETS + 1):               # je freiem Platz: „Send Pets“ mit einem Pet
             words, _roi = self._words()
             box = self._send_box(words)
             if box is None:
@@ -703,7 +775,7 @@ class Navigator:
             self.log(tr("Klicke „{button}“.", button="Send Pets"))
             self._click_roi(box)
             time.sleep(1.2)
-            self._send_pets()
+            self._send_pets(nth)
             if not self._is_open(window, self._frame()):
                 self._open(window)
                 time.sleep(0.8)
@@ -712,6 +784,8 @@ class Navigator:
         if times:
             self.gigs_next = time.monotonic() + min(times) + 30
             self.log(tr("Fixer Gigs: nächste fertig in {minutes} Min.", minutes=int(min(times) // 60) + 1))
+        else:
+            self.gigs_next = time.monotonic() + 20 * 60      # Zeiten nicht lesbar: kürzester Gig dauert 20 Min.
         self._close_any()
 
     @staticmethod
@@ -720,8 +794,9 @@ class Navigator:
         norm = [(re.sub(r"[^a-z]", "", w.lower()), b) for w, b in words]
         return next((b for w, b in norm if w in ("send", "sendpets")), None)
 
-    def _send_pets(self) -> None:
-        """Pets-Fenster nach „Send Pets“: ganz nach unten scrollen, die letzten GIGS_PETS Pets anklicken, bestätigen.
+    def _send_pets(self, nth: int = 1) -> None:
+        """Pets-Fenster nach „Send Pets“: ganz nach unten scrollen, EIN Pet anklicken – beim n-ten Gig das n-te von
+        hinten (also reihum eins der letzten GIGS_PETS, egal welches) –, bestätigen.
         Unbekannte Schritte werden protokolliert und als Bild gespeichert (debug/makro_gigs_*.jpg)."""
         roi, frame = self._window_area({"name": "Pets"})
         x0, y0, x1, y1 = roi
@@ -744,10 +819,10 @@ class Navigator:
             self._snap("gigs_pets")
             self._close_any_quiet()
             return
-        for box in tiles[-GIGS_PETS:]:
-            self._click_roi(box)
-            time.sleep(0.4)
-        self.log(tr("{count} Pets ausgewählt.", count=min(GIGS_PETS, len(tiles))))
+        box = tiles[-min(nth, len(tiles))]
+        self._click_roi(box)
+        time.sleep(0.4)
+        self.log(tr("Pet Nr. {n} von hinten ausgewählt.", n=min(nth, len(tiles))))
         words, _roi = self._words()
         confirm = self._find(words, "send", "confirm", "done", "select", "ok", "start")
         if confirm is None:
@@ -768,7 +843,11 @@ class Navigator:
         _ACTIVE.clear()
         try:
             end = time.monotonic() + max(0.0, seconds)
+            next_check = time.monotonic() + 5
             while time.monotonic() < end:
+                if time.monotonic() >= next_check:
+                    next_check = time.monotonic() + 5
+                    self._extras_while_waiting()
                 if self._halt.wait(0.25):
                     raise UserStop(tr("Gestoppt."))
                 if ctypes.windll.user32.GetAsyncKeyState(0x1B) & 0x8000:

@@ -82,8 +82,8 @@ class AutomationCard(Card):
 
         self.log = QListWidget()
         smooth(self.log)
-        theme.track_fixed_height(self.log, 58)
-        self.body.addWidget(self.log)
+        theme.track_min_height(self.log, 58)               # wächst mit der Spalte (Startseite = Makro)
+        self.body.addWidget(self.log, 1)
         if not self.map.entries:
             self.body.addWidget(label(tr("Keine Oberflächen-Karte vorhanden."), "muted"))
         self._update()
@@ -137,6 +137,8 @@ class AutomationCard(Card):
             self.navigator.start_monitoring = lambda: self.main.post(
                 lambda: None if engine.running else self.main.toggle_monitoring())
             self.navigator.set_raid = lambda target: self.main.post(lambda: self._set_raid(target))
+            self.navigator.auto_gigs = lambda: bool(s.auto_gigs)        # Schalter „Automatisch abholen“
+            self.navigator.auto_guild = lambda: bool(s.auto_guild)
         return self.navigator
 
     def _set_raid(self, target: str) -> None:
