@@ -1062,17 +1062,29 @@ class Navigator:
         x0, y0, x1, y1 = roi
         grid = [x0 + 0.06 * (x1 - x0), y0 + 0.30 * (y1 - y0), x0 + 0.94 * (x1 - x0), y0 + 0.86 * (y1 - y0)]
         center = ((grid[0] + grid[2]) / 2, (grid[1] + grid[3]) / 2)
-        last = None
-        for _ in range(25):                               # bis die Liste unten steht
+        # bis die Liste unten steht: „unten“ = der Inhalt verschiebt sich nicht mehr (Phasenkorrelation). Der reine
+        # Bildvergleich lief bei animierten Pets endlos weiter, wenn die Liste schon unten war (2. Gig, Eigentümer)
+        from .explorer import scrolled_box
+
+        def grid_img() -> tuple[np.ndarray, np.ndarray]:
+            f = self._frame()
+            fh, fw = f.shape[:2]
+            crop = f[int(grid[1] * fh):int(grid[3] * fh), int(grid[0] * fw):int(grid[2] * fw)]
+            return f, cv2.resize(cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY), (480, 270), interpolation=cv2.INTER_AREA)
+
+        frame, last = grid_img()
+        still = 0
+        for _ in range(25):
             self._wheel(center, -SCROLL_NOTCHES)
             time.sleep(0.35)
-            frame = self._frame()
-            fh, fw = frame.shape[:2]
-            small = cv2.resize(frame[int(grid[1] * fh):int(grid[3] * fh), int(grid[0] * fw):int(grid[2] * fw)],
-                               (96, 48), interpolation=cv2.INTER_AREA)
-            if last is not None and float(cv2.absdiff(small, last).mean()) < 2.0:
-                break
-            last = small
+            frame, now = grid_img()
+            if scrolled_box(last, now) is None:
+                still += 1
+                if still >= 2:
+                    break                                 # zweimal nichts verschoben: unten angekommen
+            else:
+                still = 0
+            last = now
         tiles = self._pet_tiles(frame, grid)
         if not tiles:
             self.log(tr("Keine Pets im Fenster erkannt."))
