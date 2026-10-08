@@ -40,6 +40,7 @@ PROBE_NOTCHES = 2         # Mausrad-Rasten je Probe; ohne Wirkung sofort zurück
 PROBE_MAX = 4             # höchstens so viele Probe-Stellen je Seite (vorher 9 – zu langsam, brachte wenig)
 NO_SCROLL_CATS = ("raid", "defense", "artefact", "info", "later", "shrine", "pets", "titans", "equip_best")
 SCROLL_STOP = ("completed",)   # Eigentümer: Quests mit großem lila „Completed“ und alles darunter ist unwichtig
+EMPTY_SLOTS = {3: (8,), 9: (8,)}   # Eigentümer 08.10.2026: W3 und W9 haben keinen Platz 8 (Rand des TELEPORT!-Knopfs)
 
 
 class TimeUp(Exception):
@@ -189,6 +190,7 @@ class Explorer:
         return f"W{prev + 1} {read}" if prev is not None else f"W? {read}"
 
     def _unknown_slots(self, known: Optional[dict], img: np.ndarray, slots: vision.SlotLayout, world: str):
+        empty = EMPTY_SLOTS.get(world_number(world) or -1, ())
         """Belegte Plätze ohne bekanntes Fenster (bei neuen Welten: alle) – ohne „nicht drücken“-Symbole."""
         found = slots.slots(img)
         done = set()                                      # Bekannte Fenster nur erneut, wenn es Probleme gab (unbekannt)
@@ -205,7 +207,7 @@ class Explorer:
         out = []
         h, w = img.shape[:2]
         for i, rel in found:
-            if i in done:
+            if i in done or i + 1 in empty:
                 continue
             crop = img[int(rel[1] * h):int(rel[3] * h), int(rel[0] * w):int(rel[2] * w)]
             if any(vision.same_icon(crop, a) >= AVOID_HIT for a in self.avoid):
@@ -249,6 +251,12 @@ class Explorer:
         before = nav._frame()
         nav._click_rel(box, rel)
         seen = self._observe(before)
+        if seen is None:                                   # zweiter Blick: kleinere Fenster (Mana Contract) werden
+            time.sleep(1.0)                                # während Animationen/Meldungen manchmal knapp verfehlt
+            frame = nav._frame()
+            state = nav._menu.state(frame, nav._ocr)
+            if state is not None and state[1] and not nav._menu.is_base(state[1]):
+                seen = ("menu", state[0], state[1], frame, None)
         if seen is None:
             self.report["skipped"].append(f"{world} · Platz {index + 1}: nichts geöffnet")
             self._snap(f"nichts_{world}_{index + 1}", before, nav._frame())

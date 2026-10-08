@@ -128,7 +128,7 @@ class MenuFrame:
         ax0, ay0 = int(X_WIDE[0] * fw), int(X_WIDE[1] * fh)
         area = frame[ay0:int(X_WIDE[3] * fh), ax0:int(X_WIDE[2] * fw)]
         best = (0.0, 1.0, (0, 0), tpl.shape[:2])
-        for s in (0.8, 0.9, 1.0, 1.1, 1.2, 1.3):         # kleinere Menüs … Gilde (1,2× so groß)
+        for s in (0.8, 0.85, 0.9, 0.95, 1.0, 1.1, 1.2, 1.3):   # kleinere Menüs (Mana Contract) … Gilde (1,2×)
             t = _scaled(tpl, s)
             if area.shape[0] < t.shape[0] or area.shape[1] < t.shape[1]:
                 continue

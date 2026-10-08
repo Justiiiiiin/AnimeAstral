@@ -10,6 +10,8 @@ Der Abschnitt einer Version wird beim Veröffentlichen automatisch als Versionsh
 - Erkunden: Weltnamen trotz Lesefehlern erkannt („2 City“ = „Z City“)
 - Erkunden: Zeile wird in beide Richtungen gesucht, keine Welt übersprungen
 - Erkunden erkennt auch seitlich scrollbare Listen
+- Kleinere Fenster (Mana Contract) werden sicherer erkannt
+- W3/W9: leerer Platz 8 wird nicht mehr angeklickt
 
 ## 0.9.9-beta.9
 
