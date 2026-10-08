@@ -9,6 +9,17 @@ und Knöpfe benennen. Abgeleitet aus echten Aufnahmen des Eigentümers (07.10.20
 - Upgrade Tree: ganzer Bildschirm, „Total Stats:“, „Leveling Token“, roter „Close“-Knopf.
 - Artefakt (z. B. Elixir of Life): ganzer Bildschirm, „fragments“, „artifact“, „Boosts“, „Progress Level“, „Exit“.
 - Auto-Roll läuft im Hintergrund weiter: Fenster nach „Auto“ sofort schließen.
+
+Nachgetragen nach dem zweiten Erkunden (Eigentümer, 08.10.2026):
+- Raids/Defense/Boss Rush: der eigentliche Name steht groß in Rot/Orange unter dem Banner („Holy Grail War“).
+  Manche haben Schwierigkeiten oben rechts im Fenster: W17-Raid 3 Stufen; Cursed Rush → „King of Curses Rush“ erst
+  wählbar, wenn man darunter 10 Finger (aus der ersten Stufe) gesammelt hat.
+- Shrines (Goddess, Otsutsuki, Demon King): Währung „opfern“ (10–100 %) für Boosts.
+- Passives (Pet/Titan/Shadow Passives, Acc. Curses): je ein eigenes System, Index/Roll/Auto.
+- Fixer Gigs (W21): Aufträge 20 Min./1 Std./3 Std., „Claim“ → „Send Pets“ (Pets-Fenster, letzte Pets wählen).
+- Nur Anzeige, für das Makro ohne Nutzen: Spirit Contract, Chakra Training, Karma, Vessel, Celestial Keys,
+  Dragon Slayer, Commandments; Renaming bleibt dem Spieler überlassen.
+- Später (1.5.0): Ninja Exam, Cyberdeck/Quickhacks, Sins Upgrade Tree.
 """
 from __future__ import annotations
 
@@ -33,7 +44,12 @@ CATEGORIES: dict[str, tuple[str, tuple[str, ...], tuple[str, ...]]] = {
     "raid": (N_("Raid"), ("raid",), ("raid", "start", "difficulty", "create", "join", "enter")),
     "defense": (N_("Defense"), ("defense",), ("defense", "mode", "wave", "start")),
     "exchange": (N_("Tausch"), ("exchange",), ("exchange", "trade", "token")),
-    "passive": (N_("Passiv"), ("passive", "passives"), ("passive", "reroll", "lock")),
+    "passive": (N_("Passiv"), ("passive", "passives", "curse", "curses"), ("passive", "reroll", "lock", "index")),
+    "shrine": (N_("Shrine (opfern)"), ("shrine",), ("offered", "offer", "quantity", "coins", "choose")),
+    "gigs": (N_("Fixer Gigs"), ("gigs", "fixer"), ("gigs", "claim", "finish", "slots", "ready", "send")),
+    "info": (N_("Nur Anzeige"), ("spirit", "contract", "chakra", "karma", "vessel", "celestial", "keys", "dragon",
+                                 "slayer", "commandments", "renaming"), ()),
+    "later": (N_("Später (1.5.0)"), ("exam", "cyberdeck", "quickhacks"), ()),
     "equip_best": (N_("Equip Best"), ("equip",), ("equip", "best", "power", "damage", "yen", "luck", "drop")),
     "guild": (N_("Gilde"), ("guild",), ("guild", "members", "claim", "rewards", "quests", "donate")),
     # aus dem ersten echten Erkunden (07.10.2026): Knöpfe am Bildschirmrand und weitere Welt-Symbole
@@ -61,11 +77,13 @@ class Analysis:
     matched: list[str] = field(default_factory=list)
     buttons: list[tuple[str, list[float]]] = field(default_factory=list)   # (Wort, Lage im Roblox-Fenster)
     title: str = ""
+    mode: str = ""                                    # Banner-Titel, wenn darunter ein eigener Name steht („Raid“)
 
     def as_dict(self) -> dict:
         return {"category": self.category, "label": self.label, "score": round(self.score, 2),
                 "matched": self.matched, "buttons": [{"text": t, "roi": [round(v, 4) for v in r]}
-                                                     for t, r in self.buttons], "title": self.title}
+                                                     for t, r in self.buttons], "title": self.title,
+                **({"mode": self.mode} if self.mode else {})}
 
 
 def _norm(text: str) -> str:
@@ -78,19 +96,24 @@ def classify(title: str, words: list[tuple[str, list[float]]], template: str = "
     joined = " ".join(tokens)
     if "auto" in tokens and "roll" in tokens:
         tokens.append("autoroll")
-    title_tokens = {_norm(t) for t in re.split(r"\s+", title) if _norm(t)}
+    title_tokens = {_norm(t) for t in re.split(r"[\s/]+", title) if _norm(t)}
     best = Analysis(title=title)
     if template and "pets" in template.lower():
         best = Analysis("pets", tr(CATEGORIES["pets"][0]), 10.0, ["template"], title=title)
     else:
         for key, (label, title_words, text_words) in CATEGORIES.items():
-            hit_title = [w for w in title_words if any(w in t for t in title_tokens)]
+            # Titel-Wörter nur am Wortanfang („Magecraft“ ist kein Crafting, „Street“ kein Tree)
+            hit_title = [w for w in title_words if any(t.startswith(w) for t in title_tokens)]
             hit_text = sorted({w for w in text_words if w in tokens or (len(w) > 4 and w in joined)})
             score = 6.0 * len(hit_title) + len(hit_text)       # der Titel zählt viel mehr als Wörter im Fenster
             if key in ("equip_best", "guild") and not hit_title:
                 continue                                  # nur mit passendem Titel (Shops zeigen auch Power, Yen …)
             if key == "titans" and "buffs" in tokens:
                 score -= 2                                 # Gachas haben Buffs, Titans nicht
+            if key in ("titans", "pets") and {"passive", "passives"} & title_tokens:
+                score -= 6                                 # „Titan Passives“ ist ein Passiv-Fenster
+            if key == "progression" and hit_title:
+                score += 1                                 # „… Progression“ im Titel geht vor Wörtern im Fenster
             if key == "gacha" and ("titan" in joined or "pets" in title_tokens):
                 score -= 3
             if score > best.score:

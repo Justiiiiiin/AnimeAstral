@@ -4,6 +4,18 @@ Neueste Version oben. Kurze Stichpunkte, keine Erklärungen (die stehen im Progr
 Der Abschnitt einer Version wird beim Veröffentlichen automatisch als Versionshinweis übernommen
 (`tools/release_notes.py`) und ist im Programm unter Einstellungen → Updates → „Alle Versionen“ lesbar.
 
+## 0.9.7-beta.3
+
+### 🔧 Verbessert
+- Erkunden klickt keine leeren Plätze hinter dem letzten Symbol
+- Kleinere Fenster werden erkannt (Passives, Equip Best …)
+- Graue oder helle Fenstertitel werden besser gelesen
+- Raids heißen nach ihrem Namen („Holy Grail War“ statt „Raid“)
+- Neu eingeordnet: Shrines, Passives, Fixer Gigs, Nur Anzeige
+- „Magecraft Progression“ ist kein Crafting mehr
+- Plätze ohne Fenster werden gemerkt und nicht erneut geklickt
+- Erkunden: Standard 10 Minuten, höchstens 30
+
 ## 0.9.7-beta.2
 
 ### ✨ Neu (Beta)

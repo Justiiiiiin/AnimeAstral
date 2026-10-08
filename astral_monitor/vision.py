@@ -15,6 +15,8 @@ from .uimap import UiMap
 ROW_HIT = 0.85        # Herz-Merkmal links oben in jeder Zeile: echte Zeilen 0,98–1,0, anderes ≤ 0,6
 BOTTOM_HIT = 0.60     # unterer Zeilenrand vorhanden (sonst am Listenrand abgeschnitten)
 X_HIT = 0.85          # inneres X eines Menüs: andere Menüs 0,96, Teleporter 1,0
+X_WIDE_HIT = 0.78     # kleinere Fenster (X weiter links/unten, etwas kleiner): gemessen 0,80–0,89
+X_WIDE = (0.45, 0.08, 0.92, 0.55)    # Suchbereich dafür im Roblox-Fenster
 MARKER_HIT = 0.80     # Erkennungsmerkmal eines Sonder-Menüs
 BAND = (0.03, 0.55, 0.22)   # Titel-Banner im Menürahmen: x von, x bis, y bis
 
@@ -103,13 +105,40 @@ class MenuFrame:
             return None
         _a, score, _b, (lx, ly) = cv2.minMaxLoc(cv2.matchTemplate(region, tpl, cv2.TM_CCOEFF_NORMED))
         if score < X_HIT:
-            return None
+            return self._state_wide(frame, ocr, tpl)
         dx, dy = (rx + lx - ex) / fw, (ry + ly - ey) / fh
         x0, y0, x1, y1 = self.roi
         roi = [min(1.0, max(0.0, v)) for v in (x0 + dx, y0 + dy, x1 + dx, y1 + dy)]
         crop = frame[int(roi[1] * fh):int(roi[3] * fh), int(roi[0] * fw):int(roi[2] * fw)]
         x_center = (self.x_at[0] + dx + self.x_size[0] / 2, self.x_at[1] + dy + self.x_size[1] / 2)
-        return roi, read_title(crop, ocr), x_center
+        return roi, read_title(crop, ocr) or read_title_loose(crop, ocr), x_center
+
+    def _state_wide(self, frame: np.ndarray, ocr, tpl: np.ndarray):
+        """Kleineres Fenster (Acc. Curses, Titan Passives, Equip Best …): X woanders und etwas kleiner. Lage des
+        Fensters geschätzt: oben rechts am X, waagerecht mittig wie alle Menüs, Größe im Verhältnis."""
+        fh, fw = frame.shape[:2]
+        ax0, ay0 = int(X_WIDE[0] * fw), int(X_WIDE[1] * fh)
+        area = frame[ay0:int(X_WIDE[3] * fh), ax0:int(X_WIDE[2] * fw)]
+        best = (0.0, 1.0, (0, 0), tpl.shape[:2])
+        for s in (0.8, 0.9, 1.0):
+            t = _scaled(tpl, s)
+            if area.shape[0] < t.shape[0] or area.shape[1] < t.shape[1]:
+                continue
+            _a, score, _b, loc = cv2.minMaxLoc(cv2.matchTemplate(area, t, cv2.TM_CCOEFF_NORMED))
+            if score > best[0]:
+                best = (score, s, loc, t.shape[:2])
+        score, s, (lx, ly), (th, tw) = best
+        if score < X_WIDE_HIT:
+            return None
+        cx, cy = (ax0 + lx + tw / 2) / fw, (ay0 + ly + th / 2) / fh
+        x0, y0, x1, y1 = self.roi
+        std_cx, std_cy = self.x_at[0] + self.x_size[0] / 2, self.x_at[1] + self.x_size[1] / 2
+        mid = (x0 + x1) / 2
+        right = cx + (x1 - std_cx) * s
+        top = cy - (std_cy - y0) * s
+        roi = [max(0.0, 2 * mid - right), max(0.0, top), min(1.0, right), min(1.0, top + (y1 - y0) * s)]
+        crop = frame[int(roi[1] * fh):int(roi[3] * fh), int(roi[0] * fw):int(roi[2] * fw)]
+        return roi, read_title(crop, ocr) or read_title_loose(crop, ocr), (cx, cy)
 
     def is_base(self, title: str) -> bool:
         return bool(title) and same_title(title, self.base_title)
@@ -156,6 +185,74 @@ def read_title(window_img: np.ndarray, ocr) -> str:
     crop = cv2.resize(crop, None, fx=f, fy=f, interpolation=cv2.INTER_AREA)
     crop = cv2.copyMakeBorder(crop, 20, 20, 20, 20, cv2.BORDER_CONSTANT, value=255)
     text = re.sub(r"^[^A-Za-z0-9]+|[^A-Za-z0-9!?)]+$", "", ocr.line(crop, psm=7)).strip()
+    return text[:1].upper() + text[1:]
+
+
+def read_title_loose(window_img: np.ndarray, ocr) -> str:
+    """Ersatz, wenn read_title nichts findet (Titel grau statt weiß, heller Banner): Banner leicht gedreht und mit
+    zwei Schwellen lesen, längstes Ergebnis nehmen (gemessen: Commandments, Kagune Upgrade, Goddess Shrine …)."""
+    if ocr is None:
+        return ""
+    h, w = window_img.shape[:2]
+    band = window_img[0:int(BAND[2] * h), int(BAND[0] * w):int(BAND[1] * w)]
+    if band.size == 0:
+        return ""
+    gray = cv2.cvtColor(band, cv2.COLOR_BGR2GRAY)
+    best = ""
+    for angle in (-4, 0, 4):
+        m = cv2.getRotationMatrix2D((gray.shape[1] / 2, gray.shape[0] / 2), angle, 1)
+        turned = cv2.warpAffine(gray, m, (gray.shape[1], gray.shape[0]), borderMode=cv2.BORDER_REPLICATE)
+        for limit in (200, 160):
+            binary = cv2.threshold(turned, limit, 255, cv2.THRESH_BINARY_INV)[1]
+            try:
+                words = ocr.words(binary, psm=11)
+            except Exception:  # noqa: BLE001 – Lesefehler: anderer Versuch
+                continue
+            good = [wd for wd in sorted(words, key=lambda wd: wd.x)
+                    if wd.conf >= 60 and len(re.sub(r"[^A-Za-z]", "", wd.text)) >= 3]
+            text = " ".join(re.sub(r"[^A-Za-z0-9!? ]", " ", wd.text).strip() for wd in good)
+            if len(text) > len(best):
+                best = text
+    return re.sub(r"\s+", " ", best).strip()
+
+
+def read_name_below_banner(window_img: np.ndarray, ocr) -> str:
+    """Großer roter/oranger Name unter dem Banner (Raids: „Holy Grail War“, Boss Rush: „Zaban Rush!“) – sonst leer.
+    Die farbige Textzeile wird über die Zeilensummen gefunden, ausgeschnitten und als eine Zeile gelesen."""
+    if ocr is None:
+        return ""
+    h, w = window_img.shape[:2]
+    area = window_img[int(0.22 * h):int(0.40 * h), int(0.07 * w):int(0.58 * w)]
+    if area.size == 0:
+        return ""
+    hsv = cv2.cvtColor(area, cv2.COLOR_BGR2HSV)               # Rot (Raid) oder Orange (Boss Rush)
+    mask = (((hsv[..., 0] < 22) | (hsv[..., 0] > 165)) & (hsv[..., 1] > 120) & (hsv[..., 2] > 150)).astype(np.uint8)
+    rows = mask.sum(axis=1)
+    on = list(rows > max(3, 0.02 * mask.shape[1])) + [False]
+    best, start = (0, 0, 0), None
+    for i, v in enumerate(on):
+        if v and start is None:
+            start = i
+        elif not v and start is not None:
+            if rows[start:i].sum() > best[0]:
+                best = (int(rows[start:i].sum()), start, i)
+            start = None
+    _total, y0, y1 = best
+    if y1 - y0 < 6:
+        return ""
+    cols = np.where(mask[y0:y1].any(axis=0))[0]
+    x0, x1 = int(cols.min()), int(cols.max())
+    crop = 255 - mask[max(0, y0 - 4):y1 + 4, max(0, x0 - 4):x1 + 5] * 255
+    f = 48 / max(1, y1 - y0)
+    crop = cv2.resize(crop, None, fx=f, fy=f, interpolation=cv2.INTER_CUBIC)
+    crop = cv2.copyMakeBorder(crop, 20, 20, 20, 20, cv2.BORDER_CONSTANT, value=255)
+    try:
+        text = ocr.line(crop, psm=7)
+    except Exception:  # noqa: BLE001
+        return ""
+    text = re.sub(r"^[^A-Za-z0-9]+|[^A-Za-z0-9!?)]+$", "", text).strip()
+    if len(re.sub(r"[^A-Za-z]", "", text)) < 3:
+        return ""
     return text[:1].upper() + text[1:]
 
 
@@ -242,9 +339,10 @@ def find_word(frame: np.ndarray, roi: list[float], ocr, *wanted: str) -> list[fl
 
 
 class SlotLayout:
-    """Symbol-Plätze einer Welt-Zeile (aus der Vorlage-Zeile der Karte): Abstand, Breite, Höhe; leere Plätze
-    werden am ruhigen Rand erkannt (gemessen: belegt ≥ 31, leer ≤ 21)."""
-    EMPTY_STD = 25.0
+    """Symbol-Plätze einer Welt-Zeile (aus der Vorlage-Zeile der Karte): Abstand, Breite, Höhe. Belegt = scharfe
+    Umrisse (Laplace-Varianz auf 40 × 40, gemessen 08.10.2026: Symbole ≥ 319, Hintergrund hinter dem letzten Symbol
+    ≤ 295, meist < 120). Symbole stehen lückenlos ab Platz 1 – der erste leere Platz beendet die Zeile."""
+    SHARP_MIN = 250.0
 
     def __init__(self, uimap: UiMap, list_window: dict) -> None:
         icons, wide = [], []
@@ -265,6 +363,7 @@ class SlotLayout:
         tops, bottoms = sorted(r[1] for r in icons), sorted(r[3] for r in icons)
         self.y = (tops[len(tops) // 2], bottoms[len(bottoms) // 2])
         end = min((r[0] for r in wide), default=0.78)
+        self.end = end                                    # linker Rand des TELEPORT!-Knopfs
         self.count = int((end - self.x0) / self.pitch) + 1
 
     def slots(self, row_img: np.ndarray) -> list[tuple[int, list[float]]]:
@@ -277,10 +376,11 @@ class SlotLayout:
             crop = row_img[int(rel[1] * h):int(rel[3] * h), int(rel[0] * w):int(rel[2] * w)]
             if crop.size == 0:
                 continue
-            g = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY).astype(np.float32)[:, :max(8, int(crop.shape[1] * 0.6))]
-            ring = np.concatenate([g[2:5, 4:].ravel(), g[-5:-2, 4:].ravel(), g[4:-4, 2:5].ravel()])
-            if float(ring.std()) >= self.EMPTY_STD:
-                out.append((i, [round(v, 4) for v in rel]))
+            # letzter Platz ragt in den TELEPORT!-Knopf: dessen Kante ist auch scharf (~400–550) -> strenger
+            limit = self.SHARP_MIN * (3 if rel[2] > self.end else 1)
+            if sharpness(crop) < limit:
+                break                                     # Ende der Symbole (dahinter nur Hintergrund/Knopf)
+            out.append((i, [round(v, 4) for v in rel]))
         return out
 
     def index_of(self, rel: list[float]) -> int | None:
@@ -288,6 +388,11 @@ class SlotLayout:
             return None
         i = round((rel[0] - self.x0) / self.pitch)
         return i if 0 <= i < self.count else None
+
+
+def sharpness(crop: np.ndarray) -> float:
+    gray = cv2.resize(cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY), (40, 40), interpolation=cv2.INTER_AREA)
+    return float(cv2.Laplacian(gray, cv2.CV_32F).var())
 
 
 def find_multiscale(frame: np.ndarray, tpl: np.ndarray, region: list[float],

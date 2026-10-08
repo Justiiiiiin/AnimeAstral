@@ -172,7 +172,8 @@ class Explorer:
                 if e.get("kind") not in ("Knopf", "Symbol") or not e.get("rel"):
                     continue
                 i = slots.index_of(e["rel"])
-                if i is not None and (self.nav.map_opened(e) or (e.get("extra") or {}).get("avoid")):
+                extra = e.get("extra") or {}
+                if i is not None and (self.nav.map_opened(e) or extra.get("avoid") or extra.get("no_window")):
                     done.add(i)
         out = []
         h, w = img.shape[:2]
@@ -217,6 +218,9 @@ class Explorer:
         if seen is None:
             self.report["skipped"].append(f"{world} · Platz {index + 1}: nichts geöffnet")
             self._snap(f"nichts_{world}_{index + 1}", before, nav._frame())
+            button = self._button_for(world, index, rel, box)
+            if button.get("file", "").startswith("local:"):  # merken: beim nächsten Erkunden nicht erneut klicken
+                button.setdefault("extra", {})["no_window"] = True
             return
         kind, roi, title, frame, template = seen
         analysis = self._analyse(frame, roi, title, template)
@@ -328,9 +332,11 @@ class Explorer:
             state = nav._menu.state(frame, nav._ocr)
             if state is not None:
                 roi, title, _x = state
+                if not title and calm and not nav._rows.find(frame, nav.map.list_windows()[0]["roi"]):
+                    title = "?"                            # Menü offen, Titel nicht lesbar (Teleporter-Zeilen weg)
                 if title and not nav._menu.is_base(title):
                     if last == title:
-                        return "menu", roi, title, frame, None
+                        return "menu", roi, "" if title == "?" else title, frame, None
                     last = title
                     continue
             elif calm and vision_changed(before, frame):
@@ -343,7 +349,14 @@ class Explorer:
 
     def _analyse(self, frame: np.ndarray, roi: list[float], title: str, template) -> knowledge.Analysis:
         words = vision.words_in(frame, roi, self.nav._ocr)
-        return knowledge.classify(title, words, template.window["name"] if template else "")
+        analysis = knowledge.classify(title, words, template.window["name"] if template else "")
+        if analysis.category in ("raid", "defense"):
+            fh, fw = frame.shape[:2]
+            crop = frame[int(roi[1] * fh):int(roi[3] * fh), int(roi[0] * fw):int(roi[2] * fw)]
+            name = vision.read_name_below_banner(crop, self.nav._ocr) if crop.size else ""
+            if name:                                       # „Raid“/„Boss Rush“ -> „Holy Grail War“
+                analysis.mode, analysis.title = analysis.title, name
+        return analysis
 
     def _window_name(self, world: str, analysis: knowledge.Analysis, index: int, button: dict) -> str:
         named = button.get("name", "")
@@ -353,6 +366,8 @@ class Explorer:
                 name = f"{name} Fenster"
             return name
         base = analysis.title or analysis.label or f"Platz {index + 1}"
+        if analysis.category in ("raid", "defense") and analysis.mode:
+            base = analysis.title                          # Raid-Name statt „Raid“
         if analysis.category == "pets":
             base = "Pets-Roll"
         prefix = re.match(r"(W\d+|W\?)\s", world + " ")

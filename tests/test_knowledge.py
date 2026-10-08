@@ -56,6 +56,22 @@ class ClassifyTest(unittest.TestCase):
         self.assertEqual(knowledge.classify("Inventory", W("Rarity", "Key")).category, "inventory")
         self.assertEqual(knowledge.classify("Achievements", W("Claim", "Veteran")).category, "achievements")
 
+    def test_second_run_titles(self):
+        """Aus dem zweiten Erkunden (08.10.2026): Titel-Wörter nur am Wortanfang, neue Fensterarten."""
+        cases = {
+            "Magecraft Progression": ("progression", W("Craft", "Craft", "Auto", "Roll")),
+            "Street cred progression": ("progression", W("Tree", "Token")),
+            "Titan Passives": ("passive", W("Index", "Roll", "Auto", "Titan")),
+            "Acc. Curses": ("passive", W("Index", "Roll", "Auto")),
+            "Goddess Shrine": ("shrine", W("Choose", "quantity", "coins", "offer")),
+            "Fixer Gigs": ("gigs", W("CLAIM", "FINISH", "NOW")),
+            "Chakra Training": ("info", W("Reset")),
+            "Renaming": ("info", W("RENAME")),
+            "NINJA EXAM": ("later", W("BOOSTS", "START", "EXAM")),
+        }
+        for title, (category, words) in cases.items():
+            self.assertEqual(knowledge.classify(title, words).category, category, title)
+
     def test_unknown_and_safety(self):
         self.assertEqual(knowledge.classify("", W("Hello")).category, "unknown")
         for word in ("Roll", "Auto", "Craft", "Buy", "Claim", "Equip"):

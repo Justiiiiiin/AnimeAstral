@@ -1054,4 +1054,8 @@ EN: dict[str, str] = {
     'Avatare': 'Avatars',
     'Event': 'Event',
     'Status neu senden: löscht die Statusnachricht in Discord und sendet sie ganz unten im Chat neu.': 'Resend status: deletes the status message in Discord and posts it again at the bottom of the chat.',
+    'Shrine (opfern)': 'Shrine (offerings)',
+    'Fixer Gigs': 'Fixer Gigs',
+    'Nur Anzeige': 'Display only',
+    'Später (1.5.0)': 'Later (1.5.0)',
 }
