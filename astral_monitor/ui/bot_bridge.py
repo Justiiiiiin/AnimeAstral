@@ -173,7 +173,7 @@ class BotBridge:
             return Reply(tr("Farm-Routine gestartet."))
         if action == "progression":
             nav.progression()
-            return Reply(tr("Progressions: Roll All gestartet."))
+            return Reply(tr("Progressions: Auto All gestartet."))
         if action == "close":
             nav.close_menu()
             return Reply(tr("Menü wird geschlossen."))

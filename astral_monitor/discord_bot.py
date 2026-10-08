@@ -209,7 +209,7 @@ class ControlBot:
         @app_commands.describe(aktion=tr("Was soll das Makro tun?"))
         @app_commands.choices(aktion=[app_commands.Choice(name=tr("Farm-Routine starten"), value="queue"),
                                       app_commands.Choice(name=tr("Stopp"), value="stop"),
-                                      app_commands.Choice(name=tr("Progressions: Roll All"), value="progression"),
+                                      app_commands.Choice(name=tr("Progressions: Auto All"), value="progression"),
                                       app_commands.Choice(name=tr("Menü schließen"), value="close")])
         async def makro(interaction, aktion: app_commands.Choice[str]):
             await run(interaction, "makro", {"action": aktion.value})

@@ -1,5 +1,5 @@
 """Karte „Automatisch abholen“ (Startseite, rechts ganz unten – Quests haben darüber Platz, ohne dass die Karte
-springt): Fixer Gigs und Gilden-Missionen als Schalter, „Progressions: Roll All“ als Knopf für einmal
+springt): Fixer Gigs und Gilden-Missionen als Schalter, „Progressions: Auto All“ als Knopf für einmal
 (Wunsch des Eigentümers 08.10.2026). Das Makro schiebt Fälliges ein: zwischen den Schritten der Farm-Routine,
 während ein Raid farmt oder – läuft nichts – über den Takt dieser Karte. Zeiten: Gigs je Karte gelesen
 (20 Min. / 1 Std. / 3 Std., zufällig), Gilde einmal am Tag; beides überdauert einen Neustart."""
@@ -23,7 +23,7 @@ class ExtrasCard(Card):
                             "(eins der letzten drei). Jede Karte hat ihre eigene Zeit (20 Min., 1 Std. oder 3 Std.) – "
                             "das Makro liest sie und kommt erst wieder, wenn einer fertig ist. „Finish Now“ wird nie "
                             "gedrückt.\n\nGilden-Missionen: einmal am Tag „Personal“ und „Guild Weekly“ abholen.\n\n"
-                            "Progressions: „Roll All“ einmal drücken (gilt für alle Welten).\n\nAlles nur mit "
+                            "Progressions: „Auto All“ einmal drücken (gilt für alle Welten).\n\nAlles nur mit "
                             "„Makro erlauben“ – zwischen den Schritten der Farm-Routine, während ein Raid farmt "
                             "oder für sich allein."))
         self.main = main
@@ -43,8 +43,8 @@ class ExtrasCard(Card):
         grid.addWidget(self.guild, 1, 0)
         grid.addWidget(label(tr("Gilden-Missionen")), 1, 1)
         grid.addWidget(self.guild_state, 1, 2)
-        self.prog = QPushButton(tr("Progressions: Roll All"))
-        self.prog.setToolTip(tr("Einmal ausführen: erste Progression öffnen, „Roll All“ drücken, schließen"))
+        self.prog = QPushButton(tr("Progressions: Auto All"))
+        self.prog.setToolTip(tr("Einmal ausführen: erste Progression öffnen, „Auto All“ drücken, schließen"))
         self.prog.clicked.connect(self._progression)
         self.prog_state = label("", "small")
         grid.addWidget(self.prog, 2, 0, 1, 2)

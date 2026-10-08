@@ -23,6 +23,7 @@ Nachgetragen nach dem zweiten Erkunden (Eigentümer, 08.10.2026):
 """
 from __future__ import annotations
 
+import difflib
 import re
 from dataclasses import dataclass, field
 
@@ -343,3 +344,81 @@ def raid_drops(words: list[tuple[str, list[float]]]) -> list[str]:
 def is_safe_to_click(word: str) -> bool:
     """Beim Erkunden nie auf Aktions-Knöpfe klicken (Roll, Craft, Buy, Claim …)."""
     return _norm(word) not in ACTION_WORDS
+
+
+# ------------------------------------------------------------------ Fenstertitel berichtigen
+# Wörter, die in Fenstertiteln des Spiels vorkommen – Lesefehler werden auf sie gezogen („Cratt“ -> „Craft“).
+GAME_WORDS = ("Craft", "Crafting", "Shrine", "Upgrade", "Upgrades", "Tree", "Raid", "Progression", "Defense", "Mode",
+              "Shop", "Merchant", "Passive", "Passives", "Index", "Battlepass", "Pets", "Roll", "Exchange",
+              "Achievements", "Promotions", "Boosts", "Quests", "Global", "Inventory", "Guild", "Equip", "Best",
+              "Rush", "Boss", "War", "Tower", "Gigs", "Fixer", "Trial", "Upgrade", "Awakening", "Specialization",
+              "Ranks", "Avatars", "Offerings", "Swords", "Sword", "Banner", "Holy", "Grail", "Spirit", "Contract")
+_NOT_TITLE = {"fenster", "platz", "lobby", "vorlage", "knopf"}
+
+
+def _title_words(names) -> list[str]:
+    out: dict[str, str] = {w.lower(): w for w in GAME_WORDS}
+    for name in names:
+        for word in re.findall(r"[A-Za-z][A-Za-z']{2,}", name or ""):
+            if word.lower() not in _NOT_TITLE:
+                out.setdefault(word.lower(), word)
+    return list(out.values())
+
+
+def _clean_name(name: str) -> str:
+    """Bekannter Name ohne Welt, „Fenster“, „(2)“ – und mit berichtigten Spiel-Wörtern (frühere Lesefehler wie
+    „Kagune Upgraid“ sollen nicht als Vorbild dienen)."""
+    name = re.sub(r"^W\d+\s+|\s*·.*$|\s*\(\d+\)$|\s+Fenster$", "", name or "").strip()
+    if name.lower() in _NOT_TITLE:
+        return ""
+    out = []
+    for word in name.split():
+        match = difflib.get_close_matches(word, GAME_WORDS, n=1, cutoff=0.85)
+        out.append(match[0] if match and word.lower() != match[0].lower() else word)
+    return " ".join(out)
+
+
+def _fix_word(word: str, vocab: list[str], last: bool) -> tuple[str, bool]:
+    """Ein Wort berichtigen. Rückgabe: (Wort, bekannt). Nur echte Lesefehler: ähnlich (≥ 0,8) und fast gleich lang –
+    „Cratt“ -> „Craft“, „Worsutsuki“ -> „Otsutsuki“; am Zeilenende auch abgeschnittene Wörter („Shrin“ -> „Shrine“).
+    Richtige Wörter bleiben, auch Einzahl/Mehrzahl („Pet“, „Fruit“) und Großschreibung („NINJA EXAM“)."""
+    core = re.sub(r"[^A-Za-z']", "", word)
+    low = core.lower()
+    lows = {v.lower() for v in vocab}
+    if len(core) < 3 or low in lows:
+        return word, low in lows
+    best, score = "", 0.0
+    for v in vocab:                                       # Spiel-Wörter zuerst: bei Gleichstand gewinnen sie
+        vl = v.lower()
+        if vl in (low + "s", low + "es") or low in (vl + "s", vl + "es"):
+            continue                                      # Mehrzahl ist kein Lesefehler
+        r = difflib.SequenceMatcher(None, low, vl).ratio()
+        ok = r >= 0.8 and abs(len(vl) - len(low)) <= max(1, len(low) // 5)
+        if last and len(low) >= 4 and vl.startswith(low) and len(vl) - len(low) <= 3:
+            ok, r = True, r + 0.15                         # abgeschnitten: das vollständige Wort bevorzugen
+        if ok and r > score:
+            best, score = v, r
+    if not best:
+        return word, False
+    return (best.upper() if core.isupper() and len(core) > 1 else best), True
+
+
+def fix_title(text: str, names) -> str:
+    """Gelesenen Titel berichtigen, damit Fenster so heißen wie im Spiel (Eigentümer 08.10.2026): Wort für Wort auf
+    bekannte Wörter ziehen („Worsutsuki Shrin“ -> „Otsutsuki Shrine“, „Cratt Genos“ -> „Craft Genos“), kurze Reste
+    am Rand weglassen („AK Kagune Upgra“ -> „Kagune Upgrade“). Ganze Namen werden nicht ersetzt (sonst würde aus
+    „Fire Progression“ „Ki Progression“). names: bekannte Fensternamen (Karte, Berichte, Funde prüfen)."""
+    text = (text or "").strip()
+    if not text:
+        return ""
+    known = [n for n in (_clean_name(n) for n in names) if n]
+    vocab = _title_words(known)
+    lows = {v.lower() for v in vocab}
+    words = text.split()
+    while len(words) > 1 and re.fullmatch(r"[A-Za-z]{1,2}", words[0]) and words[0].lower() not in lows:
+        words.pop(0)                                      # Rest vom Banner-Rand („AK“)
+    while len(words) > 1 and re.fullmatch(r"[A-Za-z]{1,2}", words[-1]) and words[-1].lower() not in lows:
+        words.pop()
+    fixed = [_fix_word(word, vocab, i == len(words) - 1)[0] for i, word in enumerate(words)]
+    out = " ".join(fixed)
+    return out[:1].upper() + out[1:]

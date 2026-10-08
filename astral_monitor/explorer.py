@@ -374,7 +374,25 @@ class Explorer:
             time.sleep(0.25)
         return None
 
+    def _titles(self) -> list[str]:
+        """Bekannte Fensternamen (Karte, frühere Berichte, eigene Namen aus Funde prüfen) – Vorbild für fix_title."""
+        if getattr(self, "_title_cache", None) is None:
+            names = [e["name"] for e in self.nav.map.entries if e.get("kind") != "Knopf"]
+            seen: dict[str, int] = {}                     # Titel aus Berichten nur, wenn mehrmals gleich gelesen
+            for report in (self.data_dir / "explore").glob("2*/report.json"):
+                try:
+                    data = json.loads(report.read_text(encoding="utf-8"))
+                except (OSError, ValueError):
+                    continue
+                for title in {w.get("title") or "" for world in data.get("worlds", []) for w in world.get("windows", [])}:
+                    seen[title] = seen.get(title, 0) + 1
+            names += [n for n, c in seen.items() if c >= 2]
+            names += [e.get("display") or "" for e in review.load(self.data_dir).values()]
+            self._title_cache = [n for n in names if n]
+        return self._title_cache
+
     def _analyse(self, frame: np.ndarray, roi: list[float], title: str, template) -> knowledge.Analysis:
+        title = knowledge.fix_title(title, self._titles())   # „Cratt Genos“ -> „Craft Genos“
         words = vision.words_in(frame, roi, self.nav._ocr)
         analysis = knowledge.classify(title, words, template.window["name"] if template else "")
         analysis.words = words                              # für Claim-Suche wiederverwenden (OCR ~150 ms)
@@ -384,7 +402,7 @@ class Explorer:
             crop = frame[int(roi[1] * fh):int(roi[3] * fh), int(roi[0] * fw):int(roi[2] * fw)]
             name = vision.read_name_below_banner(crop, self.nav._ocr) if crop.size else ""
             if name:                                       # „Raid“/„Boss Rush“ -> „Holy Grail War“
-                analysis.mode, analysis.title = analysis.title, name
+                analysis.mode, analysis.title = analysis.title, knowledge.fix_title(name, self._titles())
         return analysis
 
     def _needs_visit(self, button: dict, hud: bool = False) -> bool:

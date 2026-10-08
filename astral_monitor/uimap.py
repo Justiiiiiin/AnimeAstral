@@ -156,7 +156,7 @@ class UiMap:
 
     def sorted_targets(self) -> list[tuple[str, str]]:
         """Ziele für Makro und Warteschlange, nach Welt sortiert („Lobby · …“, „W1 · …“ …, danach die Knöpfe am
-        Rand). Progressions nur einmal (die erste): dort gibt es „Roll All“ für alle (Eigentümer 08.10.2026).
+        Rand). Progressions nur einmal (die erste): dort gibt es „Auto All“ für alle (Eigentümer 08.10.2026).
         Rückgabe: (Anzeige, Fenstername)."""
         rows = []
         progression_seen = False
@@ -185,7 +185,7 @@ class UiMap:
         return out
 
     def first_progression(self) -> Optional[dict]:
-        """Erstes Progression-Fenster (niedrigste Welt) – „Roll All“ gilt dort für alle Progressions."""
+        """Erstes Progression-Fenster (niedrigste Welt) – „Auto All“ gilt dort für alle Progressions."""
         for _label, name in self.sorted_targets():
             w = self.container(name)
             if w is not None and ((w.get("extra") or {}).get("category") == "progression"

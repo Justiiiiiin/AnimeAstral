@@ -173,3 +173,20 @@ class SlotLayoutTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class FixTitleTest(unittest.TestCase):
+    def test_fix_title(self):
+        from astral_monitor.knowledge import fix_title
+        names = ["Otsutsuki Shrine", "Kagune Upgraid Fenster", "W13 Genos", "Index Fenster", "Fire Progression",
+                 "Ki Evolution", "Flame Core", "Pets Passives"]
+        self.assertEqual(fix_title("Worsutsuki Shrin", names), "Otsutsuki Shrine")
+        self.assertEqual(fix_title("Cratt Genos", names), "Craft Genos")
+        self.assertEqual(fix_title("AK Kagune Upgra", names), "Kagune Upgrade")
+        self.assertEqual(fix_title("Ndex", names), "Index")
+        # richtige Titel bleiben, wie sie sind (Einzahl/Mehrzahl, Großschreibung, ähnliche Namen)
+        self.assertEqual(fix_title("Fire Progression", names), "Fire Progression")
+        self.assertEqual(fix_title("Lion Progression", names), "Lion Progression")
+        self.assertEqual(fix_title("FLAME CORES", names), "FLAME CORES")
+        self.assertEqual(fix_title("Pet Passives", names), "Pet Passives")
+        self.assertEqual(fix_title("Sword Banner 3", names), "Sword Banner 3")

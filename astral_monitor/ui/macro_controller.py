@@ -137,7 +137,7 @@ class MacroController(QObject):
         return self.ensure_navigator().run_queue(tasks, loop)
 
     def run_progression(self) -> bool:
-        """Einmal „Roll All“ im ersten Progression-Fenster (gilt für alle Progressions)."""
+        """Einmal „Auto All“ im ersten Progression-Fenster (gilt für alle Progressions)."""
         if not self._ready():
             return False
         return self.ensure_navigator().progression()

@@ -73,7 +73,7 @@ def task_label(task: dict) -> str:
             text += " · " + tr("Leave ab Welle {wave}", wave=int(task["leave_wave"]))
         return text + (" · " + tr("beitreten") if task.get("join") else "")
     if kind == "progression":
-        return tr("Progressions: Roll All")
+        return tr("Progressions: Auto All")
     if kind == "gigs":
         return tr("Fixer Gigs abholen")
     if kind == "guild_claim":
@@ -400,16 +400,16 @@ class Navigator:
                           lambda: Explorer(self, minutes, data_dir, full=revisit).run())
 
     def progression(self) -> bool:
-        return self.start(tr("Progressions: Roll All"), self._progression)
+        return self.start(tr("Progressions: Auto All"), self._progression)
 
     def _progression(self) -> None:
-        """Erstes Progression-Fenster öffnen, „Roll All“ drücken, schließen – gilt für alle Progressions."""
+        """Erstes Progression-Fenster öffnen, „Auto All“ drücken, schließen – gilt für alle Progressions."""
         window = self.map.first_progression()
         if window is None:
             raise Stop(tr("Kein Progression-Fenster in der Karte (einmal Erkunden laufen lassen)."))
         self._open(window)
         try:
-            self._press(window, ("roll", "all"), ("rollall",))
+            self._press(window, ("auto", "all"), ("autoall",))
         except Stop:
             self._snap("progression")                     # Bild für die Fehlersuche (debug/makro_progression_*.jpg)
             raise
@@ -514,7 +514,7 @@ class Navigator:
         for label in labels:
             for i, (w, box) in enumerate(norm):
                 if w != label[0] and not (len(label[0]) >= 5 and len(label) == 1 and
-                                          difflib.SequenceMatcher(None, w, label[0]).ratio() >= 0.8):
+                                          difflib.SequenceMatcher(None, w, label[0]).ratio() >= 0.85):
                     continue                              # kleine Lesefehler erlaubt („Persona1“ für „Personal“)
                 boxes = [box]
                 for part in label[1:]:                    # nächstes Wort rechts daneben, gleiche Zeile

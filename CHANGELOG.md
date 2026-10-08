@@ -4,6 +4,12 @@ Neueste Version oben. Kurze Stichpunkte, keine Erklärungen (die stehen im Progr
 Der Abschnitt einer Version wird beim Veröffentlichen automatisch als Versionshinweis übernommen
 (`tools/release_notes.py`) und ist im Programm unter Einstellungen → Updates → „Alle Versionen“ lesbar.
 
+## Unveröffentlicht
+
+### 🔧 Verbessert
+- Progressions: Makro drückt „Auto All“ (statt „Roll All“)
+- Fensternamen wie im Spiel: Lesefehler berichtigt („Craft Genos“)
+
 ## 0.9.9-beta.8
 
 ### 🔧 Verbessert
