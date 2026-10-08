@@ -1174,4 +1174,5 @@ EN: dict[str, str] = {
     'Überwachung gestartet.': 'Monitoring started.',
     'Überwachung gestoppt.': 'Monitoring stopped.',
     'Überwachung pausieren / fortsetzen': 'Pause / resume monitoring',
+    'Boosts': 'Boosts',
 }

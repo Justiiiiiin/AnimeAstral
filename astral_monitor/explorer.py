@@ -25,7 +25,7 @@ from .automation import Stop
 from .uimap import LOCAL_FILE, ROW, match_row, save_local, world_number
 
 AVOID_HIT = 0.9          # so ähnlich wie ein „nicht drücken“-Symbol = auslassen (gleiche Symbole ~0,99)
-OBSERVE_WAIT = 4.0        # so lange darf ein Fenster nach dem Klick zum Aufgehen brauchen
+OBSERVE_WAIT = 6.5        # so lange darf ein Fenster nach dem Klick zum Aufgehen brauchen (viel Spiel-Last)
 HUD_ORDER = ("Equip Best", "Guild", "Boosts", "G. Quests", "Promotion", "Shop", "Items", "Achiev", "Index", "Pets")
 FULL = [0.0, 0.0, 1.0, 1.0]
 # Fenster, die man gründlich ansieht (Reiter durchklicken, scrollen) – einmal, danach in explore/deep_done.json
@@ -475,16 +475,18 @@ class Explorer:
             analysis.tabs.append(result)
 
     def _scroll_read(self, roi: list[float], words: list) -> tuple[list[str], list[list[float]]]:
-        """Inhalt lesen und scrollbare Bereiche finden: an mehreren Stellen das Mausrad drehen; wo sich etwas bewegt,
-        weiter nach unten lesen, bis nichts mehr kommt, dann wieder nach oben. Gesperrte Stellen werden ausgelassen.
+        """Inhalt lesen und scrollbare Bereiche finden: an mehreren Stellen das Mausrad drehen. Gescrollt hat es nur,
+        wenn sich der Inhalt unter der Maus wirklich senkrecht VERSCHOBEN hat (Phasenkorrelation) – laufende Timer
+        oder Animationen (Boosts, Equip Best) zählen nicht. Dieselbe Liste wird nur einmal durchgelesen.
         Rückgabe: (Textzeilen ohne Doppelte, Stellen, an denen gescrollt werden kann)."""
         nav = self.nav
         lines = knowledge.lines_of(words)
         areas: list[list[float]] = []
+        covered: list[list[float]] = []                   # Bereiche, die schon mitgescrollt sind
         x0, y0, x1, y1 = roi
         for fx, fy in SCROLL_POINTS:
             point = (x0 + fx * (x1 - x0), y0 + fy * (y1 - y0))
-            if knowledge.inside(point, nav.forbidden):
+            if knowledge.inside(point, nav.forbidden) or knowledge.inside(point, covered):
                 continue
             moved = 0
             last = self._content(roi)
@@ -493,10 +495,13 @@ class Explorer:
                 nav._wheel(point, -3)
                 time.sleep(0.5)
                 now = self._content(roi)
-                if float(cv2.absdiff(now, last).mean()) < 3.0:
-                    break                                  # nichts bewegt: nicht scrollbar oder unten angekommen
+                box = scrolled_box(last, now)
+                if box is None:
+                    break                                  # nichts verschoben: nicht scrollbar oder unten angekommen
                 moved += 1
                 last = now
+                covered.append([x0 + box[0] * (x1 - x0), y0 + box[1] * (y1 - y0),
+                                x0 + box[2] * (x1 - x0), y0 + box[3] * (y1 - y0)])
                 for line in knowledge.lines_of(vision.words_in(nav._frame(), roi, nav._ocr)):
                     if line not in lines:
                         lines.append(line)
@@ -511,7 +516,7 @@ class Explorer:
         frame = self.nav._frame()
         fh, fw = frame.shape[:2]
         crop = frame[int(roi[1] * fh):int(roi[3] * fh), int(roi[0] * fw):int(roi[2] * fw)]
-        return cv2.resize(cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY), (160, 90), interpolation=cv2.INTER_AREA)
+        return cv2.resize(cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY), (320, 180), interpolation=cv2.INTER_AREA)
 
     def _window_name(self, world: str, analysis: knowledge.Analysis, index: int, button: dict) -> str:
         named = button.get("name", "")
@@ -578,6 +583,35 @@ class Explorer:
             if box is not None:
                 nav._click_roi(box)
         time.sleep(0.6)
+
+
+def scrolled_box(before: np.ndarray, after: np.ndarray) -> Optional[list[float]]:
+    """Hat sich ein Teil des Fensters senkrecht verschoben (Liste gescrollt)? Raster aus 4 × 3 Feldern: in jedem
+    Feld mit genug Inhalt wird die Verschiebung gemessen (Phasenkorrelation). Gescrollt = mindestens zwei Felder
+    übereinander mit gleicher senkrechter Verschiebung ≥ 3 px und kaum waagerechter. Rückgabe: Bereich der
+    verschobenen Felder (Anteile des Fensters) oder None (nichts verschoben, nur Animation/Timer)."""
+    h, w = before.shape[:2]
+    cols, rows = 4, 3
+    hits = []
+    for r in range(rows):
+        for c in range(cols):
+            ys, ye = r * h // rows, (r + 1) * h // rows
+            xs, xe = c * w // cols, (c + 1) * w // cols
+            a = before[ys:ye, xs:xe].astype(np.float32)
+            b = after[ys:ye, xs:xe].astype(np.float32)
+            if a.std() < 8 or float(cv2.absdiff(a, b).mean()) < 2.0:
+                continue
+            (dx, dy), resp = cv2.phaseCorrelate(a, b)
+            if resp > 0.15 and abs(dy) >= 3 and abs(dx) <= 1.5:
+                hits.append((c, r, round(dy / 3)))
+    for c in range(cols):                                 # Spalte mit mind. 2 Feldern, gleiche Richtung/Größe
+        col = [hit for hit in hits if hit[0] == c]
+        if len(col) >= 2 and len({hit[2] for hit in col}) <= 2:
+            cells = [hit for hit in hits if abs(hit[2] - col[0][2]) <= 1]
+            cs = [hit[0] for hit in cells]
+            rs = [hit[1] for hit in cells]
+            return [min(cs) / cols, min(rs) / rows, (max(cs) + 1) / cols, (max(rs) + 1) / rows]
+    return None
 
 
 def vision_scroll() -> int:

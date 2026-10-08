@@ -1000,10 +1000,11 @@ class Navigator:
     # ------------------------------------------------------------------ Bild + Zustand
     def _frame(self) -> np.ndarray:
         self._check()
-        res = self._source.grab([], full=True, timeout=1.5)
-        if res is None or res.full is None:
-            raise Stop(tr("Kein Bild vom Roblox-Fenster."))
-        return res.full
+        for timeout in (1.5, 3.0):                       # bei viel Spiel-Last kommt ein Bild manchmal zu spät
+            res = self._source.grab([], full=True, timeout=timeout)
+            if res is not None and res.full is not None:
+                return res.full
+        raise Stop(tr("Kein Bild vom Roblox-Fenster."))
 
     def _screen(self, frame: np.ndarray) -> tuple[str, object]:
         """("template", Vorlage) | ("menu", (lage, titel, x)) | ("none", None)."""

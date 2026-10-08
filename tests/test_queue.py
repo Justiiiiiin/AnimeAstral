@@ -64,5 +64,20 @@ class QueueTest(unittest.TestCase):
         self.assertFalse(knowledge.inside((0.5, 0.11), zones))   # Gilden-Sperre trifft das Raid-LEAVE! nicht
 
 
+    def test_scroll_vs_animation(self):
+        """Scrollen = Inhalt verschiebt sich; laufende Timer/Animationen zählen nicht (Boosts, Equip Best)."""
+        from astral_monitor.explorer import scrolled_box
+        rng = np.random.default_rng(1)
+        img = (rng.random((180, 320)) * 255).astype(np.uint8)
+        img = np.repeat(np.repeat(img[::6, ::6], 6, axis=0), 6, axis=1)[:180, :320]   # grobe Struktur
+        moved = img.copy()
+        moved[50:165] = img[65:180]
+        self.assertIsNotNone(scrolled_box(img, moved))
+        timer = img.copy()
+        timer[80:92, 100:200] = 255 - timer[80:92, 100:200]
+        self.assertIsNone(scrolled_box(img, timer))
+        self.assertIsNone(scrolled_box(img, img))
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -44,6 +44,7 @@ CATEGORIES: dict[str, tuple[str, tuple[str, ...], tuple[str, ...]]] = {
     "raid": (N_("Raid"), ("raid",), ("raid", "start", "difficulty", "create", "join", "enter")),
     "defense": (N_("Defense"), ("defense",), ("defense", "mode", "wave", "start")),
     "exchange": (N_("Tausch"), ("exchange",), ("exchange", "trade", "token")),
+    "boosts": (N_("Boosts"), ("boosts", "boost"), ("play", "pause", "sync", "food", "potion")),
     "passive": (N_("Passiv"), ("passive", "passives", "curse", "curses"), ("passive", "reroll", "lock", "index")),
     "shrine": (N_("Shrine (opfern)"), ("shrine",), ("offered", "offer", "quantity", "coins", "choose")),
     "gigs": (N_("Fixer Gigs"), ("gigs", "fixer"), ("gigs", "claim", "finish", "slots", "ready", "send")),
@@ -205,7 +206,7 @@ def side_tabs(words: list[tuple[str, list[float]]], roi: list[float]) -> list[tu
     ok = _dedupe([(t, b) for t, b in words if len(re.sub(r"[^A-Za-z]", "", t)) >= 3 and is_safe_to_click(t)
                   and not is_forbidden(t)])
     # links
-    left = _rows([(t, b) for t, b in ok if b[2] <= x0 + 0.30 * w], axis=1)
+    left = _rows([(t, b) for t, b in ok if b[2] <= x0 + 0.42 * w], axis=1)    # große Fenster: Lage geschätzt
     best: list[tuple[str, list[float]]] = []
     for anchor in left:
         ax = (anchor[1][0] + anchor[1][2]) / 2
