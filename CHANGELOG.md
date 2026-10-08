@@ -4,6 +4,22 @@ Neueste Version oben. Kurze Stichpunkte, keine Erklärungen (die stehen im Progr
 Der Abschnitt einer Version wird beim Veröffentlichen automatisch als Versionshinweis übernommen
 (`tools/release_notes.py`) und ist im Programm unter Einstellungen → Updates → „Alle Versionen“ lesbar.
 
+## 0.9.9-beta.1
+
+### ✨ Neu (Beta)
+- Warteschlange: eine Aufgabe „Raid“ mit Ende nach Raids/Minuten
+- Raid wird nur verlassen, wenn danach ein anderer Raid folgt
+- Automatisch abholen: Fixer Gigs (1 Pet je Gig) und Gilde
+- Raid-Auswahl als Dropdown in der Live-Karte
+- Raid wird am Raid-Fenster erkannt (auch wenn du selbst spielst)
+- Raid wird an eindeutigen Drops erkannt (z. B. Auto-Join)
+- Erkunden öffnet alles und klickt Reiter links durch
+- Knöpfe am Rand werden bei jeder GUI-Größe gefunden
+
+### 🎨 Design
+- Startseite zeigt fast nur das Makro
+- UI-Größe standardmäßig 50 %
+
 ## 0.9.8
 
 ### ✨ Neu seit 0.9.1 (Kurzfassung der Betas)

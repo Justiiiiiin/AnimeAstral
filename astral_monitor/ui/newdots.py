@@ -19,6 +19,7 @@ NEW_FEATURES: dict[str, tuple[str, ...]] = {
     "0.9.7-beta.4": ("nav:1", "nav:2", "tab:Debug"),   # Statistik/Meldungen ohne Scrollen; Debug als eigener Reiter
     "0.9.7-beta.5": ("nav:3", "tab:Debug"),          # Debug mit An/Aus und vollem Protokoll
     "0.9.8": ("nav:0", "nav:3"),                    # Makro/Warteschlange (stabil), Einstellungssuche mit Strg+F
+    "0.9.9-beta.1": ("nav:0",),                     # Startseite fürs Makro, Automatisch abholen, Raid-Auswahl
 }
 
 
