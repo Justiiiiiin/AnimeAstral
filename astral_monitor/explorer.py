@@ -246,7 +246,7 @@ class Explorer:
         kind, roi, title, frame, template = seen
         analysis = self._analyse(frame, roi, title, template)
         button = self._button_for(world, index, rel, box)
-        name = self._window_name(world, analysis, index, button)
+        name = self._known_name(button) or self._window_name(world, analysis, index, button)
         nav.log(tr("{world} · Platz {n}: {title} ({kind})", world=world, n=index + 1,
                    title=analysis.title or "?", kind=analysis.label))
         self._scan_tabs(name, roi, analysis)
@@ -307,7 +307,8 @@ class Explorer:
             analysis.category, analysis.label = "equip_best", tr("Equip Best")
         elif name == "Guild":
             analysis.category, analysis.label = "guild", tr("Gilde")
-        window = analysis.title if analysis.title and analysis.title != name else f"{name} Fenster"
+        window = self._known_name(button) or (analysis.title if analysis.title and analysis.title != name
+                                              else f"{name} Fenster")
         nav.log(tr("{button}: {title} ({kind})", button=name, title=analysis.title or "?", kind=analysis.label))
         found = analysis.words
         claims = knowledge.claimables(found)
@@ -541,6 +542,16 @@ class Explorer:
         fh, fw = frame.shape[:2]
         crop = frame[int(roi[1] * fh):int(roi[3] * fh), int(roi[0] * fw):int(roi[2] * fw)]
         return cv2.resize(cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY), (480, 270), interpolation=cv2.INTER_AREA)
+
+    def _known_name(self, button: dict) -> str:
+        """Name des Fensters, das dieser Knopf schon öffnet – sonst entstehen Dopplungen wie „Sword 1“ und
+        „Sword 1 Fenster“ (geprüfte zuerst, dann erkundete, dann mitgelieferte)."""
+        windows = self.nav.map.windows_for(button)
+        if not windows:
+            return ""
+        reviewed = [w for w in windows if review.status_of(self.data_dir, w["name"])]
+        local = [w for w in windows if str(w.get("file", "")).startswith("local:")]
+        return (reviewed or local or windows)[0]["name"]
 
     def _window_name(self, world: str, analysis: knowledge.Analysis, index: int, button: dict) -> str:
         named = button.get("name", "")

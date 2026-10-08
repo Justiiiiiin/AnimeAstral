@@ -23,6 +23,7 @@ NEW_FEATURES: dict[str, tuple[str, ...]] = {
     "0.9.9-beta.2": ("nav:3", "tab:Makro", "tab:Discord-Bot"),   # Erkunden in Einstellungen, Discord-Bot
     "0.9.9-beta.4": ("nav:3", "tab:Makro"),          # Funde prüfen mit Markier-Werkzeug
     "0.9.9-beta.7": ("nav:0", "nav:3", "tab:Makro", "tab:Darstellung"),   # Farm-Routine, Protokoll, Night City
+    "0.9.9-beta.8": ("nav:3", "tab:Makro"),          # Funde ohne Dopplungen
 }
 
 

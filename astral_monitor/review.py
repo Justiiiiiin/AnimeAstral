@@ -5,6 +5,7 @@ erneut. Gespeichert in explore/review.json im Datenordner; korrigierte Arten wir
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Optional
 
@@ -31,15 +32,54 @@ def save(data_dir: Path, data: dict) -> None:
     path.write_text(json.dumps(data, indent=1, ensure_ascii=False), encoding="utf-8")
 
 
+KEEP = ("annotations", "description", "display")     # Eingaben des Nutzers – überdauern einen neuen Scan
+
+
+def _alias(name: str) -> str:
+    """„Sword 1 Fenster“ und „Sword 1“ sind dasselbe Fenster (frühere Läufe hängten „Fenster“ an)."""
+    return re.sub(r"\s+Fenster$", "", name).strip().lower()
+
+
 def add_finding(data_dir: Path, window: str, finding: dict) -> None:
-    """Neuer Fund nach einem Scan: wartet auf Bestätigung (eine bestätigte Art bleibt erhalten)."""
+    """Neuer Fund nach einem Scan: wartet auf Bestätigung (eine bestätigte Art und Markierungen/Beschreibung bleiben
+    erhalten). Doppelte Einträge desselben Fensters unter anderem Namen werden zusammengelegt."""
     data = load(data_dir)
     old = data.get(window) or {}
+    for name in [n for n in data if n != window and _alias(n) == _alias(window)]:
+        twin = data.pop(name)
+        if not old or (twin.get("status") == OK and old.get("status") != OK):
+            old = twin
     entry = {**finding, "status": PENDING}
     if old.get("status") == OK and old.get("category"):
         entry["category"] = old["category"]
+    entry.update({k: old[k] for k in KEEP if old.get(k)})
     data[window] = entry
     save(data_dir, data)
+
+
+def dedupe(data_dir: Path) -> int:
+    """Doppelte Funde zusammenlegen (gleiches Fenster, mit/ohne „Fenster“ im Namen): geprüfte gewinnen, Eingaben des
+    Nutzers wandern mit. Rückgabe: Anzahl entfernter Einträge."""
+    data = load(data_dir)
+    groups: dict[str, list[str]] = {}
+    for name in data:
+        groups.setdefault(_alias(name), []).append(name)
+    removed = 0
+    for names in groups.values():
+        if len(names) < 2:
+            continue
+        rank = {OK: 0, RECHECK: 1}
+        names.sort(key=lambda n: (rank.get(data[n].get("status"), 2), n.endswith(" Fenster")))
+        keep = data[names[0]]
+        for name in names[1:]:
+            for k in KEEP:
+                if data[name].get(k) and not keep.get(k):
+                    keep[k] = data[name][k]
+            del data[name]
+            removed += 1
+    if removed:
+        save(data_dir, data)
+    return removed
 
 
 def set_status(data_dir: Path, window: str, status: str, category: Optional[str] = None) -> None:

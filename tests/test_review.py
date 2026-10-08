@@ -9,6 +9,23 @@ from astral_monitor import review
 
 
 class ReviewTest(unittest.TestCase):
+    def test_duplicates_merged(self):
+        with tempfile.TemporaryDirectory() as d:
+            data = Path(d)
+            review.add_finding(data, "Sword 1", {"category": "gacha", "lines": []})
+            review.set_status(data, "Sword 1", review.OK)
+            review.set_notes(data, "Sword 1", [{"box": [0, 0, 1, 1], "kind": "button", "text": "Roll"}], "Gacha")
+            raw = review.load(data)
+            raw["Sword 1 Fenster"] = {"status": review.PENDING, "category": "gacha"}
+            review.save(data, raw)
+            self.assertEqual(review.dedupe(data), 1)
+            self.assertEqual(list(review.load(data)), ["Sword 1"])
+            review.add_finding(data, "Sword 1 Fenster", {"category": "unknown", "lines": []})   # neuer Scan
+            entry = review.load(data)
+            self.assertEqual(list(entry), ["Sword 1 Fenster"])
+            self.assertEqual(entry["Sword 1 Fenster"]["description"], "Gacha")    # Eingaben bleiben
+            self.assertEqual(entry["Sword 1 Fenster"]["category"], "gacha")
+
     def test_never_open(self):
         with tempfile.TemporaryDirectory() as d:
             data = Path(d)

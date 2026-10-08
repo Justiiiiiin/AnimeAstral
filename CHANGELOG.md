@@ -4,6 +4,16 @@ Neueste Version oben. Kurze Stichpunkte, keine Erklärungen (die stehen im Progr
 Der Abschnitt einer Version wird beim Veröffentlichen automatisch als Versionshinweis übernommen
 (`tools/release_notes.py`) und ist im Programm unter Einstellungen → Updates → „Alle Versionen“ lesbar.
 
+## 0.9.9-beta.8
+
+### 🔧 Verbessert
+- Fixer Gigs: Pet anklicken schickt es los, je Gig einzeln
+- Makro bricht nicht mehr ab, wenn das Spiel den Mauszeiger versetzt
+- Erkunden öffnet geprüfte Fenster nicht erneut
+- „Nicht öffnen“ in der Beschreibung wird beim Erkunden beachtet
+- Doppelte Einträge in „Funde prüfen“ zusammengelegt
+- Fenstertitel sicherer gelesen (graue Banner, Vollbild-Fenster)
+
 ## 0.9.9-beta.7
 
 ### ✨ Neu

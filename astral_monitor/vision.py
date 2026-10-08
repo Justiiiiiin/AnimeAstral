@@ -152,22 +152,93 @@ class MenuFrame:
         return bool(title) and same_title(title, self.base_title)
 
 
+TITLE_CONF = 55          # darunter gilt eine Banner-Lesung als unsicher (Müll wie „Emtt dala Cowerl“) -> zweiter Weg
+
+
 def read_title(window_img: np.ndarray, ocr) -> str:
-    """Titel im schrägen Banner oben links („Teleport“, „Trial Shop“). Weiße Streifen im Banner werden über die
-    Buchstabengröße aussortiert, Buchstaben von links nach rechts zur (schrägen) Zeile verkettet."""
+    """Titel im schrägen Banner oben links („Teleport“, „Trial Shop“). Erst die weiße Schrift im Banner
+    (_read_banner); ist die Lesung unsicher oder leer (graue Banner wie „Otsutsuki Shrine“, Vollbild-Fenster), die
+    größte Textzeile im Banner-Bereich über die normale Wortsuche. Lieber kein Titel als ein falscher."""
     if ocr is None:
         return ""
+    text, conf = _read_banner(window_img, ocr)
+    if text and conf >= TITLE_CONF:
+        return text
+    other, conf2 = _read_band_words(window_img, ocr)
+    letters = re.sub(r"[^a-z]", "", other.lower())
+    if letters and letters in re.sub(r"[^a-z]", "", text.lower()):
+        return text                                       # Banner hat mehr vom selben Titel („SixFold Spirit Contract“)
+    if other and conf2 >= TITLE_CONF and (not text or conf2 > conf):
+        return other
+    return text if conf >= 35 else ""
+
+
+def _line_conf(ocr, img: np.ndarray) -> tuple[str, float]:
+    """Eine Zeile lesen (psm 7) mit mittlerer Sicherheit der Wörter."""
+    try:
+        words = ocr.words(img, psm=7)
+    except Exception:  # noqa: BLE001 – Lesefehler: leer
+        return "", 0.0
+    words = [w for w in words if w.text.strip()]
+    if not words:
+        return "", 0.0
+    return " ".join(w.text for w in words), float(np.mean([w.conf for w in words]))
+
+
+def _clean_title(text: str) -> str:
+    text = re.sub(r"^[^A-Za-z0-9]+|[^A-Za-z0-9!?)]+$", "", text).strip()
+    text = re.sub(r"\s+", " ", re.sub(r"[^\w !?'&.()/-]", " ", text)).strip()    # Sonderzeichen-Reste weg
+    return text[:1].upper() + text[1:]
+
+
+def _read_band_words(window_img: np.ndarray, ocr) -> tuple[str, float]:
+    """Zweiter Weg: Wörter im Banner-Bereich (allgemeine Suche), die größte Zeile von links nach rechts."""
+    h, w = window_img.shape[:2]
+    band = window_img[0:int(BAND[2] * h), 0:int(BAND[1] * w)]
+    if band.size == 0:
+        return "", 0.0
+    gray = cv2.cvtColor(band, cv2.COLOR_BGR2GRAY)
+    f = 2.0 if band.shape[0] < 200 else 1.0
+    best: tuple[str, float] = ("", 0.0)
+    for binary in (cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY_INV)[1],
+                   cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]):
+        img = binary if f == 1.0 else cv2.resize(binary, None, fx=f, fy=f, interpolation=cv2.INTER_CUBIC)
+        try:
+            words = [wd for wd in ocr.words(img, psm=11) if len(re.sub(r"[^A-Za-z]", "", wd.text)) >= 2
+                     and wd.conf >= 40]
+        except Exception:  # noqa: BLE001
+            continue
+        if not words:
+            continue
+        top = max(words, key=lambda wd: wd.h)
+        line = sorted((wd for wd in words if wd.h >= 0.7 * top.h and abs((wd.y + wd.h / 2) - (top.y + top.h / 2))
+                       < 0.6 * top.h), key=lambda wd: wd.x)
+        parts = [line[0].text]
+        for prev, wd in zip(line, line[1:]):              # psm 11 trennt gern mitten im Wort („Kag une“)
+            parts.append(("" if wd.x - (prev.x + prev.w) < 0.2 * top.h else " ") + wd.text)
+        text = _clean_title("".join(parts))
+        if re.match(r"(?i)wave\b", text) or re.search(r"\d+\s*/\s*\d+", text):
+            continue                                      # Wellenzähler oben (Vollbild-Fenster), kein Titel
+        conf = float(np.mean([wd.conf for wd in line]))
+        if len(re.sub(r"[^A-Za-z]", "", text)) >= 3 and conf > best[1]:
+            best = (text, conf)
+    return best
+
+
+def _read_banner(window_img: np.ndarray, ocr) -> tuple[str, float]:
+    """Weiße Schrift im Banner: Streifen über die Buchstabengröße aussortiert, Buchstaben von links nach rechts zur
+    (schrägen) Zeile verkettet, gerade gedreht. Rückgabe: (Text, Sicherheit 0–100)."""
     h, w = window_img.shape[:2]
     band = window_img[0:int(BAND[2] * h), int(BAND[0] * w):int(BAND[1] * w)]
     if band.size == 0:
-        return ""
+        return "", 0.0
     gray = cv2.cvtColor(band, cv2.COLOR_BGR2GRAY)
     sat = cv2.cvtColor(band, cv2.COLOR_BGR2HSV)[..., 1]
     mask = ((gray > 225) & (sat < 40)).astype(np.uint8) * 255
     n, lab, st, _c = cv2.connectedComponentsWithStats(mask, 8)
     comps = [i for i in range(1, n) if st[i, cv2.CC_STAT_AREA] > 40]
     if not comps:
-        return ""
+        return "", 0.0
     hmax = max(st[i, cv2.CC_STAT_HEIGHT] for i in comps)
     keep = [i for i in comps if st[i, cv2.CC_STAT_HEIGHT] >= 0.35 * hmax
             and st[i, cv2.CC_STAT_WIDTH] < 2.5 * st[i, cv2.CC_STAT_HEIGHT]]
@@ -183,14 +254,14 @@ def read_title(window_img: np.ndarray, ocr) -> str:
             chains.append([i])
     best = max(chains, key=lambda c: sum(st[i, cv2.CC_STAT_AREA] for i in c), default=[])
     if not best:
-        return ""
+        return "", 0.0
     best = _join_words(best, chains, st, mid, hmax)
     x0 = min(st[i, cv2.CC_STAT_LEFT] for i in best)
     x1 = max(st[i, cv2.CC_STAT_LEFT] + st[i, cv2.CC_STAT_WIDTH] for i in best)
     y0 = min(st[i, cv2.CC_STAT_TOP] for i in best)
     y1 = max(st[i, cv2.CC_STAT_TOP] + st[i, cv2.CC_STAT_HEIGHT] for i in best)
     ink = np.isin(lab, best).astype(np.uint8) * 255
-    text = ""
+    text, conf = "", 0.0
     if len(best) >= 3:                                    # schräge Zeile gerade drehen (Tesseract liest sonst oft nichts)
         xs = [st[i, cv2.CC_STAT_LEFT] + st[i, cv2.CC_STAT_WIDTH] / 2 for i in best]
         slope = float(np.polyfit(xs, [mid[i] for i in best], 1)[0])
@@ -205,15 +276,16 @@ def read_title(window_img: np.ndarray, ocr) -> str:
             f = 40 / max(1.0, letter_h)
             part = cv2.resize(part, None, fx=f, fy=f, interpolation=cv2.INTER_AREA)
             part = cv2.copyMakeBorder(part, 20, 20, 20, 20, cv2.BORDER_CONSTANT, value=255)
-            text = re.sub(r"^[^A-Za-z0-9]+|[^A-Za-z0-9!?)]+$", "", ocr.line(part, psm=7)).strip()
+            text, conf = _line_conf(ocr, part)
+            text = _clean_title(text)
     if not text:                                          # bisheriger Weg (ungedreht)
         crop = 255 - ink[max(0, y0 - 10):y1 + 10, max(0, x0 - 10):x1 + 10]
         f = 48 / max(1, y1 - y0)
         crop = cv2.resize(crop, None, fx=f, fy=f, interpolation=cv2.INTER_AREA)
         crop = cv2.copyMakeBorder(crop, 20, 20, 20, 20, cv2.BORDER_CONSTANT, value=255)
-        text = re.sub(r"^[^A-Za-z0-9]+|[^A-Za-z0-9!?)]+$", "", ocr.line(crop, psm=7)).strip()
-    text = re.sub(r"\s+", " ", re.sub(r"[^\w !?'&.()/-]", " ", text)).strip()    # Sonderzeichen-Reste weg
-    return text[:1].upper() + text[1:]
+        text, conf = _line_conf(ocr, crop)
+        text = _clean_title(text)
+    return text, conf
 
 
 def _join_words(best: list[int], chains: list[list[int]], st, mid: dict, hmax: float) -> list[int]:

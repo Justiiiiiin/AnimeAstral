@@ -217,6 +217,8 @@ class MacroController(QObject):
         if self.busy:
             return
         try:
+            from ..review import dedupe
+            dedupe(data_dir())                            # doppelte Funde (z. B. „Sword 1“ / „Sword 1 Fenster“)
             count = restore_from_reports(data_dir(), self.map)
         except Exception:  # noqa: BLE001 – nur eine Ergänzung, nie den Start stören
             return
