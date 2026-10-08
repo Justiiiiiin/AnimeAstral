@@ -16,7 +16,7 @@ ROW_HIT = 0.85        # Herz-Merkmal links oben in jeder Zeile: echte Zeilen 0,9
 BOTTOM_HIT = 0.60     # unterer Zeilenrand vorhanden (sonst am Listenrand abgeschnitten)
 X_HIT = 0.85          # inneres X eines Menüs: andere Menüs 0,96, Teleporter 1,0
 X_WIDE_HIT = 0.78     # kleinere Fenster (X weiter links/unten, etwas kleiner): gemessen 0,80–0,89
-X_WIDE = (0.45, 0.08, 0.92, 0.55)    # Suchbereich dafür im Roblox-Fenster
+X_WIDE = (0.45, 0.05, 0.97, 0.55)    # Suchbereich dafür im Roblox-Fenster (Gilde: X weit rechts)
 MARKER_HIT = 0.80     # Erkennungsmerkmal eines Sonder-Menüs
 BAND = (0.03, 0.55, 0.22)   # Titel-Banner im Menürahmen: x von, x bis, y bis
 X_BAND = 0.04         # so weit links/rechts vom gewohnten Zeilenanfang wird nach dem Herz gesucht
@@ -128,7 +128,7 @@ class MenuFrame:
         ax0, ay0 = int(X_WIDE[0] * fw), int(X_WIDE[1] * fh)
         area = frame[ay0:int(X_WIDE[3] * fh), ax0:int(X_WIDE[2] * fw)]
         best = (0.0, 1.0, (0, 0), tpl.shape[:2])
-        for s in (0.8, 0.9, 1.0):
+        for s in (0.8, 0.9, 1.0, 1.1, 1.2, 1.3):         # kleinere Menüs … Gilde (1,2× so groß)
             t = _scaled(tpl, s)
             if area.shape[0] < t.shape[0] or area.shape[1] < t.shape[1]:
                 continue

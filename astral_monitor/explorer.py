@@ -21,12 +21,18 @@ import numpy as np
 
 from . import knowledge, vision
 from .i18n import tr
+from .automation import Stop
 from .uimap import LOCAL_FILE, ROW, match_row, save_local, world_number
 
 AVOID_HIT = 0.9          # so ähnlich wie ein „nicht drücken“-Symbol = auslassen (gleiche Symbole ~0,99)
 OBSERVE_WAIT = 4.0        # so lange darf ein Fenster nach dem Klick zum Aufgehen brauchen
 HUD_ORDER = ("Equip Best", "Guild", "Boosts", "G. Quests", "Promotion", "Shop", "Items", "Achiev", "Index", "Pets")
 FULL = [0.0, 0.0, 1.0, 1.0]
+# Fenster, die man gründlich ansieht (Reiter durchklicken, scrollen) – einmal, danach in explore/deep_done.json
+DEEP_CATS = ("upgrades", "shop", "quests", "achievements", "guild", "promotion", "inventory", "index", "battlepass",
+             "passive", "gigs", "equip_best", "unknown")
+SCROLL_POINTS = ((0.62, 0.6), (0.3, 0.55), (0.22, 0.74), (0.5, 0.45))   # rechts groß, links, links unten, Mitte
+SCROLL_MAX = 5
 
 
 class TimeUp(Exception):
@@ -36,7 +42,11 @@ class TimeUp(Exception):
 class Explorer:
     def __init__(self, nav, minutes: float, data_dir: Path, full: bool = True) -> None:
         self.nav = nav
-        self.full = full                                  # auch Bekanntes öffnen (Standard seit 0.9.9)
+        self.full = full                                  # Problem-Fenster erneut öffnen (Standard seit 0.9.9)
+        try:
+            self.deep_done = set(json.loads((data_dir / "explore" / "deep_done.json").read_text(encoding="utf-8")))
+        except (OSError, ValueError):
+            self.deep_done = set()
         self.deadline = time.monotonic() + max(0.5, minutes) * 60
         self.data_dir = data_dir
         stamp = time.strftime("%Y%m%d_%H%M%S")
@@ -71,6 +81,8 @@ class Explorer:
         latest.write_text(json.dumps(self.report, indent=1, ensure_ascii=False), encoding="utf-8")
         if self.local:
             save_local(self.data_dir / LOCAL_FILE, self.local)
+        (self.data_dir / "explore" / "deep_done.json").write_text(json.dumps(sorted(self.deep_done)),
+                                                                   encoding="utf-8")
         worlds = sum(1 for w in self.report["worlds"] if w.get("new"))
         self.nav.log(tr("Erkundet: {count} Fenster, {worlds} neue Welten – Bericht: {path}", count=self.count,
                         worlds=worlds, path=str(self.out)))
@@ -167,8 +179,8 @@ class Explorer:
     def _unknown_slots(self, known: Optional[dict], img: np.ndarray, slots: vision.SlotLayout, world: str):
         """Belegte Plätze ohne bekanntes Fenster (bei neuen Welten: alle) – ohne „nicht drücken“-Symbole."""
         found = slots.slots(img)
-        done = set()                                      # „alles öffnen“ (Wunsch des Eigentümers): bekannte Fenster
-        # werden erneut geöffnet und gelesen – ausgelassen werden nur „nicht drücken“ und Plätze ohne Fenster
+        done = set()                                      # Bekannte Fenster nur erneut, wenn es Probleme gab (unbekannt)
+        # oder sie noch nicht gründlich angesehen wurden (Reiter/Scrollen) – Wunsch des Eigentümers 08.10.2026
         if known is not None:
             for e in self.nav.map.children(known):
                 if e.get("kind") not in ("Knopf", "Symbol") or not e.get("rel"):
@@ -176,7 +188,7 @@ class Explorer:
                 i = slots.index_of(e["rel"])
                 extra = e.get("extra") or {}
                 if i is not None and (extra.get("avoid") or extra.get("no_window")
-                                      or (not self.full and self.nav.map_opened(e))):
+                                      or (self.nav.map_opened(e) and not self._needs_visit(e))):
                     done.add(i)
         out = []
         h, w = img.shape[:2]
@@ -267,7 +279,7 @@ class Explorer:
         self._left()
         nav = self.nav
         button = next((e for e in nav.map.hud() if e["name"] == name), None)
-        if button is None or (not self.full and nav.map_opened(button)):
+        if button is None or (nav.map_opened(button) and not self._needs_visit(button, hud=True)):
             return
         nav._focus()
         nav._close_any()
@@ -297,7 +309,7 @@ class Explorer:
             nav.log(tr("{button}: {count}× „Claim“ gefunden (nicht geklickt)", button=name, count=len(claims)))
         self._scan_tabs(window, roi, analysis)
         frame = nav._frame()                              # nach den Reitern: aktuelles Bild zum Schließen
-        self.report["hud"].append({"button": name, "window": window, "words": [w for w, _r in found][:80],
+        self.report["hud"].append({"button": name, "window": window, "lines": knowledge.lines_of(found)[:80],
                                    "claim": [[round(v, 4) for v in r] for r in claims], **analysis.as_dict()})
         self._record_window(window, roi, button, analysis, template, frame)
         self._close(kind, roi, template, frame)
@@ -368,29 +380,138 @@ class Explorer:
                 analysis.mode, analysis.title = analysis.title, name
         return analysis
 
+    def _needs_visit(self, button: dict, hud: bool = False) -> bool:
+        """Bekanntes Fenster erneut öffnen? Nur bei Problemen (unbekannt, kein Titel) oder wenn es gründlich angesehen
+        werden soll (Reiter, Scrollen) und das noch nicht geschehen ist."""
+        if not self.full:
+            return False
+        window = self.nav.map.window_for(button)
+        if window is None:
+            return True
+        cat = (window.get("extra") or {}).get("category", "")
+        if cat == "unknown":
+            return True
+        return (hud or cat in DEEP_CATS) and window["name"] not in self.deep_done
+
     def _scan_tabs(self, window: str, roi: list[float], analysis: knowledge.Analysis) -> None:
-        """Reiter links im Fenster einmal durchklicken (Gilde: Home, Upgrades, Members, Missions …) und lesen – nie
-        Aktions- oder Gefahren-Reiter (Leave, Kick …). Ergebnis: analysis.tabs + Knöpfe in der lokalen Karte."""
+        """Gründlich ansehen (unbeaufsichtigt sicher):
+        1. Sperrzonen setzen (Leave, Kick, Delete …; Gilde: Ecke unten links) – dort wird nie geklickt, gescrollt
+           oder gehovert (Navigator._guard).
+        2. Hauptseite lesen und scrollbare Bereiche finden (Mausrad an mehreren Stellen, nur wo sich etwas bewegt).
+        3. Reiter (links untereinander / unten nebeneinander) einzeln öffnen, lesen, scrollen.
+        4. Reine Ansichts-Knöpfe (knowledge.NAV_WORDS: Info, Members, Personal, Weekly …) testweise drücken und
+           festhalten, was passiert; geht ein Unterfenster auf, wird es wieder geschlossen.
+        Nie Aktions-Knöpfe (Claim, Buy, Roll, Max …). Ganze Bildschirme (Upgrade Tree …): nur lesen/scrollen."""
         nav = self.nav
-        tabs = knowledge.side_tabs(analysis.words, roi)
-        for label, box in tabs[:9]:
+        title = analysis.title or window
+        nav.forbidden = knowledge.forbidden_zones(analysis.words, roi, title)
+        try:
+            full = roi == FULL
+            tabs = [] if full else knowledge.side_tabs(analysis.words, roi)
+            lines, areas = self._scroll_read(roi, analysis.words)
+            analysis.tabs.append({"tab": "", "lines": lines, "scroll": areas})
+            for label, box in tabs[:9]:
+                self._left()
+                nav.log(tr("{window}: Reiter „{tab}“", window=window, tab=label))
+                try:
+                    nav._click_roi(box)
+                except Stop as exc:                        # gesperrt: überspringen, nie erzwingen
+                    nav.log(str(exc))
+                    continue
+                time.sleep(1.0)
+                frame = nav._frame()
+                words = vision.words_in(frame, roi, nav._ocr)
+                nav.forbidden += knowledge.forbidden_zones(words, roi, title)
+                sub = knowledge.classify(label, words)
+                tab_lines, tab_areas = self._scroll_read(roi, words)
+                analysis.tabs.append({"tab": label, "category": sub.category, "label": sub.label,
+                                      "claim": len(knowledge.claimables(words)), "lines": tab_lines,
+                                      "scroll": tab_areas})
+                self._snap(f"reiter_{window}_{label}", frame, frame)
+                entry = {"name": f"{window} · {label}", "kind": "Knopf", "parent": window,
+                         "roi": [round(v, 4) for v in box], "file": f"local:tab:{window}:{label}", "note": "erkundet",
+                         "extra": {"tab": True, "category": sub.category}}
+                if nav.map.container(entry["name"]) is None:
+                    self.local.append(entry)
+                    nav.map.add(entry)
+            if not full:
+                self._test_buttons(window, roi, title, tabs, analysis)
+        finally:
+            nav.forbidden = []
+        self.deep_done.add(window)
+
+    def _test_buttons(self, window: str, roi: list[float], title: str, tabs: list, analysis) -> None:
+        """Ansichts-Knöpfe testweise drücken; geht ein Unterfenster auf: lesen, schließen, prüfen, dass das
+        ursprüngliche Fenster wieder da ist – sonst aufhören (nichts erzwingen)."""
+        nav = self.nav
+        frame = nav._frame()
+        words = vision.words_in(frame, roi, nav._ocr)
+        for label, box in knowledge.nav_buttons(words, tabs):
             self._left()
-            nav.log(tr("{window}: Reiter „{tab}“", window=window, tab=label))
-            nav._click_roi(box)
+            nav.log(tr("{window}: teste „{button}“", window=window, button=label))
+            try:
+                nav._click_roi(box)
+            except Stop as exc:
+                nav.log(str(exc))
+                continue
             time.sleep(1.0)
             frame = nav._frame()
-            words = vision.words_in(frame, roi, nav._ocr)
-            sub = knowledge.classify(label, words)
-            claims = knowledge.claimables(words)
-            analysis.tabs.append({"tab": label, "category": sub.category, "label": sub.label,
-                                  "claim": len(claims), "words": [w for w, _r in words][:50]})
-            self._snap(f"reiter_{window}_{label}", frame, frame)
-            entry = {"name": f"{window} · {label}", "kind": "Knopf", "parent": window,
-                     "roi": [round(v, 4) for v in box], "file": f"local:tab:{window}:{label}", "note": "erkundet",
-                     "extra": {"tab": True, "category": sub.category}}
-            if nav.map.container(entry["name"]) is None:
-                self.local.append(entry)
-                nav.map.add(entry)
+            state = nav._menu.state(frame, nav._ocr)
+            now_title = state[1] if state else ""
+            result = {"button": label, "opened": "", "lines": knowledge.lines_of(
+                vision.words_in(frame, state[0] if state else roi, nav._ocr))[:40]}
+            if state is None:
+                analysis.tabs.append({**result, "note": "Fenster zu"})
+                break                                      # Fenster weg: nicht weiter testen
+            if now_title and title and not vision.same_title(now_title, title):
+                result["opened"] = now_title               # Unterfenster: schließen und zurück
+                nav._click(state[2])
+                time.sleep(0.8)
+                back = nav._menu.state(nav._frame(), nav._ocr)
+                analysis.tabs.append(result)
+                if back is None or not vision.same_title(back[1], title):
+                    break
+                continue
+            analysis.tabs.append(result)
+
+    def _scroll_read(self, roi: list[float], words: list) -> tuple[list[str], list[list[float]]]:
+        """Inhalt lesen und scrollbare Bereiche finden: an mehreren Stellen das Mausrad drehen; wo sich etwas bewegt,
+        weiter nach unten lesen, bis nichts mehr kommt, dann wieder nach oben. Gesperrte Stellen werden ausgelassen.
+        Rückgabe: (Textzeilen ohne Doppelte, Stellen, an denen gescrollt werden kann)."""
+        nav = self.nav
+        lines = knowledge.lines_of(words)
+        areas: list[list[float]] = []
+        x0, y0, x1, y1 = roi
+        for fx, fy in SCROLL_POINTS:
+            point = (x0 + fx * (x1 - x0), y0 + fy * (y1 - y0))
+            if knowledge.inside(point, nav.forbidden):
+                continue
+            moved = 0
+            last = self._content(roi)
+            for _ in range(SCROLL_MAX):
+                self._left()
+                nav._wheel(point, -3)
+                time.sleep(0.5)
+                now = self._content(roi)
+                if float(cv2.absdiff(now, last).mean()) < 3.0:
+                    break                                  # nichts bewegt: nicht scrollbar oder unten angekommen
+                moved += 1
+                last = now
+                for line in knowledge.lines_of(vision.words_in(nav._frame(), roi, nav._ocr)):
+                    if line not in lines:
+                        lines.append(line)
+            if moved:
+                areas.append([round(point[0], 4), round(point[1], 4)])
+                nav.log(tr("Gescrollt: {n}×", n=moved))
+                nav._wheel(point, 3 * moved)               # zurück nach oben (Reiter/Knöpfe wieder an ihrem Platz)
+                time.sleep(0.4)
+        return lines[:150], areas
+
+    def _content(self, roi: list[float]) -> np.ndarray:
+        frame = self.nav._frame()
+        fh, fw = frame.shape[:2]
+        crop = frame[int(roi[1] * fh):int(roi[3] * fh), int(roi[0] * fw):int(roi[2] * fw)]
+        return cv2.resize(cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY), (160, 90), interpolation=cv2.INTER_AREA)
 
     def _window_name(self, world: str, analysis: knowledge.Analysis, index: int, button: dict) -> str:
         named = button.get("name", "")

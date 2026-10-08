@@ -68,7 +68,9 @@ ACTION_WORDS = ("roll", "auto", "craft", "buy", "claim", "equip", "upgrade", "op
                 "yes", "use", "donate", "start", "create", "join", "enter", "trade", "exchange", "reroll", "max")
 CLOSE_WORDS = ("close", "exit")
 # Reiter, die beim Durchklicken NIE gedrückt werden (Gilde verlassen, Mitglieder rauswerfen …)
-NEVER_TABS = ("leave", "kick", "disband", "delete", "reset", "logout", "quit", "sell", "rebirth", "remove", "ban")
+NEVER_TABS = ("leave", "kick", "disband", "delete", "reset", "logout", "quit", "sell", "rebirth", "remove", "ban",
+              "play", "pause", "stop", "unequip", "lock", "unlock", "activate", "invite", "accept", "decline",
+              "promote", "rename", "filters", "filter", "search")
 DROP_IGNORE = ("yen", "xp", "coins", "coin", "gems", "gem")       # in fast jedem Raid – sagt nichts über den Raid
 
 
@@ -142,24 +144,167 @@ def close_word(words: list[tuple[str, list[float]]]) -> list[float] | None:
     return max(hits, key=lambda r: r[1]) if hits else None     # der unterste (Knöpfe sitzen unten)
 
 
+def _rows(cands: list[tuple[str, list[float]]], axis: int) -> list[tuple[str, list[float]]]:
+    """Wörter derselben Zeile (axis=1) bzw. Spalte (axis=0) zu einem Eintrag zusammenfassen („Guild Weekly“)."""
+    out: list[list] = []
+    for w, b in sorted(cands, key=lambda c: (c[1][1], c[1][0]) if axis == 1 else (c[1][0], c[1][1])):
+        if out and axis == 1 and abs(out[-1][1][1] - b[1]) < 0.6 * (b[3] - b[1]) and b[0] - out[-1][1][2] < 0.03:
+            out[-1][0] += " " + w
+            out[-1][1] = [out[-1][1][0], min(out[-1][1][1], b[1]), b[2], max(out[-1][1][3], b[3])]
+        else:
+            out.append([w, list(b)])
+    return [(w, b) for w, b in out]
+
+
+def _dedupe(items: list[tuple[str, list[float]]]) -> list[tuple[str, list[float]]]:
+    """Zwei Lesedurchgänge finden dasselbe Wort oft zweimal (leicht versetzt) – nur einmal behalten."""
+    out: list[tuple[str, list[float]]] = []
+    for t, b in items:
+        if any(min(b[2], o[2]) - max(b[0], o[0]) > 0.5 * (b[2] - b[0]) and min(b[3], o[3]) - max(b[1], o[1]) > 0
+               for _w, o in out):
+            continue
+        out.append((t, b))
+    return out
+
+
+def _longest_regular(col: list) -> list:
+    """Längste Folge mit gleichmäßigem Abstand (ein abgesetzter Knopf wie „Leave“ ganz unten gehört nicht dazu)."""
+    best: list = []
+    for i in range(len(col)):
+        for j in range(len(col), i + 3, -1):
+            run = col[i:j]
+            if len(run) > len(best) and _regular([c[1][1] for c in run]):
+                best = run
+                break
+    return best
+
+
+def is_forbidden(word: str) -> bool:
+    """Gefährlicher Knopf (Leave, Kick, Delete …) – auch bei Lesefehlern („Leaves“, „Leav“)."""
+    import difflib
+    n = _norm(word)
+    if len(n) < 3:
+        return False
+    return any(n.startswith(k) or k.startswith(n) and len(n) >= 4
+               or difflib.SequenceMatcher(None, n, k).ratio() >= 0.8 for k in NEVER_TABS)
+
+
+def _regular(values: list[float]) -> bool:
+    diffs = [b - a for a, b in zip(values, values[1:])]
+    return bool(diffs) and min(diffs) > 0 and max(diffs) / min(diffs) <= 1.5
+
+
 def side_tabs(words: list[tuple[str, list[float]]], roi: list[float]) -> list[tuple[str, list[float]]]:
-    """Reiter links im Fenster (Gilde: Home, Upgrades, Members, Missions …): untereinander, gleiche Spalte, mindestens
-    drei – ohne Aktions- und Gefahren-Wörter (Leave, Kick …). Rückgabe: (Name, Lage) von oben nach unten."""
-    x0, _y0, x1, _y1 = roi
-    left = x0 + 0.30 * (x1 - x0)
-    cand = [(w, b) for w, b in words if b[2] <= left and len(re.sub(r"[^A-Za-z]", "", w)) >= 4
-            and is_safe_to_click(w) and _norm(w) not in NEVER_TABS]
-    if len(cand) < 3:
-        return []
-    xs = sorted((b[0] + b[2]) / 2 for _w, b in cand)
-    mid = xs[len(xs) // 2]
-    col = [(w, b) for w, b in cand if abs((b[0] + b[2]) / 2 - mid) < 0.06 * (x1 - x0)]
-    rows: list[tuple[str, list[float]]] = []
-    for w, b in sorted(col, key=lambda c: c[1][1]):
-        if rows and abs(rows[-1][1][1] - b[1]) < 0.02:
-            continue                                      # zweites Wort derselben Zeile
-        rows.append((w, b))
-    return rows if len(rows) >= 3 else []
+    """Reiter eines Fensters (streng, damit nie Spielknöpfe wie „Play“/„Pause“ oder Pets geklickt werden):
+    - links: mindestens 4 Einträge untereinander, linksbündig, gleiche Schrifthöhe, gleichmäßiger Abstand
+      (Gilde: Home, Upgrades, Members, Missions, Servers, Rankings);
+    - unten: mindestens 4 Einträge nebeneinander in einer Zeile ganz unten (Achievements: Normal, Gamemode …).
+    Nie Aktions- und Gefahren-Wörter (Leave, Kick, Play, Pause, Claim, Buy …)."""
+    x0, y0, x1, y1 = roi
+    w, h = x1 - x0, y1 - y0
+    ok = _dedupe([(t, b) for t, b in words if len(re.sub(r"[^A-Za-z]", "", t)) >= 3 and is_safe_to_click(t)
+                  and not is_forbidden(t)])
+    # links
+    left = _rows([(t, b) for t, b in ok if b[2] <= x0 + 0.30 * w], axis=1)
+    best: list[tuple[str, list[float]]] = []
+    for anchor in left:
+        ax = (anchor[1][0] + anchor[1][2]) / 2
+        col = [(t, b) for t, b in left if (abs(b[0] - anchor[1][0]) < 0.025 * w or abs((b[0] + b[2]) / 2 - ax) < 0.02 * w)
+               and 0.7 < (b[3] - b[1]) / max(1e-6, anchor[1][3] - anchor[1][1]) < 1.4]
+        col = _longest_regular(sorted(col, key=lambda c: c[1][1]))
+        if len(col) >= 4 and len(col) > len(best) and not _list_rows(col, words, x0 + 0.35 * w):
+            best = col
+    if best:
+        return best
+    # unten: Zeilen ganz unten nach Höhe gruppieren; die unterste mit ≥ 4 gleichmäßig verteilten Einträgen
+    bottom = sorted([(t, b) for t, b in ok if b[1] >= y0 + 0.88 * h], key=lambda c: (c[1][1] + c[1][3]) / 2)
+    groups: list[list] = []
+    for t, b in bottom:
+        cy = (b[1] + b[3]) / 2
+        if groups and cy - groups[-1][0] < 0.025:
+            groups[-1][1].append((t, b))
+        else:
+            groups.append([cy, [(t, b)]])
+    for _cy, items in reversed(groups):
+        row = []
+        for t, b in sorted(items, key=lambda c: c[1][0]):
+            if row and b[0] < row[-1][1][2] - 0.005:
+                continue                                  # überlappt: zweite Lesung desselben Reiters
+            row.append((t, b))
+        if len(row) >= 4 and _regular([(b[0] + b[2]) / 2 for _t, b in row]):
+            return row
+    return []
+
+
+def _list_rows(col: list, words: list, right_of: float) -> bool:
+    """Sind die „Reiter“ in Wahrheit Listenzeilen? (Upgrades: Yen … +5.00x … MAX in derselben Zeile)"""
+    hits = 0
+    for _t, b in col:
+        cy, hh = (b[1] + b[3]) / 2, b[3] - b[1]
+        if any(o[0] > right_of and abs((o[1] + o[3]) / 2 - cy) < 0.35 * hh for _w, o in words):
+            hits += 1
+    return hits >= 0.75 * len(col)
+
+
+FORBID_MARGIN = 0.03      # so viel Abstand (Anteil des Fensters) bleibt um gesperrte Knöpfe frei – auch kein Hover
+# Knöpfe, die das Erkunden zum Testen drücken darf: reine Ansichts-/Seitenwechsel (Liste bewusst klein)
+NAV_WORDS = ("info", "index", "help", "details", "stats", "members", "personal", "weekly", "daily", "global",
+             "online", "all", "rewards", "missions", "upgrades", "rankings", "servers", "home", "quests", "normal",
+             "gamemode", "raid", "collection", "guild", "page", "next", "prev", "back", "overview", "list")
+
+
+def forbidden_zones(words: list[tuple[str, list[float]]], roi: list[float], title: str = "") -> list[list[float]]:
+    """Bereiche, die das Makro nie ansteuern darf (Klick, Mausrad, Hover): gefährliche Knöpfe (Leave, Kick …) mit
+    Rand – und in der Gilde immer die Ecke unten links, wo „Leave“ sitzt (auch wenn die Texterkennung es übersieht)."""
+    x0, y0, x1, y1 = roi
+    w, h = x1 - x0, y1 - y0
+    zones = []
+    for t, b in words:
+        if is_forbidden(t):
+            zones.append([b[0] - FORBID_MARGIN, b[1] - FORBID_MARGIN, b[2] + FORBID_MARGIN, b[3] + FORBID_MARGIN])
+    if "guild" in _norm(title) or any(_norm(t).startswith("leave") for t, _b in words):
+        zones.append([x0 - 0.01, y0 + 0.78 * h, x0 + 0.36 * w, y1 + 0.01])     # Gilde: „Leave“ unten links
+    return zones
+
+
+def inside(pos: tuple[float, float], zones: list[list[float]]) -> bool:
+    return any(z[0] <= pos[0] <= z[2] and z[1] <= pos[1] <= z[3] for z in zones)
+
+
+def nav_buttons(words: list[tuple[str, list[float]]], skip: list[tuple[str, list[float]]]) -> list:
+    """Knöpfe, die das Erkunden testweise drücken darf: nur Wörter aus NAV_WORDS, nichts Gesperrtes, keine Reiter
+    (die werden extra durchgeklickt)."""
+    taken = [b for _t, b in skip]
+    out = []
+    for t, b in _dedupe(words):
+        n = _norm(t)
+        if n in NAV_WORDS and is_safe_to_click(t) and not is_forbidden(t) and not any(
+                abs(b[0] - o[0]) < 0.01 and abs(b[1] - o[1]) < 0.01 for o in taken):
+            out.append((t, b))
+    return out[:6]
+
+
+def lines_of(words: list[tuple[str, list[float]]]) -> list[str]:
+    """Gelesene Wörter zu Textzeilen zusammensetzen (Bericht lesbar statt einzelner Wörter); weit auseinander
+    stehende Teile einer Höhe (Spalten) werden mit „ · “ getrennt."""
+    rows: list[list] = []
+    for t, b in sorted(words, key=lambda c: ((c[1][1] + c[1][3]) / 2, c[1][0])):
+        cy, hgt = (b[1] + b[3]) / 2, b[3] - b[1]
+        if rows and abs(rows[-1][0] - cy) < 0.5 * max(hgt, rows[-1][1]):
+            rows[-1][2].append((t, b))
+        else:
+            rows.append([cy, hgt, [(t, b)]])
+    out = []
+    for _cy, _h, items in rows:
+        items.sort(key=lambda c: c[1][0])
+        text, last = "", None
+        for t, b in items:
+            if last is not None:
+                text += " · " if b[0] - last > 0.04 else " "
+            text += t
+            last = b[2]
+        out.append(text)
+    return out
 
 
 def raid_drops(words: list[tuple[str, list[float]]]) -> list[str]:

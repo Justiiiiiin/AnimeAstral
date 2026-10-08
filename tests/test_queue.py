@@ -50,5 +50,14 @@ class QueueTest(unittest.TestCase):
         self.assertLess(found["Equip Best"][0], 0.536)
 
 
+    def test_guard_blocks_forbidden_targets(self):
+        from astral_monitor.automation import Navigator, Stop
+        nav = Navigator(lambda: None, "Roblox", lambda: None, lambda _t: None)
+        nav.forbidden = [[0.2, 0.75, 0.36, 0.9]]
+        with self.assertRaises(Stop):
+            nav._guard((0.3, 0.8))                       # „Leave“ unten links: nie anfahren
+        nav._guard((0.5, 0.5))                           # anderswo: erlaubt
+
+
 if __name__ == "__main__":
     unittest.main()

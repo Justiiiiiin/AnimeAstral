@@ -262,6 +262,7 @@ class Navigator:
         self.guild_next = 0.0                             # Gilden-Missionen: frühestens dann wieder
         self.auto_gigs: Callable[[], bool] = lambda: False     # Schalter „Automatisch abholen“ (Einstellungen)
         self._hud: dict[str, list[float]] = {}           # gefundene Rand-Knöpfe (je Bildgröße)
+        self.forbidden: list[list[float]] = []            # Sperrzonen (Leave, Kick …): nie klicken, nie hovern
         self._hud_shape: Optional[tuple] = None
         self.auto_guild: Callable[[], bool] = lambda: False
 
@@ -383,6 +384,8 @@ class Navigator:
         Mehrteilige Beschriftungen: Wörter nebeneinander in einer Zeile. Rückgabe: gedrückte Beschriftung."""
         roi, frame = self._window_area(window)
         words = vision.words_in(frame, roi, self._ocr)
+        from .knowledge import is_forbidden
+        words = [(w, b) for w, b in words if not is_forbidden(w)]       # „Leave“ & Co. nie als Treffer
         norm = [(re.sub(r"[^a-z0-9]", "", w.lower()), b) for w, b in words]
         for label in labels:
             for i, (w, box) in enumerate(norm):
@@ -792,6 +795,16 @@ class Navigator:
             time.sleep(STEP_WAIT)
         time.sleep(0.6)
         guild = {"name": "Guild"}
+        roi, frame = self._window_area(guild)                # „Leave“ unten links sperren, bevor irgendetwas geklickt wird
+        from .knowledge import forbidden_zones
+        self.forbidden = forbidden_zones(vision.words_in(frame, roi, self._ocr), roi, "Guild")
+        try:
+            self._guild_pages(guild)
+        finally:
+            self.forbidden = []
+        self._close_any()
+
+    def _guild_pages(self, guild: dict) -> None:
         self._press(guild, ("missions",))
         time.sleep(1.0)
         total = 0
@@ -805,7 +818,6 @@ class Navigator:
             total += self._claim_all(label)
         if not total:
             self._snap("gilde")
-        self._close_any()
 
     # ------------------------------------------------------------------ Fixer Gigs (W21)
     def _gigs(self) -> None:
@@ -1244,8 +1256,16 @@ class Navigator:
         x0, y0, x1, y1 = box
         self._click((x0 + (rel[0] + rel[2]) / 2 * (x1 - x0), y0 + (rel[1] + rel[3]) / 2 * (y1 - y0)))
 
+    def _guard(self, pos: tuple[float, float]) -> None:
+        """Harte Sperre: Ziele in gesperrten Bereichen (Gilde „Leave“, Kick, Delete …) werden nie angesteuert –
+        die Maus springt direkt zum Ziel, fährt also nie über andere Knöpfe."""
+        from .knowledge import inside
+        if inside(pos, self.forbidden):
+            raise Stop(tr("Gesperrter Bereich (z. B. „Leave“) – nicht angesteuert."))
+
     def _click(self, pos: tuple[float, float]) -> None:
         self._check()
+        self._guard(pos)
         x, y = self._point(*pos)
         u32 = ctypes.windll.user32
         u32.SetCursorPos(x - 3, y - 3)
@@ -1263,6 +1283,7 @@ class Navigator:
 
     def _wheel(self, pos: tuple[float, float], notches: int) -> None:
         self._check()
+        self._guard(pos)
         x, y = self._point(*pos)
         u32 = ctypes.windll.user32
         u32.SetCursorPos(x - 3, y - 3)

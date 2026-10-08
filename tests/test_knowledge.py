@@ -89,6 +89,26 @@ class ClassifyTest(unittest.TestCase):
                  ("Create", [0.1, 0.7, 0.2, 0.74]), ("Join", [0.3, 0.7, 0.35, 0.74])]
         self.assertEqual(knowledge.raid_drops(words), ["Bankai Token", "Grail Shard"])
 
+    def test_guild_leave_is_never_targeted(self):
+        """Gilde: „Leave“ (auch falsch gelesen als „Leaves“) und die ganze Ecke unten links sind gesperrt."""
+        roi = [0.161, 0.149, 0.832, 0.876]
+        words = [("Home", [0.263, 0.342, 0.316, 0.362]), ("Members", [0.245, 0.445, 0.33, 0.476]),
+                 ("Leaves", [0.265, 0.776, 0.331, 0.805]), ("Invite", [0.56, 0.774, 0.6, 0.793])]
+        zones = knowledge.forbidden_zones(words, roi, "Guild")
+        self.assertTrue(knowledge.inside((0.298, 0.79), zones))        # auf „Leave“
+        self.assertTrue(knowledge.inside((0.3, 0.83), zones))          # knapp darunter (Rand)
+        self.assertTrue(knowledge.inside((0.2, 0.86), zones))          # Ecke unten links, auch ohne Text
+        self.assertFalse(knowledge.inside((0.29, 0.352), zones))       # „Home“ bleibt frei
+        no_text = knowledge.forbidden_zones([], roi, "Guild")          # Texterkennung hat „Leave“ übersehen
+        self.assertTrue(knowledge.inside((0.298, 0.79), no_text))
+        for word in ("Leave", "LEAVE!", "Leaves", "Leav", "Kick", "Delete", "Pause", "Play", "Unequip"):
+            self.assertTrue(knowledge.is_forbidden(word), word)
+        self.assertFalse(knowledge.is_forbidden("Members"))
+        tabs = [t for t, _b in knowledge.side_tabs(words, roi)]
+        self.assertNotIn("Leaves", tabs)
+        self.assertEqual(knowledge.nav_buttons([("Leave", [0.2, 0.8, 0.3, 0.82]), ("Members", [0.6, 0.3, 0.7, 0.32])],
+                                               []), [("Members", [0.6, 0.3, 0.7, 0.32])])
+
     def test_unknown_and_safety(self):
         self.assertEqual(knowledge.classify("", W("Hello")).category, "unknown")
         for word in ("Roll", "Auto", "Craft", "Buy", "Claim", "Equip"):

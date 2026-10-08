@@ -1097,4 +1097,7 @@ EN: dict[str, str] = {
     'nächste in {minutes} Min.': 'next in {minutes} min',
     '{task}: {reason} – nächster Versuch in 15 Min.': '{task}: {reason} – next try in 15 min',
     '{window}: Reiter „{tab}“': '{window}: tab “{tab}”',
+    'Gescrollt: {n}×': 'Scrolled: {n}×',
+    'Gesperrter Bereich (z. B. „Leave“) – nicht angesteuert.': 'Blocked area (e.g. “Leave”) – not targeted.',
+    '{window}: teste „{button}“': '{window}: testing “{button}”',
 }
