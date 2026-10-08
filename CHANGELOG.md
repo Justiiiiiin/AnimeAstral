@@ -4,6 +4,11 @@ Neueste Version oben. Kurze Stichpunkte, keine Erklärungen (die stehen im Progr
 Der Abschnitt einer Version wird beim Veröffentlichen automatisch als Versionshinweis übernommen
 (`tools/release_notes.py`) und ist im Programm unter Einstellungen → Updates → „Alle Versionen“ lesbar.
 
+## Unveröffentlicht
+
+### 🔧 Verbessert
+- Mana Contract (W19) auch vor hellem Hintergrund erkannt
+
 ## 0.9.9-beta.10
 
 ### 🔧 Verbessert

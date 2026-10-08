@@ -16,6 +16,7 @@ ROW_HIT = 0.85        # Herz-Merkmal links oben in jeder Zeile: echte Zeilen 0,9
 BOTTOM_HIT = 0.60     # unterer Zeilenrand vorhanden (sonst am Listenrand abgeschnitten)
 X_HIT = 0.85          # inneres X eines Menüs: andere Menüs 0,96, Teleporter 1,0
 X_WIDE_HIT = 0.78     # kleinere Fenster (X weiter links/unten, etwas kleiner): gemessen 0,80–0,89
+X_WIDE_SOFT = 0.7       # knapp darunter nur mit lesbarem Titel (Hintergrund hinter dem X stört)
 X_WIDE = (0.45, 0.05, 0.97, 0.55)    # Suchbereich dafür im Roblox-Fenster (Gilde: X weit rechts)
 MARKER_HIT = 0.80     # Erkennungsmerkmal eines Sonder-Menüs
 BAND = (0.03, 0.55, 0.22)   # Titel-Banner im Menürahmen: x von, x bis, y bis
@@ -136,8 +137,9 @@ class MenuFrame:
             if score > best[0]:
                 best = (score, s, loc, t.shape[:2])
         score, s, (lx, ly), (th, tw) = best
-        if score < X_WIDE_HIT:
-            return None
+        if score < X_WIDE_SOFT:
+            return None                                   # knapp darunter (heller Hintergrund hinter dem X, z. B.
+        weak = score < X_WIDE_HIT                         # Mana Contract im Raid): nur gültig mit lesbarem Titel
         cx, cy = (ax0 + lx + tw / 2) / fw, (ay0 + ly + th / 2) / fh
         x0, y0, x1, y1 = self.roi
         std_cx, std_cy = self.x_at[0] + self.x_size[0] / 2, self.x_at[1] + self.x_size[1] / 2
@@ -146,7 +148,10 @@ class MenuFrame:
         top = cy - (std_cy - y0) * s
         roi = [max(0.0, 2 * mid - right), max(0.0, top), min(1.0, right), min(1.0, top + (y1 - y0) * s)]
         crop = frame[int(roi[1] * fh):int(roi[3] * fh), int(roi[0] * fw):int(roi[2] * fw)]
-        return roi, read_title(crop, ocr) or read_title_loose(crop, ocr), (cx, cy)
+        title = read_title(crop, ocr) or read_title_loose(crop, ocr)
+        if weak and len(re.sub(r"[^A-Za-z]", "", title)) < 4:
+            return None
+        return roi, title, (cx, cy)
 
     def is_base(self, title: str) -> bool:
         return bool(title) and same_title(title, self.base_title)
