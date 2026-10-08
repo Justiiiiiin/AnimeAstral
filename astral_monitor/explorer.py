@@ -588,16 +588,16 @@ class Explorer:
         image = self.out / f"voll_{self.count:03d}_{safe}.jpg"   # volle Auflösung zum Markieren (Funde prüfen)
         if crop.size:
             cv2.imencode(".jpg", crop, [cv2.IMWRITE_JPEG_QUALITY, 88])[1].tofile(str(image))
-        if True:                                           # jedes Fenster: Nutzer bestätigen/markieren lassen
-            base = analysis.tabs[0] if analysis.tabs else {"lines": knowledge.lines_of(analysis.words)}
-            review.add_finding(self.data_dir, name, {
-                "title": analysis.title, "category": analysis.category, "label": analysis.label,
-                "tabs": [t["tab"] for t in analysis.tabs if t.get("tab")],
-                "tested": [t["button"] for t in analysis.tabs if t.get("button")],
-                "scroll": [a for t in analysis.tabs for a in t.get("scroll", [])],
-                "actions": sorted({b for b, _r in analysis.buttons}),
-                "claims": len(knowledge.claimables(analysis.words)),
-                "lines": base.get("lines", [])[:20], "image": str(image), "roi": [round(v, 4) for v in roi]})
+        # jedes Fenster: Nutzer bestätigen/markieren lassen (Funde prüfen)
+        base = analysis.tabs[0] if analysis.tabs else {"lines": knowledge.lines_of(analysis.words)}
+        review.add_finding(self.data_dir, name, {
+            "title": analysis.title, "category": analysis.category, "label": analysis.label,
+            "tabs": [t["tab"] for t in analysis.tabs if t.get("tab")],
+            "tested": [t["button"] for t in analysis.tabs if t.get("button")],
+            "scroll": [a for t in analysis.tabs for a in t.get("scroll", [])],
+            "actions": sorted({b for b, _r in analysis.buttons}),
+            "claims": len(knowledge.claimables(analysis.words)),
+            "lines": base.get("lines", [])[:20], "image": str(image), "roi": [round(v, 4) for v in roi]})
 
     def _close(self, kind: str, roi: list[float], template, frame: np.ndarray) -> None:
         nav = self.nav
