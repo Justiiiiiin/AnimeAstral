@@ -9,6 +9,12 @@ Der Abschnitt einer Version wird beim Veröffentlichen automatisch als Versionsh
 ### 🔧 Verbessert
 - Progressions: Makro drückt „Auto All“ (statt „Roll All“)
 - Fensternamen wie im Spiel: Lesefehler berichtigt („Craft Genos“)
+- Erkunden: Scroll-Probe nur noch an bis zu 4 Stellen mit Inhalt
+- Mausrad ohne Wirkung wird zurückgedreht (Kamera zoomt nicht mehr)
+- Ich-Perspektive (Zeiger festgehalten) wird erkannt und verlassen
+- Geprüfte Fenster: nur markierte Listen scrollen, Raids nie
+- Raid-Fenster: Titel „Raid“ wird nicht mehr als Knopf getestet
+- Teleporter statt Fenster im Bild: nicht als Fund speichern
 
 ## 0.9.9-beta.8
 

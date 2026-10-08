@@ -1386,8 +1386,20 @@ class Navigator:
             return
         raise Stop(tr("„{name}“ ging nicht auf.", name=window["name"]))
 
+    def _unlock_camera(self) -> None:
+        """Ich-Perspektive verlassen: Hält Roblox den Zeiger in der Mitte fest (Kamera ganz herangezoomt), lassen
+        sich Fenster nicht mehr anklicken. Mausrad zurück = Kamera herauszoomen."""
+        self.log(tr("Kamera ist ganz herangezoomt (Zeiger festgehalten) – zoome heraus."))
+        for _ in range(4):
+            self._wheel((0.5, 0.5), -5)
+            time.sleep(0.15)
+        self._warped = 0.0
+        self._cursor = None
+
     def _close_any(self) -> None:
-        for _ in range(3):
+        for attempt in range(4):
+            if attempt == 2 and time.monotonic() - getattr(self, "_warped", 0.0) < 10:
+                self._unlock_camera()                     # zweimal nicht zu und Zeiger wird festgehalten
             kind, st = self._screen(self._frame())
             if kind == "none":
                 return
@@ -1442,6 +1454,7 @@ class Navigator:
             if moved is None:                             # Roblox hat den Zeiger selbst zur Mitte gesetzt
                 _log.info("Makro: Mauszeiger vom Spiel zur Fenstermitte gesetzt – kein Abbruch.")
                 self._cursor = (pt.x, pt.y)
+                self._warped = time.monotonic()
             elif moved:
                 raise UserStop(tr("Abgebrochen – Maus wurde bewegt."))
         u32.GetForegroundWindow.restype = wintypes.HWND

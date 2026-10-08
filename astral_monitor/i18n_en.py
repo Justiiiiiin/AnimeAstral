@@ -1237,4 +1237,6 @@ EN: dict[str, str] = {
     "Kein Pet ließ sich losschicken – Bild gespeichert (debug).": "No pet could be sent – image saved (debug).",
     "Pet Nr. {n} von hinten angeklickt.": "Clicked pet no. {n} from the end.",
     "Pet losgeschickt.": "Pet sent.",
+    "Kamera ist ganz herangezoomt (Zeiger festgehalten) – zoome heraus.":
+        "Camera is fully zoomed in (cursor locked) – zooming out.",
 }

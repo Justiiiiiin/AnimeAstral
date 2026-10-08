@@ -35,6 +35,10 @@ DEEP_CATS = ("upgrades", "shop", "quests", "achievements", "guild", "promotion",
 # gescrollt (Bereich = scrolled_box). Oben (Titel) bleibt frei.
 SCROLL_POINTS = tuple((fx, fy) for fy in (0.38, 0.6, 0.82) for fx in (0.2, 0.5, 0.8))
 SCROLL_MAX = 5
+PROBE_NOTCHES = 2         # Mausrad-Rasten je Probe; ohne Wirkung sofort zurückdrehen (sonst zoomt die Kamera bis
+                          # in die Ich-Perspektive – Roblox hält dann den Zeiger fest, Fenster gehen nicht mehr zu)
+PROBE_MAX = 4             # höchstens so viele Probe-Stellen je Seite (vorher 9 – zu langsam, brachte wenig)
+NO_SCROLL_CATS = ("raid", "defense", "artefact", "info", "later", "shrine", "pets", "titans", "equip_best")
 SCROLL_STOP = ("completed",)   # Eigentümer: Quests mit großem lila „Completed“ und alles darunter ist unwichtig
 
 
@@ -245,6 +249,14 @@ class Explorer:
             return
         kind, roi, title, frame, template = seen
         analysis = self._analyse(frame, roi, title, template)
+        if _is_teleporter(analysis.words):                 # noch der Teleporter im Bild (Raid-Fenster gehen
+            time.sleep(1.5)                                # langsam auf) – einmal nachsehen, sonst nicht aufnehmen
+            frame = nav._frame()
+            analysis = self._analyse(frame, roi, title, template)
+            if _is_teleporter(analysis.words):
+                self.report["skipped"].append(f"{world} · Platz {index + 1}: Teleporter statt Fenster im Bild")
+                self._close(kind, roi, template, frame)
+                return
         button = self._button_for(world, index, rel, box)
         name = self._known_name(button) or self._window_name(world, analysis, index, button)
         nav.log(tr("{world} · Platz {n}: {title} ({kind})", world=world, n=index + 1,
@@ -447,7 +459,7 @@ class Explorer:
         try:
             full = roi == FULL
             tabs = [] if full else knowledge.side_tabs(analysis.words, roi)
-            lines, areas = self._scroll_read(roi, analysis.words)
+            lines, areas = self._scroll_read(roi, analysis.words, analysis.category)
             analysis.tabs.append({"tab": "", "lines": lines, "scroll": areas})
             for label, box in tabs[:9]:
                 self._left()
@@ -462,7 +474,7 @@ class Explorer:
                 words = vision.words_in(frame, roi, nav._ocr)
                 nav.forbidden += knowledge.forbidden_zones(words, roi, title)
                 sub = knowledge.classify(label, words)
-                tab_lines, tab_areas = self._scroll_read(roi, words)
+                tab_lines, tab_areas = self._scroll_read(roi, words, sub.category)
                 analysis.tabs.append({"tab": label, "category": sub.category, "label": sub.label,
                                       "claim": len(knowledge.claimables(words)), "lines": tab_lines,
                                       "scroll": tab_areas})
@@ -483,8 +495,13 @@ class Explorer:
         """Ansichts-Knöpfe testweise drücken; geht ein Unterfenster auf: lesen, schließen, prüfen, dass das
         ursprüngliche Fenster wieder da ist – sonst aufhören (nichts erzwingen)."""
         nav = self.nav
+        if analysis.category in ("raid", "defense"):
+            return                                        # Raid-Fenster: Create/Join & Co. nie anfassen
         frame = nav._frame()
-        words = vision.words_in(frame, roi, nav._ocr)
+        x0, y0, x1, y1 = roi
+        banner = [x0, y0, x0 + vision.BAND[1] * (x1 - x0), y0 + vision.BAND[2] * (y1 - y0)]
+        words = [(w, b) for w, b in vision.words_in(frame, roi, nav._ocr)
+                 if not knowledge.inside(((b[0] + b[2]) / 2, (b[1] + b[3]) / 2), [banner])]   # Titel ist kein Knopf
         for label, box in knowledge.nav_buttons(words, tabs):
             self._left()
             nav.log(tr("{window}: teste „{button}“", window=window, button=label))
@@ -513,10 +530,13 @@ class Explorer:
                 continue
             analysis.tabs.append(result)
 
-    def _scroll_read(self, roi: list[float], words: list) -> tuple[list[str], list[list[float]]]:
-        """Inhalt lesen und scrollbare Bereiche finden: an mehreren Stellen das Mausrad drehen. Gescrollt hat es nur,
-        wenn sich der Inhalt unter der Maus wirklich senkrecht VERSCHOBEN hat (Phasenkorrelation) – laufende Timer
-        oder Animationen (Boosts, Equip Best) zählen nicht. Dieselbe Liste wird nur einmal durchgelesen.
+    def _scroll_read(self, roi: list[float], words: list, category: str = "") -> tuple[list[str], list[list[float]]]:
+        """Inhalt lesen und scrollbare Bereiche finden. Gescrollt hat es nur, wenn sich der Inhalt unter der Maus
+        wirklich senkrecht VERSCHOBEN hat (Phasenkorrelation) – Timer/Animationen zählen nicht.
+        Schneller und sicherer als das alte 3×3-Raster (Eigentümer 08.10.2026: „dauert zu lange, bringt wenig“):
+        - geprüfte Fenster: nur die markierten Listen (keine = nicht scrollen), Raids/Artefakte/Infos nie;
+        - Probe-Stellen nur, wo Inhalt ist (Wörter/Kanten), nicht im Titel-Banner, höchstens PROBE_MAX;
+        - je Probe PROBE_NOTCHES Rasten; bewegt sich nichts, sofort zurückdrehen (Kamera-Zoom rückgängig).
         Rückgabe: (Textzeilen ohne Doppelte, Stellen, an denen gescrollt werden kann)."""
         nav = self.nav
         lines = knowledge.lines_of(words)
@@ -524,20 +544,28 @@ class Explorer:
         covered: list[list[float]] = []                   # Bereiche, die schon mitgescrollt sind
         x0, y0, x1, y1 = roi
         marked = [((b[0] + b[2]) / 2, (b[1] + b[3]) / 2) for b in self._marked(self._current, "list")]
-        points = marked or [(x0 + fx * (x1 - x0), y0 + fy * (y1 - y0)) for fx, fy in SCROLL_POINTS]
-        for point in points:                              # vom Nutzer markierte Listen gehen vor dem Probe-Raster
+        if marked:
+            points = marked                               # vom Nutzer markierte Listen gehen vor
+        elif category in NO_SCROLL_CATS or (self._current and review.status_of(self.data_dir, self._current)
+                                            == review.OK):
+            return lines[:150], []                        # nichts zu scrollen bzw. vom Nutzer ohne Liste bestätigt
+        else:
+            points = probe_points(self._content(roi), words, roi)
+        for point in points:
             if knowledge.inside(point, nav.forbidden) or knowledge.inside(point, covered):
                 continue
             moved = 0
             last = self._content(roi)
             for _ in range(SCROLL_MAX):
                 self._left()
-                nav._wheel(point, -3)
-                time.sleep(0.5)
+                nav._wheel(point, -PROBE_NOTCHES)
+                time.sleep(0.3)
                 now = self._content(roi)
                 box = scrolled_box(last, now)
                 if box is None:
-                    break                                  # nichts verschoben: nicht scrollbar oder unten angekommen
+                    nav._wheel(point, PROBE_NOTCHES)      # nichts verschoben: Rasten zurück (Kamera!)
+                    time.sleep(0.15)
+                    break                                  # nicht scrollbar oder unten angekommen
                 moved += 1
                 last = now
                 covered.append([x0 + box[0] * (x1 - x0), y0 + box[1] * (y1 - y0),
@@ -551,8 +579,16 @@ class Explorer:
             if moved:
                 areas.append([round(point[0], 4), round(point[1], 4)])
                 nav.log(tr("Gescrollt: {n}×", n=moved))
-                nav._wheel(point, 3 * moved)               # zurück nach oben (Reiter/Knöpfe wieder an ihrem Platz)
-                time.sleep(0.4)
+                # zurück nach oben, Schritt für Schritt nur solange sich die Liste bewegt: zu viele Rasten am oberen
+                # Ende gehen an die Kamera (Zoom bis zur Ich-Perspektive, Zeiger festgehalten)
+                last = self._content(roi)
+                for _ in range(moved + 1):
+                    nav._wheel(point, PROBE_NOTCHES)
+                    time.sleep(0.25)
+                    now = self._content(roi)
+                    if scrolled_box(last, now) is None:
+                        break
+                    last = now
         return lines[:150], areas
 
     def _content(self, roi: list[float]) -> np.ndarray:
@@ -696,6 +732,34 @@ def vision_changed(before: np.ndarray, after: np.ndarray) -> bool:
     a = cv2.resize(cv2.cvtColor(before, cv2.COLOR_BGR2GRAY), (160, 90), interpolation=cv2.INTER_AREA)
     b = cv2.resize(cv2.cvtColor(after, cv2.COLOR_BGR2GRAY), (160, 90), interpolation=cv2.INTER_AREA)
     return float(np.count_nonzero(cv2.absdiff(a, b) > 40)) / a.size > 0.25
+
+
+def _is_teleporter(words: list) -> bool:
+    """Steht im Bild noch der Teleporter (mehrere „TELEPORT!“/„RESPAWN!“-Knöpfe) statt des geöffneten Fensters?"""
+    return sum(1 for w, _b in words if re.sub(r"[^a-z]", "", w.lower()) in ("teleport", "respawn")) >= 2
+
+
+def probe_points(content: np.ndarray, words: list, roi: list[float]) -> list[tuple[float, float]]:
+    """Wo lohnt eine Scroll-Probe? Aus dem 3×3-Raster nur Stellen mit Inhalt: Kantendichte im Umfeld (Kacheln,
+    Zeilen) oder Wörter in der Nähe – leere Flächen und der Titel-Banner fallen weg; die dichtesten zuerst, höchstens
+    PROBE_MAX. content: Fensterbild grau 480×270 (Explorer._content)."""
+    x0, y0, x1, y1 = roi
+    h, w = content.shape[:2]
+    edges = cv2.Canny(content, 60, 160)
+    centers = [((b[0] + b[2]) / 2, (b[1] + b[3]) / 2) for _t, b in words]
+    scored = []
+    for fx, fy in SCROLL_POINTS:
+        px, py = int(fx * w), int(fy * h)
+        patch = edges[max(0, py - h // 10):py + h // 10, max(0, px - w // 10):px + w // 10]
+        density = float(patch.mean()) / 255 if patch.size else 0.0
+        point = (x0 + fx * (x1 - x0), y0 + fy * (y1 - y0))
+        near = sum(1 for cx, cy in centers if abs(cx - point[0]) < 0.12 * (x1 - x0)
+                   and abs(cy - point[1]) < 0.12 * (y1 - y0))
+        if density < 0.04 and near == 0:
+            continue                                      # leere Fläche: dort ist keine Liste
+        scored.append((density + 0.02 * near, point))
+    scored.sort(key=lambda s: -s[0])
+    return [p for _s, p in scored[:PROBE_MAX]]
 
 
 def latest_report(data_dir: Path) -> Optional[dict]:

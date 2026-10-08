@@ -45,3 +45,20 @@ class RestoreTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ProbeTest(unittest.TestCase):
+    def test_probe_points_skip_empty(self):
+        import numpy as np
+        content = np.zeros((270, 480), np.uint8)
+        for x in range(40, 200, 16):
+            content[150:240, x:x + 8] = 255                       # Inhalt unten links (Kacheln)
+        pts = explorer.probe_points(content, [], [0.0, 0.0, 1.0, 1.0])
+        self.assertTrue(pts)
+        self.assertLessEqual(len(pts), explorer.PROBE_MAX)
+        self.assertTrue(all(x < 0.5 and y > 0.5 for x, y in pts))   # leere Flächen werden nicht probiert
+
+    def test_teleporter_in_picture(self):
+        words = [("TELEPORT!", [0, 0, 0.1, 0.1]), ("RESPAWN!", [0, 0.2, 0.1, 0.3]), ("Lobby", [0, 0, 0.1, 0.1])]
+        self.assertTrue(explorer._is_teleporter(words))
+        self.assertFalse(explorer._is_teleporter([("Create", [0, 0, 0.1, 0.1])]))
