@@ -504,7 +504,10 @@ class SettingsPage(QWidget):
         forget.setToolTip(tr("Vom Erkunden gelernte Fenster, Reiter und Drops löschen – die mitgelieferte Karte "
                              "bleibt"))
         forget.clicked.connect(self._forget_explore)
-        for btn in (start_explore, report, forget):
+        check = QPushButton(tr("Funde prüfen …"))
+        check.setToolTip(tr("Was das Erkunden gefunden hat, Fenster für Fenster bestätigen oder korrigieren"))
+        check.clicked.connect(lambda: self.main.pages[0].macro.open_review(always=True))
+        for btn in (start_explore, check, report, forget):
             erow.addWidget(btn)
         erow.addStretch(1)
         explore.body.addLayout(erow)
@@ -935,6 +938,7 @@ class SettingsPage(QWidget):
         from ..explorer import forget_local
         forget_local(app_paths.data_dir())
         (app_paths.data_dir() / "explore" / "deep_done.json").unlink(missing_ok=True)
+        (app_paths.data_dir() / "explore" / "review.json").unlink(missing_ok=True)
         self.main.pages[0].macro.reload_map()
 
     def load(self, s) -> None:

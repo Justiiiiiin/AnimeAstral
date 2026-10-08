@@ -196,6 +196,17 @@ class AutomationCard(Card):
             self.main.set_anti_afk(True)                   # Zähler beginnt neu mit einem vollen Intervall
             self._add_log(tr("Anti-AFK wieder an."))
         self.reload_map()
+        self.open_review()
+
+    def open_review(self, always: bool = False) -> None:
+        """Funde des Erkundens bestätigen lassen (nur wenn etwas offen ist, außer always)."""
+        from .. import app_paths, review
+        if not always and not review.pending(app_paths.data_dir()):
+            return
+        from .explore_review import ReviewDialog
+        dlg = ReviewDialog(self.main)
+        dlg.exec()
+        self.reload_map()                                 # bestätigte Arten gelten sofort
 
     def reload_map(self) -> None:
         self.map = UiMap.load()

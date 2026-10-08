@@ -48,6 +48,14 @@ class UiMap:
         if local is not None:
             have = {e.get("file") for e in entries}
             entries += [e for e in load_local(local) if e.get("file") not in have]
+            try:                                          # vom Nutzer bestätigte/korrigierte Arten (review.py)
+                from .review import category_overrides
+                overrides = category_overrides(local.parent)
+            except Exception:  # noqa: BLE001
+                overrides = {}
+            for e in entries:
+                if e.get("name") in overrides:
+                    e["extra"] = {**(e.get("extra") or {}), "category": overrides[e["name"]]}
         return cls(entries, base)
 
     def add(self, entry: dict) -> None:

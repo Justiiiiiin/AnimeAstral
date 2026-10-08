@@ -19,7 +19,7 @@ from typing import Optional
 import cv2
 import numpy as np
 
-from . import knowledge, vision
+from . import knowledge, review, vision
 from .i18n import tr
 from .automation import Stop
 from .uimap import LOCAL_FILE, ROW, match_row, save_local, world_number
@@ -31,8 +31,11 @@ FULL = [0.0, 0.0, 1.0, 1.0]
 # Fenster, die man gründlich ansieht (Reiter durchklicken, scrollen) – einmal, danach in explore/deep_done.json
 DEEP_CATS = ("upgrades", "shop", "quests", "achievements", "guild", "promotion", "inventory", "index", "battlepass",
              "passive", "gigs", "equip_best", "unknown")
-SCROLL_POINTS = ((0.62, 0.6), (0.3, 0.55), (0.22, 0.74), (0.5, 0.45))   # rechts groß, links, links unten, Mitte
+# Probe-Raster: an diesen Stellen wird je EINMAL das Mausrad gedreht; nur wo sich etwas verschiebt, wird weiter
+# gescrollt (Bereich = scrolled_box). Oben (Titel) bleibt frei.
+SCROLL_POINTS = tuple((fx, fy) for fy in (0.38, 0.6, 0.82) for fx in (0.2, 0.5, 0.8))
 SCROLL_MAX = 5
+SCROLL_STOP = ("completed",)   # Eigentümer: Quests mit großem lila „Completed“ und alles darunter ist unwichtig
 
 
 class TimeUp(Exception):
@@ -381,17 +384,21 @@ class Explorer:
         return analysis
 
     def _needs_visit(self, button: dict, hud: bool = False) -> bool:
-        """Bekanntes Fenster erneut öffnen? Nur bei Problemen (unbekannt, kein Titel) oder wenn es gründlich angesehen
-        werden soll (Reiter, Scrollen) und das noch nicht geschehen ist."""
+        """Fenster (erneut) öffnen? Jedes Fenster wird nur EINMAL gründlich gescannt; danach entscheidet der Nutzer
+        in der Rückfrage (review.py). Erneut nur, wenn er „nochmal prüfen“ gesetzt hat."""
         if not self.full:
             return False
         window = self.nav.map.window_for(button)
         if window is None:
             return True
-        cat = (window.get("extra") or {}).get("category", "")
-        if cat == "unknown":
+        name = window["name"]
+        if review.status_of(self.data_dir, name) == review.RECHECK:
+            self.deep_done.discard(name)
             return True
-        return (hud or cat in DEEP_CATS) and window["name"] not in self.deep_done
+        if name in self.deep_done or review.status_of(self.data_dir, name):
+            return False
+        cat = (window.get("extra") or {}).get("category", "")
+        return hud or cat == "unknown" or cat in DEEP_CATS
 
     def _scan_tabs(self, window: str, roi: list[float], analysis: knowledge.Analysis) -> None:
         """Gründlich ansehen (unbeaufsichtigt sicher):
@@ -502,9 +509,12 @@ class Explorer:
                 last = now
                 covered.append([x0 + box[0] * (x1 - x0), y0 + box[1] * (y1 - y0),
                                 x0 + box[2] * (x1 - x0), y0 + box[3] * (y1 - y0)])
-                for line in knowledge.lines_of(vision.words_in(nav._frame(), roi, nav._ocr)):
+                new = knowledge.lines_of(vision.words_in(nav._frame(), roi, nav._ocr))
+                for line in new:
                     if line not in lines:
                         lines.append(line)
+                if any(stop in line.lower() for line in new for stop in SCROLL_STOP):
+                    break                                  # ab hier nur Erledigtes (Global Quests: „Completed“)
             if moved:
                 areas.append([round(point[0], 4), round(point[1], 4)])
                 nav.log(tr("Gescrollt: {n}×", n=moved))
@@ -516,7 +526,7 @@ class Explorer:
         frame = self.nav._frame()
         fh, fw = frame.shape[:2]
         crop = frame[int(roi[1] * fh):int(roi[3] * fh), int(roi[0] * fw):int(roi[2] * fw)]
-        return cv2.resize(cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY), (320, 180), interpolation=cv2.INTER_AREA)
+        return cv2.resize(cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY), (480, 270), interpolation=cv2.INTER_AREA)
 
     def _window_name(self, world: str, analysis: knowledge.Analysis, index: int, button: dict) -> str:
         named = button.get("name", "")
@@ -566,7 +576,18 @@ class Explorer:
         crop = frame[int(roi[1] * fh):int(roi[3] * fh), int(roi[0] * fw):int(roi[2] * fw)]
         small = cv2.resize(crop, None, fx=0.5, fy=0.5, interpolation=cv2.INTER_AREA) if crop.size else frame
         safe = re.sub(r"[^\w-]+", "_", name)[:60]
-        cv2.imencode(".jpg", small, [cv2.IMWRITE_JPEG_QUALITY, 82])[1].tofile(str(self.out / f"{self.count:03d}_{safe}.jpg"))
+        image = self.out / f"{self.count:03d}_{safe}.jpg"
+        cv2.imencode(".jpg", small, [cv2.IMWRITE_JPEG_QUALITY, 82])[1].tofile(str(image))
+        if analysis.tabs:                                  # gründlich gescannt: Nutzer bestätigen lassen
+            base = analysis.tabs[0]
+            review.add_finding(self.data_dir, name, {
+                "title": analysis.title, "category": analysis.category, "label": analysis.label,
+                "tabs": [t["tab"] for t in analysis.tabs if t.get("tab")],
+                "tested": [t["button"] for t in analysis.tabs if t.get("button")],
+                "scroll": [a for t in analysis.tabs for a in t.get("scroll", [])],
+                "actions": sorted({b for b, _r in analysis.buttons}),
+                "claims": len(knowledge.claimables(analysis.words)),
+                "lines": base.get("lines", [])[:20], "image": str(image)})
 
     def _close(self, kind: str, roi: list[float], template, frame: np.ndarray) -> None:
         nav = self.nav
@@ -586,12 +607,13 @@ class Explorer:
 
 
 def scrolled_box(before: np.ndarray, after: np.ndarray) -> Optional[list[float]]:
-    """Hat sich ein Teil des Fensters senkrecht verschoben (Liste gescrollt)? Raster aus 4 × 3 Feldern: in jedem
+    """Hat sich ein Teil des Fensters senkrecht verschoben (Liste gescrollt)? Raster aus 8 × 6 Feldern: in jedem
     Feld mit genug Inhalt wird die Verschiebung gemessen (Phasenkorrelation). Gescrollt = mindestens zwei Felder
-    übereinander mit gleicher senkrechter Verschiebung ≥ 3 px und kaum waagerechter. Rückgabe: Bereich der
-    verschobenen Felder (Anteile des Fensters) oder None (nichts verschoben, nur Animation/Timer)."""
+    mit gleicher senkrechter Verschiebung ≥ 3 px und kaum waagerechter – auch kleine Listen (Promotions links
+    unten). Animationen/Timer verschieben sich nicht einheitlich und zählen nicht. Rückgabe: Bereich der
+    verschobenen Felder (Anteile des Fensters) oder None."""
     h, w = before.shape[:2]
-    cols, rows = 4, 3
+    cols, rows = 8, 6
     hits = []
     for r in range(rows):
         for c in range(cols):
@@ -603,15 +625,17 @@ def scrolled_box(before: np.ndarray, after: np.ndarray) -> Optional[list[float]]
                 continue
             (dx, dy), resp = cv2.phaseCorrelate(a, b)
             if resp > 0.15 and abs(dy) >= 3 and abs(dx) <= 1.5:
-                hits.append((c, r, round(dy / 3)))
-    for c in range(cols):                                 # Spalte mit mind. 2 Feldern, gleiche Richtung/Größe
-        col = [hit for hit in hits if hit[0] == c]
-        if len(col) >= 2 and len({hit[2] for hit in col}) <= 2:
-            cells = [hit for hit in hits if abs(hit[2] - col[0][2]) <= 1]
-            cs = [hit[0] for hit in cells]
-            rs = [hit[1] for hit in cells]
-            return [min(cs) / cols, min(rs) / rows, (max(cs) + 1) / cols, (max(rs) + 1) / rows]
-    return None
+                hits.append((c, r, dy))
+    best: list = []
+    for _c, _r, dy in hits:                               # größte Gruppe mit (fast) gleicher Verschiebung
+        group = [hit for hit in hits if abs(hit[2] - dy) <= 2.5]
+        if len(group) > len(best):
+            best = group
+    if len(best) < 2:
+        return None
+    cs = [hit[0] for hit in best]
+    rs = [hit[1] for hit in best]
+    return [min(cs) / cols, min(rs) / rows, (max(cs) + 1) / cols, (max(rs) + 1) / rows]
 
 
 def vision_scroll() -> int:
