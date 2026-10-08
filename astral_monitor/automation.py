@@ -1037,7 +1037,7 @@ class Navigator:
 
     def _send_pets(self, nth: int = 1) -> None:
         """Pets-Fenster nach „Send Pets“: ganz nach unten scrollen, EIN Pet anklicken – beim n-ten Gig das n-te von
-        hinten (also reihum eins der letzten GIGS_PETS, egal welches) –, bestätigen.
+        hinten (also reihum eins der letzten GIGS_PETS, egal welches); der Klick schickt es los. Je Gig einzeln.
         Unbekannte Schritte werden protokolliert und als Bild gespeichert (debug/makro_gigs_*.jpg)."""
         roi, frame = self._window_area({"name": "Pets"})
         x0, y0, x1, y1 = roi
@@ -1060,28 +1060,23 @@ class Navigator:
             self._snap("gigs_pets")
             self._close_any_quiet()
             return
-        box = tiles[-min(nth, len(tiles))]
-        self._click_roi(box)
-        time.sleep(0.4)
-        self.log(tr("Pet Nr. {n} von hinten ausgewählt.", n=min(nth, len(tiles))))
-        self._snap("gigs_auswahl")                        # Ablauf nach der Auswahl ist noch unbekannt: Bild merken
-        words, _roi = self._words()
-        outside = [(w, b) for w, b in words if not (grid[0] <= (b[0] + b[2]) / 2 <= grid[2]
-                                                     and grid[1] <= (b[1] + b[3]) / 2 <= grid[3])]
-        for key in ("send", "confirm", "done", "select", "start", "ok"):   # Knöpfe außerhalb des Pet-Rasters
-            confirm = self._find(outside, key)
-            if confirm is not None:
-                break
-        if confirm is None:
-            self.log(tr("Bestätigen-Knopf nicht gefunden – Bild gespeichert (debug)."))
-            self._snap("gigs_bestaetigen")
-            return
-        self.log(tr("Klicke „{button}“.", button=key.capitalize()))
-        self._click_roi(confirm)
-        time.sleep(1.0)
-        if self._screen(self._frame())[0] != "none" and not self._is_open(self._gigs_window() or {"name": "Fixer Gigs"}, self._frame()):
-            self.log(tr("Nach dem Bestätigen ist noch ein anderes Fenster offen – Bild gespeichert (debug)."))
-            self._snap("gigs_danach")
+        # Ein Klick auf das Pet schickt es los – kein Bestätigen (Eigentümer 08.10.2026). Zuerst das n-te von hinten;
+        # bleibt das Pets-Fenster offen (Pet schon unterwegs o. Ä.), die anderen der letzten GIGS_PETS probieren.
+        gigs = self._gigs_window() or {"name": "Fixer Gigs"}
+        order = [nth] + [k for k in range(1, GIGS_PETS + 1) if k != nth]
+        for k in order[:min(GIGS_PETS, len(tiles))]:
+            self._click_roi(tiles[-k])
+            self.log(tr("Pet Nr. {n} von hinten angeklickt.", n=k))
+            end = time.monotonic() + 2.5
+            while time.monotonic() < end:
+                time.sleep(STEP_WAIT * 2)
+                frame = self._frame()
+                if self._is_open(gigs, frame) or self._screen(frame)[0] == "none":
+                    self.log(tr("Pet losgeschickt."))
+                    return
+        self.log(tr("Kein Pet ließ sich losschicken – Bild gespeichert (debug)."))
+        self._snap("gigs_pets_offen")
+        self._close_any_quiet()
 
     def _pet_tiles(self, frame: np.ndarray, grid: list[float]) -> list[list[float]]:
         """Pet-Kacheln im Raster (Lese-Reihenfolge). Das Raster ergibt sich aus den Namensschildern unten in den

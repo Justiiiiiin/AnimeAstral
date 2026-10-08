@@ -33,7 +33,7 @@ Schritte: **Raid / Defense farmen** (Create/Join, Ende nach N Raids / M Min. / n
 Überwachung selbst, setzt den Raid der Statistik; schon im selben Raid = nicht neu starten; **verlassen nur, wenn
 danach ein anderer Raid/Modus folgt** – `automation.leave_before`), Auto Roll, Progressions: Roll All, Pause.
 Automatisch abholen (Schalter, keine Schritte): **Fixer Gigs** (Claim, „Send Pets“ → Pets-Fenster nach unten, eins
-der letzten `GIGS_PETS` Pets – Raster `automation.pet_tiles` –, bestätigen; jede Karte einzeln gelesen
+der letzten `GIGS_PETS` Pets – Raster `automation.pet_tiles` – anklicken = losgeschickt, kein Bestätigen, je Gig einzeln; jede Karte einzeln gelesen
 `automation.gig_cards`: Art QUICK 20 Min./STANDARD 1 Std./BIG JOB 3 Std. ist zufällig, Restzeit genau per
 Ziffern-Lesung `_read_timer`, `gig_next_due`; „FINISH NOW“ kostet Währung – nie drücken), **Gilden-Missionen**
 (Guild → Missions → Personal + Guild Weekly „Claim“, einmal am Tag `GUILD_EVERY`), Progressions: Roll All als Knopf
