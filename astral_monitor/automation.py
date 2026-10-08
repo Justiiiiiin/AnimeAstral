@@ -577,6 +577,8 @@ class Navigator:
         if box is None:
             raise Stop(tr("„LEAVE!“ nicht gefunden."))
         self.log(tr("Klicke „{button}“.", button="LEAVE!"))
+        # Raid-„LEAVE!“ oben in der Mitte ist gewollt (Raid verlassen). Sperrzonen gelten nur, solange die Gilde bzw.
+        # ein Fenster beim Erkunden offen ist – hier ist keine aktiv (Gilden-„Leave“ unten links im Gilden-Fenster).
         self._click_roi(box)
         time.sleep(3.0)
 

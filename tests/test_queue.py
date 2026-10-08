@@ -57,6 +57,11 @@ class QueueTest(unittest.TestCase):
         with self.assertRaises(Stop):
             nav._guard((0.3, 0.8))                       # „Leave“ unten links: nie anfahren
         nav._guard((0.5, 0.5))                           # anderswo: erlaubt
+        nav.forbidden = []                               # außerhalb von Gilde/Erkunden keine Sperrzonen:
+        nav._guard((0.5, 0.11))                          # Raid-„LEAVE!“ oben in der Mitte bleibt drückbar
+        from astral_monitor import knowledge
+        zones = knowledge.forbidden_zones([("Leave", [0.265, 0.776, 0.331, 0.805])], [0.16, 0.15, 0.83, 0.88], "Guild")
+        self.assertFalse(knowledge.inside((0.5, 0.11), zones))   # Gilden-Sperre trifft das Raid-LEAVE! nicht
 
 
 if __name__ == "__main__":
