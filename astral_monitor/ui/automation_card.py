@@ -133,7 +133,24 @@ class AutomationCard(Card):
                 uimap=self.map)
             self.navigator.raid_count = lambda: engine.stats.snapshot().total_attempts   # Raid-Enden (Überwachung)
             self.navigator.monitoring = lambda: engine.running
+            # Raid-Aufgabe: Überwachung selbst starten, Raid für die Statistik übernehmen (beides im GUI-Thread)
+            self.navigator.start_monitoring = lambda: self.main.post(
+                lambda: None if engine.running else self.main.toggle_monitoring())
+            self.navigator.set_raid = lambda target: self.main.post(lambda: self._set_raid(target))
         return self.navigator
+
+    def _set_raid(self, target: str) -> None:
+        """Raid der Warteschlange als aktuellen Raid der Statistik setzen – nur, wenn es einen passenden Raid-Namen
+        gibt („Alvarez War“ zu „W20 Alvarez War“); sonst bleibt die Auswahl, wie sie ist."""
+        import re
+        engine = self.main.engine
+        key = re.sub(r"[^a-z0-9]", "", re.sub(r"^W\d+\s+", "", target).lower())
+        for name in engine.profile_store.names():
+            norm = re.sub(r"[^a-z0-9]", "", name.lower())
+            if norm and (norm == key or norm in key or key in norm):
+                if engine.settings.current_raid != name:
+                    engine.set_current_raid(name)
+                return
 
     def _start(self, what: str, arg) -> None:
         if not self.enabled.isChecked():

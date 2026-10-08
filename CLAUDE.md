@@ -25,8 +25,14 @@ Menü gleich wieder schließen (Auto-Roll läuft im Hintergrund weiter – nie a
 „Makro (Beta)“ links oben auf der Startseite (in der Oberfläche heißt es „Makro“), darunter die
 **Makro-Warteschlange** (`ui/macro_queue_card.py`, `Navigator.run_queue`, Aufgaben `automation.TASK_KINDS`, gespeichert in
 `settings.macro_queue`/`macro_loop`; während „Warten“ ist `_ACTIVE` aus, damit das Anti-AFK laufen kann).
-Aufgaben seit 0.9.7: Auto Roll (Fenster öffnen, „Auto Roll“/„Auto!“ per Texterkennung drücken, schließen), Raid
-starten (Create/Start) / beitreten (Join), Warten – reines Öffnen bringt in der Schlange nichts (Eigentümer).
+Aufgaben seit 0.9.8+: **Raid** (eine Aufgabe: Create/Join, Ende nach N Raids / M Min. / ohne Ende, Auto Leave ab
+Welle; startet die Überwachung selbst, setzt den Raid der Statistik; schon im selben Raid = nicht neu starten;
+**verlassen nur, wenn danach ein anderer Raid/Modus folgt** – `automation.leave_before`, Wunsch des Eigentümers),
+Auto Roll, **Fixer Gigs abholen** (Claim, „Send Pets“ → Pets-Fenster nach unten, die letzten `GIGS_PETS` Pets –
+Raster aus den Namensschildern `automation.pet_tiles` –, bestätigen; Laufzeiten gemerkt, vorher übersprungen),
+**Gilde: Missionen** (Guild → Missions → Personal + Guild Weekly „Claim“), Warten. Fehler: einmal wiederholen, dann
+überspringen; Nutzer-Abbruch (`UserStop`) beendet die Schlange. Unbekannte Schritte: Bild `debug/makro_*.jpg`.
+Ältere Aufgaben (raid_farm/leave/create/join) laufen weiter. Recherche InformaalFrog/Faxi: siehe Memory.
 **Erkunden (seit 0.9.7-beta.1, `explorer.py`, Wissen in `knowledge.py`):** übernimmt Roblox ein paar Minuten, geht
 den Teleporter durch, öffnet in neuen Welten und bei Symbolen ohne Fenster jedes Symbol einmal, ordnet es ein
 (Titel + gelesene Wörter), schließt (X, Vorlage-Close oder „Close“/„Exit“ bei ganzen Bildschirmen), danach die

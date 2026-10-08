@@ -15,8 +15,11 @@ from ..uimap import natural
 from . import theme
 from .widgets import Card, smooth
 
-KINDS = [("autoroll", N_("Auto Roll")), ("raid_farm", N_("Raid farmen")), ("raid_leave", N_("Raid verlassen")),
-         ("raid_create", N_("Raid starten")), ("raid_join", N_("Raid beitreten")), ("wait", N_("Warten (Min.)"))]                  # reines Öffnen bringt in der Schlange nichts (Eigentümer)
+# Eine Raid-Aufgabe mit Ende-Bedingung statt starten/farmen/verlassen einzeln (Eigentümer 08.10.2026): verlassen wird
+# nur, wenn danach ein anderer Raid/Modus folgt (automation.leave_before). Ältere Aufgaben laufen weiter.
+KINDS = [("raid", N_("Raid")), ("autoroll", N_("Auto Roll")), ("gigs", N_("Fixer Gigs abholen")),
+         ("guild_claim", N_("Gilde: Missionen")), ("wait", N_("Warten (Min.)"))]
+UNTIL = [("runs", N_("Anzahl Raids")), ("minutes", N_("Minuten")), ("never", N_("ohne Ende"))]
 
 
 class _TaskList(QListWidget):
@@ -57,12 +60,20 @@ class MacroQueueCard(Card):
         add_row.addWidget(self.minutes)
         add_row.addWidget(add)
         self.body.addLayout(add_row)
-        farm = QHBoxLayout()                              # nur bei „Raid farmen“: Anzahl, Auto Leave, beitreten
+        farm = QHBoxLayout()                              # nur bei „Raid“: Ende, Auto Leave, beitreten
+        self.until = QComboBox()
+        self.until.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
+        self.until.setMinimumContentsLength(6)
+        for key, text in UNTIL:
+            self.until.addItem(tr(text), key)
+        self.until.setToolTip(tr("Wann der Raid endet. Verlassen wird nur, wenn danach ein anderer Raid kommt – "
+                                 "sonst farmt Auto Retry weiter."))
+        self.until.currentIndexChanged.connect(lambda _i: self._until_changed())
         self.runs = QSpinBox()
         self.runs.setRange(1, 9999)
         self.runs.setValue(100)
         self.runs.setPrefix("× ")
-        self.runs.setToolTip(tr("So viele Raids farmen (zählt die Überwachung), dann Auto Retry aus und verlassen"))
+        self.runs.setToolTip(tr("So viele Raids (zählt die Überwachung) bzw. Minuten"))
         self.leave_wave = QSpinBox()
         self.leave_wave.setRange(0, 2000)
         self.leave_wave.setSpecialValueText(tr("Auto Leave aus"))
@@ -71,11 +82,12 @@ class MacroQueueCard(Card):
                                       "weiter kommt"))
         self.join = QCheckBox(tr("beitreten"))
         self.join.setToolTip(tr("„Join“ statt „Create/Start“ (eigener Raid kostet einen Schlüssel)"))
+        farm.addWidget(self.until)
         farm.addWidget(self.runs)
         farm.addWidget(self.leave_wave, 1)
         farm.addWidget(self.join)
         self.body.addLayout(farm)
-        self._farm = [self.runs, self.leave_wave, self.join]
+        self._farm = [self.until, self.runs, self.leave_wave, self.join]
 
         self.list = _TaskList()
         smooth(self.list)
@@ -126,29 +138,47 @@ class MacroQueueCard(Card):
         kind = self.kind.currentData()
         self.param.clear()
         for w in getattr(self, "_farm", []):
-            w.setVisible(kind == "raid_farm")
-        if kind not in ("wait", "raid_leave"):
-            names = [w["name"] for w in self.macro.map.targets() if w["name"] != "Teleporter Fenster"]
-            if kind in ("raid_farm", "raid_create", "raid_join"):    # Raids/Defense zuerst
-                names.sort(key=lambda n: (not re.search(r"raid|defense|castle|gate", n, re.I), natural(n)))
+            w.setVisible(kind == "raid")
+        if kind in ("raid", "autoroll"):
+            targets = [w for w in self.macro.map.targets() if w["name"] != "Teleporter Fenster"]
+            if kind == "raid":                            # Raids/Defense zuerst (Kategorie vom Erkunden oder Name)
+                def is_raid(w: dict) -> bool:
+                    cat = (w.get("extra") or {}).get("category")
+                    if cat in ("raid", "defense"):
+                        return True
+                    name = w["name"]
+                    return bool(re.search(r"raid|defense|rush|war|tower|castle|gate", name, re.I)) and not                         re.search(r"battlepass|shop|upgrade|merchant", name, re.I)
+                targets.sort(key=lambda w: (not is_raid(w), natural(w["name"])))
+            names = [w["name"] for w in targets]
             for name in names:
                 self.param.addItem(name, name)
-        self.param.setVisible(kind not in ("wait", "raid_leave"))
+        self.param.setVisible(kind in ("raid", "autoroll"))
         self.minutes.setVisible(kind == "wait")
+        if kind == "raid":
+            self._until_changed()
+
+    def _until_changed(self) -> None:
+        until = self.until.currentData()
+        self.runs.setVisible(until != "never")
+        self.runs.setPrefix("× " if until == "runs" else "")
+        self.runs.setSuffix(tr(" Min") if until == "minutes" else "")
 
     def _add(self) -> None:
         kind = self.kind.currentData()
         task: dict = {"kind": kind}
         if kind == "wait":
             task["seconds"] = self.minutes.value() * 60
-        elif kind == "raid_leave":
-            pass
-        else:
+        elif kind in ("raid", "autoroll"):
             if not self.param.currentData():
                 return
             task["target"] = self.param.currentData()
-            if kind == "raid_farm":
-                task.update(runs=self.runs.value(), leave_wave=self.leave_wave.value(), join=self.join.isChecked())
+            if kind == "raid":
+                until = self.until.currentData()
+                task.update(until=until, leave_wave=self.leave_wave.value(), join=self.join.isChecked())
+                if until == "runs":
+                    task["runs"] = self.runs.value()
+                elif until == "minutes":
+                    task["minutes"] = self.runs.value()
         self._append(task)
         self.list.setCurrentRow(self.list.count() - 1)
         self._save()

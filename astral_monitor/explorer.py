@@ -51,9 +51,9 @@ class Explorer:
     def run(self) -> None:
         nav = self.nav
         try:
+            for name in HUD_ORDER:                         # zuerst die Knöpfe am Rand (wenige, u. a. Pets-Inventar,
+                self._hud(name)                            # Gilde) – sonst reicht die Zeit oft nicht bis dorthin
             self._teleporter()
-            for name in HUD_ORDER:
-                self._hud(name)
         except TimeUp:
             nav.log(tr("Zeit abgelaufen – Erkunden beendet."))
         finally:
