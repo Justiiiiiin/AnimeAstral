@@ -4,6 +4,20 @@ Neueste Version oben. Kurze Stichpunkte, keine Erklärungen (die stehen im Progr
 Der Abschnitt einer Version wird beim Veröffentlichen automatisch als Versionshinweis übernommen
 (`tools/release_notes.py`) und ist im Programm unter Einstellungen → Updates → „Alle Versionen“ lesbar.
 
+## 0.9.9-beta.3
+
+### ✨ Neu (Beta)
+- Funde prüfen: nach dem Erkunden jedes Fenster bestätigen
+- Erkunden öffnet jedes Fenster nur einmal (außer „nochmal prüfen“)
+
+### 🔧 Verbessert
+- Erkunden findet scrollbare Listen selbst (nicht mehr blind)
+- Timer und Animationen gelten nicht mehr als Scrollen
+- Global Quests: nur bis zur ersten erledigten Quest scrollen
+- Gilden-Reiter auch beim großen Gilden-Fenster erkannt
+- Spät öffnende Fenster werden abgewartet, Boosts erkannt
+- Zweiter Versuch, wenn die Bildaufnahme kurz hakt
+
 ## 0.9.9-beta.2
 
 ### ✨ Neu (Beta)
