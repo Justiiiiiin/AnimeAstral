@@ -66,9 +66,11 @@ class Explorer:
     def run(self) -> None:
         nav = self.nav
         try:
-            for name in HUD_ORDER:                         # zuerst die Knöpfe am Rand (wenige, u. a. Pets-Inventar,
-                self._hud(name)                            # Gilde) – sonst reicht die Zeit oft nicht bis dorthin
+            # zuerst die Welten (Pets, Crafting, Raids, Gachas – höchste Priorität, Eigentümer 08.10.2026), danach
+            # die Knöpfe am Rand (Shop, Gilde, Quests …)
             self._teleporter()
+            for name in HUD_ORDER:
+                self._hud(name)
         except TimeUp:
             nav.log(tr("Zeit abgelaufen – Erkunden beendet."))
         finally:
@@ -670,7 +672,111 @@ def latest_report(data_dir: Path) -> Optional[dict]:
 
 
 def forget_local(data_dir: Path) -> None:
-    """Erkundete Einträge vergessen (lokale Ergänzung der Karte löschen)."""
+    """Erkundete Einträge vergessen (lokale Ergänzung der Karte löschen). Ältere Berichte werden danach nicht mehr
+    wiederhergestellt (restore_from_reports)."""
     (data_dir / LOCAL_FILE).unlink(missing_ok=True)
+    folder = data_dir / "explore"
+    folder.mkdir(parents=True, exist_ok=True)
+    (folder / "forgot_at").write_text(time.strftime("%Y%m%d_%H%M%S"), encoding="utf-8")
 
 
+
+
+# Fensternamen, die es in jeder Welt gibt: beim Wiederherstellen „W8 Crafting“ statt „Crafting Unit Fenster“
+_GENERIC = {"crafting": "Crafting", "progression": "Progression", "pets": "Pets-Roll", "battlepass": "Battlepass"}
+
+
+def _restored_name(world: str, rec: dict, taken: set[str]) -> str:
+    prefix = re.match(r"(W\d+)\b", world)
+    title = (rec.get("title") or "").strip()
+    cat = rec.get("category") or ""
+    if "progression" in title.lower() or "progression" in (rec.get("window") or "").lower():
+        cat = "progression"
+    base = re.sub(r"\s*\(\d+\)$", "", rec.get("window") or title or "?")
+    base = re.sub(r"\s+Fenster$", "", base)
+    if prefix:
+        base = re.sub(rf"^{prefix.group(1)}\s+", "", base)
+    if cat in _GENERIC:
+        base = _GENERIC[cat]
+    elif cat in ("upgrades", "shop") and title.lower() in ("upgrades", "merchant"):
+        base = title.title()
+    name = f"{prefix.group(1)} {base}" if prefix else base     # immer mit Welt: eindeutig und gut sortierbar
+    n, plain = 2, name
+    while name in taken:
+        name, n = f"{plain} ({n})", n + 1
+    return name
+
+
+def restore_from_reports(data_dir: Path, uimap) -> int:
+    """Gelernte Welt-Fenster aus den Berichten früherer Erkundungen wieder in die lokale Karte holen (z. B. nach
+    „Gelerntes vergessen“ oder einem abgebrochenen Lauf) – nur Plätze, die die Karte noch nicht kennt. Berichte vor
+    dem letzten „Vergessen“ (explore/forgot_at) zählen nicht. Rückgabe: Anzahl neuer Fenster."""
+    folder = data_dir / "explore"
+    try:
+        forgot = (folder / "forgot_at").read_text(encoding="utf-8").strip()
+    except OSError:
+        forgot = ""
+    latest: dict[tuple[str, int], dict] = {}
+    for report in sorted(folder.glob("2*/report.json")):
+        if forgot and report.parent.name <= forgot:
+            continue
+        try:
+            data = json.loads(report.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        for world in data.get("worlds", []):
+            for rec in world.get("windows", []):
+                if rec.get("slot") and rec.get("category") not in (None, "unknown"):
+                    latest[(world["name"], int(rec["slot"]))] = rec
+    lists = uimap.list_windows()
+    if not latest or not lists:
+        return 0
+    try:
+        layout = vision.SlotLayout(uimap, lists[0])
+    except ValueError:
+        return 0
+    rois = [w["roi"] for w in uimap.entries if w.get("kind") == "Fenster / Bereich" and w.get("roi")
+            and uimap.world_of(w) is not None and not (w.get("extra") or {}).get("layout_of")]
+    if not rois:
+        return 0
+    roi = sorted(rois)[len(rois) // 2]                    # Menüs im Teleporter-Rahmen sind gleich groß
+    taken = {e["name"] for e in uimap.entries}
+    added: list[dict] = []
+    for (world, slot), rec in sorted(latest.items(), key=lambda kv: (world_number(kv[0][0]) or 0, kv[0][1])):
+        row = uimap.container(world)
+        if row is None or row.get("kind") != ROW:             # „W13 2 City“ gelesen, Karte: „W13 Z City“
+            row = next((r for r in uimap.rows(lists[0]) if world_number(r["name"]) is not None
+                        and world_number(r["name"]) == world_number(world)), None)
+            if row is None:
+                continue
+            world = row["name"]
+        index = slot - 1
+        button = next((e for e in uimap.children(row) if e.get("rel") and layout.index_of(e["rel"]) == index), None)
+        if button is not None and uimap.window_for(button) is not None:
+            continue                                      # Platz schon bekannt
+        if button is None:
+            x0 = layout.x0 + index * layout.pitch
+            rel = [round(v, 4) for v in (x0, layout.y[0], x0 + layout.w, layout.y[1])]
+            r = row["roi"]
+            button = {"name": f"{world} · Platz {slot}", "kind": "Knopf", "parent": world, "rel": rel,
+                      "roi": [round(r[0] + rel[0] * (r[2] - r[0]), 4), round(r[1] + rel[1] * (r[3] - r[1]), 4),
+                              round(r[0] + rel[2] * (r[2] - r[0]), 4), round(r[1] + rel[3] * (r[3] - r[1]), 4)],
+                      "file": f"local:btn:{world}:{index}", "note": "erkundet"}
+            added.append(button)
+            uimap.add(button)
+        name = _restored_name(world, rec, taken)
+        taken.add(name)
+        cat = rec.get("category")
+        if "progression" in (rec.get("title") or "").lower():
+            cat = "progression"
+        extra = {"category": cat, "explored": True, "buttons": rec.get("buttons", [])}
+        if rec.get("drops") and rec.get("mode"):
+            extra.update(drops=rec["drops"], raid_name=rec.get("title", ""))
+        window = {"name": name, "kind": "Fenster / Bereich", "roi": list(roi), "opened_by_id": button["file"],
+                  "opened_by": button["name"], "file": f"local:win:{button['file']}", "note": "erkundet (Bericht)",
+                  "extra": extra}
+        added.append(window)
+        uimap.add(window)
+    if added:
+        save_local(data_dir / LOCAL_FILE, added)
+    return sum(1 for e in added if e["kind"] == "Fenster / Bereich")

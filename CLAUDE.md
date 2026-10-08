@@ -21,24 +21,34 @@ klickt. **Seit 0.9.5-beta.1 zweite Ausnahme: Automatik (Beta)** (`automation.py`
 Einstellungen → Roblox, Einschalten nur nach Warnung zu den Roblox-Regeln; Wunsch des Eigentümers 07.10.2026, Ziel
 1.0.0): öffnet Menüs anhand der Oberflächen-Karte (`uimap.py` + `astral_monitor/uimap/`, Erkennung `vision.py`) –
 Teleporter auf, per Mausrad zur Welt scrollen, Symbol klicken, Titel prüfen; Pets-Roll „Auto!“ drücken und das
-Menü gleich wieder schließen (Auto-Roll läuft im Hintergrund weiter – nie auf das Rollen warten). Oberfläche: Karte
-„Makro (Beta)“ links oben auf der Startseite (in der Oberfläche heißt es „Makro“), darunter die
-**Makro-Warteschlange** (`ui/macro_queue_card.py`, `Navigator.run_queue`, Aufgaben `automation.TASK_KINDS`, gespeichert in
-`settings.macro_queue`/`macro_loop`; während „Warten“ ist `_ACTIVE` aus, damit das Anti-AFK laufen kann).
-Aufgaben seit 0.9.8+: **Raid** (eine Aufgabe: Create/Join, Ende nach N Raids / M Min. / ohne Ende, Auto Leave ab
-Welle; startet die Überwachung selbst, setzt den Raid der Statistik; schon im selben Raid = nicht neu starten;
-**verlassen nur, wenn danach ein anderer Raid/Modus folgt** – `automation.leave_before`, Wunsch des Eigentümers),
-Auto Roll, **Fixer Gigs abholen** (Claim, „Send Pets“ → Pets-Fenster nach unten, die letzten `GIGS_PETS` Pets –
-Raster aus den Namensschildern `automation.pet_tiles` –, bestätigen; Laufzeiten gemerkt, vorher übersprungen),
-**Gilde: Missionen** (Guild → Missions → Personal + Guild Weekly „Claim“), Warten. Fehler: einmal wiederholen, dann
-überspringen; Nutzer-Abbruch (`UserStop`) beendet die Schlange. Unbekannte Schritte: Bild `debug/makro_*.jpg`.
-Ältere Aufgaben (raid_farm/leave/create/join) laufen weiter. Recherche InformaalFrog/Faxi: siehe Memory.
+Menü gleich wieder schließen (Auto-Roll läuft im Hintergrund weiter – nie auf das Rollen warten). **Oberfläche seit
+0.9.9-beta.7:** keine eigene Makro-Karte mehr; `ui/macro_controller.py` (`MainWindow.macro`) hält Karte, Navigator und
+das **Makro-Protokoll** (`ui/macro_log.py`, kompakt mit Uhrzeit, unter Einstellungen → Makro; auf der Startseite nur mit
+`settings.macro_log_home`). „Makro erlauben“, Stopp und Erkunden: Einstellungen → Makro. Startseite: links die
+**Farm-Routine** (bis beta.6 „Makro-Warteschlange“; `ui/macro_queue_card.py`, „Was?/Wo?“ + Optionen im festen Stapel –
+Breite springt nicht; `Navigator.run_queue`, laufender Schritt über `Navigator.queue_pos`; Aufgaben
+`automation.TASK_KINDS`, gespeichert in `settings.macro_queue`/`macro_loop`; während „Pause“ ist `_ACTIVE` aus, damit
+das Anti-AFK laufen kann), rechts Live, Quests und ganz unten **„Automatisch abholen“** (`ui/extras_card.py`).
+Schritte: **Raid / Defense farmen** (Create/Join, Ende nach N Raids / M Min. / nie, Auto Leave ab Welle; startet die
+Überwachung selbst, setzt den Raid der Statistik; schon im selben Raid = nicht neu starten; **verlassen nur, wenn
+danach ein anderer Raid/Modus folgt** – `automation.leave_before`), Auto Roll, Progressions: Roll All, Pause.
+Automatisch abholen (Schalter, keine Schritte): **Fixer Gigs** (Claim, „Send Pets“ → Pets-Fenster nach unten, eins
+der letzten `GIGS_PETS` Pets – Raster `automation.pet_tiles` –, bestätigen; jede Karte einzeln gelesen
+`automation.gig_cards`: Art QUICK 20 Min./STANDARD 1 Std./BIG JOB 3 Std. ist zufällig, Restzeit genau per
+Ziffern-Lesung `_read_timer`, `gig_next_due`; „FINISH NOW“ kostet Währung – nie drücken), **Gilden-Missionen**
+(Guild → Missions → Personal + Guild Weekly „Claim“, einmal am Tag `GUILD_EVERY`), Progressions: Roll All als Knopf
+für einmal. Zeiten überdauern Neustarts (`extras_state.json`). Fehler: einmal wiederholen, dann überspringen;
+Nutzer-Abbruch (`UserStop`) beendet die Routine. Unbekannte Schritte: Bild `debug/makro_*.jpg`.
+Ältere Aufgaben (raid_farm/leave/create/join/navigate/close) laufen weiter, sind aber nicht mehr wählbar
+(„Hin navigieren“/„Menü schließen“ entfernt – nur Test). Recherche InformaalFrog/Faxi: siehe Memory.
 **Erkunden (seit 0.9.7-beta.1, `explorer.py`, Wissen in `knowledge.py`):** übernimmt Roblox ein paar Minuten, geht
 den Teleporter durch, öffnet in neuen Welten und bei Symbolen ohne Fenster jedes Symbol einmal, ordnet es ein
-(Titel + gelesene Wörter), schließt (X, Vorlage-Close oder „Close“/„Exit“ bei ganzen Bildschirmen), danach die
+(Titel + gelesene Wörter), schließt (X, Vorlage-Close oder „Close“/„Exit“ bei ganzen Bildschirmen) – **seit
+0.9.9-beta.7 zuerst die Welten** (Pets, Crafting, Raids, Gachas haben Vorrang, Eigentümer), danach die
 Knöpfe am Bildschirmrand (`extra.hud`, feste Lage mit Bildprüfung). Nie Aktions-Knöpfe klicken
 (`knowledge.ACTION_WORDS`). Ergebnis: `uimap_local.json` im Datenordner (mitgelieferte Karte hat Vorrang) +
-`explore/<zeit>/report.json` mit Bildern. **„Nicht drücken“** (`extra.avoid` in der Karte, Bildvergleich
+`explore/<zeit>/report.json` mit Bildern. Fehlen der Karte Welt-Fenster (z. B. nach „Gelerntes vergessen“), holt
+`explorer.restore_from_reports` sie beim Start aus den Berichten zurück (nur Berichte nach `explore/forgot_at`). **„Nicht drücken“** (`extra.avoid` in der Karte, Bildvergleich
 `vision.same_icon`): Gates (W5) und Totenkopf/MaxTac Call (W21) sind zeitbasierte Modi – Klick schließt den Teleporter.
 **Raid-Steuerung (seit 0.9.7-beta.2):** Zahnrad oben rechts neben Welle/Timer (`uimap_static/raid_gear.png`, Suche in
 mehreren Größen) öffnet „Auto Retry“/„Auto Leave“ + Feld „Wave N“; Schalterzustand an der Farbe des Knopfs (größter
@@ -113,7 +123,7 @@ nutzen das). Dort: `settings.json`, `raid_history.csv`, `monitor.log`, `profiles
 | `presence.py` | Discord-Profilstatus (pypresence), Spiel-Thumbnail von Roblox als Bild |
 | `updater.py` | Update-Prüfung über GitHub-Releases, Download mit SHA256-Prüfung, leiser Installer-Start |
 | `ocr.py` | Tesseract-Anbindung; **mitgeliefertes** Tesseract (`tesseract/` neben der EXE) hat Vorrang |
-| `uimap.py`, `vision.py`, `automation.py` | Automatik (Beta): Oberflächen-Karte lesen, Zeilen/Menüs erkennen, Wege gehen (eigener Thread, eigene OCR-Instanz); Oberfläche `ui/automation_card.py` |
+| `uimap.py`, `vision.py`, `automation.py` | Automatik (Beta): Oberflächen-Karte lesen, Zeilen/Menüs erkennen, Wege gehen (eigener Thread, eigene OCR-Instanz); Oberfläche `ui/macro_controller.py`, `macro_queue_card.py`, `extras_card.py`, `macro_log.py` |
 | `settings.py` | `Settings`-Dataclass (JSON), `Roi`, Ereignis-Definitionen, Migration über `settings_version` |
 | `debuglog.py` | Debug-Reiter: `BUFFER` hängt nur bei `settings.debug_view` (Standard aus) am Logger, lädt das Ende von monitor.log vor; Anzeige `ui/events_card.py` |
 | `search.py` | Einstellungssuche: Umlaute/Bindestriche egal, kleine Tippfehler erlaubt (difflib); Strg+F = `MainWindow.open_search` |
@@ -138,7 +148,8 @@ Wichtige Entwurfsentscheidungen:
   im Build als hidden import). Kein Server/Konto – bewusst.
 - **Erklärtexte gehören in ⓘ** (`Card(title, info)`, `InfoButton`), nicht als Fließtext auf die Seite;
   auf den Seiten nur Bedienelemente und Statuszeilen (Wunsch des Eigentümers: weniger überladen).
-- **Design „Nebula“** (seit 0.7.0, Standard): aus dem Logo abgeleitet; Layout-Flag `rail` = schmale Symbolleiste (76 px, Logo oben, Namen als Tooltip), Status als Pille in der Kopfzeile, Hinweise oben (`top_toast`). Vorlage = Astral + Überschreibungen (`_NEBULA`). Logo: `tools/make_icon.py`.
+- **Design „Night City“** (seit 0.9.9-beta.7, Standard; Migration settings_version 12 stellt Nebula um): passend zum Spiel – violett-schwarz, Neon-Gelb/Magenta, Kartenränder Magenta → Cyan, kantiger; Vorlage `_NIGHTCITY` = Nebula + Überschreibungen, nur dunkel.
+- **Design „Nebula“** (seit 0.7.0, bis 0.9.9-beta.6 Standard): aus dem Logo abgeleitet; Layout-Flag `rail` = schmale Symbolleiste (76 px, Logo oben, Namen als Tooltip), Status als Pille in der Kopfzeile, Hinweise oben (`top_toast`). Vorlage = Astral + Überschreibungen (`_NEBULA`). Logo: `tools/make_icon.py`.
 - **Seit 0.9.0 – Erkennung ohne Einstellungen** (Wunsch des Eigentümers): keine Seiten „Erkennung“ und „Raids“
   mehr (Symbolleiste: Überwachung, Statistik, Meldungen, Einstellungen; `PAGE_*`-Konstanten in `main_window.py`).
   `settings.fix_detection()` setzt beim Laden immer die festen Werte (`FIXED_DETECTION`: Raid-Ende bei 100/100 mit

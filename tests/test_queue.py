@@ -4,7 +4,8 @@ import unittest
 import _env  # noqa: F401
 import numpy as np
 
-from astral_monitor.automation import hud_locate, leave_before, next_task, parse_timer, pet_tiles
+from astral_monitor.automation import fmt_wait, gig_cards, gig_next_due, gig_timer_box, hud_locate, \
+    leave_before, next_task, parse_timer, pet_tiles
 
 
 class QueueTest(unittest.TestCase):
@@ -22,6 +23,35 @@ class QueueTest(unittest.TestCase):
         self.assertEqual(parse_timer("33:57"), 2037)
         self.assertIsNone(parse_timer("3/3"))
         self.assertIsNone(parse_timer("12:75"))
+
+    def test_gig_cards(self):
+        # Wörter wie aus dem echten Fixer-Gigs-Fenster (Big Job working, Quick ready, Big Job working)
+        words = [("NEW", [0.338, 0.277, 0.379, 0.298]), ("1:38:43", [0.452, 0.277, 0.51, 0.298]),
+                 ("BIS", [0.331, 0.373, 0.354, 0.393]), ("JOB", [0.36, 0.373, 0.389, 0.393]),
+                 ("3H", [0.409, 0.373, 0.428, 0.393]), ("QUICK", [0.54, 0.373, 0.586, 0.393]),
+                 ("20", [0.608, 0.373, 0.624, 0.393]), ("BIS", [0.768, 0.373, 0.792, 0.393]),
+                 ("WORKING", [0.352, 0.427, 0.408, 0.44]), ("READY", [0.579, 0.427, 0.618, 0.44]),
+                 ("WORKING", [0.791, 0.427, 0.845, 0.44]), ("4:36:98", [0.346, 0.702, 0.389, 0.719]),
+                 ("left", [0.393, 0.702, 0.414, 0.719]), ("left", [0.831, 0.702, 0.852, 0.719]),
+                 ("FINISH", [0.335, 0.841, 0.395, 0.862]), ("CLAIM", [0.568, 0.841, 0.629, 0.862])]
+        cards = gig_cards(words)
+        self.assertEqual([c["duration"] for c in cards], [10800, 1200, 10800])
+        self.assertEqual([c["state"] for c in cards], ["working", "ready", "working"])
+        self.assertIsNotNone(cards[1]["claim"])
+        self.assertIsNone(cards[0]["claim"])                 # „FINISH NOW“ kostet Währung – nie ein Knopf
+        box = gig_timer_box(cards[0])
+        self.assertLess(box[0], 0.346)                        # Zeit links von „left“ liegt im Bereich
+        self.assertLess(box[2], 0.393)
+        self.assertEqual(gig_next_due(cards, {0: 5798, 2: 5822}), 0)          # eine Karte ist fertig
+        self.assertEqual(gig_next_due(cards[:1] + cards[2:], {0: 5798, 1: 5822}), 5798)
+        self.assertEqual(gig_next_due(cards[:1], {0: 99999}), 1200)       # unplausibel: verworfen, bald nachsehen
+        self.assertEqual(gig_next_due(cards[:1], {}), 1200)   # Zeit unlesbar: in 20 Min. nachsehen
+
+    def test_fmt_wait(self):
+        self.assertEqual(fmt_wait(30), "30 s")
+        self.assertEqual(fmt_wait(18 * 60), "18 Min.")
+        self.assertEqual(fmt_wait(96 * 60), "1 Std. 36 Min.")
+        self.assertEqual(fmt_wait(24 * 3600), "24 Std.")
 
     def test_pet_grid_from_labels(self):
         # 3 Zeilen × 8 Spalten Namensschilder (Lage wie im echten Pets-Fenster), in der letzten Zeile 5 Pets

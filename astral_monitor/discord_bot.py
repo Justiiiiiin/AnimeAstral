@@ -205,9 +205,9 @@ class ControlBot:
         async def raid_names(interaction, current: str):
             return await complete("raid", current)
 
-        @tree.command(name="makro", description=tr("Makro: Warteschlange starten, stoppen, Progressions …"))
+        @tree.command(name="makro", description=tr("Makro: Farm-Routine starten, stoppen, Progressions …"))
         @app_commands.describe(aktion=tr("Was soll das Makro tun?"))
-        @app_commands.choices(aktion=[app_commands.Choice(name=tr("Warteschlange starten"), value="queue"),
+        @app_commands.choices(aktion=[app_commands.Choice(name=tr("Farm-Routine starten"), value="queue"),
                                       app_commands.Choice(name=tr("Stopp"), value="stop"),
                                       app_commands.Choice(name=tr("Progressions: Roll All"), value="progression"),
                                       app_commands.Choice(name=tr("Menü schließen"), value="close")])

@@ -159,19 +159,18 @@ class BotBridge:
         return Reply(tr("Roblox-Fenster:"), png.tobytes() if ok else None)
 
     def _macro(self, action: str) -> Reply:
-        page = self.main.pages[0]
-        macro = page.macro
-        if not macro.enabled.isChecked():
+        macro = self.main.macro
+        if not macro.enabled:
             return Reply(tr("Das Makro ist im Programm nicht erlaubt („Makro erlauben“)."))
-        nav = self.gui(macro._ensure_navigator)
+        nav = self.gui(macro.ensure_navigator)
         if action == "stop":
             nav.stop()
             return Reply(tr("Makro gestoppt."))
         if nav.busy:
             return Reply(tr("Das Makro läuft schon – erst /makro Stopp."))
         if action == "queue":
-            self.gui(page.queue._start)
-            return Reply(tr("Warteschlange gestartet."))
+            self.gui(self.main.pages[0].queue._start)
+            return Reply(tr("Farm-Routine gestartet."))
         if action == "progression":
             nav.progression()
             return Reply(tr("Progressions: Roll All gestartet."))

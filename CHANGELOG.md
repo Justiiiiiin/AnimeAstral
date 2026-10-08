@@ -4,6 +4,25 @@ Neueste Version oben. Kurze Stichpunkte, keine Erklärungen (die stehen im Progr
 Der Abschnitt einer Version wird beim Veröffentlichen automatisch als Versionshinweis übernommen
 (`tools/release_notes.py`) und ist im Programm unter Einstellungen → Updates → „Alle Versionen“ lesbar.
 
+## 0.9.9-beta.7
+
+### ✨ Neu
+- Startseite neu: Farm-Routine links, Abholen rechts unten
+- Farm-Routine statt Warteschlange, laufender Schritt markiert
+- Makro-Protokoll mit Uhrzeit unter Einstellungen → Makro
+- Progressions: Roll All als Knopf unter „Automatisch abholen“
+- Neues Design „Night City“ passend zum Spiel (Nebula bleibt wählbar)
+
+### 🔧 Verbessert
+- Fixer Gigs: Zeit jeder Karte gelesen (20 Min. / 1 Std. / 3 Std.)
+- Abhol-Zeiten bleiben nach einem Neustart erhalten
+- Gilden-Missionen nur noch einmal am Tag
+- Erkunden: zuerst die Welten, danach Shop & Co.
+- Gelernte Fenster aus früheren Erkundungen zurückgeholt
+- Raid-Auswahl zeigt alle erkundeten Raids und Defense-Modi
+- „Hin navigieren“ und „Menü schließen“ entfernt
+- Routine ändert ihre Breite beim Umschalten nicht mehr
+
 ## 0.9.9-beta.4
 
 ### ✨ Neu (Beta)

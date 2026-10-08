@@ -1,4 +1,5 @@
-"""Startseite: Kennzahlen, links Makro + Makro-Warteschlange, rechts Live-Erkennung + Quests.
+"""Startseite: Kennzahlen, links Farm-Routine (+ Makro-Protokoll auf Wunsch), rechts Live-Erkennung, Quests
+und „Automatisch abholen“.
 Start/Stopp, Pause und „Status neu senden“ sitzen in der Kopfzeile des Hauptfensters (MainWindow._mount_controls);
 die Ereignisse stehen als Debug-Karte in den Einstellungen (ui/events_card.py)."""
 from __future__ import annotations
@@ -69,23 +70,25 @@ class MonitorPage(QWidget):
             kpis.addWidget(card, 1)
         root.addLayout(kpis)
 
-        # Mitte: Startseite ist vor allem Makro (Wunsch des Eigentümers 08.10.2026) – links Makro + Automatisch
-        # abholen, Mitte Warteschlange, rechts schmal Live-Erkennung + Quests
+        # Mitte (Wunsch des Eigentümers 08.10.2026): links die Farm-Routine (+ Makro-Protokoll, wenn unter
+        # Einstellungen → Makro gewünscht), rechts Live-Erkennung, Quests und ganz unten „Automatisch abholen“ –
+        # die Quests haben darüber Platz, ohne dass die Abhol-Karte springt
         mid = QHBoxLayout()
         theme.track_spacing(mid, 16)
         left = QVBoxLayout()
         theme.track_spacing(left, 16)
-        center = QVBoxLayout()
-        theme.track_spacing(center, 16)
         right = QVBoxLayout()
         theme.track_spacing(right, 16)
 
-        from .automation_card import AutomationCard
         from .extras_card import ExtrasCard
-        self.macro = AutomationCard(main)
-        left.addWidget(self.macro, 1)
-        self.extras = ExtrasCard(main, self.macro)
-        left.addWidget(self.extras)
+        from .macro_log import MacroLogCard
+        from .macro_queue_card import MacroQueueCard
+        self.queue = MacroQueueCard(main)
+        left.addWidget(self.queue, 3)
+        self.log_card = MacroLogCard(main.macro)
+        left.addWidget(self.log_card, 2)
+        self.log_card.setVisible(bool(main.engine.settings.macro_log_home))
+        self.extras = ExtrasCard(main)
 
         live = Card(tr("Live-Erkennung"))                 # ohne Vorschaubild: Zahl, Balken, Kurzinfos
         self.wave = label("–", "wave")
@@ -141,18 +144,19 @@ class MonitorPage(QWidget):
         quests.body.addLayout(self.quest_box)
         right.addWidget(quests)
         right.addStretch(1)
+        right.addWidget(self.extras)
 
-        from .macro_queue_card import MacroQueueCard
-        self.queue = MacroQueueCard(main, self.macro)
-        center.addWidget(self.queue, 1)
-        mid.addLayout(left, 4)
-        mid.addLayout(center, 4)
+        mid.addLayout(left, 3)
         mid.addLayout(right, 2)
         root.addLayout(mid, 1)
         self.reload_raids()
 
+    def set_log_visible(self, on: bool) -> None:
+        self.log_card.setVisible(on)
+
     def recolor(self) -> None:
         """Nach Design-/Farbwechsel: Wellenzahl und Start-Symbol in den neuen Farben."""
+        self.log_card.view.reload()
         self._wave_color = None
         self._was_running = None
         self._paused = None

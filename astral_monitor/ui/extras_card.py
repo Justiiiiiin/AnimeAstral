@@ -1,49 +1,66 @@
-"""Karte „Automatisch abholen“ (Startseite, unter dem Makro): Fixer Gigs und Gilden-Missionen als eigene Schalter –
-keine Aufgaben der Warteschlange (Wunsch des Eigentümers 08.10.2026). Das Makro schiebt sie ein, sobald sie fällig
-sind: zwischen den Aufgaben der Schlange, während ein Raid farmt oder – läuft nichts – über den Takt dieser Karte."""
+"""Karte „Automatisch abholen“ (Startseite, rechts ganz unten – Quests haben darüber Platz, ohne dass die Karte
+springt): Fixer Gigs und Gilden-Missionen als Schalter, „Progressions: Roll All“ als Knopf für einmal
+(Wunsch des Eigentümers 08.10.2026). Das Makro schiebt Fälliges ein: zwischen den Schritten der Farm-Routine,
+während ein Raid farmt oder – läuft nichts – über den Takt dieser Karte. Zeiten: Gigs je Karte gelesen
+(20 Min. / 1 Std. / 3 Std., zufällig), Gilde einmal am Tag; beides überdauert einen Neustart."""
 from __future__ import annotations
 
 import time
 
 from PySide6.QtCore import QTimer
-from PySide6.QtWidgets import QCheckBox, QGridLayout, QMessageBox
+from PySide6.QtWidgets import QGridLayout, QMessageBox, QPushButton
 
 from .. import winapi
+from ..automation import fmt_wait
 from ..i18n import tr
-from .widgets import Card, label
+from .widgets import Card, ToggleSwitch, label
 
 
 class ExtrasCard(Card):
-    def __init__(self, main, macro_card) -> None:
+    def __init__(self, main) -> None:
         super().__init__(tr("Automatisch abholen"),
-                         tr("Fixer Gigs (W21): fertige Gigs abholen und neue losschicken – je Gig ein Pet, reihum "
-                            "eins der letzten drei im Pets-Fenster. Das Makro merkt sich die Laufzeiten (20 Min. / "
-                            "1 Std. / 3 Std.) und kommt erst wieder, wenn einer fertig ist.\n\nGilden-Missionen: "
-                            "alle 3 Stunden „Personal“ und „Guild Weekly“ abholen.\n\nBeides läuft nur mit „Makro "
-                            "erlauben“ – zwischen den Aufgaben der Warteschlange, während ein Raid farmt oder für "
-                            "sich allein."))
+                         tr("Fixer Gigs (W21): fertige Gigs abholen („Claim“) und neue mit je einem Pet losschicken "
+                            "(eins der letzten drei). Jede Karte hat ihre eigene Zeit (20 Min., 1 Std. oder 3 Std.) – "
+                            "das Makro liest sie und kommt erst wieder, wenn einer fertig ist. „Finish Now“ wird nie "
+                            "gedrückt.\n\nGilden-Missionen: einmal am Tag „Personal“ und „Guild Weekly“ abholen.\n\n"
+                            "Progressions: „Roll All“ einmal drücken (gilt für alle Welten).\n\nAlles nur mit "
+                            "„Makro erlauben“ – zwischen den Schritten der Farm-Routine, während ein Raid farmt "
+                            "oder für sich allein."))
         self.main = main
-        self.macro = macro_card
+        self.macro = main.macro
         s = main.engine.settings
         grid = QGridLayout()
         grid.setColumnStretch(1, 1)
-        self.gigs = QCheckBox(tr("Fixer Gigs"))
+        self.gigs = ToggleSwitch()
         self.gigs.setChecked(bool(s.auto_gigs))
-        self.guild = QCheckBox(tr("Gilden-Missionen"))
+        self.guild = ToggleSwitch()
         self.guild.setChecked(bool(s.auto_guild))
         self.gigs_state = label("", "small")
         self.guild_state = label("", "small")
         grid.addWidget(self.gigs, 0, 0)
-        grid.addWidget(self.gigs_state, 0, 1)
+        grid.addWidget(label(tr("Fixer Gigs (W21)")), 0, 1)
+        grid.addWidget(self.gigs_state, 0, 2)
         grid.addWidget(self.guild, 1, 0)
-        grid.addWidget(self.guild_state, 1, 1)
+        grid.addWidget(label(tr("Gilden-Missionen")), 1, 1)
+        grid.addWidget(self.guild_state, 1, 2)
+        self.prog = QPushButton(tr("Progressions: Roll All"))
+        self.prog.setToolTip(tr("Einmal ausführen: erste Progression öffnen, „Roll All“ drücken, schließen"))
+        self.prog.clicked.connect(self._progression)
+        self.prog_state = label("", "small")
+        grid.addWidget(self.prog, 2, 0, 1, 2)
+        grid.addWidget(self.prog_state, 2, 2)
         self.body.addLayout(grid)
         for box in (self.gigs, self.guild):
             box.toggled.connect(self._save)
+        self.macro.enabled_listeners.append(lambda _on: self._update_state())
         self.timer = QTimer(self)
         self.timer.setInterval(15_000)
         self.timer.timeout.connect(self._tick)
         self.timer.start()
+        self.fast = QTimer(self)                          # Anzeige (Knopf/Zeiten) öfter als der Takt
+        self.fast.setInterval(1000)
+        self.fast.timeout.connect(self._update_state)
+        self.fast.start()
         self._update_state()
 
     def _save(self, *_args) -> None:
@@ -57,24 +74,37 @@ class ExtrasCard(Card):
         if self.gigs.isChecked() or self.guild.isChecked():
             QTimer.singleShot(500, self._tick)
 
+    def _progression(self) -> None:
+        if self.macro.run_progression():
+            self.prog_state.setText(tr("gestartet {time}", time=time.strftime("%H:%M")))
+
     def _update_state(self) -> None:
+        on = self.macro.enabled
         nav = self.macro.navigator
-        now = time.monotonic()
+        if on and nav is None and (self.gigs.isChecked() or self.guild.isChecked()):
+            nav = self.macro.ensure_navigator()           # gemerkte Zeiten laden (überdauern Neustarts)
+        now = time.time()
         for box, state, nxt in ((self.gigs, self.gigs_state, nav.gigs_next if nav else 0.0),
                                 (self.guild, self.guild_state, nav.guild_next if nav else 0.0)):
-            if not box.isChecked():
-                state.setText(tr("aus"))
+            box.setEnabled(on)
+            if not on:
+                text = tr("Makro aus")
+            elif not box.isChecked():
+                text = tr("aus")
             elif nxt > now:
-                state.setText(tr("nächste in {minutes} Min.", minutes=int((nxt - now) // 60) + 1))
+                text = tr("in {time}", time=fmt_wait(nxt - now))
             else:
-                state.setText(tr("fällig"))
+                text = tr("fällig")
+            if state.text() != text:
+                state.setText(text)
+        self.prog.setEnabled(on and not self.macro.busy)
 
     def _tick(self) -> None:
         """Läuft gerade nichts im Makro: Fälliges selbst anstoßen (nur mit „Makro erlauben“ und offenem Roblox)."""
         self._update_state()
-        if not (self.gigs.isChecked() or self.guild.isChecked()) or not self.macro.enabled.isChecked():
+        if not (self.gigs.isChecked() or self.guild.isChecked()) or not self.macro.enabled:
             return
-        nav = self.macro._ensure_navigator()
+        nav = self.macro.ensure_navigator()
         if nav.busy or not nav.due_extras():
             return
         if winapi.find_window(self.main.engine.settings.window_title) is None:

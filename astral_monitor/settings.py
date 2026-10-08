@@ -208,7 +208,7 @@ class Settings:
     # Oberfläche
     language: str = "de"                # de | en (gilt nach Neustart)
     close_to_tray: bool = True          # Fenster schließen = im Infobereich weiterlaufen
-    ui_design: str = "nebula"           # theme.DESIGNS (alte Designs bleiben wählbar)
+    ui_design: str = "nightcity"        # theme.DESIGNS (alte Designs bleiben wählbar)
     ui_mode: str = "dark"               # dark | light | system
     ui_zoom: int = 75                   # 50–200 % (mehr pro Seite sehen = kleiner); seit 0.9.9 Standard 75 %
     ui_auto_fit: bool = True            # zusätzlich an die Fenstergröße anpassen (0,7–1,3)
@@ -225,6 +225,7 @@ class Settings:
     macro_queue: list = field(default_factory=list)    # Makro-Warteschlange: [{"kind": …, …}] (automation.TASK_KINDS)
     macro_loop: bool = False            # Warteschlange immer wieder von vorn
     debug_view: bool = False            # Einstellungen → Debug: Protokoll live sammeln und zeigen (aus = spart Last)
+    macro_log_home: bool = False        # Makro-Protokoll zusätzlich auf der Startseite (sonst nur Einstellungen → Makro)
     auto_gigs: bool = False             # Makro: Fixer Gigs automatisch abholen + neu losschicken (nach ihren Zeiten)
     auto_guild: bool = False            # Makro: Gilden-Missionen automatisch abholen (alle paar Stunden)
     explore_minutes: int = 20           # Einstellungen → Makro: Erkunden höchstens so lange
@@ -238,7 +239,7 @@ class Settings:
     server_favorites: list = field(default_factory=list)   # [{"name", "link"}] – nur lokal, Diagnose schwärzt die Links
     private_server_link: str = "" # roblox.com/games/…?privateServerLinkCode=… (nur lokal, roblox_join.py)
     # Sonstiges
-    settings_version: int = 11
+    settings_version: int = 12
     uptime_minutes: int = 10
     total_offset: int = 0               # Startwert für "Raids gesamt"
     tesseract_path: str = ""
@@ -345,6 +346,8 @@ class Settings:
             s.ui_zoom = 75                   # 0.9.9-beta.1 hatte 50 % gesetzt – 75 % ist angenehmer
         if int(data.get("settings_version", 1) or 1) < 8 and s.ui_design == "astral":
             s.ui_design = "nebula"           # „Astral“ war bis 0.6.6 nur der Standard – neues Standarddesign übernehmen
+        if int(data.get("settings_version", 1) or 1) < 12 and s.ui_design == "nebula":
+            s.ui_design = "nightcity"        # 0.9.9-beta.7: neues Standarddesign passend zum Spiel (Nebula bleibt wählbar)
         if int(data.get("settings_version", 1) or 1) < 6:
             # Der frühere Standardlink zeigte auf eine falsche Spielnummer; eigene Links bleiben unverändert.
             if "9797806474" in s.rpc_game_link:

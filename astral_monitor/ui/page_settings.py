@@ -477,11 +477,31 @@ class SettingsPage(QWidget):
         data.body.addStretch(1)
         root.addLayout(columns(stack(upd, rpc), data))
         root.addWidget(section(tr("Makro")))
+        macro = Card(tr("Makro (Beta)"),
+                     tr("Das Makro klickt selbst in Roblox: Farm-Routine (Startseite), automatisches Abholen und "
+                        "Erkunden. Es öffnet Menüs über die Oberflächen-Karte – kein Laufen, kein Teleportieren.\n\n"
+                        "Not-Aus: Maus bewegen, Esc oder „Stopp“. Roblox muss sichtbar sein (nicht minimiert) und "
+                        "wird dafür nach vorne geholt.\n\nMakros sind laut Roblox-Regeln nicht erlaubt – Nutzung auf "
+                        "eigene Verantwortung."))
+        self.macro_on = QCheckBox(tr("Makro erlauben"))
+        self.macro_on.setChecked(bool(main.engine.settings.automation_enabled))
+        self.macro_on.toggled.connect(self._toggle_macro)
+        macro.body.addWidget(self.macro_on)
+        self.macro_log_home = QCheckBox(tr("Makro-Protokoll auch auf der Startseite zeigen"))
+        self.macro_log_home.setChecked(bool(main.engine.settings.macro_log_home))
+        self.macro_log_home.toggled.connect(self._toggle_log_home)
+        macro.body.addWidget(self.macro_log_home)
+        mrow = QHBoxLayout()
+        stop_macro = QPushButton(tr("■ Makro stoppen"))
+        stop_macro.clicked.connect(main.macro.stop)
+        mrow.addWidget(stop_macro)
+        mrow.addStretch(1)
+        macro.body.addLayout(mrow)
         explore = Card(tr("Erkunden"),
                        tr("Das Makro übernimmt Roblox für die eingestellte Zeit und lernt das Spiel kennen: zuerst die "
-                          "Knöpfe am Rand (Gilde, Pets, Achievements …) – Reiter durchklicken, scrollbare Bereiche "
-                          "finden, reine Ansichts-Knöpfe testen –, dann im Teleporter neue Welten und Fenster mit "
-                          "Problemen.\n\nNie gedrückt: Aktions-Knöpfe (Claim, Buy, Roll, Max …) und gefährliche "
+                          "Welten im Teleporter (Pets, Crafting, Raids, Gachas – neue Welten und Fenster mit "
+                          "Problemen), danach die Knöpfe am Rand (Shop, Gilde, Achievements …) – Reiter durchklicken, "
+                          "scrollbare Bereiche finden, reine Ansichts-Knöpfe testen.\n\nNie gedrückt: Aktions-Knöpfe (Claim, Buy, Roll, Max …) und gefährliche "
                           "(Leave, Kick, Delete …) – um die bleibt eine Sperrzone, dort wird auch nicht gescrollt oder "
                           "gehovert; in der Gilde ist die ganze Ecke unten links gesperrt. Anti-AFK pausiert solange.\n\n"
                           "Not-Aus: Maus bewegen oder Esc."))
@@ -499,20 +519,22 @@ class SettingsPage(QWidget):
         start_explore.setObjectName("primary")
         start_explore.clicked.connect(self._start_explore)
         report = QPushButton(tr("Bericht öffnen"))
-        report.clicked.connect(lambda: self.main.pages[0].macro.open_report())
+        report.clicked.connect(main.macro.open_report)
         forget = QPushButton(tr("Gelerntes vergessen …"))
         forget.setToolTip(tr("Vom Erkunden gelernte Fenster, Reiter und Drops löschen – die mitgelieferte Karte "
                              "bleibt"))
         forget.clicked.connect(self._forget_explore)
         check = QPushButton(tr("Funde prüfen …"))
         check.setToolTip(tr("Was das Erkunden gefunden hat, Fenster für Fenster bestätigen oder korrigieren"))
-        check.clicked.connect(lambda: self.main.pages[0].macro.open_review(always=True))
+        check.clicked.connect(lambda: self.main.macro.open_review(always=True))
         for btn in (start_explore, check, report, forget):
             erow.addWidget(btn)
         erow.addStretch(1)
         explore.body.addLayout(erow)
         explore.body.addStretch(1)
-        root.addLayout(columns(explore, QWidget()))
+        from .macro_log import MacroLogCard
+        self.macro_log = MacroLogCard(main.macro)
+        root.addLayout(columns(stack(macro, explore), self.macro_log), 10)
 
         root.addWidget(section(tr("Discord-Bot")))
         bot = Card(tr("Discord-Bot"),
@@ -929,7 +951,22 @@ class SettingsPage(QWidget):
     def _start_explore(self) -> None:
         s = self.main.engine.settings
         s.explore_minutes, s.explore_revisit = self.explore_minutes.value(), self.explore_revisit.isChecked()
-        self.main.pages[0].macro.start_explore()
+        self.main.macro.start_explore(self)
+
+    def _toggle_macro(self, on: bool) -> None:
+        if self.main.macro.set_enabled(on, self) != on:      # Warnung abgelehnt
+            self.macro_on.blockSignals(True)
+            self.macro_on.setChecked(False)
+            self.macro_on.blockSignals(False)
+
+    def _toggle_log_home(self, on: bool) -> None:
+        s = self.main.engine.settings
+        s.macro_log_home = bool(on)
+        try:
+            s.save()                                      # sofort, ohne Speichern-Leiste
+        except OSError:
+            pass
+        self.main.pages[0].set_log_visible(bool(on))
 
     def _forget_explore(self) -> None:
         if QMessageBox.question(self, tr("Erkunden"), tr("Alles vergessen, was das Erkunden gelernt hat?")) \
@@ -939,9 +976,13 @@ class SettingsPage(QWidget):
         forget_local(app_paths.data_dir())
         (app_paths.data_dir() / "explore" / "deep_done.json").unlink(missing_ok=True)
         (app_paths.data_dir() / "explore" / "review.json").unlink(missing_ok=True)
-        self.main.pages[0].macro.reload_map()
+        self.main.macro.reload_map()
 
     def load(self, s) -> None:
+        for box, value in ((self.macro_on, s.automation_enabled), (self.macro_log_home, s.macro_log_home)):
+            box.blockSignals(True)
+            box.setChecked(bool(value))
+            box.blockSignals(False)
         self.bot_enabled.setChecked(bool(s.bot_enabled))
         self.bot_token.setText(s.bot_token)
         self.bot_users.setText(s.bot_users)

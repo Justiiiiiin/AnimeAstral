@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import ctypes
 import difflib
+import json
 import logging
 import re
 import threading
@@ -20,7 +21,7 @@ import cv2
 import numpy as np
 
 from . import vision, winapi
-from .i18n import tr
+from .i18n import N_, tr
 from .uimap import ROW, UiMap, match_row, world_number
 
 _log = logging.getLogger("makro")
@@ -46,7 +47,7 @@ TASK_KINDS = ("raid", "autoroll", "progression", "gigs", "guild_claim", "wait",
 RAID_KINDS = ("raid", "raid_farm", "raid_create", "raid_join")     # Aufgaben, die in einen Raid/Modus führen
 CLAIM_LIMIT = 8           # höchstens so viele „Claim“ je Seite (Schutz gegen Endlosschleifen)
 GIGS_PETS = 3             # „Send Pets“: je Gig 1 Pet, reihum eins der letzten 3 (Eigentümer 08.10.2026)
-GUILD_EVERY = 3 * 3600    # Gilden-Missionen: so oft nachsehen (Tagesaufgaben, Reset einmal am Tag)
+GUILD_EVERY = 24 * 3600   # Gilden-Missionen: einmal am Tag (Eigentümer 08.10.2026)
 EXTRA_RETRY = 15 * 60     # nach einem Fehlschlag frühestens so viel später erneut
 RAID_GEAR = Path(__file__).with_name("uimap_static") / "raid_gear.png"   # Zahnrad oben rechts im Raid (fest, nicht aus der Karte)
 GEAR_REGION = [0.4, 0.0, 0.9, 0.16]
@@ -58,16 +59,16 @@ def task_label(task: dict) -> str:
     """Anzeige einer Aufgabe der Warteschlange."""
     kind = task.get("kind")
     if kind == "autoroll":
-        return tr("Auto Roll: {target}", target=task.get("target", "?"))
+        return tr("Auto Roll · {target}", target=task.get("target", "?"))
     if kind == "raid":
         until = task.get("until", "runs")
-        text = tr("Raid: {target}", target=task.get("target", "?"))
+        text = tr("Farmen · {target}", target=task.get("target", "?"))
         if until == "runs":
             text += " · " + tr("{runs} Raids", runs=int(task.get("runs", 1)))
         elif until == "minutes":
             text += " · " + tr("{minutes} Min.", minutes=int(task.get("minutes", 30)))
         else:
-            text += " · " + tr("ohne Ende")
+            text += " · " + tr("bis Stopp")
         if int(task.get("leave_wave", 0)):
             text += " · " + tr("Leave ab Welle {wave}", wave=int(task["leave_wave"]))
         return text + (" · " + tr("beitreten") if task.get("join") else "")
@@ -96,8 +97,8 @@ def task_label(task: dict) -> str:
         return tr("Menü schließen")
     if kind == "wait":
         seconds = int(task.get("seconds", 60))
-        return tr("Warten: {minutes} Min.", minutes=seconds // 60) if seconds % 60 == 0 and seconds >= 60 else \
-            tr("Warten: {seconds} s", seconds=seconds)
+        return tr("Pause · {minutes} Min.", minutes=seconds // 60) if seconds % 60 == 0 and seconds >= 60 else \
+            tr("Pause · {seconds} s", seconds=seconds)
     return str(kind)
 
 
@@ -228,6 +229,18 @@ def _words_sharp(frame: np.ndarray, area: list[float], ocr) -> list[tuple[str, l
             for w, b in vision.words_in(big, [0.0, 0.0, 1.0, 1.0], ocr)]
 
 
+def fmt_wait(seconds: float) -> str:
+    """Wartezeit kurz: „45 s“, „18 Min.“, „1 Std. 36 Min.“, „23 Std.“."""
+    seconds = max(0, int(seconds))
+    if seconds < 60:
+        return tr("{n} s", n=seconds)
+    minutes = (seconds + 59) // 60
+    if minutes < 60:
+        return tr("{n} Min.", n=minutes)
+    hours, rest = divmod(minutes, 60)
+    return tr("{h} Std. {m} Min.", h=hours, m=rest) if rest and hours < 10 else tr("{h} Std.", h=hours)
+
+
 def parse_timer(text: str) -> Optional[int]:
     """„1:20:40“ / „33:57“ -> Sekunden (Fixer-Gigs-Zeiten), sonst None."""
     m = re.fullmatch(r"(?:(\d{1,2}):)?(\d{1,2}):(\d{2})", text.strip())
@@ -235,6 +248,72 @@ def parse_timer(text: str) -> Optional[int]:
         return None
     h, mnt, s = int(m.group(1) or 0), int(m.group(2)), int(m.group(3))
     return h * 3600 + mnt * 60 + s if mnt < 60 and s < 60 else None
+
+
+# Fixer Gigs: Kopf jeder Karte („QUICK · 20 MIN“, „STANDARD · 1H“, „BIG JOB · 3H“) -> Laufzeit. Welche Art kommt, ist
+# zufällig (Eigentümer 08.10.2026) – deshalb je Karte lesen statt fester Zeiten.
+GIG_KINDS = {"quick": 20 * 60, "standard": 3600, "big": 3 * 3600, "bis": 3 * 3600}
+GIG_NAMES = {20 * 60: N_("Quick 20 Min."), 3600: N_("Standard 1 Std."), 3 * 3600: N_("Big Job 3 Std.")}
+
+
+def gig_cards(words: list[tuple[str, list[float]]]) -> list[dict]:
+    """Karten im Fixer-Gigs-Fenster aus den gelesenen Wörtern (Lage in Anteilen des Roblox-Fensters), links nach
+    rechts. Je Karte: x (Mitte), duration (s), state („ready“/„working“/„open“), left (Lage von „left“ unter der
+    Restzeit oder None), claim/send (Knopf-Lage oder None). „FINISH NOW“ kostet Währung – wird nie geliefert."""
+    norm = [(re.sub(r"[^a-z0-9]", "", w.lower()), b) for w, b in words]
+    heads = [(GIG_KINDS[w], b) for w, b in norm if w in GIG_KINDS]
+    if not heads:
+        return []
+    top = min(b[1] for _d, b in heads)
+    heads = [(d, b) for d, b in heads if abs(b[1] - top) < 0.03]          # nur die Kopfzeile der Karten
+    heads.sort(key=lambda h: h[1][0])
+    pitch = min((b2[0] - b1[0] for (_d1, b1), (_d2, b2) in zip(heads, heads[1:])), default=0.12)
+    cards = [{"x": (b[0] + b[2]) / 2, "head": b, "duration": d, "state": "open", "left": None, "claim": None,
+              "send": None, "pitch": pitch} for d, b in heads]
+
+    def card_of(box: list[float]) -> Optional[dict]:
+        cx = (box[0] + box[2]) / 2
+        best = min(cards, key=lambda c: abs(c["x"] - cx))
+        return best if abs(best["x"] - cx) < 0.6 * pitch and box[1] > top else None
+
+    for w, b in norm:
+        card = card_of(b)
+        if card is None:
+            continue
+        if w == "ready":
+            card["state"] = "ready"
+        elif w == "working" and card["state"] != "ready":
+            card["state"] = "working"
+        elif w == "left" and card["left"] is None:
+            card["left"] = b
+        elif w == "claim":
+            card["claim"] = b
+        elif w in ("send", "sendpets"):
+            card["send"] = b
+    return cards
+
+
+def gig_timer_box(card: dict) -> Optional[list[float]]:
+    """Bereich der Restzeit („1:36:38 left“) links neben „left“ – für die genaue Ziffern-Lesung."""
+    left = card.get("left")
+    if left is None:
+        return None
+    h = left[3] - left[1]
+    return [max(card["x"] - 0.4 * card["pitch"], left[0] - 9 * h), left[1] - 0.4 * h, left[0] - 0.1 * h,
+            left[3] + 0.4 * h]
+
+
+def gig_next_due(cards: list[dict], timers: dict[int, Optional[int]]) -> int:
+    """Sekunden bis zum nächsten Besuch: kleinste gültige Restzeit (höchstens so lang wie der Gig); laufende Gigs
+    ohne lesbare Zeit zählen mit 20 Min. (dann wird nachgesehen), fertige/freie sofort."""
+    due = []
+    for i, card in enumerate(cards):
+        if card["state"] != "working":
+            due.append(0)
+            continue
+        t = timers.get(i)
+        due.append(t if t is not None and 0 < t <= card["duration"] + 60 else min(card["duration"], 20 * 60))
+    return min(due) if due else 20 * 60
 
 
 class Navigator:
@@ -260,8 +339,10 @@ class Navigator:
         self.start_monitoring: Optional[Callable[[], None]] = None   # Überwachung starten (über die Oberfläche)
         self.set_raid: Optional[Callable[[str], None]] = None        # Raid-Name für die Statistik setzen
         self._in_raid: Optional[str] = None               # Ziel des Raids, in dem das Makro gerade farmt
-        self.gigs_next = 0.0                              # Fixer Gigs: frühestens dann wieder nachsehen (monotonic)
+        self.gigs_next = 0.0                              # Fixer Gigs: frühestens dann wieder nachsehen (time.time)
         self.guild_next = 0.0                             # Gilden-Missionen: frühestens dann wieder
+        self.state_path: Optional[Path] = None            # Zeiten der Abholungen (überdauern Neustarts)
+        self.queue_pos: Optional[int] = None              # Warteschlange: gerade laufende Aufgabe (für die Anzeige)
         self.auto_gigs: Callable[[], bool] = lambda: False     # Schalter „Automatisch abholen“ (Einstellungen)
         self._hud: dict[str, list[float]] = {}           # gefundene Rand-Knöpfe (je Bildgröße)
         self.forbidden: list[list[float]] = []            # Sperrzonen (Leave, Kick …): nie klicken, nie hovern
@@ -324,16 +405,23 @@ class Navigator:
         tasks = [dict(t) for t in tasks if t.get("kind") in TASK_KINDS]
         if not tasks:
             return False
-        return self.start(tr("Warteschlange ({count} Aufgaben)", count=len(tasks)), lambda: self._queue(tasks, loop))
+        return self.start(tr("Farm-Routine ({count} Schritte)", count=len(tasks)), lambda: self._queue(tasks, loop))
 
     def _queue(self, tasks: list[dict], loop: bool) -> None:
+        try:
+            self._queue_rounds(tasks, loop)
+        finally:
+            self.queue_pos = None
+
+    def _queue_rounds(self, tasks: list[dict], loop: bool) -> None:
         rounds = 0
         while True:
             rounds += 1
             if loop:
-                self.log(tr("Durchlauf {n}", n=rounds))
+                self.log(tr("Runde {n} beginnt.", n=rounds))
             for i, task in enumerate(tasks):
-                self.log(f"{i + 1}/{len(tasks)}  {task_label(task)}")
+                self.queue_pos = i
+                self.log(tr("Schritt {n}/{count}: {task}", n=i + 1, count=len(tasks), task=task_label(task)))
                 following = next_task(tasks, i, loop)
                 self._run_extras()                        # fällige Gigs/Gilde zuerst
                 for attempt in (1, 2):                    # einmal wiederholen, dann überspringen
@@ -406,8 +494,9 @@ class Navigator:
         norm = [(re.sub(r"[^a-z0-9]", "", w.lower()), b) for w, b in words]
         for label in labels:
             for i, (w, box) in enumerate(norm):
-                if w != label[0]:
-                    continue
+                if w != label[0] and not (len(label[0]) >= 5 and len(label) == 1 and
+                                          difflib.SequenceMatcher(None, w, label[0]).ratio() >= 0.8):
+                    continue                              # kleine Lesefehler erlaubt („Persona1“ für „Personal“)
                 boxes = [box]
                 for part in label[1:]:                    # nächstes Wort rechts daneben, gleiche Zeile
                     nxt = next((b for v, b in norm if v == part and 0 <= b[0] - boxes[-1][2] < 0.03
@@ -624,9 +713,9 @@ class Navigator:
     def due_extras(self) -> list[str]:
         """Fällige Zusatzaufgaben: Fixer Gigs (nach ihren Zeiten) und Gilden-Missionen (alle GUILD_EVERY) – keine
         Aufgaben der Warteschlange, sondern eigene Schalter; laufen zwischen den Aufgaben und während ein Raid farmt."""
-        now = time.monotonic()
+        now = time.time()
         due = []
-        if self.auto_gigs() and now >= self.gigs_next and self.map.container("Fixer Gigs") is not None:
+        if self.auto_gigs() and now >= self.gigs_next and self._gigs_window() is not None:
             due.append("gigs")
         if self.auto_guild() and now >= self.guild_next:
             due.append("guild")
@@ -659,16 +748,19 @@ class Navigator:
                     self._gigs()
                 else:
                     self._guild_claim()
-                    self.guild_next = time.monotonic() + GUILD_EVERY
+                    self.guild_next = time.time() + GUILD_EVERY
+                    self._save_state()
+                    self.log(tr("Gilde: nächster Besuch in {time}.", time=fmt_wait(GUILD_EVERY)))
             except UserStop:
                 raise
             except Stop as exc:
                 self.log("⚠ " + tr("{task}: {reason} – nächster Versuch in 15 Min.",
                                    task=tr("Fixer Gigs") if kind == "gigs" else tr("Gilde"), reason=exc))
                 if kind == "gigs":
-                    self.gigs_next = time.monotonic() + EXTRA_RETRY
+                    self.gigs_next = time.time() + EXTRA_RETRY
                 else:
-                    self.guild_next = time.monotonic() + EXTRA_RETRY
+                    self.guild_next = time.time() + EXTRA_RETRY
+                self._save_state()
                 self._close_any_quiet()
 
     def _extras_while_waiting(self) -> None:
@@ -842,11 +934,13 @@ class Navigator:
     def _gigs(self) -> None:
         """Fixer Gigs öffnen, fertige Gigs abholen („Claim“), neue mit „Send Pets“ losschicken (die letzten Pets im
         Pets-Fenster), Laufzeiten merken – vor Ablauf wird die Aufgabe übersprungen."""
-        wait = self.gigs_next - time.monotonic()
+        wait = self.gigs_next - time.time()
         if wait > 0:
-            self.log(tr("Fixer Gigs: nichts fertig – nächste in {minutes} Min.", minutes=int(wait // 60) + 1))
+            self.log(tr("Fixer Gigs: nichts fertig – nächster Besuch in {time}.", time=fmt_wait(wait)))
             return
-        window = self._window("Fixer Gigs")
+        window = self._gigs_window()
+        if window is None:
+            raise Stop(tr("Fixer Gigs steht nicht in der Karte (einmal Erkunden laufen lassen)."))
         self._open(window)
         time.sleep(0.8)
         self._claim_all("Fixer Gigs")
@@ -863,13 +957,77 @@ class Navigator:
                 self._open(window)
                 time.sleep(0.8)
         words, _roi = self._words()
-        times = [s for w, _b in words for s in [parse_timer(re.sub(r"[^0-9:]", "", w))] if s]
-        if times:
-            self.gigs_next = time.monotonic() + min(times) + 30
-            self.log(tr("Fixer Gigs: nächste fertig in {minutes} Min.", minutes=int(min(times) // 60) + 1))
+        cards = gig_cards(words)
+        frame = self._frame()
+        timers = {i: self._read_timer(frame, gig_timer_box(c), c["duration"]) for i, c in enumerate(cards)
+                  if c["state"] == "working"}
+        parts = []
+        for i, c in enumerate(cards):
+            kind = tr(GIG_NAMES.get(c["duration"], "Gig"))
+            if c["state"] == "working":
+                parts.append(tr("{gig}: noch {time}", gig=kind, time=fmt_wait(timers[i])) if timers.get(i)
+                             else tr("{gig}: läuft", gig=kind))
+            elif c["state"] == "ready":
+                parts.append(tr("{gig}: fertig", gig=kind))
+            else:
+                parts.append(tr("{gig}: frei", gig=kind))
+        if parts:
+            self.log(tr("Fixer Gigs: {cards}", cards=" · ".join(parts)))
         else:
-            self.gigs_next = time.monotonic() + 20 * 60      # Zeiten nicht lesbar: kürzester Gig dauert 20 Min.
+            self.log(tr("Fixer Gigs: keine Karten erkannt – Bild gespeichert (debug)."))
+            self._snap("gigs")
+        wait = max(60, gig_next_due(cards, timers) + 20)
+        self.gigs_next = time.time() + wait
+        self._save_state()
+        self.log(tr("Fixer Gigs: nächster Besuch in {time}.", time=fmt_wait(wait)))
         self._close_any()
+
+    def _read_timer(self, frame: np.ndarray, box: Optional[list[float]], duration: int) -> Optional[int]:
+        """Restzeit genau lesen: Ausschnitt 4× vergrößert, helle Schrift, nur Ziffern und „:“ (die allgemeine
+        Lesung macht aus „1:36:38“ gern „4:36:98“). Gültig nur, wenn höchstens so lang wie der Gig."""
+        if box is None or self._ocr is None:
+            return None
+        fh, fw = frame.shape[:2]
+        crop = frame[max(0, int(box[1] * fh)):int(box[3] * fh), max(0, int(box[0] * fw)):int(box[2] * fw)]
+        if crop.size == 0:
+            return None
+        gray = cv2.resize(cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY), None, fx=4, fy=4, interpolation=cv2.INTER_CUBIC)
+        for thresh in (170, 0):
+            flag = cv2.THRESH_BINARY_INV | (cv2.THRESH_OTSU if thresh == 0 else 0)
+            binary = cv2.copyMakeBorder(cv2.threshold(gray, thresh, 255, flag)[1], 10, 10, 10, 10,
+                                        cv2.BORDER_CONSTANT, value=255)
+            try:
+                seconds = parse_timer(self._ocr.line(binary, 7, "0123456789:"))
+            except Exception:  # noqa: BLE001 – Lesefehler: dann eben nicht
+                seconds = None
+            if seconds is not None and 0 < seconds <= duration + 60:
+                return seconds
+        return None
+
+    # ------------------------------------------------------------------ Zeiten der Abholungen (überdauern Neustarts)
+    def _load_state(self) -> None:
+        if self.state_path is None:
+            return
+        try:
+            data = json.loads(self.state_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return
+        self.gigs_next = float(data.get("gigs_next", 0) or 0)
+        self.guild_next = float(data.get("guild_next", 0) or 0)
+
+    def _save_state(self) -> None:
+        if self.state_path is None:
+            return
+        try:
+            self.state_path.write_text(json.dumps({"gigs_next": self.gigs_next, "guild_next": self.guild_next}),
+                                       encoding="utf-8")
+        except OSError:
+            pass
+
+    def _gigs_window(self) -> Optional[dict]:
+        """Fixer-Gigs-Fenster der Karte (Art „gigs“ vom Erkunden oder Name)."""
+        return next((e for e in self.map.entries if e.get("kind") == "Fenster / Bereich" and (
+            (e.get("extra") or {}).get("category") == "gigs" or "fixer gigs" in e["name"].lower())), None)
 
     @staticmethod
     def _send_box(words) -> Optional[list[float]]:
@@ -906,14 +1064,24 @@ class Navigator:
         self._click_roi(box)
         time.sleep(0.4)
         self.log(tr("Pet Nr. {n} von hinten ausgewählt.", n=min(nth, len(tiles))))
+        self._snap("gigs_auswahl")                        # Ablauf nach der Auswahl ist noch unbekannt: Bild merken
         words, _roi = self._words()
-        confirm = self._find(words, "send", "confirm", "done", "select", "ok", "start")
+        outside = [(w, b) for w, b in words if not (grid[0] <= (b[0] + b[2]) / 2 <= grid[2]
+                                                     and grid[1] <= (b[1] + b[3]) / 2 <= grid[3])]
+        for key in ("send", "confirm", "done", "select", "start", "ok"):   # Knöpfe außerhalb des Pet-Rasters
+            confirm = self._find(outside, key)
+            if confirm is not None:
+                break
         if confirm is None:
             self.log(tr("Bestätigen-Knopf nicht gefunden – Bild gespeichert (debug)."))
             self._snap("gigs_bestaetigen")
             return
+        self.log(tr("Klicke „{button}“.", button=key.capitalize()))
         self._click_roi(confirm)
         time.sleep(1.0)
+        if self._screen(self._frame())[0] != "none" and not self._is_open(self._gigs_window() or {"name": "Fixer Gigs"}, self._frame()):
+            self.log(tr("Nach dem Bestätigen ist noch ein anderes Fenster offen – Bild gespeichert (debug)."))
+            self._snap("gigs_danach")
 
     def _pet_tiles(self, frame: np.ndarray, grid: list[float]) -> list[list[float]]:
         """Pet-Kacheln im Raster (Lese-Reihenfolge). Das Raster ergibt sich aus den Namensschildern unten in den

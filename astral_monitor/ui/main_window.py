@@ -185,6 +185,8 @@ class MainWindow(QMainWindow):
         theme.track(self.rail_logo, lambda o, f: o.setContentsMargins(0, 0, 0, round(12 * f)))   # Abstand nur mit Logo
         side.addWidget(self.rail_logo)
 
+        from .macro_controller import MacroController
+        self.macro = MacroController(self)                # Makro: Karte, Navigator, Protokoll (vor den Seiten)
         self.stack = QStackedWidget()
         self._page_classes = [MonitorPage, StatsPage, AlertsPage, SettingsPage]
         self._hotkey_status: Optional[tuple] = None
@@ -580,6 +582,15 @@ class MainWindow(QMainWindow):
         search = self.pages[PAGE_SETTINGS].search
         search.setFocus()
         search.selectAll()
+
+    def open_settings_tab(self, key: str) -> None:
+        """Einstellungen auf einem Reiter öffnen (z. B. „Makro“ vom Hinweis der Farm-Routine)."""
+        self.nav.button(PAGE_SETTINGS).click()
+        page = self.pages[PAGE_SETTINGS]
+        for btn in page.tab_group.buttons():
+            if btn.property("group") == key:
+                btn.click()
+                break
 
     def set_anti_afk(self, on: bool) -> None:
         """Schalter oben / im Tray-Menü: sofort wirksam und gespeichert."""

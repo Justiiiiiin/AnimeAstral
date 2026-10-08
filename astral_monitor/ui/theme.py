@@ -229,6 +229,9 @@ QPushButton#danger:hover, QFrame#card QPushButton#danger:hover { background: @da
 QFrame#card QPushButton { background: @control; }
 QFrame#card QPushButton:hover { background: @controlHover; }
 QPushButton#chipbtn { min-height: 30px; padding: 0 12px; border-radius: 15px; font-weight: 600; }
+QPushButton#glyph { padding: 0; }
+QPlainTextEdit#macroLog { padding: 4px 6px; border-radius: 8px; }
+QListWidget#routine::item { padding: 6px 6px; }
 QPushButton#chipbtn:checked, QFrame#card QPushButton#chipbtn:checked { background: @navActive;
   border: 1px solid @accent; color: @accent; }
 QPushButton#nav { background: transparent; border: none; text-align: left; padding: 0 12px;
@@ -375,6 +378,30 @@ _OLED_DARK = dict(_NEBULA_DARK, **{
     "headerLine": "#101219", "barEmpty": "#0E1015", "scroll": "#1A1D26", "trackOff": "#1A1D26",
 })
 
+# Night City (0.9.9): passend zum Spiel (W21 Night City, Fixer Gigs) – violett-schwarzer Grund, Neon-Gelb und Magenta,
+# Kartenränder Magenta → Cyan, etwas kantiger als Nebula. Nur dunkel (wie das Spiel).
+_NIGHTCITY_DARK = dict(_NEBULA_DARK, **{
+    "bg": "#07050D", "sidebar": "#0A0712", "topbar": "#07050D", "card": "#110C1C", "cardTop": "#1A1029",
+    "border": "#2A1A3D", "borderA": "#7A2A6E", "borderB": "#1C4D5C", "line": "#1A1226", "field": "#0B0814",
+    "control": "#1A1228", "controlHover": "#251A38", "controlBorder": "#33244A", "checkBorder": "#4A3866",
+    "navHover": "#1A1228", "navActive": "#2A1640", "softA": "#3A1236", "softB": "#123540", "edge": "#B0408F",
+    "select": "#3A1D52", "section": "#B98AD6", "text": "#F4EEFF", "muted": "#9B8DB5",
+    "accent": "#FCE94F", "accentHover": "#FFF27A", "accent2": "#FF3D9A", "accent2Hover": "#FF66B2",
+    "onAccent": "#1A0E00", "warn": "#FFB547", "danger": "#FF6B8B", "info": "#4BE3F0",
+    "okBg": "#1C1608", "okBorder": "#5C4E14", "stepDone": "#8A7A1E", "bar": "#C9B52E", "barEmpty": "#1E1530",
+    "scroll": "#2A1D3D", "scrollHover": "#3D2A58", "trackOff": "#2A1D3D", "knobOn": "#1A0E00",
+    "headerLine": "#1E1530", "dangerBg": "#2A0E1A", "dangerBorder": "#7A2445", "dangerHover": "#3A1224",
+})
+_NIGHTCITY = _NEBULA + """
+QFrame#card { background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 @cardTop, stop:1 @card);
+  border: 1px solid qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 @borderA, stop:0.5 @border, stop:1 @borderB);
+  border-radius: 10px; }
+QPushButton { border-radius: 6px; }
+QLineEdit, QSpinBox, QDoubleSpinBox, QComboBox, QPlainTextEdit, QTextBrowser { border-radius: 6px; }
+QPushButton#nav { border-radius: 10px; }
+QPushButton#nav:checked { border: 1px solid @edge; }
+"""
+
 # Bubble (0.7.6): Nebula mit runden „Blasen“-Formen – Knöpfe und Felder als Pillen, große Kartenradien
 _BUBBLE = _NEBULA + """
 QFrame#card { border-radius: 26px; }
@@ -446,6 +473,9 @@ QFrame#card { background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 @cardTo
 
 DESIGNS: dict[str, dict] = {
     # Schlüssel: Anzeigename, eingeführt in Version, Vorlage, Paletten je Farbschema (fehlt eines: Dunkel)
+    "nightcity": {"name": N_("Night City"), "since": "0.9.9", "template": _NIGHTCITY, "icons": True, "gear": True,
+                  "animate": True, "rail": True, "font": ["Segoe UI Variable Text", "Segoe UI"],
+                  "palettes": {"dark": _NIGHTCITY_DARK}},
     "nebula": {"name": N_("Nebula"), "since": "0.7.0", "template": _NEBULA, "icons": True, "gear": True,
                "animate": True, "rail": True, "font": ["Segoe UI Variable Text", "Segoe UI"],
                "palettes": {"dark": _NEBULA_DARK, "light": _NEBULA_LIGHT}},
@@ -479,7 +509,7 @@ DESIGNS: dict[str, dict] = {
     "classic": {"name": N_("Klassisch"), "since": "0.5.0", "template": _CLASSIC, "icons": False, "gear": False,
                 "animate": False, "font": ["Segoe UI"], "palettes": {"dark": _CLASSIC_DARK}},
 }
-DEFAULT_DESIGN = "nebula"
+DEFAULT_DESIGN = "nightcity"   # seit 0.9.9-beta.7 (vorher Nebula)
 
 
 def season_design(today=None) -> str:
