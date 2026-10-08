@@ -149,7 +149,7 @@ def _rows(cands: list[tuple[str, list[float]]], axis: int) -> list[tuple[str, li
     """Wörter derselben Zeile (axis=1) bzw. Spalte (axis=0) zu einem Eintrag zusammenfassen („Guild Weekly“)."""
     out: list[list] = []
     for w, b in sorted(cands, key=lambda c: (c[1][1], c[1][0]) if axis == 1 else (c[1][0], c[1][1])):
-        if out and axis == 1 and abs(out[-1][1][1] - b[1]) < 0.6 * (b[3] - b[1]) and b[0] - out[-1][1][2] < 0.03:
+        if out and axis == 1 and abs(out[-1][1][1] - b[1]) < 0.6 * (b[3] - b[1]) and -0.005 <= b[0] - out[-1][1][2] < 0.03:
             out[-1][0] += " " + w
             out[-1][1] = [out[-1][1][0], min(out[-1][1][1], b[1]), b[2], max(out[-1][1][3], b[3])]
         else:
