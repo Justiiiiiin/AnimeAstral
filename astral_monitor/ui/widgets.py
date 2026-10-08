@@ -237,6 +237,17 @@ class Card(QFrame):
             self.body.addLayout(head)
 
 
+def page_header(title: str, info: str = "") -> QHBoxLayout:
+    """Seitentitel mit ⓘ in einer Zeile; Bedienelemente rechts daneben mit addWidget anhängen (nach addStretch).
+    Spart die Zeile mit dem Untertitel – alle Seiten sollen ohne Scrollen passen."""
+    row = QHBoxLayout()
+    theme.track_spacing(row, 8)
+    row.addWidget(label(title, "h1"))
+    if info:
+        row.addWidget(InfoButton(info))
+    return row
+
+
 class StatCard(Card):
     def __init__(self, title: str, value: str = "–") -> None:
         super().__init__()

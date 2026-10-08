@@ -1058,4 +1058,5 @@ EN: dict[str, str] = {
     'Fixer Gigs': 'Fixer Gigs',
     'Nur Anzeige': 'Display only',
     'Später (1.5.0)': 'Later (1.5.0)',
+    'Debug': 'Debug',
 }

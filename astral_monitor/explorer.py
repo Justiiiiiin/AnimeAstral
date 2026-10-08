@@ -319,7 +319,7 @@ class Explorer:
         """Nach einem Klick: Was ist aufgegangen? (art, lage, titel, bild, vorlage) oder None (nichts)."""
         nav = self.nav
         end = time.monotonic() + OBSERVE_WAIT
-        time.sleep(0.8)
+        time.sleep(0.5)                                    # danach wartet die Schleife auf einen stabilen Titel
         prev_small, last = None, None
         while time.monotonic() < end:
             frame = nav._frame()
@@ -419,7 +419,7 @@ class Explorer:
             box = knowledge.close_word(vision.words_in(frame, FULL, nav._ocr))
             if box is not None:
                 nav._click_roi(box)
-        time.sleep(0.8)
+        time.sleep(0.6)
 
 
 def vision_scroll() -> int:

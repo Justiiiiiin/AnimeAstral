@@ -39,16 +39,17 @@ class SettingsPage(QWidget):
         root = QVBoxLayout(self)
         theme.track_margins(root, 28, 24, 28, 24)
         theme.track_spacing(root, 14)
-        root.addWidget(label(tr("Einstellungen"), "h1"))
         self.search = short_field(QLineEdit(), 300)
         self.search.setPlaceholderText(tr("Einstellung suchen …"))
         self.search.setClearButtonEnabled(True)
         self.search.textChanged.connect(self._filter)
         tabs = QHBoxLayout()
         theme.track_spacing(tabs, 4)
+        tabs.addWidget(label(tr("Einstellungen"), "h1"))
+        tabs.addSpacing(theme.px(14))
         self.tab_group = QButtonGroup(self)
         self.tab_group.setExclusive(True)
-        for key in ("Roblox", "Überwachung", "Darstellung", "Programm"):
+        for key in ("Roblox", "Überwachung", "Darstellung", "Programm", "Debug"):
             btn = QPushButton(tr(key))
             btn.setObjectName("tab")
             btn.setCheckable(True)
@@ -63,6 +64,16 @@ class SettingsPage(QWidget):
         self.no_match = label(tr("Keine Einstellung gefunden."), "muted")
         self.no_match.setVisible(False)
         root.addWidget(self.no_match)
+
+        def stack(*cards) -> QWidget:
+            """Mehrere Karten untereinander als eine Spalte (für columns)."""
+            col = QWidget()
+            lay = QVBoxLayout(col)
+            lay.setContentsMargins(0, 0, 0, 0)
+            theme.track_spacing(lay, 14)
+            for card in cards:
+                lay.addWidget(card)
+            return col
 
         # ------------------------------------------------------------------ Roblox
         root.addWidget(section(tr("Roblox")))
@@ -144,6 +155,23 @@ class SettingsPage(QWidget):
                 lay.addWidget(card)
         root.addLayout(columns(left, right))
 
+        keys = Card(tr("Hotkeys"),
+                    tr("Wirken global, auch während des Spiels. Format: Ctrl+Alt+S, Shift+F9 … (Ctrl, Alt, Shift, "
+                       "Win). Einzelne F-Tasten vermeiden, die Roblox selbst nutzt."))
+        kg = form_grid()
+        self.hk_toggle = short_field(QLineEdit())
+        self.hk_pause = short_field(QLineEdit())
+        self.hk_status_edit = short_field(QLineEdit())
+        kg.addWidget(label(tr("Start / Stopp")), 0, 0)
+        kg.addWidget(self.hk_toggle, 0, 1)
+        kg.addWidget(label(tr("Pause / Fortsetzen")), 1, 0)
+        kg.addWidget(self.hk_pause, 1, 1)
+        kg.addWidget(label(tr("Status neu senden")), 2, 0)
+        kg.addWidget(self.hk_status_edit, 2, 1)
+        keys.body.addLayout(kg)
+        self.hk_status = label("", "small", wrap=True)
+        keys.body.addWidget(self.hk_status)
+        keys.body.addStretch(1)
         # ------------------------------------------------------------------ Überwachung
         root.addWidget(section(tr("Überwachung")))
         perf = Card(tr("Leistung"),
@@ -190,9 +218,24 @@ class SettingsPage(QWidget):
         gg.addWidget(self.ram, 2, 1)
         guard.body.addLayout(gg)
         guard.body.addStretch(1)
-        root.addLayout(columns(perf, guard))
+        root.addLayout(columns(stack(perf, keys), guard))
 
         # ------------------------------------------------------------------ Programm
+        ui = Card(tr("Oberfläche"),
+                  tr("Ein Sprachwechsel gilt nach einem Neustart.\n\nSchließt du das Fenster, läuft das Programm "
+                     "im Infobereich (Symbol neben der Uhr) weiter. Rechtsklick auf das Symbol: Öffnen, "
+                     "Start/Stopp, Pause, Server beitreten, Anti-AFK, Auto-Rejoin, Auto-Start, Beenden."))
+        ug = form_grid()
+        self.language = ComboBox()
+        for code, name in LANGUAGES.items():
+            self.language.addItem(name, code)
+        ug.addWidget(label(tr("Sprache / Language")), 0, 0)
+        ug.addWidget(self.language, 0, 1)
+        ui.body.addLayout(ug)
+        self.close_to_tray = QCheckBox(tr("Beim Schließen im Infobereich weiterlaufen"))
+        ui.body.addWidget(self.close_to_tray)
+        ui.body.addStretch(1)
+
         root.addWidget(section(tr("Darstellung")))
         look = Card(tr("Aussehen"),
                     tr("Änderungen gelten sofort. Ältere Designs bleiben hier auswählbar, mit der Version, in der "
@@ -331,42 +374,9 @@ class SettingsPage(QWidget):
         self.intro.toggled.connect(lambda on: self.main.set_appearance(intro=on))
         fx.body.addWidget(self.intro)
         fx.body.addStretch(1)
-        root.addLayout(columns(look, fx))
+        root.addLayout(columns(look, stack(fx, ui)))
 
         root.addWidget(section(tr("Programm")))
-        ui = Card(tr("Oberfläche"),
-                  tr("Ein Sprachwechsel gilt nach einem Neustart.\n\nSchließt du das Fenster, läuft das Programm "
-                     "im Infobereich (Symbol neben der Uhr) weiter. Rechtsklick auf das Symbol: Öffnen, "
-                     "Start/Stopp, Pause, Server beitreten, Anti-AFK, Auto-Rejoin, Auto-Start, Beenden."))
-        ug = form_grid()
-        self.language = ComboBox()
-        for code, name in LANGUAGES.items():
-            self.language.addItem(name, code)
-        ug.addWidget(label(tr("Sprache / Language")), 0, 0)
-        ug.addWidget(self.language, 0, 1)
-        ui.body.addLayout(ug)
-        self.close_to_tray = QCheckBox(tr("Beim Schließen im Infobereich weiterlaufen"))
-        ui.body.addWidget(self.close_to_tray)
-        ui.body.addStretch(1)
-
-        keys = Card(tr("Hotkeys"),
-                    tr("Wirken global, auch während des Spiels. Format: Ctrl+Alt+S, Shift+F9 … (Ctrl, Alt, Shift, "
-                       "Win). Einzelne F-Tasten vermeiden, die Roblox selbst nutzt."))
-        kg = form_grid()
-        self.hk_toggle = short_field(QLineEdit())
-        self.hk_pause = short_field(QLineEdit())
-        self.hk_status_edit = short_field(QLineEdit())
-        kg.addWidget(label(tr("Start / Stopp")), 0, 0)
-        kg.addWidget(self.hk_toggle, 0, 1)
-        kg.addWidget(label(tr("Pause / Fortsetzen")), 1, 0)
-        kg.addWidget(self.hk_pause, 1, 1)
-        kg.addWidget(label(tr("Status neu senden")), 2, 0)
-        kg.addWidget(self.hk_status_edit, 2, 1)
-        keys.body.addLayout(kg)
-        self.hk_status = label("", "small", wrap=True)
-        keys.body.addWidget(self.hk_status)
-        keys.body.addStretch(1)
-        root.addLayout(columns(ui, keys))
 
         rpc = Card(tr("Discord-Profilstatus"),
                    tr("Zeigt Raid und Welle als „Spielt …“ in deinem Discord-Profil.\n\nAnwendungs-ID: "
@@ -389,7 +399,6 @@ class SettingsPage(QWidget):
         rg.addWidget(label(tr("Spiel-Link (für das Bild)")), 1, 0)
         rg.addWidget(self.rpc_link, 1, 1)
         rpc.body.addLayout(rg)
-        root.addWidget(rpc)
 
         upd = Card(tr("Updates"),
                    tr("Neue Versionen kommen meist als kleines Paket (nur geänderte Dateien). Unter „Alle "
@@ -465,10 +474,11 @@ class SettingsPage(QWidget):
         xrow.addStretch(1)
         data.body.addLayout(xrow)
         data.body.addStretch(1)
-        root.addLayout(columns(upd, data))
+        root.addLayout(columns(stack(upd, rpc), data))
+        root.addWidget(section(tr("Debug")))
         from .events_card import EventsCard
         self.events = EventsCard(main.event_log)          # Debug/Tester: Ereignisse (früher auf der Startseite)
-        root.addWidget(self.events)
+        root.addWidget(self.events, 10)
         root.addStretch(1)
         root.addLayout(self._about_row())
         self._assign_groups(root)
@@ -508,21 +518,28 @@ class SettingsPage(QWidget):
         """Karten den Abschnitten zuordnen (Reihenfolge wie auf der Seite: Abschnittsüberschrift, dann ihre Karten)."""
         from PySide6.QtWidgets import QLabel
         self._groups: dict = {}
-        current = None
+        self._holders: dict = {}                          # Abschnitt -> Zeilen-Widgets (ganz ausblenden, sonst
+        current = None                                    # bleiben die Abstände leerer Zeilen stehen)
         for i in range(root.count()):
             item = root.itemAt(i)
-            if item.widget():
-                widgets = [item.widget()]
-            elif item.layout():
-                widgets = [item.layout().itemAt(j).widget() for j in range(item.layout().count())]
-            else:
-                widgets = []
-            for w in widgets:
-                if isinstance(w, QLabel) and w.objectName() == "section":
-                    current = w
-                    self._groups[w] = []
-                elif current is not None and w is not None:     # Karte oder Spalte mit mehreren Karten
-                    self._groups[current] += [w] if isinstance(w, Card) else w.findChildren(Card)
+            if item.layout() is not None and current is not None:   # Kartenreihe in ein Widget packen
+                stretch = root.stretch(i)
+                root.takeAt(i)
+                lay = item.layout()
+                lay.setParent(None)
+                holder = QWidget()
+                lay.setContentsMargins(0, 0, 0, 0)
+                holder.setLayout(lay)
+                root.insertWidget(i, holder, stretch)
+                item = root.itemAt(i)
+            w = item.widget()
+            if isinstance(w, QLabel) and w.objectName() == "section":
+                current = w
+                self._groups[w] = []
+                self._holders[w] = []
+            elif current is not None and w is not None:          # Karte oder Reihe mit mehreren Karten
+                self._groups[current] += [w] if isinstance(w, Card) else w.findChildren(Card)
+                self._holders[current].append(w)
 
     def _show_group(self, key: str) -> None:
         """Nur einen Abschnitt zeigen (weniger Scrollen); die Suche zeigt dagegen alle Treffer."""
@@ -534,6 +551,8 @@ class SettingsPage(QWidget):
             sec.setVisible(False)                          # der Reiter ersetzt die Überschrift
             for card in cards:
                 card.setVisible(visible)
+            for holder in self._holders.get(sec, ()):
+                holder.setVisible(visible)
 
     # ------------------------------------------------------------------ Suche
     def _build_index(self) -> None:
@@ -569,6 +588,10 @@ class SettingsPage(QWidget):
             match = all(w in haystack for w in words)
             card.setVisible(match)
             shown += match
+        for sec, holders in self._holders.items():
+            for holder in holders:                         # Reihe zeigen, sobald eine ihrer Karten passt
+                holder.setVisible(any(not c.isHidden() for c in self._groups[sec]
+                                      if holder is c or holder.isAncestorOf(c)))
         for sec in self.findChildren(QLabel, "section"):
             sec.setVisible(not words)
         self.no_match.setVisible(bool(words) and not shown)

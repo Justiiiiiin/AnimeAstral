@@ -9,14 +9,14 @@ from typing import Optional
 
 from PySide6.QtCore import Qt, QUrl
 from PySide6.QtGui import QDesktopServices
-from PySide6.QtWidgets import (QButtonGroup, QFileDialog, QHBoxLayout, QMenu, QMessageBox, QPushButton,
-                               QStackedWidget, QToolButton, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QButtonGroup, QFileDialog, QGridLayout, QHBoxLayout, QMenu, QMessageBox,
+                               QPushButton, QStackedWidget, QToolButton, QVBoxLayout, QWidget)
 
 from .. import app_paths, messages
 from ..i18n import N_, dec, tr
 from . import theme
-from .widgets import (PARAGRAPH, BarChart, Card, ComboBox, SortItem, StatCard, label, make_table, restore_header,
-                      save_header)
+from .widgets import (PARAGRAPH, BarChart, Card, ComboBox, SortItem, StatCard, label, make_table, page_header,
+                      restore_header, save_header)
 
 RANGES = [("session", N_("Diese Session"), N_("Session-Bericht")),
           ("12h", N_("Letzte 12 Stunden"), N_("12-Stunden-Bericht")),
@@ -70,10 +70,8 @@ class StatsPage(QWidget):
         theme.track_margins(root, 28, 24, 28, 24)
         theme.track_spacing(root, 14)
 
-        # Titel und Bedienleiste in eigenen Zeilen, sonst wird die Seite bei kleinem Fenster zu breit
-        root.addWidget(label(tr("Statistik"), "h1"))
-        root.addWidget(label(tr("Jeder Versuch zählt – jede Welle gibt Belohnungen."), "muted", wrap=True))
-        head = QHBoxLayout()
+        # Titel, Auswahl und Aktionen in einer Zeile (Seite passt ohne Scrollen)
+        head = page_header(tr("Statistik"), tr("Jeder Versuch zählt – jede Welle gibt Belohnungen."))
         theme.track_spacing(head, 8)
         self.profile = ComboBox()
         theme.track_min_width(self.profile, 170)
@@ -83,6 +81,7 @@ class StatsPage(QWidget):
         for key, text, _title in RANGES:
             self.range.addItem(tr(text), key)
         self.range.currentIndexChanged.connect(lambda _i: self.mark_dirty())
+        head.addSpacing(theme.px(8))
         head.addWidget(self.profile)
         head.addWidget(self.range)
         head.addStretch(1)
@@ -147,14 +146,28 @@ class StatsPage(QWidget):
 
         mid = QHBoxLayout()
         theme.track_spacing(mid, 16)
-        runs = Card(tr("Letzte Versuche"))
+        runs = Card()                                    # Reiter: Letzte Versuche | Raids im Vergleich | Rekorde
+        list_tabs = QHBoxLayout()
+        self.list_group = QButtonGroup(self)
+        self.list_group.setExclusive(True)
+        for i, text in enumerate((tr("Letzte Versuche"), tr("Alle Raids im Vergleich"), tr("Persönliche Rekorde"))):
+            btn = QPushButton(text)
+            btn.setCheckable(True)
+            btn.setObjectName("tab")
+            self.list_group.addButton(btn, i)
+            list_tabs.addWidget(btn)
+        self.list_group.button(0).setChecked(True)
+        list_tabs.addStretch(1)
+        runs.body.addLayout(list_tabs)
+        self.lists = QStackedWidget()
         self.table = make_table([tr("Beendet um"), tr("Raid"), tr("Endwelle"), tr("Dauer")],
                                 rights=(2, 3), widths=(140, 150, 90, 80), selectable=True)
         self.table.setToolTip(tr("Überschrift anklicken sortiert, Spaltenränder ziehen ändert die Breite. "
                                  "~ = geschätzte Dauer."))
-        theme.track_min_height(self.table, 320)
+        theme.track_min_height(self.table, 200)
         restore_header(self.table, "stats_runs2")
-        runs.body.addWidget(self.table, 1)
+        self.lists.addWidget(self.table)
+        runs.body.addWidget(self.lists, 1)
         mid.addWidget(runs, 3)
 
         chart_card = Card(tr("Auswertung"), " ")
@@ -179,30 +192,30 @@ class StatsPage(QWidget):
         chart_card.body.addWidget(self.charts, 1)
         self.chart_group.idClicked.connect(self._chart_changed)
         mid.addWidget(chart_card, 2)
-        root.addLayout(mid)
+        root.addLayout(mid, 1)
         self._chart_changed(0)
 
-        per_card = Card(tr("Alle Raids im Vergleich"))
-        self.per_table = make_table([tr("Raid"), tr("Versuche"), tr("Wellen gesamt"), tr("Ø Endwelle"), tr("Bestwelle"), tr("Ø Dauer"),
-                                     tr("Wellen/Std")], rights=(1, 2, 3, 4, 5, 6),
-                                    widths=(220, 100, 130, 110, 100, 100, 110))
-        theme.track_min_height(self.per_table, 170)
+        self.per_table = make_table([tr("Raid"), tr("Versuche"), tr("Wellen gesamt"), tr("Ø Endwelle"), tr("Bestwelle"),
+                                     tr("Ø Dauer"), tr("Wellen/Std")], rights=(1, 2, 3, 4, 5, 6),
+                                    widths=(170, 80, 110, 95, 85, 85, 95))
         restore_header(self.per_table, "stats_raids")
-        per_card.body.addWidget(self.per_table, 1)
-        root.addWidget(per_card)
+        self.lists.addWidget(self.per_table)
 
-        root.addWidget(label(tr("Persönliche Rekorde"), "h2"))
+        rec_page = QWidget()                              # Rekorde über den ganzen Verlauf, 2 × 2 Kacheln
+        rec_grid = QGridLayout(rec_page)
+        rec_grid.setContentsMargins(0, 0, 0, 0)
+        theme.track_spacing(rec_grid, 12)
         self.records = {}
-        rec_row = QHBoxLayout()
-        theme.track_spacing(rec_row, 12)
-        for key, title in (("best_wave", tr("Bestwelle")), ("best_day", tr("Stärkster Tag")),
-                           ("best_hour", tr("Beste Stunde")), ("longest", tr("Längste Session"))):
+        for i, (key, title) in enumerate((("best_wave", tr("Bestwelle")), ("best_day", tr("Stärkster Tag")),
+                                          ("best_hour", tr("Beste Stunde")), ("longest", tr("Längste Session")))):
             card = StatCard(title)
             card.sub = label("", "small")
             card.body.addWidget(card.sub)
             self.records[key] = card
-            rec_row.addWidget(card, 1)
-        root.addLayout(rec_row)
+            rec_grid.addWidget(card, i // 2, i % 2)
+        rec_grid.setRowStretch(2, 1)
+        self.lists.addWidget(rec_page)
+        self.list_group.idClicked.connect(self.lists.setCurrentIndex)
 
     def _fill_records(self, rec: dict) -> None:
         """Bestwerte über den ganzen Verlauf (unabhängig von Raid- und Zeitraum-Auswahl)."""

@@ -4,6 +4,22 @@ Neueste Version oben. Kurze Stichpunkte, keine Erklärungen (die stehen im Progr
 Der Abschnitt einer Version wird beim Veröffentlichen automatisch als Versionshinweis übernommen
 (`tools/release_notes.py`) und ist im Programm unter Einstellungen → Updates → „Alle Versionen“ lesbar.
 
+## 0.9.7-beta.4
+
+### 🎨 Design
+- Alle Seiten passen ohne Scrollen
+- Statistik: Letzte Versuche, Raid-Vergleich und Rekorde als Reiter
+- Meldungen in zwei Spalten
+- Einstellungen neu sortiert, Debug als eigener Reiter
+- Titel und Bedienelemente in einer Zeile, Erklärungen im ⓘ
+- Warteschlange kompakter, Felder passend zur Aufgabe
+
+### 🔧 Verbessert
+- Verdeckte Ziffer („4“ statt „54“) beendet keinen Raid mehr
+- Während das Makro Menüs öffnet, wertet die Erkennung nichts
+- Debug-Liste zeigt ganze Sätze
+- Erkunden wartet nach Klicks kürzer
+
 ## 0.9.7-beta.3
 
 ### 🔧 Verbessert

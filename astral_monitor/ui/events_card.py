@@ -24,13 +24,11 @@ class EventsCard(Card):
                             "Zum Testen und für Fehlermeldungen – das ausführliche Protokoll steckt im "
                             "Diagnose-Paket."))
         self.list = QListWidget()
-        self.list.setWordWrap(False)
-        self.list.setTextElideMode(Qt.TextElideMode.ElideRight)
+        self.list.setWordWrap(True)                       # ganze Sätze statt „…“
         self.list.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.list.setUniformItemSizes(True)
         smooth(self.list)
-        theme.track_fixed_height(self.list, 180)
-        self.body.addWidget(self.list)
+        theme.track_min_height(self.list, 180)
+        self.body.addWidget(self.list, 1)
         for data in history:
             self.add(data)
 

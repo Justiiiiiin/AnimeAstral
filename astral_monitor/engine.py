@@ -14,7 +14,7 @@ from typing import Callable, Optional
 import numpy as np
 
 from . import app_paths, messages
-from .antiafk import AntiAfk
+from .antiafk import AntiAfk, _macro_busy
 from .rejoin import AutoRejoin
 from .i18n import N_, dec, tr
 from .capture import CaptureError, FrameSource, GrabResult, create_source
@@ -547,8 +547,12 @@ class Engine:
             self.state.info = tr("Kein Wellenzähler im Bild")
 
         self.guard.on_wave(reading.value if reading else None, now)
-        events = self.tracker.update(reading.value if reading else None,
-                                     reading.total if reading else None, now)
+        if _macro_busy():
+            self.tracker.hold()                              # Makro öffnet Menüs: Lesungen nicht werten
+            events = []
+        else:
+            events = self.tracker.update(reading.value if reading else None,
+                                         reading.total if reading else None, now)
         run = self.tracker.run
         if run is None:
             self.state.profile = self.settings.current_raid

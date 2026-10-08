@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import re
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QSize, Qt
 from PySide6.QtWidgets import QCheckBox, QComboBox, QHBoxLayout, QListWidget, QListWidgetItem, QMessageBox, \
     QPushButton, QSpinBox
 
@@ -17,6 +17,13 @@ from .widgets import Card, smooth
 
 KINDS = [("autoroll", N_("Auto Roll")), ("raid_farm", N_("Raid farmen")), ("raid_leave", N_("Raid verlassen")),
          ("raid_create", N_("Raid starten")), ("raid_join", N_("Raid beitreten")), ("wait", N_("Warten (Min.)"))]                  # reines Öffnen bringt in der Schlange nichts (Eigentümer)
+
+
+class _TaskList(QListWidget):
+    """Liste, die den freien Platz der Spalte füllt, aber selbst keinen fordert (Startseite ohne Scrollen)."""
+
+    def sizeHint(self) -> QSize:
+        return QSize(super().sizeHint().width(), self.minimumHeight())
 
 
 class MacroQueueCard(Card):
@@ -70,11 +77,11 @@ class MacroQueueCard(Card):
         self.body.addLayout(farm)
         self._farm = [self.runs, self.leave_wave, self.join]
 
-        self.list = QListWidget()
+        self.list = _TaskList()
         smooth(self.list)
-        theme.track_fixed_height(self.list, 84)           # feste Höhe: sonst wächst die Startseite über den Rand
+        theme.track_min_height(self.list, 84)             # wächst in den freien Platz der Spalte
         self.list.itemDoubleClicked.connect(lambda _i: self._remove())
-        self.body.addWidget(self.list)
+        self.body.addWidget(self.list, 1)
 
         row = QHBoxLayout()
         self.loop = QCheckBox(tr("Schleife"))
@@ -86,7 +93,8 @@ class MacroQueueCard(Card):
         down = QPushButton("↓")
         down.setToolTip(tr("Nach unten"))
         down.clicked.connect(lambda: self._move(1))
-        remove = QPushButton(tr("Entfernen"))
+        remove = QPushButton("✕")
+        remove.setToolTip(tr("Entfernen"))
         remove.clicked.connect(self._remove)
         self.run = QPushButton(tr("Starten"))
         self.run.setObjectName("primary")
@@ -95,18 +103,16 @@ class MacroQueueCard(Card):
         stop.clicked.connect(lambda: self.macro.navigator and self.macro.navigator.stop())
         for w in (self.loop, up, down, remove):
             row.addWidget(w)
-        row.addStretch(1)
+        row.addStretch(1)                                 # eine Zeile (Seite passt ohne Scrollen)
+        row.addWidget(self.run)
+        row.addWidget(stop)
         self.body.addLayout(row)
-        run_row = QHBoxLayout()                           # eigene Zeile: sonst wird die Startseite zu breit
-        run_row.addStretch(1)
-        run_row.addWidget(self.run)
-        run_row.addWidget(stop)
-        self.body.addLayout(run_row)
         self._controls = [self.kind, self.param, self.minutes, add, up, down, remove, self.run, self.loop,
                           *self._farm]
 
         for task in s.macro_queue or []:
             self._append(task)
+        self._kind_changed()                              # Felder passend zur ersten Aufgabe ein-/ausblenden
 
     def reload(self) -> None:
         """Nach dem Erkunden: neue Ziele in die Auswahl."""

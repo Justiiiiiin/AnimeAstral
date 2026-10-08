@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (QButtonGroup, QCheckBox, QColorDialog, QGridLayou
 from ..i18n import tr
 from . import theme
 from ..settings import EVENT_DEFS, is_hex_color, is_valid_webhook
-from .widgets import Card, InfoButton, SpinBox, form_grid, label
+from .widgets import Card, InfoButton, SpinBox, form_grid, label, page_header
 
 
 class ColorButton(QToolButton):
@@ -58,9 +58,15 @@ class AlertsPage(QWidget):
 
         root = QVBoxLayout(self)
         theme.track_margins(root, 28, 24, 28, 24)
-        theme.track_spacing(root, 16)
-        root.addWidget(label(tr("Meldungen"), "h1"))
-        root.addWidget(label(tr("Was wird an Discord gesendet, und wann gibt es einen Ping?"), "muted"))
+        theme.track_spacing(root, 14)
+        head = page_header(tr("Meldungen"), tr("Was wird an Discord gesendet, und wann gibt es einen Ping?"))
+        head.addStretch(1)
+        root.addLayout(head)
+        cols = QHBoxLayout()                               # links Discord + Live-Status, rechts Ereignisse
+        theme.track_spacing(cols, 14)
+        left = QVBoxLayout()
+        theme.track_spacing(left, 14)
+        cols.addLayout(left, 1)
 
         hook = Card(tr("Discord"))
         grid = QGridLayout()
@@ -110,16 +116,13 @@ class AlertsPage(QWidget):
             "Ausführlich: Kennzahlen als einzelne Felder.\n\nKompakt: eine ruhige Zeile mit den wichtigsten "
             "Werten – auch der Live-Status wird schlanker.")))
         style_row.addStretch(1)
+        test = QPushButton(tr("Test-Nachricht senden"))     # in derselben Zeile (Seite passt ohne Scrollen)
+        test.clicked.connect(self._send_test)
+        style_row.addWidget(test)
         grid.addWidget(label(tr("Nachrichtenstil")), 4, 0)
         grid.addLayout(style_row, 4, 1, 1, 2)
         hook.body.addLayout(grid)
-        row = QHBoxLayout()
-        test = QPushButton(tr("Test-Nachricht senden"))
-        test.clicked.connect(self._send_test)
-        row.addWidget(test)
-        row.addStretch(1)
-        hook.body.addLayout(row)
-        root.addWidget(hook)
+        left.addWidget(hook)
 
         live = Card(tr("Live-Status"),
                     tr("Eine Nachricht im Kanal, die sich laufend aktualisiert, statt vieler Uptime-Meldungen."
@@ -149,7 +152,8 @@ class AlertsPage(QWidget):
         brow.addWidget(resend)
         brow.addStretch(1)
         live.body.addLayout(brow)
-        root.addWidget(live)
+        left.addWidget(live)
+        left.addStretch(1)
 
         events = Card(tr("Ereignisse"))
         table = QGridLayout()
@@ -160,9 +164,8 @@ class AlertsPage(QWidget):
         table.addWidget(label(tr("Senden"), "small"), 0, 1, center)
         table.addWidget(label(tr("Ping"), "small"), 0, 2, center)
         table.addWidget(label(tr("Farbe"), "small"), 0, 3, center)
-        table.setColumnMinimumWidth(1, 64)
-        table.setColumnMinimumWidth(2, 64)
-        table.setColumnMinimumWidth(3, 64)
+        for col in (1, 2, 3):
+            theme.track(table, lambda o, f, c=col: o.setColumnMinimumWidth(c, round(56 * f)))
         self.send_boxes: dict[str, QCheckBox] = {}
         self.ping_boxes: dict[str, QCheckBox] = {}
         self.color_buttons: dict[str, ColorButton] = {}
@@ -180,8 +183,9 @@ class AlertsPage(QWidget):
         events.body.addWidget(self.attach)
         self.report_on_stop = QCheckBox(tr("Beim Stoppen eine Statistik-Karte senden"))
         events.body.addWidget(self.report_on_stop)
-        root.addWidget(events)
-        root.addStretch(1)
+        events.body.addStretch(1)
+        cols.addWidget(events, 1)
+        root.addLayout(cols, 1)
 
     def _sync_uptime(self, live_on: bool) -> None:
         self.uptime.setEnabled(not live_on)

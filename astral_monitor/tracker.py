@@ -18,6 +18,14 @@ ABSENT_SECONDS = 8.0     # so lange ohne Zähler = Raid vorbei
 DROP_MIN = 3             # Zähler fällt um mehr als so viel = Neustart (nach 2 passenden Lesungen)
 UP_BASE = 4              # erlaubter Sprung nach oben ...
 UP_PER_SECOND = 1.5      # ... plus so viele Wellen pro vergangener Sekunde (alles darüber = Fehllesung)
+CUT_CONFIRM = 2.0        # „4“ statt „54“ (vordere Ziffer verdeckt): Neustart erst, wenn die Lesung so lange bleibt
+
+
+def _cut_digits(value: int, last: int) -> bool:
+    """Sieht value aus wie last (oder die nächsten Wellen) mit fehlender vorderer Ziffer? Echter Fall 07.10.:
+    bei Welle 54 zweimal „4“ gelesen – ohne diese Prüfung ein falscher Neustart."""
+    s = str(value)
+    return any(len(str(n)) > len(s) and str(n).endswith(s) for n in (last, last + 1, last + 2))
 
 
 @dataclass
@@ -80,6 +88,9 @@ class WaveTracker:
         restart_ts: Optional[float] = None
         if self.run is not None and self.last_value is not None and value < self.last_value - DROP_MIN:
             cand = self._drop_value
+            if (cand is not None and cand <= value <= cand + DROP_MIN and _cut_digits(cand, self.last_value)
+                    and now - self._drop_ts < CUT_CONFIRM):
+                return out                                # verdächtig (Ziffer verdeckt?): weiter abwarten
             if cand is not None and cand <= value <= cand + DROP_MIN:
                 self._drop_value = None
                 if value > max(START_MAX, self.last_value // 2):
@@ -120,6 +131,12 @@ class WaveTracker:
                 and now - self._last_trigger >= self.cooldown):
             out.append(("candidate", None))
         return out
+
+    def hold(self) -> None:
+        """Makro klickt gerade Menüs: Zähler oft verdeckt oder andere Zahlen im Bild – nichts entscheiden. Ein
+        begonnener Rückgang oder eine Abwesenheit zählt nicht weiter; danach geht es normal weiter."""
+        self._absent_since = None
+        self._drop_value = None
 
     def confirm(self, now: float) -> dict:
         """Auslöser bestätigt: Raid zählt. Gibt Dauer/Wellen zurück."""
