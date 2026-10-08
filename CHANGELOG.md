@@ -4,6 +4,22 @@ Neueste Version oben. Kurze Stichpunkte, keine Erklärungen (die stehen im Progr
 Der Abschnitt einer Version wird beim Veröffentlichen automatisch als Versionshinweis übernommen
 (`tools/release_notes.py`) und ist im Programm unter Einstellungen → Updates → „Alle Versionen“ lesbar.
 
+## 0.9.9-beta.2
+
+### ✨ Neu (Beta)
+- Discord-Bot: Programm per Slash-Befehl steuern (eigener Bot)
+- /pc: PC herunterfahren/neu starten (Schalter, 60 s, abbrechbar)
+- Progressions: Roll All als Knopf und Aufgabe
+- Einstellungen → Makro: Erkunden mit Dauer und Optionen
+
+### 🔧 Verbessert
+- Erkunden drückt nie Leave & Co. – auch kein Hover dort
+- Erkunden: Reiter streng erkannt, scrollt, testet Ansichts-Knöpfe
+- Erkunden öffnet nur Fenster mit Problemen erneut
+- Gilden-Fenster wird erkannt (größer als andere Menüs)
+- Ziel-Listen nach Welt sortiert, Progression nur einmal
+- UI-Größe standardmäßig 75 %
+
 ## 0.9.9-beta.1
 
 ### ✨ Neu (Beta)
