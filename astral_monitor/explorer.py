@@ -272,11 +272,12 @@ class Explorer:
         nav._focus()
         nav._close_any()
         frame = nav._frame()
-        if not self._hud_visible(button, frame):
+        roi = nav.hud_roi(button)                         # über die Beschriftung gefunden (jede GUI-Größe)
+        if roi is button["roi"] and not self._hud_visible(button, frame):
             self.report["skipped"].append(f"{name}: Knopf nicht gefunden")
             self._snap(f"knopf_fehlt_{name}", frame, frame)
             return
-        nav._click_roi(button["roi"])
+        nav._click_roi(roi)
         seen = self._observe(frame)
         if seen is None:
             self.report["skipped"].append(f"{name}: nichts geöffnet")

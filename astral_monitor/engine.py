@@ -36,7 +36,7 @@ log = logging.getLogger("engine")
 BURST_SECONDS = 30.0        # so lange nach einem Raid wird auf Quest-Änderungen gewartet
 BURST_INTERVAL = 4.0
 RAID_PROBE_SECONDS = 3.0     # Raid-Fenster suchen – nur ohne sichtbaren Wellenzähler (Lobby), ~15 ms
-DROP_SECONDS = 60.0          # im Raid: Drop-Feld so oft lesen (~250 ms) – Raid über eindeutige Drops erkennen
+DROP_SECONDS = 90.0          # im Raid: Drop-Feld so oft lesen (~0,3–0,7 s) – Raid über eindeutige Drops erkennen
 
 
 class EngineError(RuntimeError):
@@ -624,7 +624,9 @@ class Engine:
             if not self._drop_index.unique:
                 self._next_drops = now + 600                 # noch keine Drop-Listen: selten nachsehen
                 return
-            votes = self._drop_index.votes(read_drop_words(frame, self.get_ocr()))
+            box = self.wave_reader.box                       # Größe des Wellenzählers = GUI-Größe des Spiels
+            text_h = float(box[3] - box[1]) / 2 if box is not None else None   # Textzeile ohne Rand (PAD_Y)
+            votes = self._drop_index.votes(read_drop_words(frame, self.get_ocr(), text_h))
             raid = self.drop_watch.feed(votes)
             if votes:
                 log.debug("Drops: %s", votes)

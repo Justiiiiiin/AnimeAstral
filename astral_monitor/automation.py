@@ -7,6 +7,7 @@ Ablauf in einem eigenen Thread; Meldungen über log(text). Ohne Qt."""
 from __future__ import annotations
 
 import ctypes
+import difflib
 import logging
 import re
 import threading
@@ -172,6 +173,59 @@ def pet_tiles(frame: np.ndarray, grid: list[float], words: list[tuple[str, list[
     return tiles
 
 
+# Knöpfe am Rand über ihre Beschriftung finden – die Spiel-GUI-Größe (50 %, 100 % …) verschiebt und vergrößert sie,
+# feste Lagen aus der Karte passen nur bei der GUI-Größe der Aufnahme (Eigentümer 08.10.2026). Fenster bleiben gleich.
+HUD_LABELS = {"Teleporter": ("teleport",), "Shop": ("shop",), "Pets": ("pets",), "Items": ("items",),
+              "Achiev": ("achiev",), "Index": ("index",), "Guild": ("guild",), "Boosts": ("boosts",),
+              "G. Quests": ("quests",), "Promotion": ("promotion",), "Equip Best": ("equip", "best")}
+HUD_AREAS = ([0.0, 0.25, 0.3, 0.8], [0.0, 0.78, 0.3, 1.0], [0.3, 0.72, 0.7, 1.0])   # Leiste links, unten links, Mitte
+
+
+def _label_like(word: str, key: str) -> bool:
+    """Beschriftung passt (Anfang, kleine Lesefehler wie „OUESTS“ für „QUESTS“ erlaubt)."""
+    if word.startswith(key):
+        return True
+    head = word[:len(key)]
+    return len(key) >= 5 and len(head) == len(key) and difflib.SequenceMatcher(None, head, key).ratio() >= 0.8
+
+
+def hud_locate(words: list[tuple[str, list[float]]]) -> dict[str, list[float]]:
+    """Lage der Rand-Knöpfe aus gelesenen Beschriftungen: das Symbol sitzt direkt über seinem Namen.
+    Rückgabe: Name -> Bereich des Symbols (Anteile des Fensters)."""
+    norm = [(re.sub(r"[^a-z]", "", w.lower()), b) for w, b in words]
+    out: dict[str, list[float]] = {}
+    for name, parts in HUD_LABELS.items():
+        for w, b in norm:
+            if not _label_like(w, parts[0]):
+                continue
+            box = list(b)
+            if len(parts) > 1:                            # „Equip Best“: zweites Wort rechts daneben
+                nxt = next((b2 for w2, b2 in norm if _label_like(w2, parts[1]) and 0 <= b2[0] - box[2] < 0.03
+                            and abs(b2[1] - box[1]) < 0.015), None)
+                if nxt is None:
+                    continue
+                box = [box[0], min(box[1], nxt[1]), nxt[2], max(box[3], nxt[3])]
+            lh = box[3] - box[1]
+            cx = (box[0] + box[2]) / 2
+            half = max(box[2] - box[0], 2.4 * lh) / 2
+            out[name] = [round(v, 4) for v in (cx - half, max(0.0, box[1] - 3.0 * lh), cx + half, box[1])]
+            break
+    return out
+
+
+def _words_sharp(frame: np.ndarray, area: list[float], ocr) -> list[tuple[str, list[float]]]:
+    """Wörter in einem Bereich, kleine Bereiche doppelt so groß gelesen (winzige Beschriftungen bei GUI 50 %)."""
+    fh, fw = frame.shape[:2]
+    x0, y0, x1, y1 = area
+    crop = frame[int(y0 * fh):int(y1 * fh), int(x0 * fw):int(x1 * fw)]
+    if crop.size == 0:
+        return []
+    f = 2.0 if crop.shape[0] < 400 else 1.0
+    big = crop if f == 1.0 else cv2.resize(crop, None, fx=f, fy=f, interpolation=cv2.INTER_CUBIC)
+    return [(w, [x0 + b[0] * (x1 - x0), y0 + b[1] * (y1 - y0), x0 + b[2] * (x1 - x0), y0 + b[3] * (y1 - y0)])
+            for w, b in vision.words_in(big, [0.0, 0.0, 1.0, 1.0], ocr)]
+
+
 def parse_timer(text: str) -> Optional[int]:
     """„1:20:40“ / „33:57“ -> Sekunden (Fixer-Gigs-Zeiten), sonst None."""
     m = re.fullmatch(r"(?:(\d{1,2}):)?(\d{1,2}):(\d{2})", text.strip())
@@ -207,6 +261,8 @@ class Navigator:
         self.gigs_next = 0.0                              # Fixer Gigs: frühestens dann wieder nachsehen (monotonic)
         self.guild_next = 0.0                             # Gilden-Missionen: frühestens dann wieder
         self.auto_gigs: Callable[[], bool] = lambda: False     # Schalter „Automatisch abholen“ (Einstellungen)
+        self._hud: dict[str, list[float]] = {}           # gefundene Rand-Knöpfe (je Bildgröße)
+        self._hud_shape: Optional[tuple] = None
         self.auto_guild: Callable[[], bool] = lambda: False
 
     def log(self, text: str) -> None:
@@ -558,6 +614,21 @@ class Navigator:
         """Von der Oberfläche, wenn sonst nichts läuft."""
         return self.start(tr("Automatisch abholen"), self._run_extras)
 
+    def hud_roi(self, button: dict) -> list[float]:
+        """Wo ist dieser Rand-Knopf gerade? Einmal je Fenstergröße über die Beschriftungen gesucht (zwei Bereiche,
+        ~0,2 s), danach gemerkt; nicht gefunden = Lage aus der Karte."""
+        frame = self._frame()
+        if self._hud_shape != frame.shape or button["name"] not in self._hud:
+            words = [w for area in HUD_AREAS for w in _words_sharp(frame, area, self._ocr)]
+            found = hud_locate(words)
+            if self._hud_shape != frame.shape:
+                self._hud = {}
+            self._hud.update(found)
+            self._hud_shape = frame.shape
+            if found:
+                _log.info("Rand-Knöpfe gefunden: %s", ", ".join(sorted(found)))
+        return self._hud.get(button["name"], button["roi"])
+
     def _run_extras(self) -> None:
         for kind in self.due_extras():
             self._focus()
@@ -713,7 +784,7 @@ class Navigator:
             raise Stop(tr("Der Gilden-Knopf steht nicht in der Karte."))
         self._close_any()
         self.log(tr("Klicke „{button}“.", button="Guild"))
-        self._click_roi(button["roi"])
+        self._click_roi(self.hud_roi(button))
         end = time.monotonic() + OPEN_TIMEOUT
         while self._screen(self._frame())[0] == "none":
             if time.monotonic() > end:
@@ -942,7 +1013,8 @@ class Navigator:
             elif holder is None:
                 self._close_any()
             self.log(tr("Klicke „{button}“.", button=button["name"]))
-            self._click_roi(button["roi"])
+            is_hud = (button.get("extra") or {}).get("hud")
+            self._click_roi(self.hud_roi(button) if is_hud else button["roi"])
         self._wait_open(window)
 
     def _open_list(self, row_list: dict) -> None:

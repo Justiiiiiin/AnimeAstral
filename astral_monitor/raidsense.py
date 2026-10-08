@@ -110,40 +110,45 @@ def read_raid_window(frame: np.ndarray, menu: "vision.MenuFrame", ocr) -> Option
 
 
 # ---------------------------------------------------------------------- 2. Drops (Feld links über der Leiste unten)
-DROP_REGION = [0.0, 0.30, 0.85, 0.86]   # Drop-Kacheln (bis zu 4 Zeilen) über den Knöpfen unten links
+DROP_REGION = [0.08, 0.32, 0.86, 0.90]  # Drop-Kacheln (bis zu 4 Zeilen) über den Knöpfen unten – je nach GUI-Größe
 DROP_SCALE = 3                          # Beschriftungen sind winzig: vergrößert lesen
 DROP_HIT = 0.8                          # unscharfer Vergleich (Lesefehler „Sreet Cred“)
 DROP_CONFIRM = 2                        # so oft hintereinander vorne = Raid übernehmen
 
 
-def _partial(name: str, text: str) -> float:
-    """Wie gut kommt name (normalisiert) irgendwo in text vor? 0..1 (Fenster gleicher Länge, difflib)."""
-    if not name or len(text) < len(name) - 2:
-        return 0.0
-    if name in text:
-        return 1.0
-    n = len(name)
-    best = 0.0
-    for i in range(0, max(1, len(text) - n + 1)):
-        r = difflib.SequenceMatcher(None, name, text[i:i + n]).ratio()
-        if r > best:
-            best = r
-            if best >= 0.95:
-                break
-    return best
+GENERIC = {"token", "tokens", "coin", "coins", "shard", "shards", "key", "keys", "fragment", "fragments", "chest",
+           "box", "orb", "stone", "crystal", "part", "parts"}     # sagen allein nichts – Kennwörter entscheiden
+
+
+def _keywords(name: str) -> list[str]:
+    words = [norm(w) for w in re.split(r"\s+", name) if norm(w)]
+    special = [w for w in words if w not in GENERIC and len(w) >= 3]
+    return special or words
+
+
+def _word_hit(key: str, read: list[str]) -> bool:
+    if len(key) <= 3:
+        return key in read
+    return any(r == key or (abs(len(r) - len(key)) <= 1 and difflib.SequenceMatcher(None, key, r).ratio() >= DROP_HIT)
+               for r in read)
 
 
 class DropIndex:
-    """Welche Drops gibt es nur in genau einem Raid? (aus den „Enemy Drops“-Listen, die das Erkunden liest)"""
+    """Welche Drops gibt es nur in genau einem Raid? (aus den „Enemy Drops“-Listen, die das Erkunden liest).
+    Verglichen werden die Kennwörter eines Drops einzeln („Primordial“, „Street“+„Cred“) – die Reihenfolge der
+    gelesenen Wörter im Drop-Feld ist nicht verlässlich."""
 
     def __init__(self, drops_by_raid: dict[str, list[str]]) -> None:
         owners: dict[str, set[str]] = {}
+        names: dict[str, str] = {}
         for raid, drops in drops_by_raid.items():
             for d in drops:
                 key = norm(d)
                 if len(key) >= 5:
                     owners.setdefault(key, set()).add(raid)
+                    names[key] = d
         self.unique = {key: next(iter(r)) for key, r in owners.items() if len(r) == 1}
+        self._keys = {key: _keywords(names[key]) for key in self.unique}
 
     @classmethod
     def from_map(cls, umap) -> "DropIndex":
@@ -156,10 +161,10 @@ class DropIndex:
 
     def votes(self, words: list[str]) -> dict[str, int]:
         """Treffer je Raid für die gelesenen Wörter des Drop-Felds (nur eindeutige Drops zählen)."""
-        text = norm(" ".join(words))
+        read = [norm(w) for w in words if norm(w)]
         out: dict[str, int] = {}
         for key, raid in self.unique.items():
-            if _partial(key, text) >= DROP_HIT:
+            if all(_word_hit(k, read) for k in self._keys[key]):
                 out[raid] = out.get(raid, 0) + 1
         return out
 
@@ -189,15 +194,24 @@ class DropWatcher:
         self._leader, self._streak = None, 0
 
 
-def read_drop_words(frame: np.ndarray, ocr) -> list[str]:
-    """Wörter im Drop-Feld (vergrößert gelesen; ~250 ms – darum nur selten aufrufen)."""
+def drop_scale(frame_h: int, wave_text_h: Optional[float]) -> float:
+    """Vergrößerung fürs Drop-Feld aus der Spiel-GUI-Größe: Die Beschriftungen sind gut ein Drittel so hoch wie
+    der Wellenzähler (gemessen bei GUI 50 % und 100 %); Tesseract braucht ~20 px. Ohne Zähler: aus der Bildhöhe."""
+    if wave_text_h and wave_text_h > 4:
+        return max(1.0, min(3.5, 20.0 / (0.4 * wave_text_h)))
+    return max(1.5, min(DROP_SCALE, DROP_SCALE * 720 / max(1, frame_h)))
+
+
+def read_drop_words(frame: np.ndarray, ocr, wave_text_h: Optional[float] = None) -> list[str]:
+    """Wörter im Drop-Feld. Die Lage hängt von der GUI-Größe des Spiels ab, darum ein großzügiger Bereich (unten,
+    ohne die Randleisten); die Vergrößerung richtet sich nach der Größe des Wellenzählers. ~0,3–0,7 s – selten!"""
     import cv2
     fh, fw = frame.shape[:2]
     x0, y0, x1, y1 = DROP_REGION
     crop = frame[int(y0 * fh):int(y1 * fh), int(x0 * fw):int(x1 * fw)]
     if crop.size == 0:
         return []
-    f = max(1.5, min(DROP_SCALE, DROP_SCALE * 1280 / fw))     # großes Fenster: weniger vergrößern (Rechenzeit)
-    big = cv2.resize(crop, None, fx=f, fy=f, interpolation=cv2.INTER_CUBIC)
+    f = drop_scale(fh, wave_text_h)
+    big = crop if f == 1.0 else cv2.resize(crop, None, fx=f, fy=f, interpolation=cv2.INTER_CUBIC)
     return [w for w, _b in vision.words_in(big, [0.0, 0.0, 1.0, 1.0], ocr)
             if len(re.sub(r"[^A-Za-z]", "", w)) >= 3]

@@ -4,7 +4,7 @@ import unittest
 import _env  # noqa: F401
 import numpy as np
 
-from astral_monitor.automation import leave_before, next_task, parse_timer, pet_tiles
+from astral_monitor.automation import hud_locate, leave_before, next_task, parse_timer, pet_tiles
 
 
 class QueueTest(unittest.TestCase):
@@ -36,6 +36,18 @@ class QueueTest(unittest.TestCase):
         last = tiles[-1]
         self.assertAlmostEqual((last[0] + last[2]) / 2, 0.142 + 4 * 0.102, places=3)
         self.assertLess(last[1], 0.82)                                   # Kachel liegt über ihrem Namen
+
+
+    def test_hud_from_labels(self):
+        # Beschriftungen wie bei GUI 100 % gelesen (Lesefehler „OUESTS“); Symbol liegt über dem Namen
+        words = [("TELEPORT", [0.122, 0.508, 0.171, 0.52]), ("Equip", [0.535, 0.882, 0.556, 0.894]),
+                 ("Best", [0.558, 0.882, 0.582, 0.894]), ("G.", [0.066, 0.983, 0.075, 0.995]),
+                 ("OUESTS", [0.077, 0.983, 0.1, 0.995]), ("Guild", [0.015, 0.889, 0.038, 0.9])]
+        found = hud_locate(words)
+        self.assertEqual(sorted(found), ["Equip Best", "G. Quests", "Guild", "Teleporter"])
+        tele = found["Teleporter"]
+        self.assertLess(tele[3], 0.509)                       # Symbol oberhalb der Beschriftung
+        self.assertLess(found["Equip Best"][0], 0.536)
 
 
 if __name__ == "__main__":
