@@ -4,6 +4,16 @@ Neueste Version oben. Kurze Stichpunkte, keine Erklärungen (die stehen im Progr
 Der Abschnitt einer Version wird beim Veröffentlichen automatisch als Versionshinweis übernommen
 (`tools/release_notes.py`) und ist im Programm unter Einstellungen → Updates → „Alle Versionen“ lesbar.
 
+## 0.9.7-beta.5
+
+### ✨ Neu
+- Debug-Reiter: Schalter „Debug an“ (Standard aus, spart Last)
+- Debug zeigt live das ganze Protokoll wie im Diagnose-Paket
+- Debug: Filter, Kopieren, Leeren und Diagnose-Paket
+
+### 🐞 Behoben
+- Start-/Pause-Symbole oben links fehlten auf anderen Seiten
+
 ## 0.9.7-beta.4
 
 ### 🎨 Design

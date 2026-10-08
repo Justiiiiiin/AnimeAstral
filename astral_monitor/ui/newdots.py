@@ -17,6 +17,7 @@ NEW_FEATURES: dict[str, tuple[str, ...]] = {
     "0.9.5-beta.4": ("nav:0", "nav:3", "tab:Programm"),   # Warteschlange; Ereignisse unter Einstellungen → Programm
     "0.9.7-beta.1": ("nav:0",),                     # Erkunden, Auto Roll, Raids in der Warteschlange
     "0.9.7-beta.4": ("nav:1", "nav:2", "tab:Debug"),   # Statistik/Meldungen ohne Scrollen; Debug als eigener Reiter
+    "0.9.7-beta.5": ("nav:3", "tab:Debug"),          # Debug mit An/Aus und vollem Protokoll
 }
 
 
