@@ -698,7 +698,7 @@ class Explorer:
 
 
 def scrolled_box(before: np.ndarray, after: np.ndarray) -> Optional[list[float]]:
-    """Hat sich ein Teil des Fensters senkrecht verschoben (Liste gescrollt)? Raster aus 8 × 6 Feldern: in jedem
+    """Hat sich ein Teil des Fensters senkrecht oder waagerecht verschoben (Liste gescrollt)? Raster aus 8 × 6 Feldern: in jedem
     Feld mit genug Inhalt wird die Verschiebung gemessen (Phasenkorrelation). Gescrollt = mindestens zwei Felder
     mit gleicher senkrechter Verschiebung ≥ 3 px und kaum waagerechter – auch kleine Listen (Promotions links
     unten). Animationen/Timer verschieben sich nicht einheitlich und zählen nicht. Rückgabe: Bereich der
@@ -716,10 +716,12 @@ def scrolled_box(before: np.ndarray, after: np.ndarray) -> Optional[list[float]]
                 continue
             (dx, dy), resp = cv2.phaseCorrelate(a, b)
             if resp > 0.15 and abs(dy) >= 3 and abs(dx) <= 1.5:
-                hits.append((c, r, dy))
+                hits.append((c, r, "y", dy))
+            elif resp > 0.15 and abs(dx) >= 3 and abs(dy) <= 1.5:   # seitliche Listen (Swords, Professions)
+                hits.append((c, r, "x", dx))
     best: list = []
-    for _c, _r, dy in hits:                               # größte Gruppe mit (fast) gleicher Verschiebung
-        group = [hit for hit in hits if abs(hit[2] - dy) <= 2.5]
+    for _c, _r, axis, d in hits:                          # größte Gruppe mit (fast) gleicher Verschiebung
+        group = [hit for hit in hits if hit[2] == axis and abs(hit[3] - d) <= 2.5]
         if len(group) > len(best):
             best = group
     if len(best) < 2:

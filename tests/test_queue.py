@@ -114,6 +114,9 @@ class QueueTest(unittest.TestCase):
         timer[80:92, 100:200] = 255 - timer[80:92, 100:200]
         self.assertIsNone(scrolled_box(img, timer))
         self.assertIsNone(scrolled_box(img, img))
+        side = img.copy()                                  # seitliche Liste (Swords, Professions)
+        side[:, 40:300] = img[:, 60:320]
+        self.assertIsNotNone(scrolled_box(img, side))
 
 
 if __name__ == "__main__":
