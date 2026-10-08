@@ -290,6 +290,9 @@ class MainWindow(QMainWindow):
         self.timer.setInterval(400)
         self.timer.timeout.connect(self._tick)
         self.timer.start()
+        from .bot_bridge import BotBridge
+        self.bot = BotBridge(self)                         # eigener Discord-Bot des Nutzers (Standard aus)
+        QTimer.singleShot(3000, self.bot.apply_settings)
         QShortcut(QKeySequence.StandardKey.Find, self, activated=self.open_search)   # Strg+F: Einstellung suchen
 
         # Speicher aufräumen: nach dem Start, danach alle 10 Minuten und beim Minimieren (siehe winapi.trim_memory)
@@ -814,6 +817,7 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, tr("Speichern"), tr("Konnte nicht speichern: {error}", error=exc))
             return False
         self._setup_hotkeys()
+        self.bot.apply_settings()                         # Bot an/aus bzw. mit neuem Token neu verbinden
         self.notes_btn.setVisible(s.update_beta)
         if show_message:
             self.show_toast(tr("Gespeichert ✓"))
@@ -1261,6 +1265,7 @@ class MainWindow(QMainWindow):
                 page.save_ui()
         if self._hotkeys is not None:
             self._hotkeys.stop()
+        self.bot.stop()
         self.engine.shutdown()
         if self.tray is not None:
             self.tray.hide()

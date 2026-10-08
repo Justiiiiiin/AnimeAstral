@@ -127,7 +127,7 @@ def default_events() -> dict[str, dict[str, bool]]:
 MAX_FAVORITES = 20
 # Werte, die in settings.json verschlüsselt liegen (secure.py) und im Diagnose-Paket geschwärzt werden
 SECRET_FIELDS = ("webhook_url", "forum_webhook_url", "private_server_link", "ping_user_id", "rpc_client_id",
-                 "roblox_username")
+                 "roblox_username", "bot_token", "bot_users")
 # Diese Meldungen landen – mit Forum-Webhook – in einem Beitrag pro Tag statt im Hauptkanal
 DAILY_KINDS = ("raid_done", "quest_update", "quest_done", "record", "wall")
 
@@ -229,6 +229,10 @@ class Settings:
     auto_guild: bool = False            # Makro: Gilden-Missionen automatisch abholen (alle paar Stunden)
     explore_minutes: int = 20           # Einstellungen → Makro: Erkunden höchstens so lange
     explore_revisit: bool = True        # Erkunden: Fenster mit Problemen / ohne Tiefen-Durchsicht erneut öffnen
+    bot_enabled: bool = False           # Discord-Bot (eigener Bot des Nutzers) zur Fernsteuerung
+    bot_token: str = ""                 # Bot-Token (verschlüsselt, SECRET_FIELDS)
+    bot_users: str = ""                 # erlaubte Discord-IDs (leer = Ping-ID aus „Meldungen“)
+    bot_power: bool = False             # /pc herunterfahren/neu starten erlauben (Standard aus)
     auto_rejoin_enabled: bool = False   # nach Disconnect/Kick/Absturz neu beitreten (rejoin.py)
     auto_monitor: bool = False          # Überwachung startet/stoppt mit Anime Astral (automonitor.py)
     server_favorites: list = field(default_factory=list)   # [{"name", "link"}] – nur lokal, Diagnose schwärzt die Links

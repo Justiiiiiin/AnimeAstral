@@ -50,7 +50,7 @@ class SettingsPage(QWidget):
         tabs.addSpacing(theme.px(14))
         self.tab_group = QButtonGroup(self)
         self.tab_group.setExclusive(True)
-        for key in ("Roblox", "Makro", "Überwachung", "Darstellung", "Programm", "Debug"):
+        for key in ("Roblox", "Makro", "Discord-Bot", "Überwachung", "Darstellung", "Programm", "Debug"):
             btn = QPushButton(tr(key))
             btn.setObjectName("tab")
             btn.setCheckable(True)
@@ -511,6 +511,45 @@ class SettingsPage(QWidget):
         explore.body.addStretch(1)
         root.addLayout(columns(explore, QWidget()))
 
+        root.addWidget(section(tr("Discord-Bot")))
+        bot = Card(tr("Discord-Bot"),
+                   tr("Steuere das Programm aus Discord – mit deinem EIGENEN Bot (ein gemeinsamer Bot ginge nicht: "
+                      "sein Schlüssel stünde sonst öffentlich im Programm). Der Bot läuft nur, solange das Programm "
+                      "offen ist, und gehorcht nur den erlaubten Discord-IDs.\n\nEinrichten (2 Minuten): "
+                      "discord.com/developers/applications → New Application → links „Bot“ → „Reset Token“ → Token "
+                      "kopieren und hier eintragen, speichern. Dann „Einladungslink öffnen“ und den Bot in deinen "
+                      "Server holen. Besondere Rechte (Intents) braucht er nicht.\n\nBefehle: /status, /start, "
+                      "/stop, /pause, /screenshot, /raid, /makro, /antiafk, /autorejoin, /join, /pc, /hilfe."))
+        self.bot_enabled = QCheckBox(tr("Discord-Bot aktiv"))
+        bot.body.addWidget(self.bot_enabled)
+        bg = form_grid()
+        bg.setColumnStretch(1, 1)
+        bg.setColumnStretch(2, 0)
+        self.bot_token = QLineEdit()
+        self.bot_token.setEchoMode(QLineEdit.EchoMode.Password)
+        self.bot_token.setPlaceholderText(tr("Token deines Bots (Entwicklerportal → Bot → Reset Token)"))
+        self.bot_users = QLineEdit()
+        self.bot_users.setPlaceholderText(tr("leer = deine Ping-ID aus „Meldungen“; mehrere mit Komma"))
+        bg.addWidget(label(tr("Bot-Token")), 0, 0)
+        bg.addWidget(self.bot_token, 0, 1)
+        bg.addWidget(label(tr("Erlaubte Discord-IDs")), 1, 0)
+        bg.addWidget(self.bot_users, 1, 1)
+        bot.body.addLayout(bg)
+        self.bot_power = QCheckBox(tr("/pc erlauben: PC herunterfahren oder neu starten (60 s, abbrechbar)"))
+        bot.body.addWidget(self.bot_power)
+        self.bot_state = label(tr("aus"), "small", wrap=True)
+        bot.body.addWidget(self.bot_state)
+        brow = QHBoxLayout()
+        self.bot_invite = QPushButton(tr("Einladungslink öffnen"))
+        self.bot_invite.setEnabled(False)
+        self.bot_invite.clicked.connect(self._open_bot_invite)
+        brow.addWidget(self.bot_invite)
+        brow.addStretch(1)
+        bot.body.addLayout(brow)
+        bot.body.addStretch(1)
+        root.addLayout(columns(bot, QWidget()))
+        main.bot.listeners.append(self._bot_state_changed) if hasattr(main, "bot") else None
+
         root.addWidget(section(tr("Debug")))
         from .events_card import EventsCard
         self.events = EventsCard(main)                    # Debug: Protokoll live (an/aus)
@@ -871,6 +910,19 @@ class SettingsPage(QWidget):
         super().showEvent(event)
         self.refresh_storage()
 
+    def _bot_state_changed(self, state: str, app_id: str) -> None:
+        # Vor dem ersten Verbinden: dieselbe Anwendung wie beim Discord-Profilstatus nutzen (gleiche Anwendungs-ID)
+        app_id = app_id or (self.main.engine.settings.rpc_client_id or "").strip()
+        self.bot_state.setText(tr("Zustand: {state}", state=state))
+        self.bot_invite.setEnabled(app_id.isdigit())
+        self._bot_app_id = app_id
+
+    def _open_bot_invite(self) -> None:
+        from ..discord_bot import invite_url
+        app_id = getattr(self, "_bot_app_id", "")
+        if app_id:
+            QDesktopServices.openUrl(QUrl(invite_url(app_id)))
+
     def _start_explore(self) -> None:
         s = self.main.engine.settings
         s.explore_minutes, s.explore_revisit = self.explore_minutes.value(), self.explore_revisit.isChecked()
@@ -886,6 +938,12 @@ class SettingsPage(QWidget):
         self.main.pages[0].macro.reload_map()
 
     def load(self, s) -> None:
+        self.bot_enabled.setChecked(bool(s.bot_enabled))
+        self.bot_token.setText(s.bot_token)
+        self.bot_users.setText(s.bot_users)
+        self.bot_power.setChecked(bool(s.bot_power))
+        if hasattr(self.main, "bot"):
+            self._bot_state_changed(self.main.bot.state, self.main.bot.app_id)
         self.explore_minutes.setValue(int(s.explore_minutes))
         self.explore_revisit.setChecked(bool(s.explore_revisit))
         self.roblox_name.setText(s.roblox_username)
@@ -917,6 +975,10 @@ class SettingsPage(QWidget):
         self.hk_status.style().polish(self.hk_status)
 
     def apply(self, s) -> None:
+        s.bot_enabled = self.bot_enabled.isChecked()
+        s.bot_token = self.bot_token.text().strip()
+        s.bot_users = self.bot_users.text().strip()
+        s.bot_power = self.bot_power.isChecked()
         s.explore_minutes = self.explore_minutes.value()
         s.explore_revisit = self.explore_revisit.isChecked()
         s.language = self.language.currentData() or "de"
