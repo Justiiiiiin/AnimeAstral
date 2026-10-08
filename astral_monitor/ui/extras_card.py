@@ -7,13 +7,27 @@ from __future__ import annotations
 
 import time
 
-from PySide6.QtCore import QTimer
-from PySide6.QtWidgets import QGridLayout, QMessageBox, QPushButton
+from PySide6.QtCore import Qt, QTimer
+from PySide6.QtWidgets import QGridLayout, QLabel, QMessageBox, QPushButton
 
 from .. import winapi
 from ..automation import fmt_wait
 from ..i18n import tr
 from .widgets import Card, ToggleSwitch, label
+
+
+class _ClickLabel(QLabel):
+    """Beschriftung eines Schalters: ein Klick darauf schaltet um (wie der Text neben einem Häkchen)."""
+
+    def __init__(self, text: str, switch) -> None:
+        super().__init__(text)
+        self.switch = switch
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+
+    def mouseReleaseEvent(self, event) -> None:
+        if self.switch.isEnabled() and event.button() == Qt.MouseButton.LeftButton:
+            self.switch.toggle()
+        super().mouseReleaseEvent(event)
 
 
 class ExtrasCard(Card):
@@ -38,10 +52,10 @@ class ExtrasCard(Card):
         self.gigs_state = label("", "small")
         self.guild_state = label("", "small")
         grid.addWidget(self.gigs, 0, 0)
-        grid.addWidget(label(tr("Fixer Gigs (W21)")), 0, 1)
+        grid.addWidget(_ClickLabel(tr("Fixer Gigs (W21)"), self.gigs), 0, 1)   # Text klickbar wie bei Häkchen
         grid.addWidget(self.gigs_state, 0, 2)
         grid.addWidget(self.guild, 1, 0)
-        grid.addWidget(label(tr("Gilden-Missionen")), 1, 1)
+        grid.addWidget(_ClickLabel(tr("Gilden-Missionen"), self.guild), 1, 1)
         grid.addWidget(self.guild_state, 1, 2)
         self.prog = QPushButton(tr("Progressions: Auto All"))
         self.prog.setToolTip(tr("Einmal ausführen: erste Progression öffnen, „Auto All“ drücken, schließen"))

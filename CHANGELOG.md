@@ -9,6 +9,8 @@ Der Abschnitt einer Version wird beim Veröffentlichen automatisch als Versionsh
 ### 🔧 Verbessert
 - Mana Contract (W19) auch vor hellem Hintergrund erkannt
 - Farm-Routine: Schritt „Progressions“ entfernt (Knopf unter Abholen)
+- Automatisch abholen: Schalter wirken auch nach dem Speichern
+- Automatisch abholen: Klick auf den Text schaltet um
 
 ## 0.9.9-beta.10
 

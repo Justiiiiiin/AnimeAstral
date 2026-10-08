@@ -87,11 +87,13 @@ class MacroController(QObject):
             from ..app_paths import data_dir
             from ..ocr import OcrEngine
             engine = self.main.engine
-            s = engine.settings
+            # Einstellungen immer frisch lesen: „Speichern“ ersetzt engine.settings durch ein neues Objekt – ein
+            # gemerktes altes Objekt sah danach die Schalter nicht mehr (Automatisch abholen tat nichts)
             nav = automation.Navigator(
-                source_factory=lambda: engine._source_factory(s.capture_mode, s.window_title),
-                window_title=s.window_title,
-                ocr_factory=lambda: OcrEngine(s.tesseract_path),
+                source_factory=lambda: engine._source_factory(engine.settings.capture_mode,
+                                                              engine.settings.window_title),
+                window_title=engine.settings.window_title,
+                ocr_factory=lambda: OcrEngine(engine.settings.tesseract_path),
                 log=lambda text: self.main.post(lambda: self.add_log(text)),
                 uimap=self.map)
             nav.raid_count = lambda: engine.stats.snapshot().total_attempts   # Raid-Enden (Überwachung)
@@ -100,8 +102,8 @@ class MacroController(QObject):
             nav.start_monitoring = lambda: self.main.post(
                 lambda: None if engine.running else self.main.toggle_monitoring())
             nav.set_raid = lambda target: self.main.post(lambda: self._set_raid(target))
-            nav.auto_gigs = lambda: bool(s.auto_gigs)     # Schalter „Automatisch abholen“
-            nav.auto_guild = lambda: bool(s.auto_guild)
+            nav.auto_gigs = lambda: bool(engine.settings.auto_gigs)     # Schalter „Automatisch abholen“
+            nav.auto_guild = lambda: bool(engine.settings.auto_guild)
             nav.state_path = data_dir() / "extras_state.json"   # Zeiten der Abholungen überdauern Neustarts
             nav._load_state()
             self.navigator = nav
