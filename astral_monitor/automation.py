@@ -41,7 +41,7 @@ def macro_running() -> bool:
     return _ACTIVE.is_set()
 
 
-TASK_KINDS = ("raid", "autoroll", "gigs", "guild_claim", "wait",
+TASK_KINDS = ("raid", "autoroll", "progression", "gigs", "guild_claim", "wait",
               "raid_farm", "raid_leave", "raid_create", "raid_join", "navigate", "pets", "close")   # ab raid_farm: ältere
 RAID_KINDS = ("raid", "raid_farm", "raid_create", "raid_join")     # Aufgaben, die in einen Raid/Modus führen
 CLAIM_LIMIT = 8           # höchstens so viele „Claim“ je Seite (Schutz gegen Endlosschleifen)
@@ -71,6 +71,8 @@ def task_label(task: dict) -> str:
         if int(task.get("leave_wave", 0)):
             text += " · " + tr("Leave ab Welle {wave}", wave=int(task["leave_wave"]))
         return text + (" · " + tr("beitreten") if task.get("join") else "")
+    if kind == "progression":
+        return tr("Progressions: Roll All")
     if kind == "gigs":
         return tr("Fixer Gigs abholen")
     if kind == "guild_claim":
@@ -295,11 +297,24 @@ class Navigator:
     def close_menu(self) -> bool:
         return self.start(tr("Menü schließen"), self._close_any)
 
-    def explore(self, minutes: float, data_dir) -> bool:
+    def explore(self, minutes: float, data_dir, revisit: bool = True) -> bool:
         """Erkunden: neue Welten/Fenster selbst öffnen, einordnen, schließen (explorer.py)."""
         from .explorer import Explorer
         return self.start(tr("Erkunden ({minutes} Min.)", minutes=minutes),
-                          lambda: Explorer(self, minutes, data_dir).run())
+                          lambda: Explorer(self, minutes, data_dir, full=revisit).run())
+
+    def progression(self) -> bool:
+        return self.start(tr("Progressions: Roll All"), self._progression)
+
+    def _progression(self) -> None:
+        """Erstes Progression-Fenster öffnen, „Roll All“ drücken, schließen – gilt für alle Progressions."""
+        window = self.map.first_progression()
+        if window is None:
+            raise Stop(tr("Kein Progression-Fenster in der Karte (einmal Erkunden laufen lassen)."))
+        self._open(window)
+        self._press(window, ("roll", "all"), ("rollall",))
+        time.sleep(AUTO_SETTLE)
+        self._close_any()
 
     def map_opened(self, button: dict) -> bool:
         return self.map.window_for(button) is not None
@@ -345,6 +360,8 @@ class Navigator:
         self._focus()                                     # nach Warten/Anti-AFK wieder Roblox vorne
         if kind == "raid":
             self._raid_task(task, following)
+        elif kind == "progression":
+            self._progression()
         elif kind == "gigs":
             self._gigs()
         elif kind == "guild_claim":

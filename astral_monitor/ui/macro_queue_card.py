@@ -17,7 +17,8 @@ from .widgets import Card, smooth
 
 # Eine Raid-Aufgabe mit Ende-Bedingung statt starten/farmen/verlassen einzeln (Eigentümer 08.10.2026): verlassen wird
 # nur, wenn danach ein anderer Raid/Modus folgt (automation.leave_before). Ältere Aufgaben laufen weiter.
-KINDS = [("raid", N_("Raid")), ("autoroll", N_("Auto Roll")), ("wait", N_("Warten (Min.)"))]
+KINDS = [("raid", N_("Raid")), ("autoroll", N_("Auto Roll")), ("progression", N_("Progressions: Roll All")),
+         ("wait", N_("Warten (Min.)"))]
 # Fixer Gigs und Gilden-Missionen sind eigene Schalter (Karte „Automatisch abholen“), keine Aufgaben der Schlange
 UNTIL = [("runs", N_("Anzahl Raids")), ("minutes", N_("Minuten")), ("never", N_("ohne Ende"))]
 
@@ -140,22 +141,22 @@ class MacroQueueCard(Card):
         for w in getattr(self, "_farm", []):
             w.setVisible(kind == "raid")
         if kind in ("raid", "autoroll"):
-            targets = [w for w in self.macro.map.targets() if w["name"] != "Teleporter Fenster"]
-            if kind == "raid":                            # Raids/Defense zuerst (Kategorie vom Erkunden oder Name)
-                def is_raid(w: dict) -> bool:
-                    cat = (w.get("extra") or {}).get("category")
-                    if cat in ("raid", "defense"):
-                        return True
-                    name = w["name"]
-                    return bool(re.search(r"raid|defense|rush|war|tower|castle|gate", name, re.I)) and not                         re.search(r"battlepass|shop|upgrade|merchant", name, re.I)
-                targets.sort(key=lambda w: (not is_raid(w), natural(w["name"])))
-            names = [w["name"] for w in targets]
-            for name in names:
-                self.param.addItem(name, name)
+            targets = self.macro.map.sorted_targets()      # nach Welt sortiert, Progression nur einmal
+            if kind == "raid":                            # nur Raids/Defense (Kategorie vom Erkunden oder Name)
+                targets = [t for t in targets if self._is_raid(t[1])] or targets
+            for text, name in targets:
+                self.param.addItem(text, name)
         self.param.setVisible(kind in ("raid", "autoroll"))
         self.minutes.setVisible(kind == "wait")
         if kind == "raid":
             self._until_changed()
+
+    def _is_raid(self, name: str) -> bool:
+        w = self.macro.map.container(name) or {}
+        if (w.get("extra") or {}).get("category") in ("raid", "defense"):
+            return True
+        return bool(re.search(r"raid|defense|rush|war|tower|castle|gate", name, re.I)) and not re.search(
+            r"battlepass|shop|upgrade|merchant", name, re.I)
 
     def _until_changed(self) -> None:
         until = self.until.currentData()

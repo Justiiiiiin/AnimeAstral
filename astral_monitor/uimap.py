@@ -128,6 +128,55 @@ class UiMap:
                        and self.opener_of(e) is not None and not (e.get("extra") or {}).get("template")),
                       key=lambda e: natural(e["name"]))
 
+    def world_of(self, window: dict) -> Optional[int]:
+        """Welt-Nummer eines Fensters (über die Zeile seines Knopfs; Lobby = 0), None = Knopf am Rand o. Ä."""
+        button = self.opener_of(window)
+        holder = self.parent(button) if button is not None else None
+        if holder is None or holder.get("kind") != ROW:
+            return None
+        if holder["name"].lower().startswith("lobby"):
+            return 0
+        return world_number(holder["name"])
+
+    def sorted_targets(self) -> list[tuple[str, str]]:
+        """Ziele für Makro und Warteschlange, nach Welt sortiert („Lobby · …“, „W1 · …“ …, danach die Knöpfe am
+        Rand). Progressions nur einmal (die erste): dort gibt es „Roll All“ für alle (Eigentümer 08.10.2026).
+        Rückgabe: (Anzeige, Fenstername)."""
+        rows = []
+        progression_seen = False
+        for w in self.targets():
+            if w["name"] == "Teleporter Fenster":
+                continue
+            world = self.world_of(w)
+            cat = (w.get("extra") or {}).get("category", "")
+            is_prog = cat == "progression" or "progression" in w["name"].lower()
+            rows.append((999 if world is None else world, natural(w["name"]), w, is_prog))
+        rows.sort(key=lambda r: (r[0], r[1]))
+        out = []
+        for world, _key, w, is_prog in rows:
+            if is_prog:
+                if progression_seen:
+                    continue
+                progression_seen = True
+            name = w["name"]
+            if world == 999:
+                label = name
+            elif world == 0:
+                label = name if name.lower().startswith("lobby") else f"Lobby · {name}"
+            else:
+                label = name if re.match(rf"W{world}\b", name) else f"W{world} · {name}"
+            out.append((label, name))
+        return out
+
+    def first_progression(self) -> Optional[dict]:
+        """Erstes Progression-Fenster (niedrigste Welt) – „Roll All“ gilt dort für alle Progressions."""
+        for _label, name in self.sorted_targets():
+            w = self.container(name)
+            if w is not None and ((w.get("extra") or {}).get("category") == "progression"
+                                  or "progression" in name.lower()):
+                return w
+        return None
+
     def templates(self) -> list[tuple[dict, dict]]:
         """(Vorlage, Erkennungsmerkmal) – Sonder-Menüs mit festem Aufbau."""
         out = []

@@ -227,6 +227,8 @@ class Settings:
     debug_view: bool = False            # Einstellungen → Debug: Protokoll live sammeln und zeigen (aus = spart Last)
     auto_gigs: bool = False             # Makro: Fixer Gigs automatisch abholen + neu losschicken (nach ihren Zeiten)
     auto_guild: bool = False            # Makro: Gilden-Missionen automatisch abholen (alle paar Stunden)
+    explore_minutes: int = 20           # Einstellungen → Makro: Erkunden höchstens so lange
+    explore_revisit: bool = True        # Erkunden: Fenster mit Problemen / ohne Tiefen-Durchsicht erneut öffnen
     auto_rejoin_enabled: bool = False   # nach Disconnect/Kick/Absturz neu beitreten (rejoin.py)
     auto_monitor: bool = False          # Überwachung startet/stoppt mit Anime Astral (automonitor.py)
     server_favorites: list = field(default_factory=list)   # [{"name", "link"}] – nur lokal, Diagnose schwärzt die Links

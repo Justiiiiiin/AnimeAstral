@@ -50,7 +50,7 @@ class SettingsPage(QWidget):
         tabs.addSpacing(theme.px(14))
         self.tab_group = QButtonGroup(self)
         self.tab_group.setExclusive(True)
-        for key in ("Roblox", "Überwachung", "Darstellung", "Programm", "Debug"):
+        for key in ("Roblox", "Makro", "Überwachung", "Darstellung", "Programm", "Debug"):
             btn = QPushButton(tr(key))
             btn.setObjectName("tab")
             btn.setCheckable(True)
@@ -476,6 +476,41 @@ class SettingsPage(QWidget):
         data.body.addLayout(xrow)
         data.body.addStretch(1)
         root.addLayout(columns(stack(upd, rpc), data))
+        root.addWidget(section(tr("Makro")))
+        explore = Card(tr("Erkunden"),
+                       tr("Das Makro übernimmt Roblox für die eingestellte Zeit und lernt das Spiel kennen: zuerst die "
+                          "Knöpfe am Rand (Gilde, Pets, Achievements …) – Reiter durchklicken, scrollbare Bereiche "
+                          "finden, reine Ansichts-Knöpfe testen –, dann im Teleporter neue Welten und Fenster mit "
+                          "Problemen.\n\nNie gedrückt: Aktions-Knöpfe (Claim, Buy, Roll, Max …) und gefährliche "
+                          "(Leave, Kick, Delete …) – um die bleibt eine Sperrzone, dort wird auch nicht gescrollt oder "
+                          "gehovert; in der Gilde ist die ganze Ecke unten links gesperrt. Anti-AFK pausiert solange.\n\n"
+                          "Not-Aus: Maus bewegen oder Esc."))
+        eg = form_grid()
+        self.explore_minutes = SpinBox()
+        self.explore_minutes.setRange(1, 60)
+        self.explore_minutes.setSuffix(tr(" Min"))
+        eg.addWidget(label(tr("Höchstens")), 0, 0)
+        eg.addWidget(self.explore_minutes, 0, 1)
+        explore.body.addLayout(eg)
+        self.explore_revisit = QCheckBox(tr("Fenster mit Problemen erneut öffnen (unbekannt, noch nicht gescrollt)"))
+        explore.body.addWidget(self.explore_revisit)
+        erow = QHBoxLayout()
+        start_explore = QPushButton(tr("Jetzt erkunden …"))
+        start_explore.setObjectName("primary")
+        start_explore.clicked.connect(self._start_explore)
+        report = QPushButton(tr("Bericht öffnen"))
+        report.clicked.connect(lambda: self.main.pages[0].macro.open_report())
+        forget = QPushButton(tr("Gelerntes vergessen …"))
+        forget.setToolTip(tr("Vom Erkunden gelernte Fenster, Reiter und Drops löschen – die mitgelieferte Karte "
+                             "bleibt"))
+        forget.clicked.connect(self._forget_explore)
+        for btn in (start_explore, report, forget):
+            erow.addWidget(btn)
+        erow.addStretch(1)
+        explore.body.addLayout(erow)
+        explore.body.addStretch(1)
+        root.addLayout(columns(explore, QWidget()))
+
         root.addWidget(section(tr("Debug")))
         from .events_card import EventsCard
         self.events = EventsCard(main)                    # Debug: Protokoll live (an/aus)
@@ -836,7 +871,23 @@ class SettingsPage(QWidget):
         super().showEvent(event)
         self.refresh_storage()
 
+    def _start_explore(self) -> None:
+        s = self.main.engine.settings
+        s.explore_minutes, s.explore_revisit = self.explore_minutes.value(), self.explore_revisit.isChecked()
+        self.main.pages[0].macro.start_explore()
+
+    def _forget_explore(self) -> None:
+        if QMessageBox.question(self, tr("Erkunden"), tr("Alles vergessen, was das Erkunden gelernt hat?")) \
+                != QMessageBox.StandardButton.Yes:
+            return
+        from ..explorer import forget_local
+        forget_local(app_paths.data_dir())
+        (app_paths.data_dir() / "explore" / "deep_done.json").unlink(missing_ok=True)
+        self.main.pages[0].macro.reload_map()
+
     def load(self, s) -> None:
+        self.explore_minutes.setValue(int(s.explore_minutes))
+        self.explore_revisit.setChecked(bool(s.explore_revisit))
         self.roblox_name.setText(s.roblox_username)
         self._sync_look(s)
         self.language.setCurrentIndex(max(0, self.language.findData(s.language)))
@@ -866,6 +917,8 @@ class SettingsPage(QWidget):
         self.hk_status.style().polish(self.hk_status)
 
     def apply(self, s) -> None:
+        s.explore_minutes = self.explore_minutes.value()
+        s.explore_revisit = self.explore_revisit.isChecked()
         s.language = self.language.currentData() or "de"
         s.close_to_tray = self.close_to_tray.isChecked()
         s.anti_afk_minutes = self.afk_minutes.value()

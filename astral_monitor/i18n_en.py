@@ -998,15 +998,6 @@ EN: dict[str, str] = {
     "Tausch": "Exchange",
     "Passiv": "Passive",
     "Unbekannt": "Unknown",
-    "Erkunden …": "Explore …",
-    "Das Makro übernimmt Roblox für ein paar Minuten: Teleporter auf, neue Welten und Symbole ohne bekanntes "
-    "Fenster je einmal öffnen, einordnen und schließen; danach die Knöpfe am Bildschirmrand (Equip Best, Guild …). "
-    "Es wird nur geöffnet und geschlossen – nie Roll, Craft, Buy oder Claim.":
-        "The macro takes over Roblox for a few minutes: opens the teleporter, opens each new world and each icon "
-        "without a known window once, classifies it and closes it; then the buttons at the screen edge (Equip Best, "
-        "Guild …). It only opens and closes – never Roll, Craft, Buy or Claim.",
-    "Ordner mit dem letzten Erkundungs-Bericht und den Bildern öffnen":
-        "Open the folder with the latest exploration report and images",
     "Erkunden": "Explore",
     "Das Makro übernimmt Roblox für bis zu {minutes} Minuten und öffnet dabei Menüs im Spiel (nur öffnen und "
     "schließen, nichts kaufen oder rollen).\n\nNicht die Maus bewegen – das bricht ab (Esc ebenso). Starten?":
@@ -1100,4 +1091,17 @@ EN: dict[str, str] = {
     'Gescrollt: {n}×': 'Scrolled: {n}×',
     'Gesperrter Bereich (z. B. „Leave“) – nicht angesteuert.': 'Blocked area (e.g. “Leave”) – not targeted.',
     '{window}: teste „{button}“': '{window}: testing “{button}”',
+    'Alles vergessen, was das Erkunden gelernt hat?': 'Forget everything exploring has learned?',
+    'Bericht öffnen': 'Open report',
+    'Das Makro übernimmt Roblox für die eingestellte Zeit und lernt das Spiel kennen: zuerst die Knöpfe am Rand (Gilde, Pets, Achievements …) – Reiter durchklicken, scrollbare Bereiche finden, reine Ansichts-Knöpfe testen –, dann im Teleporter neue Welten und Fenster mit Problemen.\n\nNie gedrückt: Aktions-Knöpfe (Claim, Buy, Roll, Max …) und gefährliche (Leave, Kick, Delete …) – um die bleibt eine Sperrzone, dort wird auch nicht gescrollt oder gehovert; in der Gilde ist die ganze Ecke unten links gesperrt. Anti-AFK pausiert solange.\n\nNot-Aus: Maus bewegen oder Esc.': 'The macro takes over Roblox for the set time and learns the game: first the buttons at the edge (guild, pets, achievements …) – clicking through tabs, finding scrollable areas, testing view-only buttons –, then new worlds and windows with problems in the teleporter.\n\nNever pressed: action buttons (Claim, Buy, Roll, Max …) and dangerous ones (Leave, Kick, Delete …) – a blocked zone surrounds them, with no scrolling or hovering there; in the guild the whole bottom-left corner is blocked. Anti-AFK pauses meanwhile.\n\nEmergency stop: move the mouse or press Esc.',
+    'Erst auf der Startseite „Makro erlauben“ einschalten.': 'First turn on “Allow macro” on the start page.',
+    'Erstes Progression-Fenster öffnen und „Roll All“ drücken – gilt für alle Progressions; danach schließen.': 'Open the first progression window and press “Roll All” – applies to all progressions; then close.',
+    'Fenster mit Problemen erneut öffnen (unbekannt, noch nicht gescrollt)': 'Reopen windows with problems (unknown, not scrolled yet)',
+    'Gelerntes vergessen …': 'Forget what was learned …',
+    'Höchstens': 'At most',
+    'Jetzt erkunden …': 'Explore now …',
+    'Kein Progression-Fenster in der Karte (einmal Erkunden laufen lassen).': 'No progression window in the map (run Explore once).',
+    'Makro': 'Macro',
+    'Progressions: Roll All': 'Progressions: Roll All',
+    'Vom Erkunden gelernte Fenster, Reiter und Drops löschen – die mitgelieferte Karte bleibt': 'Delete windows, tabs and drops learned by exploring – the bundled map stays',
 }

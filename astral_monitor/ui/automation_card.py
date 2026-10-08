@@ -38,9 +38,8 @@ class AutomationCard(Card):
         self.target = QComboBox()
         self.target.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
         self.target.setMinimumContentsLength(8)              # lange Namen machen die Seite sonst zu breit
-        for w in self.map.targets():
-            if w["name"] != "Teleporter Fenster":
-                self.target.addItem(w["name"], w["name"])
+        for text, name in self.map.sorted_targets():       # nach Welt sortiert, Progression nur einmal
+            self.target.addItem(text, name)
         self.go = QPushButton(tr("Hin navigieren"))
         self.go.setObjectName("primary")
         self.go.clicked.connect(lambda: self._start("navigate", self.target.currentData()))
@@ -59,26 +58,15 @@ class AutomationCard(Card):
         self.stop_btn.clicked.connect(lambda: self.navigator and self.navigator.stop())
         row0.addWidget(self.close_btn)
         row0.addWidget(self.stop_btn)
-        row4 = QHBoxLayout()
-        self.explore_btn = QPushButton(tr("Erkunden …"))
-        self.explore_btn.setToolTip(tr("Das Makro übernimmt Roblox für ein paar Minuten: Teleporter auf, neue Welten "
-                                       "und Symbole ohne bekanntes Fenster je einmal öffnen, einordnen und schließen; "
-                                       "danach die Knöpfe am Bildschirmrand (Equip Best, Guild …). Es wird nur geöffnet "
-                                       "und geschlossen – nie Roll, Craft, Buy oder Claim."))
-        self.explore_btn.clicked.connect(self._explore)
-        self.explore_minutes = QSpinBox()
-        self.explore_minutes.setRange(1, 30)
-        self.explore_minutes.setValue(20)
-        self.explore_minutes.setSuffix(tr(" Min"))
-        report = QPushButton(tr("Bericht"))
-        report.setToolTip(tr("Ordner mit dem letzten Erkundungs-Bericht und den Bildern öffnen"))
-        report.clicked.connect(self._open_report)
-        row4.addWidget(self.explore_btn)
-        row4.addWidget(self.explore_minutes)
-        row4.addWidget(report)
-        row4.addStretch(1)
-        self.body.addLayout(row4)
-        self._explore_controls = [self.explore_btn, self.explore_minutes]
+        row2 = QHBoxLayout()                              # Erkunden steht unter Einstellungen → Makro
+        self.prog = QPushButton(tr("Progressions: Roll All"))
+        self.prog.setToolTip(tr("Erstes Progression-Fenster öffnen und „Roll All“ drücken – gilt für alle "
+                                "Progressions; danach schließen."))
+        self.prog.clicked.connect(lambda: self._start("progression", None))
+        row2.addWidget(self.prog)
+        row2.addStretch(1)
+        self.body.addLayout(row2)
+        self._explore_controls = [self.prog]
 
         self.log = QListWidget()
         smooth(self.log)
@@ -167,11 +155,16 @@ class AutomationCard(Card):
             nav.autoroll(arg)
         elif what == "close":
             nav.close_menu()
+        elif what == "progression":
+            nav.progression()
 
-    def _explore(self) -> None:
+    def start_explore(self) -> None:
+        """Erkunden starten (Knopf unter Einstellungen → Makro)."""
         if not self.enabled.isChecked():
+            QMessageBox.information(self, tr("Erkunden"), tr("Erst auf der Startseite „Makro erlauben“ einschalten."))
             return
-        minutes = self.explore_minutes.value()
+        s = self.main.engine.settings
+        minutes = int(s.explore_minutes)
         answer = QMessageBox.question(
             self, tr("Erkunden"),
             tr("Das Makro übernimmt Roblox für bis zu {minutes} Minuten und öffnet dabei Menüs im Spiel (nur öffnen "
@@ -189,7 +182,7 @@ class AutomationCard(Card):
         if self._afk_restore:
             self.main.set_anti_afk(False)
             self._add_log(tr("Anti-AFK pausiert, solange das Erkunden läuft."))
-        nav.explore(minutes, data_dir())
+        nav.explore(minutes, data_dir(), revisit=bool(s.explore_revisit))
         self._watch_explore()
 
     def _watch_explore(self) -> None:
@@ -210,15 +203,14 @@ class AutomationCard(Card):
             self.navigator.map = self.map
         current = self.target.currentData()
         self.target.clear()
-        for w in self.map.targets():
-            if w["name"] != "Teleporter Fenster":
-                self.target.addItem(w["name"], w["name"])
+        for text, name in self.map.sorted_targets():
+            self.target.addItem(text, name)
         self.target.setCurrentIndex(max(0, self.target.findData(current)))
         queue = getattr(self.main.pages.built(0), "queue", None)
         if queue is not None:
             queue.reload()
 
-    def _open_report(self) -> None:
+    def open_report(self) -> None:
         import os
         from ..app_paths import data_dir
         folder = data_dir() / "explore"
