@@ -210,7 +210,7 @@ class Settings:
     close_to_tray: bool = True          # Fenster schließen = im Infobereich weiterlaufen
     ui_design: str = "nebula"           # theme.DESIGNS (alte Designs bleiben wählbar)
     ui_mode: str = "dark"               # dark | light | system
-    ui_zoom: int = 50                   # 50–200 % (mehr pro Seite sehen = kleiner); seit 0.9.9 Standard 50 %
+    ui_zoom: int = 75                   # 50–200 % (mehr pro Seite sehen = kleiner); seit 0.9.9 Standard 75 %
     ui_auto_fit: bool = True            # zusätzlich an die Fenstergröße anpassen (0,7–1,3)
     ui_reduce_motion: bool = False      # keine Überblendungen/Schalter-Animationen (spart Leistung)
     ui_spooky: bool = True              # Kürbisnacht: ab und zu lugt ein Gesicht hervor
@@ -232,7 +232,7 @@ class Settings:
     server_favorites: list = field(default_factory=list)   # [{"name", "link"}] – nur lokal, Diagnose schwärzt die Links
     private_server_link: str = "" # roblox.com/games/…?privateServerLinkCode=… (nur lokal, roblox_join.py)
     # Sonstiges
-    settings_version: int = 10
+    settings_version: int = 11
     uptime_minutes: int = 10
     total_offset: int = 0               # Startwert für "Raids gesamt"
     tesseract_path: str = ""
@@ -332,8 +332,11 @@ class Settings:
                 setattr(s, f.name, value)
             except (TypeError, ValueError):
                 log.warning("Einstellung %s ungültig, Standard bleibt.", f.name)
-        if int(data.get("settings_version", 1) or 1) < 10 and int(data.get("ui_zoom", 100) or 100) == 100:
-            s.ui_zoom = 50                   # 0.9.9: Seiten halb so groß (Wunsch des Eigentümers), eigene Werte bleiben
+        old_zoom = int(data.get("ui_zoom", 100) or 100)
+        if int(data.get("settings_version", 1) or 1) < 10 and old_zoom == 100:
+            s.ui_zoom = 75                   # 0.9.9: Seiten kleiner (Eigentümer: 75 % statt 50 %), eigene Werte bleiben
+        elif int(data.get("settings_version", 1) or 1) == 10 and old_zoom == 50:
+            s.ui_zoom = 75                   # 0.9.9-beta.1 hatte 50 % gesetzt – 75 % ist angenehmer
         if int(data.get("settings_version", 1) or 1) < 8 and s.ui_design == "astral":
             s.ui_design = "nebula"           # „Astral“ war bis 0.6.6 nur der Standard – neues Standarddesign übernehmen
         if int(data.get("settings_version", 1) or 1) < 6:
