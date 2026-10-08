@@ -65,6 +65,12 @@ class UiMap:
         self.entries.append(entry)
         self._by_id[entry.get("file")] = entry
 
+    def windows_for(self, button: dict) -> list[dict]:
+        """Alle Fenster, die dieser Knopf öffnet (mitgeliefert + erkundet können doppelt sein)."""
+        return [e for e in self.entries if e.get("kind") in CONTAINER_KINDS and e.get("kind") != ROW and (
+            e.get("opened_by_id") == button.get("file") if e.get("opened_by_id")
+            else e.get("opened_by") and e.get("opened_by") == button.get("name"))]
+
     def window_for(self, button: dict) -> Optional[dict]:
         """Fenster, das dieser Knopf öffnet (oder None)."""
         for e in self.entries:

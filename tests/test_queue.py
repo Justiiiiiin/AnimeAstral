@@ -5,7 +5,7 @@ import _env  # noqa: F401
 import numpy as np
 
 from astral_monitor.automation import fmt_wait, gig_cards, gig_next_due, gig_timer_box, hud_locate, \
-    leave_before, next_task, parse_timer, pet_tiles
+    leave_before, next_task, parse_timer, pet_tiles, user_moved
 
 
 class QueueTest(unittest.TestCase):
@@ -46,6 +46,13 @@ class QueueTest(unittest.TestCase):
         self.assertEqual(gig_next_due(cards[:1] + cards[2:], {0: 5798, 1: 5822}), 5798)
         self.assertEqual(gig_next_due(cards[:1], {0: 99999}), 1200)       # unplausibel: verworfen, bald nachsehen
         self.assertEqual(gig_next_due(cards[:1], {}), 1200)   # Zeit unlesbar: in 20 Min. nachsehen
+
+    def test_user_moved(self):
+        rect = (0, 0, 1920, 1080)
+        self.assertFalse(user_moved((500, 300), (510, 305), rect))       # kleine Abweichung: kein Abbruch
+        self.assertIsNone(user_moved((500, 300), (960, 540), rect))      # Spiel setzt Zeiger zur Mitte
+        self.assertTrue(user_moved((500, 300), (700, 300), rect))        # echte Bewegung
+        self.assertTrue(user_moved((500, 300), (960, 540), None))
 
     def test_fmt_wait(self):
         self.assertEqual(fmt_wait(30), "30 s")

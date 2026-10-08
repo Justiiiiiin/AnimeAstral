@@ -391,14 +391,19 @@ class Explorer:
         in der Rückfrage (review.py). Erneut nur, wenn er „nochmal prüfen“ gesetzt hat."""
         if not self.full:
             return False
-        window = self.nav.map.window_for(button)
-        if window is None:
+        windows = self.nav.map.windows_for(button)       # mitgeliefert + erkundet: irgendeins geprüft reicht
+        if not windows:
             return True
-        name = window["name"]
-        if review.status_of(self.data_dir, name) == review.RECHECK:
-            self.deep_done.discard(name)
+        names = [w["name"] for w in windows]
+        names += [f"{n} Fenster" for n in names]         # frühere Läufe hängten bei Namensgleichheit „Fenster“ an
+        if any(review.never_open(self.data_dir, n) for n in names):
+            return False                                  # „Nicht öffnen“ (Beschreibung in Funde prüfen)
+        states = [review.status_of(self.data_dir, n) for n in names]
+        if review.RECHECK in states:
+            for n in names:
+                self.deep_done.discard(n)
             return True
-        return not review.status_of(self.data_dir, name)  # jedes Fenster einmal öffnen, bis es in „Funde prüfen“ steht
+        return not any(states)                            # jedes Fenster einmal öffnen, bis es in „Funde prüfen“ steht
 
     def _marked(self, window: Optional[str], kind: str) -> list[list[float]]:
         """Vom Nutzer markierte Bereiche dieses Fensters (Funde prüfen): „never“ = Sperrzone, „list“ = scrollbar."""

@@ -59,6 +59,15 @@ def status_of(data_dir: Path, window: str) -> str:
     return (load(data_dir).get(window) or {}).get("status", "")
 
 
+NEVER_OPEN = ("nicht öffnen", "nie öffnen", "nicht oeffnen", "nie oeffnen", "never open", "do not open")
+
+
+def never_open(data_dir: Path, window: str) -> bool:
+    """Vom Nutzer in der Beschreibung als „Nicht öffnen“ markiert (z. B. Shops mit Echtgeld) – Erkunden lässt es aus."""
+    text = (load(data_dir).get(window) or {}).get("description", "").lower()
+    return any(k in text for k in NEVER_OPEN)
+
+
 def category_overrides(data_dir: Path) -> dict[str, str]:
     """Vom Nutzer bestätigte/korrigierte Arten (Fenstername -> Kategorie)."""
     return {name: e["category"] for name, e in load(data_dir).items()

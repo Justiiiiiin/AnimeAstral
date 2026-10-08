@@ -241,6 +241,21 @@ def fmt_wait(seconds: float) -> str:
     return tr("{h} Std. {m} Min.", h=hours, m=rest) if rest and hours < 10 else tr("{h} Std.", h=hours)
 
 
+def user_moved(cursor: tuple[int, int], pt: tuple[int, int], rect: Optional[tuple[int, int, int, int]]
+               ) -> Optional[bool]:
+    """Hat der Nutzer die Maus bewegt? False = Zeiger steht noch, wo das Makro ihn hingesetzt hat; None = Roblox hat
+    ihn selbst in die Fenstermitte gesetzt (passiert beim Öffnen/Schließen mancher Fenster, z. B. nach Raid-Fenstern
+    und dem Pets-Inventar – Erkunden brach dort ohne Zutun ab, Eigentümer 08.10.2026); True = echte Bewegung."""
+    if abs(pt[0] - cursor[0]) <= USER_MOVE_PX and abs(pt[1] - cursor[1]) <= USER_MOVE_PX:
+        return False
+    if rect is not None:
+        left, top, right, bottom = rect
+        cx, cy = (left + right) / 2, (top + bottom) / 2
+        if abs(pt[0] - cx) <= max(12, 0.03 * (right - left)) and abs(pt[1] - cy) <= max(12, 0.03 * (bottom - top)):
+            return None
+    return True
+
+
 def parse_timer(text: str) -> Optional[int]:
     """„1:20:40“ / „33:57“ -> Sekunden (Fixer-Gigs-Zeiten), sonst None."""
     m = re.fullmatch(r"(?:(\d{1,2}):)?(\d{1,2}):(\d{2})", text.strip())
@@ -393,7 +408,11 @@ class Navigator:
         if window is None:
             raise Stop(tr("Kein Progression-Fenster in der Karte (einmal Erkunden laufen lassen)."))
         self._open(window)
-        self._press(window, ("roll", "all"), ("rollall",))
+        try:
+            self._press(window, ("roll", "all"), ("rollall",))
+        except Stop:
+            self._snap("progression")                     # Bild für die Fehlersuche (debug/makro_progression_*.jpg)
+            raise
         time.sleep(AUTO_SETTLE)
         self._close_any()
 
@@ -1419,7 +1438,11 @@ class Navigator:
         if self._cursor is not None:
             pt = wintypes.POINT()
             u32.GetCursorPos(ctypes.byref(pt))
-            if abs(pt.x - self._cursor[0]) > USER_MOVE_PX or abs(pt.y - self._cursor[1]) > USER_MOVE_PX:
+            moved = user_moved(self._cursor, (pt.x, pt.y), winapi.client_rect(self._hwnd) if self._hwnd else None)
+            if moved is None:                             # Roblox hat den Zeiger selbst zur Mitte gesetzt
+                _log.info("Makro: Mauszeiger vom Spiel zur Fenstermitte gesetzt – kein Abbruch.")
+                self._cursor = (pt.x, pt.y)
+            elif moved:
                 raise UserStop(tr("Abgebrochen – Maus wurde bewegt."))
         u32.GetForegroundWindow.restype = wintypes.HWND
         if u32.GetForegroundWindow() != self._hwnd:

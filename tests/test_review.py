@@ -9,6 +9,15 @@ from astral_monitor import review
 
 
 class ReviewTest(unittest.TestCase):
+    def test_never_open(self):
+        with tempfile.TemporaryDirectory() as d:
+            data = Path(d)
+            review.add_finding(data, "Garden Arts", {"category": "unknown", "lines": []})
+            self.assertFalse(review.never_open(data, "Garden Arts"))
+            review.set_notes(data, "Garden Arts", [], "Shop, irrelevant. Nicht öffnen")
+            self.assertTrue(review.never_open(data, "Garden Arts"))
+            self.assertFalse(review.never_open(data, "Unbekannt"))
+
     def test_flow(self):
         with tempfile.TemporaryDirectory() as d:
             data = Path(d)
