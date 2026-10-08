@@ -27,5 +27,21 @@ class ReviewTest(unittest.TestCase):
             self.assertEqual(review.status_of(data, "Boosts Fenster"), review.RECHECK)
 
 
+    def test_marks_become_map_entries(self):
+        """Markierungen des Nutzers: Lage im Roblox-Fenster, „nie drücken“ = Sperrzone, „Liste“ = scrollbar."""
+        with tempfile.TemporaryDirectory() as d:
+            data = Path(d)
+            review.add_finding(data, "Ranks", {"category": "ranks", "roi": [0.2, 0.2, 0.8, 0.8]})
+            review.set_notes(data, "Ranks", [{"box": [0.62, 0.8, 0.9, 0.9], "kind": "never", "text": "Rank Up"},
+                                             {"box": [0.1, 0.3, 0.5, 0.7], "kind": "list", "text": "Liste"}],
+                             "Rank aufsteigen")
+            els = {e["extra"]["annotation"]: e for e in review.annotation_elements(data)}
+            self.assertTrue(els["never"]["extra"]["forbid"])
+            self.assertEqual(els["never"]["roi"], [0.572, 0.68, 0.74, 0.74])
+            self.assertTrue(els["list"]["extra"]["scroll"])
+            self.assertEqual(els["list"]["parent"], "Ranks")
+            self.assertEqual(review.load(data)["Ranks"]["description"], "Rank aufsteigen")
+
+
 if __name__ == "__main__":
     unittest.main()

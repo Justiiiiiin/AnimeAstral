@@ -46,6 +46,7 @@ class Explorer:
     def __init__(self, nav, minutes: float, data_dir: Path, full: bool = True) -> None:
         self.nav = nav
         self.full = full                                  # Problem-Fenster erneut öffnen (Standard seit 0.9.9)
+        self._current: Optional[str] = None               # Fenster, das gerade gründlich angesehen wird
         try:
             self.deep_done = set(json.loads((data_dir / "explore" / "deep_done.json").read_text(encoding="utf-8")))
         except (OSError, ValueError):
@@ -395,10 +396,14 @@ class Explorer:
         if review.status_of(self.data_dir, name) == review.RECHECK:
             self.deep_done.discard(name)
             return True
-        if name in self.deep_done or review.status_of(self.data_dir, name):
-            return False
-        cat = (window.get("extra") or {}).get("category", "")
-        return hud or cat == "unknown" or cat in DEEP_CATS
+        return not review.status_of(self.data_dir, name)  # jedes Fenster einmal öffnen, bis es in „Funde prüfen“ steht
+
+    def _marked(self, window: Optional[str], kind: str) -> list[list[float]]:
+        """Vom Nutzer markierte Bereiche dieses Fensters (Funde prüfen): „never“ = Sperrzone, „list“ = scrollbar."""
+        if not window:
+            return []
+        return [e["roi"] for e in self.nav.map.entries if e.get("parent") == window
+                and (e.get("extra") or {}).get("annotation") == kind]
 
     def _scan_tabs(self, window: str, roi: list[float], analysis: knowledge.Analysis) -> None:
         """Gründlich ansehen (unbeaufsichtigt sicher):
@@ -410,8 +415,9 @@ class Explorer:
            festhalten, was passiert; geht ein Unterfenster auf, wird es wieder geschlossen.
         Nie Aktions-Knöpfe (Claim, Buy, Roll, Max …). Ganze Bildschirme (Upgrade Tree …): nur lesen/scrollen."""
         nav = self.nav
+        self._current = window
         title = analysis.title or window
-        nav.forbidden = knowledge.forbidden_zones(analysis.words, roi, title)
+        nav.forbidden = knowledge.forbidden_zones(analysis.words, roi, title) + self._marked(window, "never")
         try:
             full = roi == FULL
             tabs = [] if full else knowledge.side_tabs(analysis.words, roi)
@@ -491,8 +497,9 @@ class Explorer:
         areas: list[list[float]] = []
         covered: list[list[float]] = []                   # Bereiche, die schon mitgescrollt sind
         x0, y0, x1, y1 = roi
-        for fx, fy in SCROLL_POINTS:
-            point = (x0 + fx * (x1 - x0), y0 + fy * (y1 - y0))
+        marked = [((b[0] + b[2]) / 2, (b[1] + b[3]) / 2) for b in self._marked(self._current, "list")]
+        points = marked or [(x0 + fx * (x1 - x0), y0 + fy * (y1 - y0)) for fx, fy in SCROLL_POINTS]
+        for point in points:                              # vom Nutzer markierte Listen gehen vor dem Probe-Raster
             if knowledge.inside(point, nav.forbidden) or knowledge.inside(point, covered):
                 continue
             moved = 0
@@ -576,10 +583,13 @@ class Explorer:
         crop = frame[int(roi[1] * fh):int(roi[3] * fh), int(roi[0] * fw):int(roi[2] * fw)]
         small = cv2.resize(crop, None, fx=0.5, fy=0.5, interpolation=cv2.INTER_AREA) if crop.size else frame
         safe = re.sub(r"[^\w-]+", "_", name)[:60]
-        image = self.out / f"{self.count:03d}_{safe}.jpg"
-        cv2.imencode(".jpg", small, [cv2.IMWRITE_JPEG_QUALITY, 82])[1].tofile(str(image))
-        if analysis.tabs:                                  # gründlich gescannt: Nutzer bestätigen lassen
-            base = analysis.tabs[0]
+        cv2.imencode(".jpg", small, [cv2.IMWRITE_JPEG_QUALITY, 82])[1].tofile(
+            str(self.out / f"{self.count:03d}_{safe}.jpg"))
+        image = self.out / f"voll_{self.count:03d}_{safe}.jpg"   # volle Auflösung zum Markieren (Funde prüfen)
+        if crop.size:
+            cv2.imencode(".jpg", crop, [cv2.IMWRITE_JPEG_QUALITY, 88])[1].tofile(str(image))
+        if True:                                           # jedes Fenster: Nutzer bestätigen/markieren lassen
+            base = analysis.tabs[0] if analysis.tabs else {"lines": knowledge.lines_of(analysis.words)}
             review.add_finding(self.data_dir, name, {
                 "title": analysis.title, "category": analysis.category, "label": analysis.label,
                 "tabs": [t["tab"] for t in analysis.tabs if t.get("tab")],
@@ -587,7 +597,7 @@ class Explorer:
                 "scroll": [a for t in analysis.tabs for a in t.get("scroll", [])],
                 "actions": sorted({b for b, _r in analysis.buttons}),
                 "claims": len(knowledge.claimables(analysis.words)),
-                "lines": base.get("lines", [])[:20], "image": str(image)})
+                "lines": base.get("lines", [])[:20], "image": str(image), "roi": [round(v, 4) for v in roi]})
 
     def _close(self, kind: str, roi: list[float], template, frame: np.ndarray) -> None:
         nav = self.nav

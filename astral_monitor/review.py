@@ -79,3 +79,47 @@ def summary(entry: dict) -> str:
     if entry.get("tested"):
         parts.append(tr("Getestet: {buttons}", buttons=", ".join(entry["tested"])))
     return "\n".join(parts)
+
+
+# ---------------------------------------------------------------------- Markierungen des Nutzers
+# Arten für Rahmen, die der Nutzer im Fensterbild zieht (Text frei): das Programm nutzt sie selbst –
+# „nie drücken“ wird Sperrzone, „Liste“ wird gezielt gescrollt, Knöpfe/Schalter landen in der Karte.
+from .i18n import N_  # noqa: E402
+
+ANNOTATION_KINDS = [("button", N_("Knopf")), ("never", N_("Knopf – nie drücken")), ("toggle", N_("Schalter")),
+                    ("value", N_("Wert / Anzeige")), ("progress", N_("Fortschritt")), ("list", N_("Liste (scrollbar)")),
+                    ("tab", N_("Reiter")), ("info", N_("Info / Text"))]
+CLICKABLE = ("button", "toggle", "tab")
+
+
+def set_notes(data_dir: Path, window: str, annotations: list[dict], description: str, display: str = "") -> None:
+    """Rahmen ({box: [x0,y0,x1,y1] im Fensterbild (Anteile), kind, text}), Beschreibung und Anzeigename speichern."""
+    data = load(data_dir)
+    entry = data.setdefault(window, {})
+    entry["annotations"] = [{"box": [round(v, 4) for v in a["box"]], "kind": a.get("kind", "info"),
+                             "text": a.get("text", "")} for a in annotations]
+    entry["description"] = description
+    if display:
+        entry["display"] = display
+    save(data_dir, data)
+
+
+def annotation_elements(data_dir: Path) -> list[dict]:
+    """Markierungen als Einträge der Oberflächen-Karte (Lage im Roblox-Fenster), damit Makro/Erkunden sie nutzen."""
+    out = []
+    for window, entry in load(data_dir).items():
+        roi = entry.get("roi")
+        if not roi:
+            continue
+        x0, y0, x1, y1 = roi
+        for i, a in enumerate(entry.get("annotations") or []):
+            bx0, by0, bx1, by1 = a["box"]
+            kind = a.get("kind", "info")
+            out.append({"name": f"{window} · {a.get('text') or kind}", "parent": window,
+                        "kind": "Knopf" if kind in CLICKABLE else "Bereich",
+                        "roi": [round(x0 + bx0 * (x1 - x0), 4), round(y0 + by0 * (y1 - y0), 4),
+                                round(x0 + bx1 * (x1 - x0), 4), round(y0 + by1 * (y1 - y0), 4)],
+                        "file": f"review:{window}:{i}", "note": "vom Nutzer markiert",
+                        "extra": {"annotation": kind, "text": a.get("text", ""), "forbid": kind == "never",
+                                  "scroll": kind == "list"}})
+    return out

@@ -289,7 +289,7 @@ def lines_of(words: list[tuple[str, list[float]]]) -> list[str]:
     """Gelesene Wörter zu Textzeilen zusammensetzen (Bericht lesbar statt einzelner Wörter); weit auseinander
     stehende Teile einer Höhe (Spalten) werden mit „ · “ getrennt."""
     rows: list[list] = []
-    for t, b in sorted(words, key=lambda c: ((c[1][1] + c[1][3]) / 2, c[1][0])):
+    for t, b in sorted(_dedupe(words), key=lambda c: ((c[1][1] + c[1][3]) / 2, c[1][0])):
         cy, hgt = (b[1] + b[3]) / 2, b[3] - b[1]
         if rows and abs(rows[-1][0] - cy) < 0.5 * max(hgt, rows[-1][1]):
             rows[-1][2].append((t, b))
@@ -298,12 +298,16 @@ def lines_of(words: list[tuple[str, list[float]]]) -> list[str]:
     out = []
     for _cy, _h, items in rows:
         items.sort(key=lambda c: c[1][0])
-        text, last = "", None
+        text, last, prev = "", None, ""
         for t, b in items:
             if last is not None:
-                text += " · " if b[0] - last > 0.04 else " "
+                gap, hh = b[0] - last, max(1e-6, b[3] - b[1])
+                if prev.endswith("/") or t.startswith("/"):
+                    text += " "                            # „514δU / MAX“ gehört zusammen
+                else:
+                    text += " · " if gap > max(0.04, 2.5 * hh) else " "
             text += t
-            last = b[2]
+            last, prev = b[2], t
         out.append(text)
     return out
 

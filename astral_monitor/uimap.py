@@ -48,9 +48,11 @@ class UiMap:
         if local is not None:
             have = {e.get("file") for e in entries}
             entries += [e for e in load_local(local) if e.get("file") not in have]
-            try:                                          # vom Nutzer bestätigte/korrigierte Arten (review.py)
-                from .review import category_overrides
+            try:                                          # vom Nutzer bestätigte/korrigierte Arten + Markierungen
+                from .review import annotation_elements, category_overrides
                 overrides = category_overrides(local.parent)
+                have = {e.get("file") for e in entries}
+                entries += [e for e in annotation_elements(local.parent) if e["file"] not in have]
             except Exception:  # noqa: BLE001
                 overrides = {}
             for e in entries:
