@@ -3,7 +3,7 @@ import unittest
 
 import _env  # noqa: F401
 
-from astral_monitor.raidsense import RaidSense, match_name
+from astral_monitor.raidsense import DropIndex, DropWatcher, RaidSense, match_name
 
 
 class RaidSenseTest(unittest.TestCase):
@@ -38,6 +38,27 @@ class RaidSenseTest(unittest.TestCase):
         self.assertIsNone(rs.pending)                     # erst nach zweimal lesen
         rs.seen_name("Clover Rald", [], 3.0)              # Lesefehler zählt als derselbe Name
         self.assertEqual(rs.pending, "Clover Raid")
+
+
+class DropTest(unittest.TestCase):
+    TABLE = {"Night Raid": ["Street Cred Token", "Cyberware Token", "Yen"],
+             "Tempest Raid": ["Tempest Token", "Cyberware Token"],
+             "Holy Grail War": ["Grail Shard", "Servant Token"]}
+
+    def test_only_unique_drops_count(self):
+        idx = DropIndex(self.TABLE)
+        self.assertNotIn("cyberwaretoken", idx.unique)      # in zwei Raids: sagt nichts
+        # echte Lesung aus dem Drop-Feld (Screenshot 08.10.2026): Lesefehler, fremde Tokens, gelöschte Pets
+        words = ["Oni", "Token", "Sreet", "Cred", "Token", "Tempe", "Eddie", "Magic", "Token", "Rain", "Ultima"]
+        self.assertEqual(idx.votes(words), {"Night Raid": 1})
+
+    def test_watcher_needs_two_reads_and_clear_lead(self):
+        w = DropWatcher()
+        self.assertIsNone(w.feed({"Night Raid": 1}))
+        self.assertEqual(w.feed({"Night Raid": 2}), "Night Raid")
+        w.reset()
+        self.assertIsNone(w.feed({"Night Raid": 1, "Holy Grail War": 1}))   # Gleichstand
+        self.assertIsNone(w.feed({}))
 
 
 if __name__ == "__main__":

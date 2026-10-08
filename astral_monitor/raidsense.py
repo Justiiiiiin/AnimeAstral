@@ -107,3 +107,97 @@ def read_raid_window(frame: np.ndarray, menu: "vision.MenuFrame", ocr) -> Option
     crop = frame[int(roi[1] * fh):int(roi[3] * fh), int(roi[0] * fw):int(roi[2] * fw)]
     name = vision.read_name_below_banner(crop, ocr) if crop.size else ""
     return name or None
+
+
+# ---------------------------------------------------------------------- 2. Drops (Feld links über der Leiste unten)
+DROP_REGION = [0.0, 0.30, 0.85, 0.86]   # Drop-Kacheln (bis zu 4 Zeilen) über den Knöpfen unten links
+DROP_SCALE = 3                          # Beschriftungen sind winzig: vergrößert lesen
+DROP_HIT = 0.8                          # unscharfer Vergleich (Lesefehler „Sreet Cred“)
+DROP_CONFIRM = 2                        # so oft hintereinander vorne = Raid übernehmen
+
+
+def _partial(name: str, text: str) -> float:
+    """Wie gut kommt name (normalisiert) irgendwo in text vor? 0..1 (Fenster gleicher Länge, difflib)."""
+    if not name or len(text) < len(name) - 2:
+        return 0.0
+    if name in text:
+        return 1.0
+    n = len(name)
+    best = 0.0
+    for i in range(0, max(1, len(text) - n + 1)):
+        r = difflib.SequenceMatcher(None, name, text[i:i + n]).ratio()
+        if r > best:
+            best = r
+            if best >= 0.95:
+                break
+    return best
+
+
+class DropIndex:
+    """Welche Drops gibt es nur in genau einem Raid? (aus den „Enemy Drops“-Listen, die das Erkunden liest)"""
+
+    def __init__(self, drops_by_raid: dict[str, list[str]]) -> None:
+        owners: dict[str, set[str]] = {}
+        for raid, drops in drops_by_raid.items():
+            for d in drops:
+                key = norm(d)
+                if len(key) >= 5:
+                    owners.setdefault(key, set()).add(raid)
+        self.unique = {key: next(iter(r)) for key, r in owners.items() if len(r) == 1}
+
+    @classmethod
+    def from_map(cls, umap) -> "DropIndex":
+        table: dict[str, list[str]] = {}
+        for e in umap.entries:
+            extra = e.get("extra") or {}
+            if extra.get("drops") and extra.get("raid_name"):
+                table.setdefault(extra["raid_name"], []).extend(extra["drops"])
+        return cls(table)
+
+    def votes(self, words: list[str]) -> dict[str, int]:
+        """Treffer je Raid für die gelesenen Wörter des Drop-Felds (nur eindeutige Drops zählen)."""
+        text = norm(" ".join(words))
+        out: dict[str, int] = {}
+        for key, raid in self.unique.items():
+            if _partial(key, text) >= DROP_HIT:
+                out[raid] = out.get(raid, 0) + 1
+        return out
+
+
+class DropWatcher:
+    """Entscheidet über mehrere Lesungen: derselbe Raid DROP_CONFIRM-mal hintereinander klar vorne -> Raid."""
+
+    def __init__(self) -> None:
+        self._leader: Optional[str] = None
+        self._streak = 0
+
+    def feed(self, votes: dict[str, int]) -> Optional[str]:
+        if not votes:
+            return None
+        ranked = sorted(votes.items(), key=lambda kv: -kv[1])
+        leader, score = ranked[0]
+        if len(ranked) > 1 and ranked[1][1] >= score:
+            self._leader, self._streak = None, 0          # Gleichstand: nichts sagen
+            return None
+        if leader == self._leader:
+            self._streak += 1
+        else:
+            self._leader, self._streak = leader, 1
+        return leader if self._streak >= DROP_CONFIRM else None
+
+    def reset(self) -> None:
+        self._leader, self._streak = None, 0
+
+
+def read_drop_words(frame: np.ndarray, ocr) -> list[str]:
+    """Wörter im Drop-Feld (vergrößert gelesen; ~250 ms – darum nur selten aufrufen)."""
+    import cv2
+    fh, fw = frame.shape[:2]
+    x0, y0, x1, y1 = DROP_REGION
+    crop = frame[int(y0 * fh):int(y1 * fh), int(x0 * fw):int(x1 * fw)]
+    if crop.size == 0:
+        return []
+    f = max(1.5, min(DROP_SCALE, DROP_SCALE * 1280 / fw))     # großes Fenster: weniger vergrößern (Rechenzeit)
+    big = cv2.resize(crop, None, fx=f, fy=f, interpolation=cv2.INTER_CUBIC)
+    return [w for w, _b in vision.words_in(big, [0.0, 0.0, 1.0, 1.0], ocr)
+            if len(re.sub(r"[^A-Za-z]", "", w)) >= 3]

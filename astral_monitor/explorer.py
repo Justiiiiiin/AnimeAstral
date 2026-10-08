@@ -422,6 +422,9 @@ class Explorer:
                        frame: np.ndarray) -> None:
         self.count += 1
         extra = {"category": analysis.category, "explored": True, "buttons": analysis.as_dict()["buttons"]}
+        if analysis.drops and analysis.mode:              # Raid-Fenster mit gelesenem Namen: Drops je Raid
+            extra["drops"] = analysis.drops
+            extra["raid_name"] = analysis.title
         if template is not None:
             extra["layout_of"] = template.window["name"]
             extra["closes_to"] = (template.window.get("extra") or {}).get("closes_to", "")

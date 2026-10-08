@@ -27,7 +27,7 @@ from .status import StatusPublisher
 from .quests import QuestReader
 from .settings import DAILY_KINDS, Settings, is_valid_webhook
 from .stats import RunRecord, StatsStore
-from .raidsense import RaidSense, read_raid_window
+from .raidsense import DropIndex, DropWatcher, RaidSense, read_drop_words, read_raid_window
 from .tracker import QuestTracker, WaveTracker
 from .wave import WaveReader
 
@@ -35,7 +35,8 @@ log = logging.getLogger("engine")
 
 BURST_SECONDS = 30.0        # so lange nach einem Raid wird auf Quest-Änderungen gewartet
 BURST_INTERVAL = 4.0
-RAID_PROBE_SECONDS = 2.0     # so oft nachsehen, ob ein Raid-Fenster offen ist (ganzes Bild, ~15 ms)
+RAID_PROBE_SECONDS = 3.0     # Raid-Fenster suchen – nur ohne sichtbaren Wellenzähler (Lobby), ~15 ms
+DROP_SECONDS = 60.0          # im Raid: Drop-Feld so oft lesen (~250 ms) – Raid über eindeutige Drops erkennen
 
 
 class EngineError(RuntimeError):
@@ -133,6 +134,10 @@ class Engine:
         self.raid_sense = RaidSense()                     # Raid-Name aus dem Raid-Fenster (raidsense.py)
         self._raid_menu = None
         self._next_raid_probe = 0.0
+        self.drop_watch = DropWatcher()
+        self._drop_index = None
+        self._drop_index_at = float("-inf")
+        self._next_drops = 0.0
         self.profile_store.remove_reference_images()     # Bilder der früheren Raid-Erkennung (bis 0.6.3) entfernen
         self.guard = Guard(lambda: self.settings, self.state, self._notify, self._event, self._grab_full)
         self._reset_runtime()
@@ -491,10 +496,15 @@ class Engine:
         if s.read_quests and s.quest_roi.is_valid() and now >= self._next_quest:
             request.append(("quest", s.quest_roi))
 
-        probe = now >= self._next_raid_probe and not _macro_busy()     # Makro setzt seinen Raid selbst
+        busy = _macro_busy()                                   # Makro setzt seinen Raid selbst
+        in_raid = self.state.wave_value is not None
+        probe = not busy and not in_raid and now >= self._next_raid_probe      # Lobby: Raid-Fenster offen?
+        drops = not busy and in_raid and now >= self._next_drops               # im Raid: Drop-Feld lesen
         if probe:
             self._next_raid_probe = now + RAID_PROBE_SECONDS
-        result = self._source.grab([roi for _name, roi in request], probe, 1.0)
+        if drops:
+            self._next_drops = now + DROP_SECONDS
+        result = self._source.grab([roi for _name, roi in request], probe or drops, 1.0)
         if result is None:
             self._handle_no_frame(now)
         else:
@@ -506,6 +516,8 @@ class Engine:
             crops = {name: crop for (name, _roi), crop in zip(request, result.crops)}
             if probe and result.full is not None:
                 self._probe_raid(result.full, now)
+            if drops and result.full is not None:
+                self._read_drops(result.full, now)
             self._process_wave(crops["wave"], now)
             if "quest" in crops:
                 if _macro_busy():                            # Makro öffnet Menüs (ganze Bildschirme verdecken die
@@ -601,6 +613,26 @@ class Engine:
                 self.raid_sense.seen_name(name, self.profile_store.names(), now)
         except Exception as exc:  # noqa: BLE001
             log.debug("Raid-Fenster nicht lesbar: %s", exc)
+
+    def _read_drops(self, frame: np.ndarray, now: float) -> None:
+        """Drop-Feld lesen; liegt zweimal hintereinander derselbe Raid vorne (nur eindeutige Drops), gilt er."""
+        try:
+            if self._drop_index is None or now - self._drop_index_at > 600:
+                from .uimap import UiMap
+                self._drop_index = DropIndex.from_map(UiMap.load())       # lernt das Erkunden dazu
+                self._drop_index_at = now
+            if not self._drop_index.unique:
+                self._next_drops = now + 600                 # noch keine Drop-Listen: selten nachsehen
+                return
+            votes = self._drop_index.votes(read_drop_words(frame, self.get_ocr()))
+            raid = self.drop_watch.feed(votes)
+            if votes:
+                log.debug("Drops: %s", votes)
+            if raid and raid != self.settings.current_raid:
+                log.info("Raid erkannt (Drops): %s", raid)
+                self._adopt_raid(raid)
+        except Exception as exc:  # noqa: BLE001 – darf die Überwachung nie stören
+            log.debug("Drops nicht lesbar: %s", exc)
 
     def _adopt_raid(self, name: str) -> None:
         """Gelesenen Raid übernehmen – neu anlegen, falls es ihn noch nicht gibt."""
