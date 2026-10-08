@@ -224,6 +224,7 @@ class Settings:
     automation_enabled: bool = False    # Makro (Beta): Menüs per Oberflächen-Karte öffnen (automation.py)
     macro_queue: list = field(default_factory=list)    # Makro-Warteschlange: [{"kind": …, …}] (automation.TASK_KINDS)
     macro_loop: bool = False            # Warteschlange immer wieder von vorn
+    debug_view: bool = False            # Einstellungen → Debug: Protokoll live sammeln und zeigen (aus = spart Last)
     auto_rejoin_enabled: bool = False   # nach Disconnect/Kick/Absturz neu beitreten (rejoin.py)
     auto_monitor: bool = False          # Überwachung startet/stoppt mit Anime Astral (automonitor.py)
     server_favorites: list = field(default_factory=list)   # [{"name", "link"}] – nur lokal, Diagnose schwärzt die Links

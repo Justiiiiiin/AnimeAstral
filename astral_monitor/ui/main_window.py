@@ -1,7 +1,6 @@
 """Hauptfenster: Seitenleiste + Seiten, Takt zur Aktualisierung der Anzeige."""
 from __future__ import annotations
 
-import collections
 import copy
 import logging
 import queue
@@ -70,7 +69,9 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.engine = engine
         self._ui_calls: "queue.Queue[Callable[[], None]]" = queue.Queue()
-        self.event_log: "collections.deque[dict]" = collections.deque(maxlen=200)   # Ereignisse (Debug-Karte)
+        if engine.settings.debug_view:                   # Debug-Ansicht sammelt nur, wenn eingeschaltet
+            from .events_card import set_debug
+            set_debug(True)
         self._status_key = None
         self.setWindowTitle(f"Anime Astral Monitor {__version__}")
         # etwas größer als der Entwurf (1180 × 800), vor allem höher: auf der Startseite ist so alles zu sehen
@@ -1188,9 +1189,6 @@ class MainWindow(QMainWindow):
             except queue.Empty:
                 break
             if kind == "event":
-                self.event_log.append(data)               # für die Debug-Karte in den Einstellungen
-                if self.pages.built(PAGE_SETTINGS) is not None:
-                    self.pages.built(PAGE_SETTINGS).events.add(data)
                 refresh_stats = True               # Statistik beim nächsten Anzeigen neu laden (nur Markierung)
         for _ in range(20):
             try:
@@ -1228,6 +1226,7 @@ class MainWindow(QMainWindow):
                 widget.style().unpolish(widget)
                 widget.style().polish(widget)
 
+        self.pages[0].refresh_controls()            # Kopfzeilen-Knöpfe auf jeder Seite aktuell halten
         self.pages[self.stack.currentIndex()].refresh()
 
     def closeEvent(self, event) -> None:

@@ -477,7 +477,7 @@ class SettingsPage(QWidget):
         root.addLayout(columns(stack(upd, rpc), data))
         root.addWidget(section(tr("Debug")))
         from .events_card import EventsCard
-        self.events = EventsCard(main.event_log)          # Debug/Tester: Ereignisse (früher auf der Startseite)
+        self.events = EventsCard(main)                    # Debug: Protokoll live (an/aus)
         root.addWidget(self.events, 10)
         root.addStretch(1)
         root.addLayout(self._about_row())

@@ -959,11 +959,6 @@ EN: dict[str, str] = {
     "Warten: {seconds} s": "Wait: {seconds} s",
     "Warteschlange ({count} Aufgaben)": "Queue ({count} tasks)",
     "Durchlauf {n}": "Round {n}",
-    "Ereignisse (Debug)": "Events (debug)",
-    "Was das Programm zuletzt gemacht hat: Start/Stopp, Raid-Enden, Alarme, Rejoins, Anti-AFK. Zum Testen und für "
-    "Fehlermeldungen – das ausführliche Protokoll steckt im Diagnose-Paket.":
-        "What the program did recently: start/stop, raid ends, alerts, rejoins, anti-AFK. For testing and bug "
-        "reports – the detailed log is in the diagnostics package.",
     "Warten (Min.)": "Wait (min)",
     "Makro-Warteschlange": "Macro queue",
     "Aufgaben nacheinander ausführen – mit „Schleife“ immer wieder von vorn, bis „Stopp“, Esc oder Mausbewegung beim "
@@ -1059,4 +1054,11 @@ EN: dict[str, str] = {
     'Nur Anzeige': 'Display only',
     'Später (1.5.0)': 'Later (1.5.0)',
     'Debug': 'Debug',
+    'Zeigt live alles, was das Programm protokolliert – genau wie monitor.log im Diagnose-Paket: Überwachung, Makro- und Erkunden-Schritte, Anti-AFK, Rejoin, Warnungen und Fehler. Beim Einschalten werden die letzten Zeilen aus dem Protokoll geladen.\n\nNur bei Bedarf einschalten: Aus = es wird nichts gesammelt und nichts gezeichnet.': 'Shows everything the program logs, live – exactly like monitor.log in the diagnostics package: monitoring, macro and explore steps, anti-AFK, rejoin, warnings and errors. Switching it on loads the last lines from the log.\n\nOnly switch it on when needed: off = nothing is collected or drawn.',
+    'Debug an': 'Debug on',
+    'Filtern (z. B. makro, tracker, WARNING) …': 'Filter (e.g. makro, tracker, WARNING) …',
+    'Kopieren': 'Copy',
+    'Alle angezeigten Zeilen in die Zwischenablage': 'Copy all shown lines to the clipboard',
+    'Leeren': 'Clear',
+    'Debug ist aus – oben rechts einschalten, wenn du etwas testen oder einen Fehler suchen willst.': 'Debug is off – switch it on at the top right when you want to test something or track down a bug.',
 }

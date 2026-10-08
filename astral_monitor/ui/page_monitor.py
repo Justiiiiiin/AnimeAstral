@@ -143,11 +143,10 @@ class MonitorPage(QWidget):
         """Raid-Auswahl gibt es auf der Startseite nicht mehr (kommt neu) – Aufrufer bleiben gültig."""
 
     # ---------------------------------------------------------------- Aktualisieren
-    def refresh(self) -> None:
+    def refresh_controls(self) -> None:
+        """Start/Stopp und Pause in der Kopfzeile – läuft auf jeder Seite (MainWindow._tick), nicht nur hier."""
         st = self.engine.state
-        s = self.engine.settings
         running = st.running
-
         if running != self._was_running:
             self._was_running = running
             # normaler Knopf-Rahmen (der Stil „primary“ greift in der Kopfzeile nicht), Symbol gezeichnet + gefärbt
@@ -159,6 +158,11 @@ class MonitorPage(QWidget):
             self._paused = st.paused
             self.btn_pause.setIcon(media_icon("play" if st.paused else "pause", "accent" if st.paused else "text"))
             self.btn_pause.setToolTip(tr("Fortsetzen") if st.paused else tr("Pause"))
+
+    def refresh(self) -> None:
+        st = self.engine.state
+        s = self.engine.settings
+        running = st.running
 
         now = time.monotonic()
         if now - self._last_snap > 1.5:
