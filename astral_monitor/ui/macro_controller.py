@@ -98,6 +98,7 @@ class MacroController(QObject):
                 uimap=self.map)
             nav.raid_count = lambda: engine.stats.snapshot().total_attempts   # Raid-Enden (Überwachung)
             nav.monitoring = lambda: engine.running
+            nav.wave_visible = lambda: engine.state.wave_value is not None   # Raid läuft wirklich (kein Ladebild)
             # Raid-Aufgabe: Überwachung selbst starten, Raid für die Statistik übernehmen (beides im GUI-Thread)
             nav.start_monitoring = lambda: self.main.post(
                 lambda: None if engine.running else self.main.toggle_monitoring())

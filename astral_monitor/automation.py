@@ -353,6 +353,7 @@ class Navigator:
         self.monitoring: Optional[Callable[[], bool]] = None    # läuft die Überwachung?
         self.start_monitoring: Optional[Callable[[], None]] = None   # Überwachung starten (über die Oberfläche)
         self.set_raid: Optional[Callable[[str], None]] = None        # Raid-Name für die Statistik setzen
+        self.wave_visible: Optional[Callable[[], bool]] = None       # liest die Überwachung gerade eine Welle?
         self._in_raid: Optional[str] = None               # Ziel des Raids, in dem das Makro gerade farmt
         self.gigs_next = 0.0                              # Fixer Gigs: frühestens dann wieder nachsehen (time.time)
         self.guild_next = 0.0                             # Gilden-Missionen: frühestens dann wieder
@@ -576,6 +577,22 @@ class Navigator:
         score, box = vision.find_multiscale(frame, self._gear_tpl, GEAR_REGION)
         return box if score >= GEAR_HIT else None
 
+    def _stable_gear(self, timeout: float = 12.0) -> Optional[list[float]]:
+        """Zahnrad erst anklicken, wenn der Raid wirklich läuft: „Starting defense …“ verdunkelt das Bild und
+        schluckt Klicks. Gewartet wird, bis die Überwachung eine Welle liest (falls verbunden) und das Zahnrad zweimal
+        an derselben Stelle steht."""
+        end = time.monotonic() + timeout
+        last = None
+        while time.monotonic() < end:
+            self._check()
+            gear = self._gear(self._frame())
+            wave_ok = self.wave_visible is None or self.wave_visible()
+            if gear is not None and wave_ok and last is not None and abs(gear[0] - last[0]) < 0.004                     and abs(gear[1] - last[1]) < 0.004:
+                return gear
+            last = gear
+            time.sleep(0.5)
+        return last
+
     def _labels(self, frame: np.ndarray) -> dict:
         """Beschriftungen im Zahnrad-Menü: {"retry": Lage, "leave": Lage, "wave": Lage des Wellen-Felds}."""
         words = vision.words_in(frame, [0.2, 0.1, 0.8, 0.9], self._ocr)
@@ -603,11 +620,12 @@ class Navigator:
         labels = self._labels(frame)
         if "retry" in labels or "leave" in labels:
             return labels
-        gear = self._gear(frame)
+        gear = self._stable_gear()
         if gear is None:
             raise Stop(tr("Kein Raid-Zahnrad gefunden – bist du im Raid?"))
         self.log(tr("Öffne die Raid-Einstellungen (Zahnrad)."))
-        self._click_roi(gear)
+        self._click(((gear[0] + gear[2]) / 2, gear[1] + 0.45 * (gear[3] - gear[1])))   # eher oben: unten liegt
+        # der Rand der Leiste, Klicks dort gingen daneben (Eigentümer 08.10.2026)
         end = time.monotonic() + 4
         while time.monotonic() < end:
             time.sleep(0.4)
