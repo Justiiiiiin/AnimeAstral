@@ -952,17 +952,28 @@ class Navigator:
             self.forbidden = []
         self._close_any()
 
+    def _guild_forbidden(self) -> None:
+        """Sperrzonen für die gerade sichtbare Gilden-Seite neu berechnen. Die Zonen der Startseite (Kick, Leave …)
+        lagen sonst nach dem Wechsel zu „Missions“ über „Personal“ – der Reiter galt als gesperrt."""
+        from .knowledge import forbidden_zones
+        roi, frame = self._window_area({"name": "Guild"})
+        self.forbidden = forbidden_zones(vision.words_in(frame, roi, self._ocr), roi, "Guild")
+
     def _guild_pages(self, guild: dict) -> None:
         self._press(guild, ("missions",))
         time.sleep(1.0)
+        self._guild_forbidden()
         total = 0
         for tab, label in ((("personal",), "Personal"), (("guild", "weekly"), "Guild Weekly")):
             try:
                 self._press(guild, tab)
-            except Stop:
-                self.log(tr("Reiter „{tab}“ nicht gefunden.", tab=label))
+            except UserStop:
+                raise
+            except Stop as exc:
+                self.log(tr("Reiter „{tab}“: {reason}", tab=label, reason=exc))
                 continue
             time.sleep(1.0)
+            self._guild_forbidden()
             total += self._claim_all(label)
         if not total:
             self._snap("gilde")

@@ -8,6 +8,7 @@ Der Abschnitt einer Version wird beim Veröffentlichen automatisch als Versionsh
 
 ### 🔧 Verbessert
 - Raid/Defense: Zahnrad erst nach dem Ladebild klicken, genauer getroffen
+- Gilden-Missionen: Reiter „Personal“ wird wieder abgeholt
 
 ## 0.9.9-beta.12
 

@@ -1000,7 +1000,6 @@ EN: dict[str, str] = {
     'Gilde ging nicht auf.': 'The guild did not open.',
     'Gilde: Missionen abholen': 'Guild: claim missions',
     'Keine Pets im Fenster erkannt.': 'No pets recognised in the window.',
-    'Reiter „{tab}“ nicht gefunden.': 'Tab “{tab}” not found.',
     'Schon im Raid „{name}“ – farme weiter.': 'Already in raid “{name}” – farming on.',
     'Starte die Überwachung (zählt die Raids).': 'Starting monitoring (it counts the raids).',
     '{done} Raids fertig': '{done} raids done',
@@ -1224,4 +1223,5 @@ EN: dict[str, str] = {
     'Das nächste Erkunden sieht sich dieses Fenster noch einmal genau an.': 'The next explore run takes another close look at this window.',
     'Anti-AFK an – alle {minutes} Min. kurz zu Roblox, 4× Esc und zurück.': 'Anti-AFK on – every {minutes} min briefly to Roblox, Esc 4× and back.',
     'Diese Version kennt keine Update-Quelle. Automatische Updates gibt es nur in der installierten Version (Download über GitHub).': 'This version has no update source. Automatic updates are only available in the installed version (download via GitHub).',
+    "Reiter „{tab}“: {reason}": "Tab “{tab}”: {reason}",
 }
