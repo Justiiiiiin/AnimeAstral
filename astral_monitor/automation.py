@@ -9,7 +9,6 @@ from __future__ import annotations
 import ctypes
 import difflib
 import json
-import logging
 import re
 import threading
 import time
@@ -21,81 +20,36 @@ import cv2
 import numpy as np
 
 from . import vision, winapi
-from .i18n import N_, tr
+from .macro_base import (_ACTIVE, AUTO_SETTLE, BAR_STEP, CLAIM_GAP, CLAIM_LIMIT, CLAIM_SETTLE, EXTRA_RETRY,
+                         MAX_SCROLLS, OPEN_TIMEOUT, SCROLL_NOTCHES, STEP_WAIT, USER_MOVE_PX, Stop, UserStop, _log,
+                         fmt_wait, macro_running, parse_timer, task_label)
+from .macro_gigs import GigsMixin
+from .macro_guild import GUILD_RETRY, GuildMixin
+from .macro_raid import RaidMixin
+from .i18n import tr
 from .uimap import ROW, UiMap, match_row, world_number
 
-_log = logging.getLogger("macro")
+# The macro is split into parts (macro_raid / macro_gigs / macro_guild, shared pieces in macro_base); these names
+# stay importable from here as before (UI, explorer, tests).
+from .macro_gigs import (GIG_NAMES, GIG_SLOT_BOXES, gig_cards, gig_next_due, gig_pill,
+                         gig_refresh_box, gig_refresh_read, gig_slot_states, gig_timer_vote, pet_tiles)
+from .macro_guild import guild_next_time
+from .macro_raid import (IN_RAID_KINDS, RAID_KINDS, complete_raid_labels, leave_before,
+                         raid_side_steps)
 
-STEP_WAIT = 0.15          # spacing of the checks after a click
-OPEN_TIMEOUT = 5.0        # a menu may take this long to open
-SCROLL_NOTCHES = 4        # mouse wheel notches per step
-BAR_STEP = 0.15           # drag the scroll bar by this share of the track per step
-MAX_SCROLLS = 60
-USER_MOVE_PX = 25         # mouse this far from the set spot = the user intervenes -> stop
-AUTO_SETTLE = 0.8         # after “Auto!” wait briefly, then close (auto roll keeps running in the background)
-
-
-_ACTIVE = threading.Event()    # a macro run is going on right now (Anti-AFK waits then)
-
-
-def macro_running() -> bool:
-    return _ACTIVE.is_set()
-
+__all__ = ["Navigator", "Stop", "UserStop", "macro_running", "task_label", "fmt_wait", "parse_timer", "SCROLL_NOTCHES",
+           "TASK_KINDS", "migrate_tasks", "next_task", "hud_locate", "user_moved", "GIG_NAMES", "GIG_SLOT_BOXES",
+           "gig_cards", "gig_next_due", "gig_pill", "gig_refresh_box", "gig_refresh_read", "gig_slot_states",
+           "gig_timer_vote", "pet_tiles", "guild_next_time", "IN_RAID_KINDS", "RAID_KINDS", "complete_raid_labels",
+           "leave_before", "raid_side_steps"]
 
 TASK_KINDS = ("raid", "autoroll", "progression", "wait")   # older kinds are converted on load (migrate_tasks)
-RAID_KINDS = ("raid",)                                    # tasks that lead into a raid/mode
-IN_RAID_KINDS = ("autoroll", "progression")      # quick menu tasks that also work inside a raid (owner 09.10.2026)
-CLAIM_LIMIT = 8           # at most this many “Claim” per page (protection against endless loops)
-CLAIM_GAP = 0.35          # between two “Claim” clicks of one reading
-CLAIM_SETTLE = 0.5        # after the clicks of one reading, before reading again
-GIGS_PETS = 3             # “Send Pets”: 1 pet per gig, in turn one of the last 3 (owner 08.10.2026)
-GUILD_RETRY = 3 * 3600    # guild missions: nothing to claim yet today -> try again this much later (owner 09.10.2026)
-GUILD_TAB_WAIT = 0.6      # after switching a guild tab, before reading (was 1 s – owner: too slow)
-EXTRA_RETRY = 15 * 60     # after a failure try again this much later at the earliest
-RAID_GEAR = Path(__file__).with_name("uimap_static") / "raid_gear.png"   # gear at the top right in a raid (fixed, not from the map)
-GEAR_REGION = [0.4, 0.0, 0.9, 0.16]
-LEAVE_REGION = [0.35, 0.0, 0.75, 0.2]
-GEAR_HIT = 0.75
-# raid settings layout (measured 09.10.2026), in widths of the “Auto Leave” label: Auto Retry this far above, the
-# field “Wave N” centered this far right/below, half width/height of the field
-RAID_LAYOUT = {"dy": 0.464, "field_dx": 1.058, "field_dy": 0.363, "field_hw": 0.45, "field_hh": 0.09}
-TOGGLE_TRIES = 24          # looks at the switch color (cheap) – messages pass within a few seconds
-GEAR_TRIES = 6            # click the gear again if the menu doesn't open (loading screen swallows clicks)
-GEAR_WAIT = 2.0           # wait this long for the menu after each click
 
 
-def task_label(task: dict) -> str:
-    """Display of a routine task."""
-    kind = task.get("kind")
-    if kind == "autoroll":
-        return tr("Auto Roll · {target}", target=task.get("target", "?"))
-    if kind == "raid":
-        until = task.get("until", "runs")
-        text = tr("Farm · {target}", target=task.get("target", "?"))
-        if until == "runs":
-            text += " · " + tr("{runs} raids", runs=int(task.get("runs", 1)))
-        elif until == "minutes":
-            text += " · " + tr("{minutes} min.", minutes=int(task.get("minutes", 30)))
-        else:
-            text += " · " + tr("until stopped")
-        if int(task.get("leave_wave", 0)):
-            text += " · " + tr("leave from wave {wave}", wave=int(task["leave_wave"]))
-        return text + (" · " + tr("join") if task.get("join") else "")
-    if kind == "progression":
-        return tr("Progressions: Auto All")
-    if kind == "wait":
-        seconds = int(task.get("seconds", 60))
-        return tr("Pause · {minutes} min", minutes=seconds // 60) if seconds % 60 == 0 and seconds >= 60 else \
-            tr("Pause · {seconds} s", seconds=seconds)
-    return str(kind)
 
 
-class Stop(Exception):
-    """Stop (user, timeout, not found) – text = reason for the log."""
 
 
-class UserStop(Stop):
-    """Stopped by the user (stop, Esc, mouse, Roblox not in front) – the routine ends right away."""
 
 
 def migrate_tasks(tasks: list) -> list[dict]:
@@ -125,77 +79,12 @@ def next_task(tasks: list[dict], index: int, loop: bool) -> Optional[dict]:
     return tasks[0] if loop and len(tasks) > 1 else None
 
 
-def raid_side_steps(tasks: list[dict], index: int) -> list[int]:
-    """Steps right after the raid step tasks[index] that run INSIDE the raid, once its settings are set: Auto Roll
-    and Progressions up to the next raid or pause (owner 09.10.2026: “Farm … until stopped” never ended, so the
-    gachas/pets after it never started)."""
-    if tasks[index].get("kind") != "raid":
-        return []
-    out = []
-    for j in range(index + 1, len(tasks)):
-        if tasks[j].get("kind") not in IN_RAID_KINDS:
-            break
-        out.append(j)
-    return out
 
 
-def leave_before(task: dict, following: Optional[dict]) -> bool:
-    """Leave the raid before continuing? Only if a DIFFERENT raid/mode comes next (owner 08.10.2026) –
-    for Auto Roll, gigs, guild … you stay in (Auto Retry keeps farming)."""
-    if following is None or following.get("kind") not in RAID_KINDS:
-        return False
-    return following.get("target") != task.get("target")
 
 
-def _clusters(values: list[float], tol: float) -> list[list[float]]:
-    out: list[list[float]] = []
-    for v in sorted(values):
-        if out and v - out[-1][-1] <= tol:
-            out[-1].append(v)
-        else:
-            out.append([v])
-    return out
 
 
-def pet_tiles(frame: np.ndarray, grid: list[float], words: list[tuple[str, list[float]]]) -> list[list[float]]:
-    """Tiles of a pet grid from the name tags (see Navigator._pet_tiles); testable without Qt/OCR."""
-    found = [(b, ((b[0] + b[2]) / 2, (b[1] + b[3]) / 2)) for w, b in words
-             if len(re.sub(r"[^A-Za-z]", "", w)) >= 3 and b[3] - b[1] < 0.045]
-    # name rows: at least three words with ≥ 4 letters at the same height (image noise drops out that way)
-    long_y = [m[1] for (b, m), (w, _x) in zip(found, [x for x in words if len(re.sub(r"[^A-Za-z]", "", x[0])) >= 3
-                                                       and x[1][3] - x[1][1] < 0.045]) if len(re.sub(r"[^A-Za-z]", "", w)) >= 4]
-    row_y = [float(np.median(c)) for c in _clusters(long_y, 0.02) if len(c) >= 3]
-    if not row_y:
-        return []
-    labels = []                                           # merge the words of one tag (“Kirito Armor”)
-    for y in row_y:
-        boxes = sorted((b for b, m in found if abs(m[1] - y) <= 0.025), key=lambda b: b[0])
-        for b in boxes:
-            if labels and abs(labels[-1][1] - y) < 1e-6 and b[0] - labels[-1][2] < 0.02:
-                labels[-1][2] = b[2]
-            else:
-                labels.append([b[0], y, b[2]])
-    labels = [(None, ((x0 + x1) / 2, y)) for x0, y, x1 in labels]
-    cols = [float(np.median(c)) for c in _clusters([m[0] for _b, m in labels], 0.03)]
-    if len(cols) < 2:
-        return []
-    diffs = sorted(b - a for a, b in zip(cols, cols[1:]) if b - a > 0.04)
-    if not diffs:
-        return []
-    steps = max(1, round((cols[-1] - cols[0]) / diffs[0]))  # smallest spacing ≈ one column (gaps = missing
-    pitch = (cols[-1] - cols[0]) / steps                     # names), averaged exactly over the whole width
-    cols = [cols[0] + i * pitch for i in range(steps + 1)]
-    row_pitch = min((b - a for a, b in zip(row_y, row_y[1:])), default=pitch * 1.75)
-    fh, fw = frame.shape[:2]
-    tiles = []
-    for ly in row_y:
-        for cx in cols:
-            box = [cx - pitch * 0.45, ly - row_pitch * 0.82, cx + pitch * 0.45, ly + row_pitch * 0.08]
-            named = any(box[0] <= m[0] <= box[2] and abs(m[1] - ly) <= 0.025 for _b, m in labels)
-            crop = frame[max(0, int(box[1] * fh)):int(box[3] * fh), max(0, int(box[0] * fw)):int(box[2] * fw)]
-            if named or (crop.size and vision.sharpness(crop) >= vision.SlotLayout.SHARP_MIN):
-                tiles.append([round(v, 4) for v in box])
-    return tiles
 
 
 # Find the buttons at the edge via their labels – the game's GUI size (50 %, 100 % …) moves and enlarges them;
@@ -251,16 +140,6 @@ def _words_sharp(frame: np.ndarray, area: list[float], ocr) -> list[tuple[str, l
             for w, b in vision.words_in(big, [0.0, 0.0, 1.0, 1.0], ocr)]
 
 
-def fmt_wait(seconds: float) -> str:
-    """Short waiting time: “45 s”, “18 min”, “1 h 36 min”, “23 h”."""
-    seconds = max(0, int(seconds))
-    if seconds < 60:
-        return tr("{n} s", n=seconds)
-    minutes = (seconds + 59) // 60
-    if minutes < 60:
-        return tr("{n} min", n=minutes)
-    hours, rest = divmod(minutes, 60)
-    return tr("{h} h {m} min", h=hours, m=rest) if rest and hours < 10 else tr("{h} h", h=hours)
 
 
 def user_moved(cursor: tuple[int, int], pt: tuple[int, int], rect: Optional[tuple[int, int, int, int]]
@@ -278,204 +157,31 @@ def user_moved(cursor: tuple[int, int], pt: tuple[int, int], rect: Optional[tupl
     return True
 
 
-def parse_timer(text: str) -> Optional[int]:
-    """“1:20:40” / “33:57” -> seconds (Fixer Gigs times), otherwise None."""
-    m = re.fullmatch(r"(?:(\d{1,2}):)?(\d{1,2}):(\d{2})", text.strip())
-    if not m:
-        return None
-    h, mnt, s = int(m.group(1) or 0), int(m.group(2)), int(m.group(3))
-    return h * 3600 + mnt * 60 + s if mnt < 60 and s < 60 else None
 
 
-# Fixer Gigs: header of every card (“QUICK · 20 MIN”, “STANDARD · 1H”, “BIG JOB · 3H”) -> duration. Which kind comes is
-# random (owner 08.10.2026) – so read per card instead of fixed times.
-GIG_KINDS = {"quick": 20 * 60, "standard": 3600, "big": 3 * 3600, "bis": 3 * 3600}
-GIG_NAMES = {20 * 60: N_("Quick 20 min"), 3600: N_("Standard 1 h"), 3 * 3600: N_("Big Job 3 h")}
-GIG_KIND_WORDS = {"job": 3 * 3600, "3h": 3 * 3600, "1h": 3600}
-# time line “43:41 left” of a card (fractions of the card frame, measured on the real window); two bands, so a
-# slightly different GUI size still hits it
-GIG_TIMER_BANDS = ((0.61, 0.70), (0.62, 0.69))
-GIG_UNKNOWN = 3 * 3600        # card without a readable header: duration unknown (at most a Big Job)
-# the three card frames in the Fixer Gigs window (fractions of the window roi, measured on the real window)
-GIG_SLOT_BOXES = ((0.276, 0.347, 0.481, 0.897), (0.496, 0.347, 0.700, 0.897), (0.714, 0.347, 0.919, 0.897))
-GIG_REFRESH_MAX = 4 * 3600    # longer “NEW GIGS IN” readings are misreads
-GIG_EMPTY_CHECK = 5 * 60      # empty slot without a readable countdown: open the window again this soon
 
 
-def _gig_kind(word: str) -> Optional[int]:
-    """Duration of a card header word – also glued together (“standard1h”, “quick20min”); “JOB”, “3H”, “1H” alone
-    count too (owner 09.10.2026: “BIG” of “BIG JOB · 3H” was not read)."""
-    return GIG_KIND_WORDS.get(word) or next((d for k, d in GIG_KINDS.items() if word.startswith(k)), None)
 
 
-def gig_cards(words: list[tuple[str, list[float]]], roi: list[float]) -> list[dict]:
-    """The three slots of the Fixer Gigs window, each read on its own (owner 09.10.2026: recognize directly whether a
-    gig is running, done, needs pets or the slot is empty). The card frames always sit at the same place in the
-    window (GIG_SLOT_BOXES, fractions of the window roi). Per slot: x (center), pitch (slot width), duration (s,
-    GIG_UNKNOWN + “unknown” if the header wasn't read), state (“ready”/“open” = needs pets/“working”/“empty”),
-    left (position of “left” below the time left), claim/send (button position or None).
-    “FINISH NOW” costs currency – never returned."""
-    rx, ry, rw, rh = roi[0], roi[1], roi[2] - roi[0], roi[3] - roi[1]
-    norm = [(re.sub(r"[^a-z0-9]", "", w.lower()), b) for w, b in words]
-    cards = []
-    for fx0, fy0, fx1, fy1 in GIG_SLOT_BOXES:
-        box = [rx + fx0 * rw, ry + fy0 * rh, rx + fx1 * rw, ry + fy1 * rh]
-        inside = [(w, b) for w, b in norm if w and box[0] <= (b[0] + b[2]) / 2 <= box[2]
-                  and box[1] <= (b[1] + b[3]) / 2 <= box[3]]
-        head_zone = box[1] + 0.2 * (box[3] - box[1])
-        duration = next((_gig_kind(w) for w, b in inside if b[1] < head_zone and _gig_kind(w)), None)
-        found = {w for w, _b in inside}
-        if found & {"ready", "claim"}:
-            state = "ready"
-        elif found & {"send", "sendpets"}:
-            state = "open"
-        elif found & {"working", "left", "finish", "finishnow"} or duration is not None:
-            state = "working"                             # header without a readable status: running, time unknown
-        else:
-            state = "empty"
-        cards.append({"x": (box[0] + box[2]) / 2, "pitch": box[2] - box[0], "box": box,
-                      "duration": duration or GIG_UNKNOWN, "unknown": duration is None, "state": state,
-                      "left": next((b for w, b in inside if w == "left"), None),
-                      "claim": next((b for w, b in inside if w == "claim"), None),
-                      "send": next((b for w, b in inside if w in ("send", "sendpets")), None)})
-    return cards
 
 
-def gig_timer_vote(texts: list[str], duration: int) -> Optional[int]:
-    """Time left from several readings of the same line (“43:41 left”, “«3:11 Left”, “2:59:47 left”): every valid
-    time counts as one vote, the most frequent wins (a tie: the shorter one – better to come back too early).
-    Single readings slip now and then, but rarely the same way."""
-    votes: dict[int, int] = {}
-    for text in texts:
-        for m in re.finditer(r"(?<![\d:])(\d{1,2}:)?\d{1,2}:\d{2}(?![\d:])", text or ""):
-            seconds = parse_timer(m.group(0))
-            if seconds is not None and 0 < seconds <= duration + 60:
-                votes[seconds] = votes.get(seconds, 0) + 1
-    if not votes:
-        return None
-    return min(votes, key=lambda t: (-votes[t], t))
 
 
-def gig_refresh_box(words: list[tuple[str, list[float]]]) -> Optional[list[float]]:
-    """Area of the countdown “NEW GIGS IN 52:37” above the cards (time until empty slots get new gigs) – for the
-    exact digit reading. None = the line wasn't read."""
-    norm = [(re.sub(r"[^a-z0-9:]", "", w.lower()), b) for w, b in words]
-    new = next((b for w, b in norm if w == "new"), None)
-    if new is None:
-        return None
-    h = new[3] - new[1]
-    row = [(w, b) for w, b in norm if abs((b[1] + b[3]) / 2 - (new[1] + new[3]) / 2) < 0.6 * h
-           and new[2] <= b[0] < new[0] + 16 * h]
-    timer = next((b for w, b in row if re.search(r"\d:\d", w)), None)       # not “3/3” of “SLOTS”
-    if timer is not None:                                 # the general reading found the time: read it exactly there
-        before = max((b[2] for w, b in row + [("new", new)] if b[2] <= timer[0] + 0.1 * h), default=0.0)
-        return [max(timer[0] - 0.5 * h, before + 0.1 * h), timer[1] - 0.4 * h, timer[2] + 0.8 * h,
-                timer[3] + 0.4 * h]                       # not into “IN” (its “N” was read as “1”)
-    after = max((b[2] for w, b in row if w in ("gigs", "in")), default=None)
-    if after is None:                                     # neither the time nor “GIGS IN” read: don't guess
-        return None
-    return [after + 0.2 * h, new[1] - 0.4 * h, after + 3.6 * h, new[3] + 0.4 * h]
 
 
-def gig_refresh_read(words: list[tuple[str, list[float]]]) -> Optional[int]:
-    """Fallback: “NEW GIGS IN 52:37” from the general reading (when the exact digit reading fails)."""
-    box = gig_refresh_box(words)
-    if box is None:
-        return None
-    for w, b in words:
-        if b[0] < box[2] and b[2] > box[0] and b[1] < box[3] and b[3] > box[1]:
-            seconds = parse_timer(w)
-            if seconds is not None and 0 < seconds <= GIG_REFRESH_MAX:
-                return seconds
-    return None
 
 
-def gig_slot_states(cards: list[dict], timers: dict[int, Optional[int]], refresh: Optional[int],
-                    now: float) -> list[dict]:
-    """What the card shows per slot (pills on the start page), saved in extras_state.json: state as read, “until”
-    = end of the running gig or arrival of new gigs (time.time, None = unknown), duration (None = header unread)."""
-    out = []
-    for i, c in enumerate(cards):
-        until = None
-        if c["state"] == "working" and timers.get(i):
-            until = now + timers[i]
-        elif c["state"] == "empty" and refresh is not None and 0 < refresh <= GIG_REFRESH_MAX:
-            until = now + refresh
-        out.append({"state": c["state"], "until": until, "duration": None if c["unknown"] else c["duration"]})
-    return out
 
 
-def gig_pill(slot: Optional[dict], now: float) -> tuple[str, str]:
-    """(kind for the style, text) of one pill: run / done / pet / empty / none."""
-    if not slot:
-        return "none", "–"
-    state, until = slot.get("state"), slot.get("until")
-    if state == "working":
-        if until is None:
-            return "run", tr("running")
-        return ("done", tr("done")) if until <= now else ("run", fmt_wait(until - now))
-    if state == "ready":
-        return "done", tr("done")
-    if state == "open":
-        return "pet", tr("needs pet")
-    if until is not None and until > now:
-        return "empty", tr("new in {time}", time=fmt_wait(until - now))
-    return "empty", tr("empty")
 
 
-def gig_next_due(cards: list[dict], timers: dict[int, Optional[int]], refresh: Optional[int] = None) -> int:
-    """Seconds until the next visit: smallest valid time left (at most as long as the gig); running gigs without a
-    readable time count as 20 min, done ones and ones that need pets right away, empty slots when new gigs come
-    (“NEW GIGS IN …”, refresh in seconds; unreadable = GIG_EMPTY_CHECK)."""
-    due = []
-    for i, card in enumerate(cards):
-        if card["state"] == "empty":
-            due.append(refresh if refresh is not None and 0 < refresh <= GIG_REFRESH_MAX else GIG_EMPTY_CHECK)
-        elif card["state"] != "working":
-            due.append(0)
-        else:
-            t = timers.get(i)
-            due.append(t if t is not None and 0 < t <= card["duration"] + 60 else min(card["duration"], 20 * 60))
-    return min(due) if due else 20 * 60
 
 
-def guild_next_time(done_day: str, retry: float, now: float) -> float:
-    """Guild missions once per PC day: claimed today (done_day = today's local date) -> next local midnight; on a
-    new day right away – unless “nothing to claim yet” set a retry time today."""
-    today = time.strftime("%Y-%m-%d", time.localtime(now))
-    if done_day == today:
-        t = time.localtime(now)
-        return time.mktime((t.tm_year, t.tm_mon, t.tm_mday + 1, 0, 0, 0, 0, 0, -1))
-    return retry
 
 
-def complete_raid_labels(out: dict, aspect: float) -> dict:
-    """The raid settings always have the same layout: “Auto Retry” above “Auto Leave”, the field “Wave N” below.
-    “Wave cleared!” messages often cover part of it (owner 09.10.2026: 4–6 at once) – from one readable label the
-    others follow (RAID_LAYOUT, in widths of the “Auto Leave” label; aspect = image width / height). The grey
-    field text “Wave 12” is often not read at all: its position is calculated."""
-    out = dict(out)
-    ref = out.get("leave") or out.get("retry")
-    if ref is None:
-        return out
-    w = ref[2] - ref[0]
-    dy = RAID_LAYOUT["dy"] * w * aspect                  # x and y fractions have different scales
-    if "leave" not in out:
-        r = out["retry"]
-        out["leave"] = [r[0], r[1] + dy, r[2], r[3] + dy]
-    if "retry" not in out:
-        lv = out["leave"]
-        out["retry"] = [lv[0], lv[1] - dy, lv[2], lv[3] - dy]
-    if "wave" not in out:
-        lv = out["leave"]
-        cx = lv[0] + RAID_LAYOUT["field_dx"] * w
-        cy = (lv[1] + lv[3]) / 2 + RAID_LAYOUT["field_dy"] * w * aspect
-        hw, hh = RAID_LAYOUT["field_hw"] * w, RAID_LAYOUT["field_hh"] * w * aspect
-        out["wave"] = [cx - hw, cy - hh, cx + hw, cy + hh]
-    return out
 
 
-class Navigator:
+class Navigator(RaidMixin, GigsMixin, GuildMixin):
     def __init__(self, source_factory: Callable, window_title: str, ocr_factory: Callable,
                  log: Callable[[str], None], uimap: Optional[UiMap] = None) -> None:
         self.source_factory = source_factory              # () -> image source (grab(rois, full, timeout))
@@ -680,182 +386,17 @@ class Navigator:
         self.log(tr("Auto-roll keeps running in the background – closing the menu."))
         self._close_any()
 
-    def _raid(self, window: dict, join: bool) -> None:
-        """Open the raid window and press “Create”/“Start” (own raid, costs a key) or “Join”.
-        What comes afterwards (lobby, teleport) is logged and saved as an image for troubleshooting."""
-        self._open(window)
-        if join:
-            self._press(window, ("join",))
-        else:
-            self._press(window, ("create",), ("start",))
-        time.sleep(3.0)
-        frame = self._frame()
-        kind, st = self._screen(frame)
-        self.log(tr("Afterwards: {state}", state=(st[1] if kind == "menu" else kind) or "?"))
-        try:
-            from .app_paths import debug_dir
-            path = debug_dir() / f"makro_raid_{time.strftime('%H%M%S')}.jpg"
-            small = cv2.resize(frame, None, fx=0.5, fy=0.5, interpolation=cv2.INTER_AREA)
-            cv2.imencode(".jpg", small, [cv2.IMWRITE_JPEG_QUALITY, 80])[1].tofile(str(path))
-        except Exception:  # noqa: BLE001 – only a debugging aid
-            pass
 
     # ------------------------------------------------------------------ Raid: gear, Auto Retry, Auto Leave
-    def _gear(self, frame: np.ndarray) -> Optional[list[float]]:
-        """Gear at the top right next to wave/timer – only visible in a raid."""
-        if not hasattr(self, "_gear_tpl"):
-            self._gear_tpl = cv2.imdecode(np.fromfile(str(RAID_GEAR), dtype=np.uint8), cv2.IMREAD_COLOR)
-        score, box = vision.find_multiscale(frame, self._gear_tpl, GEAR_REGION)
-        return box if score >= GEAR_HIT else None
 
-    def _stable_gear(self, timeout: float = 12.0) -> Optional[list[float]]:
-        """Only click the gear once the raid is really running: “Starting defense …” darkens the image and swallows
-        clicks. It waits until the monitoring reads a wave (if connected) and the gear is at the same spot twice."""
-        end = time.monotonic() + timeout
-        last = None
-        while time.monotonic() < end:
-            self._check()
-            gear = self._gear(self._frame())
-            wave_ok = self.wave_visible is None or self.wave_visible()
-            if gear is not None and wave_ok and last is not None and abs(gear[0] - last[0]) < 0.004                     and abs(gear[1] - last[1]) < 0.004:
-                return gear
-            last = gear
-            time.sleep(0.5)
-        return last
 
-    def _labels(self, frame: np.ndarray) -> dict:
-        """Labels in the gear menu: {"retry": position, "leave": position, "wave": position of the wave field}."""
-        words = vision.words_in(frame, [0.2, 0.1, 0.8, 0.9], self._ocr)
-        norm = [(re.sub(r"[^a-z0-9]", "", w.lower()), b) for w, b in words]
-        out = {}
-        for key, second in (("retry", "retry"), ("leave", "leave")):
-            for w, b in norm:
-                if w != "auto":
-                    continue
-                nxt = next((b2 for w2, b2 in norm if w2 == second and 0 <= b2[0] - b[2] < 0.03
-                            and abs((b2[1] + b2[3]) / 2 - (b[1] + b[3]) / 2) < 0.015), None)
-                if nxt is not None:
-                    out[key] = [b[0], min(b[1], nxt[1]), nxt[2], max(b[3], nxt[3])]
-                    break
-        if "leave" in out:                                # field “Wave 85” right below “Auto Leave”
-            lv = out["leave"]
-            field = next((b for w, b in norm if w == "wave" and 0 < b[1] - lv[3] < 0.08
-                          and abs(b[0] - lv[0]) < 0.12), None)
-            if field is not None:
-                out["wave"] = field
-        return complete_raid_labels(out, frame.shape[1] / frame.shape[0])
 
-    def _open_raid_settings(self) -> dict:
-        """Open the gear menu and remember where its parts are (self._raid_labels) – the menu doesn't move, so the
-        following steps don't need to read it again (fast, and messages covering it don't matter)."""
-        self._raid_labels = {}
-        frame = self._frame()
-        labels = self._labels(frame)
-        if "retry" in labels or "leave" in labels:
-            self._raid_labels = labels
-            return labels
-        gear = self._stable_gear()
-        if gear is None:
-            raise Stop(tr("No raid gear found – are you in a raid?"))
-        self.log(tr("Opening the raid settings (gear)."))
-        for attempt in range(GEAR_TRIES):
-            if attempt:                                   # loading screen (“Starting defense …”) swallowed the click
-                self.log(tr("Gear: no reaction yet (loading screen?) – clicking again."))
-                gear = self._gear(self._frame()) or gear
-            self._click(((gear[0] + gear[2]) / 2, (gear[1] + gear[3]) / 2))
-            end = time.monotonic() + GEAR_WAIT
-            while time.monotonic() < end:
-                time.sleep(0.3)
-                labels = self._labels(self._frame())
-                if "retry" in labels or "leave" in labels:   # one readable label is enough (complete_raid_labels)
-                    self._raid_labels = labels
-                    return labels
-        raise Stop(tr("The raid settings did not open."))
 
-    def _set_toggle(self, key: str, on: bool) -> None:
-        """Set the switch “Auto Retry”/“Auto Leave” and verify it. Uses the remembered position of the open menu
-        and only looks at the switch color – while a message covers it, wait briefly and look again."""
-        name = "Auto Retry" if key == "retry" else "Auto Leave"
-        clicks = 0
-        for _ in range(TOGGLE_TRIES):
-            frame = self._frame()
-            label = (getattr(self, "_raid_labels", {}) or {}).get(key) or self._labels(frame).get(key)
-            if label is None:
-                time.sleep(0.3)
-                continue
-            state = vision.toggle_state(frame, label)
-            if state is None:                             # covered by “Wave cleared!”: look again shortly
-                time.sleep(0.25)
-                continue
-            if state == on:
-                self.log(tr("{name}: {state}", name=name, state=tr("on") if on else tr("off")))
-                return
-            if clicks >= 3:
-                break
-            cy = (label[1] + label[3]) / 2
-            self._click((label[2] + 0.05, cy))           # switch to the right of the label
-            clicks += 1
-            time.sleep(0.5)
-        raise Stop(tr("Couldn't switch “{name}” reliably.", name=name))
 
-    def _set_leave_wave(self, wave: int) -> None:
-        field = (getattr(self, "_raid_labels", {}) or {}).get("wave") or self._labels(self._frame()).get("wave")
-        if field is None:
-            raise Stop(tr("Wave field (auto leave) not found."))
-        from .antiafk import _key
-        self._click_roi(field)
-        time.sleep(0.3)
-        for _ in range(6):                                # delete the old number
-            _key(0x08, True, 0x0E)
-            _key(0x08, False, 0x0E)
-            time.sleep(0.04)
-        scans = {"1": 0x02, "2": 0x03, "3": 0x04, "4": 0x05, "5": 0x06, "6": 0x07, "7": 0x08, "8": 0x09, "9": 0x0A,
-                 "0": 0x0B}
-        for ch in str(int(wave)):
-            _key(ord(ch), True, scans[ch])
-            _key(ord(ch), False, scans[ch])
-            time.sleep(0.05)
-        _key(0x0D, True, 0x1C)                            # Enter
-        _key(0x0D, False, 0x1C)
-        self.log(tr("Auto leave from wave {wave}.", wave=wave))
-        time.sleep(0.4)
 
-    def _close_raid_settings(self) -> None:
-        frame = self._frame()
-        labels = self._labels(frame) or (getattr(self, "_raid_labels", {}) or {})   # covered: remembered position
-        self._raid_labels = {}
-        if not labels:
-            return
-        anchor = labels.get("retry") or labels.get("leave")
-        region = [anchor[0], max(0.0, anchor[1] - 0.2), min(1.0, anchor[2] + 0.25), anchor[1]]
-        score, box = vision.find_multiscale(frame, self._menu.x_tpl, region, (0.4, 0.5, 0.6, 0.7, 0.8, 1.0))
-        if score >= 0.6 and box is not None:
-            self._click_roi(box)                          # pink X at the top right of the menu
-        else:
-            gear = self._gear(frame)
-            if gear is not None:
-                self._click_roi(gear)                     # the gear closes it again
-        time.sleep(0.6)
 
-    def _leave_raid(self) -> None:
-        """Leave the raid: first Auto Retry off (otherwise you are thrown back in), then LEAVE!."""
-        self._open_raid_settings()
-        self._set_toggle("retry", False)
-        self._close_raid_settings()
-        box = vision.find_word(self._frame(), LEAVE_REGION, self._ocr, "leave", "leave!")
-        if box is None:
-            raise Stop(tr("“LEAVE!” not found."))
-        self.log(tr("Clicking “{button}”.", button="LEAVE!"))
-        # The raid “LEAVE!” at the top middle is wanted (leave the raid). No-go zones only apply while the guild or
-        # a window is open while exploring – none is active here (guild “Leave” at the bottom left of the guild window).
-        self._click_roi(box)
-        time.sleep(3.0)
 
     # ------------------------------------------------------------------ Auto collect (own switches)
-    @property
-    def guild_next(self) -> float:
-        """Next guild visit: done today (PC date) -> local midnight, otherwise the retry time (0 = right away)."""
-        return guild_next_time(self.guild_day, self.guild_retry, time.time())
 
     def due_extras(self) -> list[str]:
         """Due extra tasks: Fixer Gigs (by their times) and guild missions (once per PC day) – not tasks of the
@@ -926,104 +467,8 @@ class Navigator:
             _ACTIVE.clear()
 
     # ------------------------------------------------------------------ Raid (one task instead of four)
-    def _ensure_monitoring(self) -> None:
-        if self.monitoring is None or self.raid_count is None:
-            raise Stop(tr("Raids need monitoring to run (it counts the raids)."))
-        if self.monitoring():
-            return
-        if self.start_monitoring is None:
-            raise Stop(tr("Raids need monitoring to run (it counts the raids)."))
-        self.log(tr("Starting monitoring (it counts the raids)."))
-        self.start_monitoring()
-        end = time.monotonic() + 15
-        while not self.monitoring():
-            if time.monotonic() > end:
-                raise Stop(tr("Monitoring could not be started."))
-            self._check()
-            time.sleep(0.3)
 
-    def _raid_task(self, task: dict, following: Optional[dict]) -> None:
-        """Start/join a raid (unless you are already farming exactly this one), set Auto Retry + Auto Leave, farm to
-        the
-                end (N raids, M minutes or without end), then only leave if a different raid/mode follows."""
-        target = task.get("target", "")
-        self._ensure_monitoring()
-        if self.set_raid is not None:
-            self.set_raid(target)
-        leave_wave = int(task.get("leave_wave", 0))
-        if self._in_raid == target and self._gear(self._frame()) is not None:
-            self.log(tr("Already in raid “{name}” – farming on.", name=target))
-        else:
-            if self._gear(self._frame()) is not None:     # still in another raid
-                self._leave_raid()
-            self._in_raid = None
-            self._raid(self._window(target), bool(task.get("join")))
-            end = time.monotonic() + 120                  # until you are in the raid (teleport, lobby)
-            while self._gear(self._frame()) is None:
-                if time.monotonic() > end:
-                    raise Stop(tr("Did not arrive in the raid."))
-                time.sleep(1.0)
-            self._in_raid = target
-        self._open_raid_settings()
-        self._set_toggle("retry", True)
-        if leave_wave > 0:                                # wave first, then the switch: the game's default is 5 –
-            self._set_leave_wave(leave_wave)              # switched on first it could leave too early (owner 09.10.2026)
-        self._set_toggle("leave", leave_wave > 0)
-        self._close_raid_settings()
-        self._run_side_steps()
-        until = task.get("until", "runs")
-        runs, minutes = int(task.get("runs", 1)), float(task.get("minutes", 30))
-        start, t0 = self.raid_count(), time.monotonic()
-        self.log({"runs": tr("Farming {runs} raids …", runs=runs),
-                  "minutes": tr("Farming {minutes} min …", minutes=int(minutes))}.get(until, tr("Farming until you stop …")))
-        _ACTIVE.clear()                                   # Anti-AFK may run while waiting
-        try:
-            last = 0
-            while True:
-                done = self.raid_count() - start
-                if until == "runs" and done >= runs:
-                    break
-                if until == "minutes" and time.monotonic() - t0 >= minutes * 60:
-                    break
-                if done != last:
-                    last = done
-                    self.log(tr("{done} raids done", done=done))
-                self._extras_while_waiting()
-                if self._halt.wait(2.0):
-                    raise UserStop(tr("Stopped."))
-                if ctypes.windll.user32.GetAsyncKeyState(0x1B) & 0x8000:
-                    raise UserStop(tr("Cancelled (Esc)."))
-        finally:
-            _ACTIVE.set()
-        self._focus()
-        if leave_before(task, following):
-            self.log(tr("A different raid is next – leaving this one."))
-            self._leave_raid()
-            self._in_raid = None
-        else:
-            self.log(tr("Staying in the raid (Auto Retry keeps farming)."))
 
-    def _run_side_steps(self) -> None:
-        """Auto Roll & co. placed after the raid step: run them now, inside the raid (raid_side_steps)."""
-        steps, self._side_steps = getattr(self, "_side_steps", []), []
-        for j, side, count in steps:
-            self.queue_pos = j
-            self.log(tr("In the raid – step {n}/{count}: {task}", n=j + 1, count=count, task=task_label(side)))
-            for attempt in (1, 2):
-                try:
-                    self._task(side)
-                    break
-                except UserStop:
-                    raise
-                except Stop as exc:
-                    if attempt == 2:
-                        self.log("⚠ " + tr("Skipped: {reason}", reason=exc))
-                    else:
-                        self.log("⚠ " + tr("{reason} – trying once more.", reason=exc))
-                        self._close_any_quiet()
-            time.sleep(0.6)
-        if steps:
-            self.queue_pos = steps[0][0] - 1                  # back to the raid step for the display
 
     # ------------------------------------------------------------------ Claim helpers
     def _words(self) -> tuple[list[tuple[str, list[float]]], list[float]]:
@@ -1074,185 +519,13 @@ class Navigator:
             pass
 
     # ------------------------------------------------------------------ Guild: missions
-    def _guild_claim(self) -> int:
-        """Open the guild (button at the bottom left) → “Missions” → claim “Personal” and “Guild Weekly” → close.
-        Returns the number of claims."""
-        button = next((e for e in self.map.hud() if e["name"] == "Guild"), None)
-        if button is None:
-            raise Stop(tr("The guild button is unknown yet."))
-        self._close_any()
-        self.log(tr("Clicking “{button}”.", button="Guild"))
-        self._click_roi(self.hud_roi(button))
-        end = time.monotonic() + OPEN_TIMEOUT
-        while self._screen(self._frame())[0] == "none":
-            if time.monotonic() > end:
-                raise Stop(tr("The guild did not open."))
-            time.sleep(STEP_WAIT)
-        time.sleep(0.6)
-        guild = {"name": "Guild"}
-        roi, frame = self._window_area(guild)                # block “Leave” at the bottom left before anything is clicked
-        from .knowledge import forbidden_zones
-        self.forbidden = forbidden_zones(vision.words_in(frame, roi, self._ocr), roi, "Guild")
-        try:
-            total = self._guild_pages(guild)
-        finally:
-            self.forbidden = []
-        self._close_any()
-        return total
 
-    def _guild_forbidden(self) -> list:
-        """Recompute the no-go zones for the guild page visible right now. Otherwise the zones of the home page (Kick,
-        Leave …) lay over “Personal” after switching to “Missions” – the tab counted as blocked. Returns the words
-        read (reused for the “Claim” search – one text recognition per page instead of two)."""
-        from .knowledge import forbidden_zones
-        roi, frame = self._window_area({"name": "Guild"})
-        words = vision.words_in(frame, roi, self._ocr)
-        self.forbidden = forbidden_zones(words, roi, "Guild")
-        return words
 
-    def _guild_pages(self, guild: dict) -> int:
-        self._press(guild, ("missions",))
-        time.sleep(GUILD_TAB_WAIT)
-        self._guild_forbidden()
-        total = 0
-        for tab, label in ((("personal",), "Personal"), (("guild", "weekly"), "Guild Weekly")):
-            try:
-                self._press(guild, tab)
-            except UserStop:
-                raise
-            except Stop as exc:
-                self.log(tr("Tab “{tab}”: {reason}", tab=label, reason=exc))
-                continue
-            time.sleep(GUILD_TAB_WAIT)
-            total += self._claim_all(label, self._guild_forbidden())
-        if not total:
-            self._snap("gilde")
-        return total
 
     # ------------------------------------------------------------------ Fixer Gigs (W21)
-    def _gigs(self) -> None:
-        """Open Fixer Gigs, claim finished gigs (“Claim”), send new ones with “Send Pets” (the last pets in the pets
-        window), remember the durations – the task is skipped before they run out."""
-        wait = self.gigs_next - time.time()
-        if wait > 0 and len(self.gig_slots) == len(GIG_SLOT_BOXES):
-            self.log(tr("Fixer Gigs: nothing finished yet – checking again in {time}.", time=fmt_wait(wait)))
-            return
-        window = self._gigs_window()
-        if window is None:
-            raise Stop(tr("Fixer Gigs is unknown yet – run “Explore” once."))
-        self._open(window)
-        time.sleep(0.8)
-        self._claim_all("Fixer Gigs")
-        for nth in range(1, GIGS_PETS + 1):               # per free slot: “Send Pets” with one pet
-            words, _roi = self._words()
-            box = self._send_box(words)
-            if box is None:
-                break
-            self.log(tr("Clicking “{button}”.", button="Send Pets"))
-            self._click_roi(box)
-            time.sleep(1.2)
-            self._send_pets(nth)
-            if not self._is_open(window, self._frame()):
-                self._open(window)
-                time.sleep(0.8)
-        words, roi = self._words()
-        if roi == [0.0, 0.0, 1.0, 1.0]:                   # frame not found in the image: position from the map
-            roi = window["roi"]
-        cards = gig_cards(words, roi)
-        frame = self._frame()
-        timers = {i: self._read_slot_timer(frame, c, words) for i, c in enumerate(cards) if c["state"] == "working"}
-        self._snap_gigs(frame, cards)
-        refresh = None
-        if any(c["state"] == "empty" for c in cards):    # new gigs only after “NEW GIGS IN …”
-            refresh = self._read_timer(frame, gig_refresh_box(words), GIG_REFRESH_MAX) or gig_refresh_read(words)
-        parts = []
-        for i, c in enumerate(cards):
-            kind = tr("Gig") if c["unknown"] else tr(GIG_NAMES.get(c["duration"], "Gig"))
-            if c["state"] == "working":
-                parts.append(tr("{gig}: {time} left", gig=kind, time=fmt_wait(timers[i])) if timers.get(i)
-                             else tr("{gig}: running", gig=kind))
-            elif c["state"] == "ready":
-                parts.append(tr("{gig}: done", gig=kind))
-            elif c["state"] == "open":
-                parts.append(tr("{gig}: needs a pet", gig=kind))
-            else:
-                parts.append(tr("Slot {n}: empty, new gigs in {time}", n=i + 1, time=fmt_wait(refresh)) if refresh
-                             else tr("Slot {n}: empty", n=i + 1))
-        self.log(tr("Fixer Gigs: {cards}", cards=" · ".join(parts)))
-        if all(c["state"] == "empty" for c in cards):     # nothing read at all: keep the image for checking
-            self._snap("gigs")
-        wait = max(60, gig_next_due(cards, timers, refresh) + 20)
-        self.gigs_next = time.time() + wait
-        self.gig_slots = gig_slot_states(cards, timers, refresh, time.time())
-        self._save_state()
-        self.log(tr("Fixer Gigs: next visit in {time}.", time=fmt_wait(wait)))
-        self._close_any()
 
-    def _snap_gigs(self, frame: np.ndarray, cards: list[dict]) -> None:
-        """Check image of the last visit (debug/gigs_last.jpg, overwritten): slot frames and time bands drawn in –
-        shows at once whether the slots sit on the cards."""
-        try:
-            from .app_paths import debug_dir
-            img = frame.copy()
-            fh, fw = img.shape[:2]
-            for c in cards:
-                x0, y0, x1, y1 = c["box"]
-                cv2.rectangle(img, (int(x0 * fw), int(y0 * fh)), (int(x1 * fw), int(y1 * fh)), (255, 0, 255), 2)
-                for fy0, fy1 in GIG_TIMER_BANDS[:1]:
-                    cv2.rectangle(img, (int((x0 + 0.1 * (x1 - x0)) * fw), int((y0 + fy0 * (y1 - y0)) * fh)),
-                                  (int((x1 - 0.1 * (x1 - x0)) * fw), int((y0 + fy1 * (y1 - y0)) * fh)), (0, 255, 255), 1)
-            small = cv2.resize(img, None, fx=0.5, fy=0.5, interpolation=cv2.INTER_AREA)
-            cv2.imencode(".jpg", small, [cv2.IMWRITE_JPEG_QUALITY, 80])[1].tofile(str(debug_dir() / "gigs_last.jpg"))
-        except Exception:  # noqa: BLE001 – only a debugging aid
-            pass
 
-    def _read_slot_timer(self, frame: np.ndarray, card: dict, words: list) -> Optional[int]:
-        """Time left of a running gig: the time line at its fixed height in the card, read several ways (two bands ×
-        two thresholds) plus the general reading, then a vote (gig_timer_vote). Independent of “left” being read
-        (owner 09.10.2026: “2:59:47 left” was missed, “43:41” read as “4:41”)."""
-        texts = [w for w, b in words if card["box"][0] <= (b[0] + b[2]) / 2 <= card["box"][2]
-                 and card["box"][1] + 0.55 * (card["box"][3] - card["box"][1]) <= (b[1] + b[3]) / 2
-                 <= card["box"][1] + 0.75 * (card["box"][3] - card["box"][1])]
-        fh, fw = frame.shape[:2]
-        x0, y0, x1, y1 = card["box"]
-        for fy0, fy1 in GIG_TIMER_BANDS:
-            crop = frame[int((y0 + fy0 * (y1 - y0)) * fh):int((y0 + fy1 * (y1 - y0)) * fh),
-                         int((x0 + 0.1 * (x1 - x0)) * fw):int((x1 - 0.1 * (x1 - x0)) * fw)]
-            if crop.size == 0 or self._ocr is None:
-                continue
-            gray = cv2.resize(cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY), None, fx=3, fy=3, interpolation=cv2.INTER_CUBIC)
-            for thresh in (170, 0):
-                flag = cv2.THRESH_BINARY_INV | (cv2.THRESH_OTSU if thresh == 0 else 0)
-                binary = cv2.copyMakeBorder(cv2.threshold(gray, thresh, 255, flag)[1], 10, 10, 10, 10,
-                                            cv2.BORDER_CONSTANT, value=255)
-                try:
-                    texts.append(self._ocr.line(binary, 7))
-                except Exception:  # noqa: BLE001 – read error: one vote less
-                    pass
-        return gig_timer_vote(texts, card["duration"])
 
-    def _read_timer(self, frame: np.ndarray, box: Optional[list[float]], duration: int) -> Optional[int]:
-        """Read the time left exactly: crop scaled up 4×, bright text, only digits and “:” (the general reading likes
-        to
-                turn “1:36:38” into “4:36:98”). Only valid if at most as long as the gig."""
-        if box is None or self._ocr is None:
-            return None
-        fh, fw = frame.shape[:2]
-        crop = frame[max(0, int(box[1] * fh)):int(box[3] * fh), max(0, int(box[0] * fw)):int(box[2] * fw)]
-        if crop.size == 0:
-            return None
-        gray = cv2.resize(cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY), None, fx=4, fy=4, interpolation=cv2.INTER_CUBIC)
-        for thresh in (170, 0):
-            flag = cv2.THRESH_BINARY_INV | (cv2.THRESH_OTSU if thresh == 0 else 0)
-            binary = cv2.copyMakeBorder(cv2.threshold(gray, thresh, 255, flag)[1], 10, 10, 10, 10,
-                                        cv2.BORDER_CONSTANT, value=255)
-            try:
-                seconds = parse_timer(self._ocr.line(binary, 7, "0123456789:"))
-            except Exception:  # noqa: BLE001 – read error: then not
-                seconds = None
-            if seconds is not None and 0 < seconds <= duration + 60:
-                return seconds
-        return None
 
     # ------------------------------------------------------------------ Collection times (survive restarts)
     def _load_state(self) -> None:
@@ -1279,77 +552,9 @@ class Navigator:
         except OSError:
             pass
 
-    def _gigs_window(self) -> Optional[dict]:
-        """Fixer Gigs window of the map (kind “gigs” from exploring, or the name)."""
-        return next((e for e in self.map.entries if e.get("kind") == "Fenster / Bereich" and (
-            (e.get("extra") or {}).get("category") == "gigs" or "fixer gigs" in e["name"].lower())), None)
 
-    @staticmethod
-    def _send_box(words) -> Optional[list[float]]:
-        """“SEND PETS” (two words side by side) or “SEND” alone."""
-        norm = [(re.sub(r"[^a-z]", "", w.lower()), b) for w, b in words]
-        return next((b for w, b in norm if w in ("send", "sendpets")), None)
 
-    def _send_pets(self, nth: int = 1) -> None:
-        """Pets window after “Send Pets”: scroll to the very bottom, click ONE pet – for the n-th gig the n-th from the
-        end (so in turn one of the last GIGS_PETS, whichever); the click sends it off. One gig at a time.
-        Unknown steps are logged and saved as an image (debug/makro_gigs_*.jpg)."""
-        roi, frame = self._window_area({"name": "Pets"})
-        x0, y0, x1, y1 = roi
-        grid = [x0 + 0.06 * (x1 - x0), y0 + 0.30 * (y1 - y0), x0 + 0.94 * (x1 - x0), y0 + 0.86 * (y1 - y0)]
-        center = ((grid[0] + grid[2]) / 2, (grid[1] + grid[3]) / 2)
-        # until the list is at the bottom: “bottom” = the content doesn't shift anymore (phase correlation). The plain
-        # image comparison ran on forever with animated pets when the list was already at the bottom (2nd gig, owner)
-        from .explorer import scrolled_box
 
-        def grid_img() -> tuple[np.ndarray, np.ndarray]:
-            f = self._frame()
-            fh, fw = f.shape[:2]
-            crop = f[int(grid[1] * fh):int(grid[3] * fh), int(grid[0] * fw):int(grid[2] * fw)]
-            return f, cv2.resize(cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY), (480, 270), interpolation=cv2.INTER_AREA)
-
-        frame, last = grid_img()
-        still = 0
-        for _ in range(25):
-            self._wheel(center, -SCROLL_NOTCHES)
-            time.sleep(0.35)
-            frame, now = grid_img()
-            if scrolled_box(last, now) is None:
-                still += 1
-                if still >= 2:
-                    break                                 # nothing shifted twice: arrived at the bottom
-            else:
-                still = 0
-            last = now
-        tiles = self._pet_tiles(frame, grid)
-        if not tiles:
-            self.log(tr("No pets recognised in the window."))
-            self._snap("gigs_pets")
-            self._close_any_quiet()
-            return
-        # A click on the pet sends it off – no confirmation (owner 08.10.2026). First the n-th from the end;
-        # if the pets window stays open (pet already busy or similar), try the others of the last GIGS_PETS.
-        gigs = self._gigs_window() or {"name": "Fixer Gigs"}
-        order = [nth] + [k for k in range(1, GIGS_PETS + 1) if k != nth]
-        for k in order[:min(GIGS_PETS, len(tiles))]:
-            self._click_roi(tiles[-k])
-            self.log(tr("Clicked pet no. {n} from the end.", n=k))
-            end = time.monotonic() + 2.5
-            while time.monotonic() < end:
-                time.sleep(STEP_WAIT * 2)
-                frame = self._frame()
-                if self._is_open(gigs, frame) or self._screen(frame)[0] == "none":
-                    self.log(tr("Pet sent."))
-                    return
-        self.log(tr("No pet could be sent – the image is in the debug folder."))
-        self._snap("gigs_pets_offen")
-        self._close_any_quiet()
-
-    def _pet_tiles(self, frame: np.ndarray, grid: list[float]) -> list[list[float]]:
-        """Pet tiles in the grid (reading order). The grid follows from the name tags at the bottom of the tiles
-        (“Maine”, “Rias” …): rows = same height, columns = same spacing. A tile counts if a name is in it or its
-        content is sharp (empty slots are smooth)."""
-        return pet_tiles(frame, grid, vision.words_in(frame, grid, self._ocr))
 
     def _idle_wait(self, seconds: float) -> None:
         """Wait without input: mouse/window free, Anti-AFK may run meanwhile; Esc/“Stop” abort."""
