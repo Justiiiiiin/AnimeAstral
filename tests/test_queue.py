@@ -4,7 +4,8 @@ import unittest
 import _env  # noqa: F401
 import numpy as np
 
-from astral_monitor.automation import fmt_wait, gig_cards, gig_next_due, gig_timer_box, hud_locate, \
+from astral_monitor.automation import fmt_wait, gig_cards, gig_next_due, gig_refresh_box, gig_refresh_read, gig_slots, \
+    gig_timer_box, hud_locate, \
     leave_before, next_task, parse_timer, pet_tiles, user_moved
 
 
@@ -46,6 +47,35 @@ class QueueTest(unittest.TestCase):
         self.assertEqual(gig_next_due(cards[:1] + cards[2:], {0: 5798, 1: 5822}), 5798)
         self.assertEqual(gig_next_due(cards[:1], {0: 99999}), 1200)       # implausible: discarded, check again soon
         self.assertEqual(gig_next_due(cards[:1], {}), 1200)   # time unreadable: check again in 20 min
+
+    def test_gig_refresh(self):
+        # owner 09.10.2026: one Standard gig running (1 h), two slots empty, “NEW GIGS IN 27:10” – earlier the
+        # macro only knew the running gig and waited the whole hour
+        words = [("NEW", [0.338, 0.277, 0.379, 0.298]), ("GIGS", [0.384, 0.277, 0.43, 0.298]),
+                 ("IN", [0.435, 0.277, 0.448, 0.298]), ("27:10", [0.452, 0.277, 0.49, 0.298]),
+                 ("SLOTS", [0.6, 0.277, 0.65, 0.298]), ("1/3", [0.655, 0.277, 0.68, 0.298]),
+                 ("STANDARD", [0.331, 0.373, 0.4, 0.393]), ("1H", [0.41, 0.373, 0.428, 0.393]),
+                 ("WORKING", [0.352, 0.427, 0.408, 0.44]), ("left", [0.393, 0.702, 0.414, 0.719])]
+        cards = gig_cards(words)
+        self.assertEqual(len(cards), 1)
+        self.assertEqual(gig_slots(words), 3)
+        box = gig_refresh_box(words)
+        self.assertLessEqual(box[0], 0.452)                   # the time lies inside the area
+        self.assertGreaterEqual(box[2], 0.49)
+        self.assertEqual(gig_next_due(cards, {0: 3300}, 1630, 3), 1630)    # new gigs come first
+        self.assertEqual(gig_next_due(cards, {0: 900}, 1630, 3), 900)      # the running gig ends first
+        self.assertEqual(gig_next_due(cards, {0: 3300}, None, 3), 600)     # countdown unreadable: 10 min
+        self.assertEqual(gig_next_due(cards, {0: 3300}, 99999, 3), 600)    # implausible reading
+        self.assertEqual(gig_next_due([], {}, 1630, 3), 1630)              # all slots empty
+        # time not read: area right of “IN”; nothing after “NEW” read: no guessing
+        box = gig_refresh_box(words[:3])
+        self.assertGreater(box[0], 0.448)
+        self.assertIsNone(gig_refresh_box([("NEW", [0.338, 0.277, 0.379, 0.298])]))
+        self.assertEqual(gig_refresh_read(words), 1630)          # fallback: the general reading
+        self.assertIsNone(gig_refresh_box([("STANDARD", [0.331, 0.373, 0.4, 0.393])]))
+        self.assertEqual(gig_slots([("SLOTS", [0, 0, 0.1, 0.1]), ("3/3", [0.1, 0, 0.2, 0.1])]), 3)
+        self.assertEqual(gig_slots([("SLOTS2/4", [0, 0, 0.1, 0.1])]), 4)
+        self.assertEqual(gig_slots([]), 3)
 
     def test_user_moved(self):
         rect = (0, 0, 1920, 1080)

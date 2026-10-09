@@ -326,7 +326,7 @@ DE: dict[str, str] = {
     'Fixer Gigs (W21)': 'Fixer Gigs (W21)',
     'Fixer Gigs (W21): the macro claims finished gigs and sends new ones with one pet each – one of the last three. Each gig takes 20 min, 1 h or 3 h; the macro reads the time left and only comes back when one is done. It never presses “Finish Now”.\n\nGuild missions: claim “Personal” and “Guild Weekly” once a day.\n\nProgressions: presses “Auto All” once – it applies to all worlds.\n\nOnly works with “Allow macro” – between the steps of the farm routine, while a raid is farming or on its own.': 'Fixer Gigs (W21): Das Makro holt fertige Gigs ab („Claim“) und schickt neue mit je einem Pet los – eins der letzten drei. Jeder Gig dauert 20 Min., 1 Std. oder 3 Std.; das Makro liest die Restzeit und kommt erst wieder, wenn einer fertig ist. „Finish Now“ drückt es nie.\n\nGilden-Missionen: einmal am Tag „Personal“ und „Guild Weekly“ abholen.\n\nProgressions: drückt einmal „Auto All“ – das gilt für alle Welten.\n\nFunktioniert nur mit „Makro erlauben“ – zwischen den Schritten der Farm-Routine, während ein Raid farmt oder ganz für sich.',
     'Fixer Gigs is unknown yet – run “Explore” once.': 'Fixer Gigs ist noch unbekannt – lass einmal „Erkunden“ laufen.',
-    'Fixer Gigs: cards not recognized – the image is in the debug folder.': 'Fixer Gigs: Karten nicht erkannt – das Bild liegt im Debug-Ordner.',
+    'Fixer Gigs: no cards recognized ({status}) – the image is in the debug folder.': 'Fixer Gigs: keine Karten erkannt ({status}) – das Bild liegt im Debug-Ordner.',
     'Fixer Gigs: next visit in {time}.': 'Fixer Gigs: nächster Besuch in {time}.',
     'Fixer Gigs: nothing finished yet – checking again in {time}.': 'Fixer Gigs: noch nichts fertig – ich schaue in {time} wieder vorbei.',
     'Fixer Gigs: {cards}': 'Fixer Gigs: {cards}',
@@ -1026,4 +1026,6 @@ DE: dict[str, str] = {
     'Last 14 days': 'Letzte 14 Tage',
     'Window capture (WGC)': 'Fenster-Capture (WGC)',
     'Screen capture (fallback)': 'Bildschirm-Capture (Fallback)',
+    '{count} empty, new gigs in {time}': '{count} leer, neue Gigs in {time}',
+    '{count} empty': '{count} leer',
 }

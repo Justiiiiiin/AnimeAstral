@@ -269,6 +269,8 @@ def parse_timer(text: str) -> Optional[int]:
 # random (owner 08.10.2026) – so read per card instead of fixed times.
 GIG_KINDS = {"quick": 20 * 60, "standard": 3600, "big": 3 * 3600, "bis": 3 * 3600}
 GIG_NAMES = {20 * 60: N_("Quick 20 min"), 3600: N_("Standard 1 h"), 3 * 3600: N_("Big Job 3 h")}
+GIG_SLOTS = 3                 # “SLOTS 3/3” – after a claim a slot stays empty until “NEW GIGS IN …” runs out
+GIG_REFRESH_MAX = 4 * 3600    # longer “NEW GIGS IN” readings are misreads
 
 
 def gig_cards(words: list[tuple[str, list[float]]]) -> list[dict]:
@@ -318,9 +320,58 @@ def gig_timer_box(card: dict) -> Optional[list[float]]:
             left[3] + 0.4 * h]
 
 
-def gig_next_due(cards: list[dict], timers: dict[int, Optional[int]]) -> int:
+def gig_refresh_box(words: list[tuple[str, list[float]]]) -> Optional[list[float]]:
+    """Area of the countdown “NEW GIGS IN 52:37” above the cards (time until empty slots get new gigs) – for the
+    exact digit reading. None = the line wasn't read."""
+    norm = [(re.sub(r"[^a-z0-9:]", "", w.lower()), b) for w, b in words]
+    new = next((b for w, b in norm if w == "new"), None)
+    if new is None:
+        return None
+    h = new[3] - new[1]
+    row = [(w, b) for w, b in norm if abs((b[1] + b[3]) / 2 - (new[1] + new[3]) / 2) < 0.6 * h
+           and new[2] <= b[0] < new[0] + 16 * h]
+    timer = next((b for w, b in row if re.search(r"\d:\d", w)), None)       # not “3/3” of “SLOTS”
+    if timer is not None:                                 # the general reading found the time: read it exactly there
+        before = max((b[2] for w, b in row + [("new", new)] if b[2] <= timer[0] + 0.1 * h), default=0.0)
+        return [max(timer[0] - 0.5 * h, before + 0.1 * h), timer[1] - 0.4 * h, timer[2] + 0.8 * h,
+                timer[3] + 0.4 * h]                       # not into “IN” (its “N” was read as “1”)
+    after = max((b[2] for w, b in row if w in ("gigs", "in")), default=None)
+    if after is None:                                     # neither the time nor “GIGS IN” read: don't guess
+        return None
+    return [after + 0.2 * h, new[1] - 0.4 * h, after + 3.6 * h, new[3] + 0.4 * h]
+
+
+def gig_refresh_read(words: list[tuple[str, list[float]]]) -> Optional[int]:
+    """Fallback: “NEW GIGS IN 52:37” from the general reading (when the exact digit reading fails)."""
+    box = gig_refresh_box(words)
+    if box is None:
+        return None
+    for w, b in words:
+        if b[0] < box[2] and b[2] > box[0] and b[1] < box[3] and b[3] > box[1]:
+            seconds = parse_timer(w)
+            if seconds is not None and 0 < seconds <= GIG_REFRESH_MAX:
+                return seconds
+    return None
+
+
+def gig_slots(words: list[tuple[str, list[float]]]) -> int:
+    """Number of gig slots from “SLOTS 3/3” (the second number); GIG_SLOTS if unreadable."""
+    norm = [(re.sub(r"[^a-z0-9/]", "", w.lower()), b) for w, b in words]
+    for i, (w, _b) in enumerate(norm):
+        if w.startswith("slots"):
+            rest = w[5:] or (norm[i + 1][0] if i + 1 < len(norm) else "")
+            m = re.fullmatch(r"\d/(\d)", rest)
+            if m and 1 <= int(m.group(1)) <= 6:
+                return int(m.group(1))
+    return GIG_SLOTS
+
+
+def gig_next_due(cards: list[dict], timers: dict[int, Optional[int]], refresh: Optional[int] = None,
+                 slots: Optional[int] = None) -> int:
     """Seconds until the next visit: smallest valid time left (at most as long as the gig); running gigs without a
-    readable time count as 20 min (then it checks), finished/free ones right away."""
+    readable time count as 20 min (then it checks), finished/free ones right away.
+    slots: number of slots – fewer cards than slots = empty slots waiting for new gigs (“NEW GIGS IN …”, refresh in
+    seconds; unreadable = check again in 10 min)."""
     due = []
     for i, card in enumerate(cards):
         if card["state"] != "working":
@@ -328,6 +379,8 @@ def gig_next_due(cards: list[dict], timers: dict[int, Optional[int]]) -> int:
             continue
         t = timers.get(i)
         due.append(t if t is not None and 0 < t <= card["duration"] + 60 else min(card["duration"], 20 * 60))
+    if slots is not None and len(cards) < slots:
+        due.append(refresh if refresh is not None and 0 < refresh <= GIG_REFRESH_MAX else 10 * 60)
     return min(due) if due else 20 * 60
 
 
@@ -1010,6 +1063,12 @@ class Navigator:
         frame = self._frame()
         timers = {i: self._read_timer(frame, gig_timer_box(c), c["duration"]) for i, c in enumerate(cards)
                   if c["state"] == "working"}
+        slots = gig_slots(words)
+        refresh = None
+        if len(cards) < slots:                            # empty slots: new gigs only after “NEW GIGS IN …”
+            refresh = self._read_timer(frame, gig_refresh_box(words), GIG_REFRESH_MAX) or gig_refresh_read(words)
+            if refresh is None:
+                self._snap("gigs_refresh")
         parts = []
         for i, c in enumerate(cards):
             kind = tr(GIG_NAMES.get(c["duration"], "Gig"))
@@ -1020,12 +1079,17 @@ class Navigator:
                 parts.append(tr("{gig}: done", gig=kind))
             else:
                 parts.append(tr("{gig}: free", gig=kind))
-        if parts:
+        if len(cards) < slots:
+            empty = slots - len(cards)
+            parts.append(tr("{count} empty, new gigs in {time}", count=empty, time=fmt_wait(refresh)) if refresh
+                         else tr("{count} empty", count=empty))
+        if cards:
             self.log(tr("Fixer Gigs: {cards}", cards=" · ".join(parts)))
-        else:
-            self.log(tr("Fixer Gigs: cards not recognized – the image is in the debug folder."))
+        else:                                             # all slots empty – or the cards weren't read
+            self.log(tr("Fixer Gigs: no cards recognized ({status}) – the image is in the debug folder.",
+                        status=" · ".join(parts)))
             self._snap("gigs")
-        wait = max(60, gig_next_due(cards, timers) + 20)
+        wait = max(60, gig_next_due(cards, timers, refresh, slots) + 20)
         self.gigs_next = time.time() + wait
         self._save_state()
         self.log(tr("Fixer Gigs: next visit in {time}.", time=fmt_wait(wait)))

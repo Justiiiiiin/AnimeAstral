@@ -4,6 +4,12 @@ Newest version at the top. Short bullet points, no explanations (those are in th
 A version's section becomes its release notes automatically when it is published
 (`tools/release_notes.py`) and can be read in the program under Settings → Program → “All versions”.
 
+## Unreleased
+
+### 🔧 Improved
+- Fixer Gigs: reads “NEW GIGS IN …” and refills empty slots in time
+- Fixer Gigs: next visit = whichever comes first, new gig or finished gig
+
 ## 0.9.9-beta.13
 
 ### ✨ New
