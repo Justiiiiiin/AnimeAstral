@@ -8,3 +8,5 @@ for _name in ("OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "OMP_THREAD_LIMIT", "MK
     os.environ.setdefault(_name, "1")
 
 from .version import __version__  # noqa: E402,F401
+
+__all__ = ["__version__"]

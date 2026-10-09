@@ -31,7 +31,7 @@ pause
 exit /b 0
 
 :nopython
-echo Python was not found. Please install Python 3.10 to 3.13 and enable "Add to PATH".
+echo Python was not found. Please install Python 3.13 and enable "Add to PATH".
 pause
 exit /b 1
 

@@ -100,7 +100,8 @@ class ControlBot:
     # ------------------------------------------------------------------ Thread
     def _run(self) -> None:
         try:
-            import discord  # noqa: F401 – load the heavy dependency only here
+            import importlib
+            importlib.import_module("discord")              # load the heavy dependency only here
         except ImportError:
             self.on_state(tr("Error: discord.py missing"), "")
             return

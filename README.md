@@ -175,7 +175,7 @@ python build_exe.py                        # build the EXE locally
 
 New version: bump `astral_monitor/version.py`, add a `## X.Y.Z` section to `CHANGELOG.md` and push the tag
 `vX.Y.Z` – GitHub Actions builds the program, installer, update package and release notes automatically.
-Python 3.12, PySide6, OpenCV, Tesseract. UI texts are written in English in the code (`tr()`); the German
+Python 3.13, PySide6, OpenCV, Tesseract. UI texts are written in English in the code (`tr()`); the German
 translation lives in `astral_monitor/i18n_de.py`.
 </details>
 

@@ -7,7 +7,7 @@ for you: **run it yourself, read the errors, fix them.**
 
 ## What the program is
 
-Windows desktop app (Python 3.12, PySide6) that watches the Roblox window of the game **Anime Astral Simulator** via
+Windows desktop app (Python 3.13, PySide6) that watches the Roblox window of the game **Anime Astral Simulator** via
 screen capture. It reads the wave counter (“Wave 12/100”) and the quest list with text recognition, counts **attempts
 and waves**, keeps statistics per raid and reports via **Discord webhook** (raid end, alerts, a self-updating status
 message, stats cards). It doesn't touch the Roblox process and **sends no input to Roblox – the only exception is the

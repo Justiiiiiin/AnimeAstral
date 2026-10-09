@@ -1,0 +1,35 @@
+name: Checks
+
+# Runs on every push and pull request: static check (pyflakes) and all tests incl. the offscreen UI test.
+# Catches errors before a release is tagged (the release workflow runs the tests again).
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: requirements-build.txt
+
+      - name: Install packages
+        run: python -m pip install -r requirements-build.txt pyflakes==4.0.2
+
+      - name: Static check (pyflakes)
+        run: python -m pyflakes astral_monitor tools build_exe.py run.py
+
+      - name: Tests
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: python -m unittest discover -s tests -v
