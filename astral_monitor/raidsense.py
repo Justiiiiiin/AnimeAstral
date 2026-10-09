@@ -1,13 +1,12 @@
-"""Welcher Raid läuft? (ohne Qt, Wunsch des Eigentümers 08.10.2026) – unabhängig von der Kamera:
+"""Which raid is running? (without Qt, owner's wish 08.10.2026) – independent of the camera:
 
-1. **Raid-Fenster mitlesen:** Bevor man einem Raid beitritt (selbst oder per Makro), ist das Raid-Fenster offen, der
-   Name steht groß in Rot/Orange unter dem Banner („Holy Grail War“). Die Überwachung schaut alle paar Sekunden, ob so
-   ein Fenster offen ist, und merkt sich den Namen. Beginnt danach ein neuer Lauf – und war der Wellenzähler
-   zwischendurch weg (Teleport) –, gehört er zu diesem Raid. Nur angeschaut und im selben Raid geblieben (Auto Retry)
-   zählt nicht.
-2. (geplant) **Drops:** eindeutige Drops je Raid aus den „Enemy Drops“-Listen (lernt das Erkunden) – für Auto-Join
-   wie MaxTac Call, wo es kein Raid-Fenster gibt.
-"""
+1. **Read along the raid window:** before you join a raid (yourself or via the macro), the raid window is open and
+   the name is in large red/orange letters below the banner (“Holy Grail War”). The monitoring checks every few
+   seconds whether such a window is open and remembers the name. If a new run starts afterwards – and the wave
+   counter was gone in between (teleport) – it belongs to that raid. Only looking and staying in the same raid
+   (Auto Retry) doesn't count.
+2. (planned) **Drops:** drops unique to one raid from the “Enemy Drops” lists (learned by exploring) – for
+   auto-join modes like MaxTac Call that have no raid window."""
 from __future__ import annotations
 
 import difflib
@@ -21,10 +20,10 @@ from . import vision
 
 log = logging.getLogger("raid")
 
-RAID_TITLES = ("raid", "boss rush", "defense mode", "tower")   # Banner-Titel von Fenstern mit Create/Join
-SEEN_TWICE = 2          # gleicher Name so oft gelesen = sicher (Lesefehler erzeugen sonst falsche Raids)
-VALID_FOR = 300.0       # so lange nach dem Fenster darf der Lauf beginnen (Lobby, Countdown)
-ABSENT_MIN = 2.0        # so lange muss der Wellenzähler dazwischen weg gewesen sein (Teleport in den Raid)
+RAID_TITLES = ("raid", "boss rush", "defense mode", "tower")   # banner titles of windows with Create/Join
+SEEN_TWICE = 2          # same name read this often = certain (misreads would otherwise create wrong raids)
+VALID_FOR = 300.0       # the run may start this long after the window (lobby, countdown)
+ABSENT_MIN = 2.0        # the wave counter must have been gone this long in between (teleport into the raid)
 
 
 def norm(name: str) -> str:
@@ -32,7 +31,7 @@ def norm(name: str) -> str:
 
 
 def match_name(read: str, known: list[str]) -> Optional[str]:
-    """Gelesenen Namen einem bekannten Raid zuordnen (Lesefehler: „Het Grail War“ ≈ „Holy Grail War“)."""
+    """Match a read name to a known raid (misreads: “Het Grail War” ≈ “Holy Grail War”)."""
     key = norm(read)
     if not key:
         return None
@@ -47,44 +46,44 @@ def match_name(read: str, known: list[str]) -> Optional[str]:
 
 class RaidSense:
     def __init__(self) -> None:
-        self.pending: Optional[str] = None                 # zuletzt sicher gelesener Raid-Name
+        self.pending: Optional[str] = None                 # last raid name read with certainty
         self.pending_ts = 0.0
         self._candidate: Optional[str] = None
         self._count = 0
         self._absent_since: Optional[float] = None
-        self._teleported = False                          # Zähler war nach dem Fenster lange genug weg
+        self._teleported = False                          # the counter was gone long enough after the window
 
-    # ------------------------------------------------------------------ 1. Raid-Fenster
+    # ------------------------------------------------------------------ 1. Raid window
     def seen_name(self, name: str, known: list[str], now: float) -> None:
-        """Name aus einem offenen Raid-Fenster (bereits gelesen). Bekannte Raids werden zugeordnet."""
+        """Name from an open raid window (already read). Known raids are matched."""
         name = match_name(name, known) or name.strip()
         if not norm(name):
             return
         if self._candidate and (norm(self._candidate) == norm(name) or difflib.SequenceMatcher(
                 None, norm(self._candidate), norm(name)).ratio() >= 0.85):
-            self._count += 1                              # kleine Lesefehler zählen als derselbe Name –
-            if name not in known:                         # bekannter Name gewinnt, sonst die erste Lesung
+            self._count += 1                              # small misreads count as the same name –
+            if name not in known:                         # a known name wins, otherwise the first reading
                 name = self._candidate
         else:
             self._candidate, self._count = name, 1
         if self._count >= SEEN_TWICE and (self.pending != name or now - self.pending_ts > 5):
             if self.pending != name:
-                log.info("Raid-Fenster: %s", name)
+                log.info("Raid window: %s", name)
             self.pending, self.pending_ts, self._teleported = name, now, False
 
     def wave_visible(self, visible: bool, now: float) -> None:
-        """Vom Wellenzähler: ist er weg (Teleport/Lobby), darf der nächste Lauf dem gelesenen Raid gehören."""
+        """From the wave counter: if it is gone (teleport/lobby), the next run may belong to the raid that was read."""
         if visible:
             if self._absent_since is not None and now - self._absent_since >= ABSENT_MIN \
                     and self.pending and now > self.pending_ts:
-                self._teleported = True                   # Zähler kam nach dem Raid-Fenster (wieder) ins Bild
+                self._teleported = True                   # the counter came (back) into the image after the raid window
             self._absent_since = None
         elif self._absent_since is None:
             self._absent_since = now
 
     def take(self, now: float) -> Optional[str]:
-        """Beim Beginn eines neuen Laufs: Raid-Name, falls ein Raid-Fenster kurz vorher offen war und man seither
-        teleportiert ist – sonst None (z. B. nur angeschaut, Auto Retry im selben Raid)."""
+        """When a new run starts: raid name, if a raid window was open shortly before and you have teleported since –
+                otherwise None (e.g. only looked, Auto Retry in the same raid)."""
         if not self.pending or now - self.pending_ts > VALID_FOR:
             return None
         if not (self._teleported or self._absent_since is not None):
@@ -95,7 +94,7 @@ class RaidSense:
 
 
 def read_raid_window(frame: np.ndarray, menu: "vision.MenuFrame", ocr) -> Optional[str]:
-    """Ist ein Raid-Fenster offen? Dann dessen Namen (rot/orange unter dem Banner), sonst None."""
+    """Is a raid window open? Then its name (red/orange below the banner), otherwise None."""
     state = menu.state(frame, ocr)
     if state is None:
         return None
@@ -109,15 +108,15 @@ def read_raid_window(frame: np.ndarray, menu: "vision.MenuFrame", ocr) -> Option
     return name or None
 
 
-# ---------------------------------------------------------------------- 2. Drops (Feld links über der Leiste unten)
-DROP_REGION = [0.08, 0.32, 0.86, 0.90]  # Drop-Kacheln (bis zu 4 Zeilen) über den Knöpfen unten – je nach GUI-Größe
-DROP_SCALE = 3                          # Beschriftungen sind winzig: vergrößert lesen
-DROP_HIT = 0.8                          # unscharfer Vergleich (Lesefehler „Sreet Cred“)
-DROP_CONFIRM = 2                        # so oft hintereinander vorne = Raid übernehmen
+# ---------------------------------------------------------------------- 2. Drops (area on the left above the bottom bar)
+DROP_REGION = [0.08, 0.32, 0.86, 0.90]  # drop tiles (up to 4 rows) above the buttons at the bottom – depending on the GUI size
+DROP_SCALE = 3                          # labels are tiny: read them enlarged
+DROP_HIT = 0.8                          # fuzzy comparison (misread “Sreet Cred”)
+DROP_CONFIRM = 2                        # in front this many times in a row = take over the raid
 
 
 GENERIC = {"token", "tokens", "coin", "coins", "shard", "shards", "key", "keys", "fragment", "fragments", "chest",
-           "box", "orb", "stone", "crystal", "part", "parts"}     # sagen allein nichts – Kennwörter entscheiden
+           "box", "orb", "stone", "crystal", "part", "parts"}     # say nothing on their own – keywords decide
 
 
 def _keywords(name: str) -> list[str]:
@@ -134,9 +133,9 @@ def _word_hit(key: str, read: list[str]) -> bool:
 
 
 class DropIndex:
-    """Welche Drops gibt es nur in genau einem Raid? (aus den „Enemy Drops“-Listen, die das Erkunden liest).
-    Verglichen werden die Kennwörter eines Drops einzeln („Primordial“, „Street“+„Cred“) – die Reihenfolge der
-    gelesenen Wörter im Drop-Feld ist nicht verlässlich."""
+    """Which drops exist in exactly one raid? (from the “Enemy Drops” lists read by exploring).
+        The keywords of a drop are compared one by one (“Primordial”, “Street”+“Cred”) – the order of the words read
+        in the drop area isn't reliable."""
 
     def __init__(self, drops_by_raid: dict[str, list[str]]) -> None:
         owners: dict[str, set[str]] = {}
@@ -160,7 +159,7 @@ class DropIndex:
         return cls(table)
 
     def votes(self, words: list[str]) -> dict[str, int]:
-        """Treffer je Raid für die gelesenen Wörter des Drop-Felds (nur eindeutige Drops zählen)."""
+        """Hits per raid for the words read in the drop area (only unique drops count)."""
         read = [norm(w) for w in words if norm(w)]
         out: dict[str, int] = {}
         for key, raid in self.unique.items():
@@ -170,7 +169,7 @@ class DropIndex:
 
 
 class DropWatcher:
-    """Entscheidet über mehrere Lesungen: derselbe Raid DROP_CONFIRM-mal hintereinander klar vorne -> Raid."""
+    """Decides over several readings: the same raid clearly ahead DROP_CONFIRM times in a row -> raid."""
 
     def __init__(self) -> None:
         self._leader: Optional[str] = None
@@ -182,7 +181,7 @@ class DropWatcher:
         ranked = sorted(votes.items(), key=lambda kv: -kv[1])
         leader, score = ranked[0]
         if len(ranked) > 1 and ranked[1][1] >= score:
-            self._leader, self._streak = None, 0          # Gleichstand: nichts sagen
+            self._leader, self._streak = None, 0          # tie: say nothing
             return None
         if leader == self._leader:
             self._streak += 1
@@ -195,16 +194,16 @@ class DropWatcher:
 
 
 def drop_scale(frame_h: int, wave_text_h: Optional[float]) -> float:
-    """Vergrößerung fürs Drop-Feld aus der Spiel-GUI-Größe: Die Beschriftungen sind gut ein Drittel so hoch wie
-    der Wellenzähler (gemessen bei GUI 50 % und 100 %); Tesseract braucht ~20 px. Ohne Zähler: aus der Bildhöhe."""
+    """Scale for the drop area from the game's GUI size: the labels are about a third as tall as the wave counter
+        (measured at GUI 50 % and 100 %); Tesseract needs ~20 px. Without a counter: from the image height."""
     if wave_text_h and wave_text_h > 4:
         return max(1.0, min(3.5, 20.0 / (0.4 * wave_text_h)))
     return max(1.5, min(DROP_SCALE, DROP_SCALE * 720 / max(1, frame_h)))
 
 
 def read_drop_words(frame: np.ndarray, ocr, wave_text_h: Optional[float] = None) -> list[str]:
-    """Wörter im Drop-Feld. Die Lage hängt von der GUI-Größe des Spiels ab, darum ein großzügiger Bereich (unten,
-    ohne die Randleisten); die Vergrößerung richtet sich nach der Größe des Wellenzählers. ~0,3–0,7 s – selten!"""
+    """Words in the drop area. The position depends on the game's GUI size, hence a generous area (at the bottom,
+        without the side bars); the scale follows the size of the wave counter. ~0.3–0.7 s – rarely!"""
     import cv2
     fh, fw = frame.shape[:2]
     x0, y0, x1, y1 = DROP_REGION

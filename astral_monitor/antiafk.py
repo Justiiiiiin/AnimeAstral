@@ -1,10 +1,9 @@
-"""Anti-AFK (optional, Standard aus): alle N Minuten jedes Roblox-Fenster kurz nach vorne, 4× Esc, zurück.
+"""Anti-AFK (optional, off by default): every N minutes bring each Roblox window to the front briefly, Esc 4×, back.
 
-Seit 0.9.5-beta.2 nach dem bewährten AutoHotkey-Skript des Eigentümers: alle Clients, Esc statt Leertaste, zusätzlich
-Esc direkt an das Fenster, danach Roblox-Speicher leeren. Minimierte Fenster werden wiederhergestellt und bleiben offen
-(minimiert liefert die Aufnahme keine Bilder – Wunsch des Eigentümers). Kein Warten, wenn der Nutzer gerade tippt:
-sofort zum fälligen Zeitpunkt, damit Roblox beim Spielen nicht unnötig lange vorne bleibt. Nur während das Makro
-klickt, wird gewartet."""
+Since 0.9.5-beta.2 after the owner's proven AutoHotkey script: all clients, Esc instead of space, plus Esc sent
+directly to the window, then clear Roblox's memory. Minimized windows are restored and stay open (minimized, the
+capture gets no images – owner's wish). No waiting while the user is typing: right at the due time, so Roblox
+doesn't stay in front for long while you play. It only waits while the macro is clicking."""
 from __future__ import annotations
 
 import logging
@@ -16,7 +15,7 @@ from .i18n import tr
 
 log = logging.getLogger("antiafk")
 
-RETRY_SECONDS = 30.0         # nach einem Fehlschlag (Roblox nicht gefunden …) erneut versuchen
+RETRY_SECONDS = 30.0         # retry after a failure (Roblox not found …)
 
 
 class AntiAfk(threading.Thread):
@@ -29,11 +28,11 @@ class AntiAfk(threading.Thread):
         self._busy = busy or _macro_busy
         self._get, self._event = get_settings, event
         self._jump = jump or jump_in_roblox
-        self._idle = idle_seconds or user_idle_seconds   # nicht mehr genutzt (kein Warten), bleibt für Aufrufer
+        self._idle = idle_seconds or user_idle_seconds   # no longer used (no waiting), kept for callers
         self._clock = clock
         self._halt = threading.Event()
         self._enabled = False
-        self.next_at: Optional[float] = None       # Zeitpunkt (clock) des nächsten Sprungs; None = aus
+        self.next_at: Optional[float] = None       # time (clock) of the next jump; None = off
 
     def stop(self) -> None:
         self._halt.set()
@@ -49,29 +48,29 @@ class AntiAfk(threading.Thread):
                 log.exception("Anti-AFK: unerwarteter Fehler")
 
     def tick(self, now: float) -> None:
-        """Ein Durchlauf (öffentlich für Tests)."""
+        """One pass (public for tests)."""
         s = self._get()
         interval = max(1, min(19, int(s.anti_afk_minutes))) * 60
         if not s.anti_afk_enabled:
             self._enabled, self.next_at = False, None
             return
-        if not self._enabled:                      # gerade eingeschaltet: erster Sprung nach einem Intervall
+        if not self._enabled:                      # just switched on: first jump after one interval
             self._enabled, self.next_at = True, now + interval
             return
         if self.next_at is not None and self.next_at - now > interval:
-            self.next_at = now + interval          # Intervall wurde verkürzt
+            self.next_at = now + interval          # the interval was shortened
         if self.next_at is None or now < self.next_at:
             return
-        if self._busy():                            # Makro klickt gerade: nicht dazwischenfunken
+        if self._busy():                            # the macro is clicking right now: don't interfere
             return
         ok, info = self._jump(s.window_title)
         if ok:
             self.next_at = now + interval
-            log.info("Anti-AFK: ausgeführt (%s)", info)
+            log.info("Anti-AFK: done (%s)", info)
             self._event(tr("Anti-AFK: kept Roblox active ({info})", info=info), "info")
         else:
             self.next_at = now + RETRY_SECONDS
-            log.info("Anti-AFK: nicht möglich – %s", info)
+            log.info("Anti-AFK: not possible – %s", info)
             self._event(tr("Anti-AFK: {reason}", reason=info), "warn")
 
 
@@ -85,7 +84,7 @@ def _macro_busy() -> bool:
 
 # ------------------------------------------------------------------ Windows
 def user_idle_seconds() -> float:
-    """Sekunden seit der letzten Maus-/Tastatureingabe des Nutzers (GetLastInputInfo)."""
+    """Seconds since the user's last mouse/keyboard input (GetLastInputInfo)."""
     import ctypes
     from ctypes import wintypes
 
@@ -99,12 +98,12 @@ def user_idle_seconds() -> float:
 
 
 ROBLOX_EXE = "robloxplayerbeta.exe"
-ESC_PRESSES = 4              # gerade Anzahl: Roblox-Menü auf und wieder zu (keine Wirkung im Spiel)
+ESC_PRESSES = 4              # even number: Roblox menu opens and closes again (no effect in the game)
 
 
 def roblox_windows(title: str = "Roblox") -> list[int]:
-    """Alle Hauptfenster der Roblox-Clients (Prozess RobloxPlayerBeta.exe) – auch minimierte, auch mehrere.
-    Fallback: Fenster mit dem Titel."""
+    """All main windows of the Roblox clients (process RobloxPlayerBeta.exe) – minimized ones too, several too.
+        Fallback: window with the title."""
     import ctypes
     from ctypes import wintypes
 
@@ -125,7 +124,7 @@ def roblox_windows(title: str = "Roblox") -> list[int]:
             pid = wintypes.DWORD()
             u32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
             if pid.value in pids and u32.IsWindowVisible(hwnd) and u32.GetWindowTextLengthW(hwnd) \
-                    and not u32.GetWindow(hwnd, 4):        # GW_OWNER: nur Hauptfenster
+                    and not u32.GetWindow(hwnd, 4):        # GW_OWNER: main windows only
                 found.append(int(hwnd))
             return True
         u32.EnumWindows(callback, 0)
@@ -137,9 +136,9 @@ def roblox_windows(title: str = "Roblox") -> list[int]:
 
 
 def wake_roblox(title: str) -> tuple[bool, str]:
-    """Wie das bewährte AutoHotkey-Skript des Eigentümers: jedes Roblox-Fenster kurz nach vorne (minimierte werden
-    wiederhergestellt und bleiben offen), 4× Esc per SendInput, zusätzlich 1× Esc direkt an das Fenster; danach
-    Roblox-Arbeitsspeicher leeren und das vorherige Fenster zurückholen. Rückgabe (geklappt?, Beschreibung)."""
+    """Like the owner's proven AutoHotkey script: bring each Roblox window to the front briefly (minimized ones are
+        restored and stay open), Esc 4× via SendInput, plus Esc 1× directly to the window; then clear Roblox's working
+        memory and bring back the previous window. Returns (worked?, description)."""
     import ctypes
     from ctypes import wintypes
 
@@ -154,7 +153,7 @@ def wake_roblox(title: str) -> tuple[bool, str]:
     previous = u32.GetForegroundWindow()
     done = 0
     for hwnd in windows:
-        if u32.IsIconic(hwnd):                     # minimiert: wiederherstellen und offen lassen (sonst keine Bilder)
+        if u32.IsIconic(hwnd):                     # minimized: restore and leave open (otherwise no images)
             u32.ShowWindow(hwnd, 9)                # SW_RESTORE
             time.sleep(0.15)
         if not _bring_to_front(hwnd):
@@ -165,7 +164,7 @@ def wake_roblox(title: str) -> tuple[bool, str]:
             time.sleep(0.03)
             _key(0x1B, down=False, scan=0x01)
             time.sleep(0.1)
-        u32.PostMessageW(hwnd, 0x0100, 0x1B, 0x00010001)          # WM_KEYDOWN Esc (wie ControlSend)
+        u32.PostMessageW(hwnd, 0x0100, 0x1B, 0x00010001)          # WM_KEYDOWN Esc (like ControlSend)
         u32.PostMessageW(hwnd, 0x0101, 0x1B, 0xC0010001)          # WM_KEYUP
         done += 1
     trim_roblox_memory()
@@ -177,7 +176,8 @@ def wake_roblox(title: str) -> tuple[bool, str]:
 
 
 def trim_roblox_memory() -> int:
-    """Arbeitsspeicher der Roblox-Prozesse freigeben (EmptyWorkingSet, wie im AutoHotkey-Skript). Rückgabe: Anzahl."""
+    """Free the working memory of the Roblox processes (EmptyWorkingSet, as in the AutoHotkey script). Returns the
+    count."""
     import ctypes
     count = 0
     try:
@@ -197,13 +197,13 @@ def trim_roblox_memory() -> int:
     return count
 
 
-jump_in_roblox = wake_roblox                       # alter Name (Tests, ältere Aufrufer)
+jump_in_roblox = wake_roblox                       # old name (tests, older callers)
 
 
 def _restore(roblox, previous) -> None:
-    """Vorheriges Fenster wieder sichtbar nach vorne. Nur aktivieren reicht nicht: manche Programme (z. B. Electron-
-    Apps) werden dadurch aktiv, aber nicht nach oben geholt – Roblox bliebe sichtbar davor (gemeldet 06.10.2026).
-    Deshalb Roblox ganz nach hinten schieben und das vorherige Fenster ausdrücklich nach oben holen."""
+    """Bring the previous window visibly back to the front. Activating alone isn't enough: some programs (e.g.
+        Electron apps) become active but aren't raised – Roblox would stay visible in front (reported 06.10.2026).
+        So push Roblox to the very back and explicitly raise the previous window."""
     import ctypes
     from ctypes import wintypes
 
@@ -216,18 +216,18 @@ def _restore(roblox, previous) -> None:
     u32.SetWindowPos(roblox, wintypes.HWND(1), 0, 0, 0, 0, flags)   # HWND_BOTTOM
     if not previous or not u32.IsWindow(previous):
         return
-    target = u32.GetAncestor(previous, 3) or previous          # GA_ROOTOWNER: das sichtbare Hauptfenster
+    target = u32.GetAncestor(previous, 3) or previous          # GA_ROOTOWNER: the visible main window
     _bring_to_front(target)
     u32.BringWindowToTop(target)
     u32.SetWindowPos(target, wintypes.HWND(0), 0, 0, 0, 0, 0x0001 | 0x0002)   # HWND_TOP
 
 
 def _bring_to_front(hwnd) -> bool:
-    """SetForegroundWindow mit dem üblichen Alt-Trick (Windows erlaubt Hintergrundprogrammen sonst keinen Wechsel)."""
+    """SetForegroundWindow with the usual Alt trick (otherwise Windows doesn't let background programs switch)."""
     import ctypes
 
     u32 = ctypes.windll.user32
-    _key(0x12, down=True)                          # Alt kurz drücken: hebt die Fokussperre auf
+    _key(0x12, down=True)                          # press Alt briefly: lifts the focus lock
     _key(0x12, down=False)
     u32.SetForegroundWindow(hwnd)
     for _ in range(10):
@@ -244,7 +244,7 @@ def _press_space() -> None:
 
 
 def _key(vk: int, down: bool, scan: int = 0) -> None:
-    """Ein Tastenereignis per SendInput (mit Scan-Code, den Spiele bevorzugt auswerten)."""
+    """One key event via SendInput (with the scan code that games prefer to evaluate)."""
     import ctypes
     from ctypes import wintypes
 

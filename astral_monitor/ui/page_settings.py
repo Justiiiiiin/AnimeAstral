@@ -1,4 +1,4 @@
-"""Seite „Einstellungen": Roblox-Helfer, Überwachung, Programm."""
+"""Page “Settings”: Roblox helpers, monitoring, program."""
 from __future__ import annotations
 
 import platform
@@ -23,7 +23,7 @@ from .widgets import (Card, ComboBox, DoubleSpinBox, InfoButton, SpinBox, column
 
 
 def bug_report_url(repo: str) -> str:
-    """Neue GitHub-Meldung, vorausgefüllt mit Version und System – ohne persönliche Daten (keine IDs, Links, Pfade)."""
+    """New GitHub issue, pre-filled with version and system – without personal data (no IDs, links, paths)."""
     body = "\n\n\n".join([f"**{tr("What happened?")}**", f"**{tr("What did you expect?")}**",
                           f"---\nVersion {__version__} · {platform.system()} {platform.release()} "
                           f"({platform.version()})"])
@@ -31,7 +31,7 @@ def bug_report_url(repo: str) -> str:
 
 
 class SettingsPage(QWidget):
-    SAVES = True                                   # Speichern-Leiste unten (main_window)
+    SAVES = True                                   # save bar at the bottom (main_window)
 
     def __init__(self, main) -> None:
         super().__init__()
@@ -67,7 +67,7 @@ class SettingsPage(QWidget):
         root.addWidget(self.no_match)
 
         def stack(*cards) -> QWidget:
-            """Mehrere Karten untereinander als eine Spalte (für columns)."""
+            """Several cards one below the other as one column (for columns)."""
             col = QWidget()
             lay = QVBoxLayout(col)
             lay.setContentsMargins(0, 0, 0, 0)
@@ -172,7 +172,7 @@ class SettingsPage(QWidget):
         self.hk_status = label("", "small", wrap=True)
         keys.body.addWidget(self.hk_status)
         keys.body.addStretch(1)
-        # ------------------------------------------------------------------ Überwachung
+        # ------------------------------------------------------------------ Monitoring
         root.addWidget(section(tr("Monitoring")))
         perf = Card(tr("Performance"),
                     tr("How often the wave counter is read. “Balanced” (every 0.5 s) reliably detects the end of a "
@@ -219,7 +219,7 @@ class SettingsPage(QWidget):
         guard.body.addStretch(1)
         root.addLayout(columns(stack(perf, keys), guard))
 
-        # ------------------------------------------------------------------ Programm
+        # ------------------------------------------------------------------ Program
         ui = Card(tr("Interface"),
                   tr("A language change applies after a restart.\n\nIf you close the window, the program keeps "
                      "running in the tray (icon next to the clock). Right-click the icon: open, start/stop, pause, "
@@ -277,7 +277,7 @@ class SettingsPage(QWidget):
         self.zoom.setRange(theme.ZOOM_MIN, theme.ZOOM_MAX)
         self.zoom.setSuffix(" %")
         self.zoom.setSingleStep(5)
-        self.zoom.setKeyboardTracking(False)              # erst nach Enter/Verlassen anwenden, nicht bei jeder Ziffer
+        self.zoom.setKeyboardTracking(False)              # apply only after Enter/leaving the field, not on every digit
         self.zoom.setToolTip(tr("Custom value from {min} to {max} %", min=theme.ZOOM_MIN, max=theme.ZOOM_MAX))
         self.zoom.valueChanged.connect(self._set_zoom)
         zoom_row.addWidget(self.zoom)
@@ -572,16 +572,16 @@ class SettingsPage(QWidget):
 
         root.addWidget(section(tr("Debug")))
         from .events_card import EventsCard
-        self.events = EventsCard(main)                    # Debug: Protokoll live (an/aus)
+        self.events = EventsCard(main)                    # debug: live log (on/off)
         root.addWidget(self.events, 10)
         root.addStretch(1)
         root.addLayout(self._about_row())
         self._assign_groups(root)
         self.tab_group.buttons()[0].setChecked(True)
         self._show_group("Roblox")
-        self._search_index: list = []               # (Karte, durchsuchbarer Text) – beim ersten Suchen gefüllt
+        self._search_index: list = []               # (card, searchable text) – filled at the first search
 
-    # ------------------------------------------------------------------ Roblox-Profil
+    # ------------------------------------------------------------------ Roblox profile
     def _apply_profile(self) -> None:
         from .. import roblox_profile
         name = self.roblox_name.text().strip()
@@ -593,13 +593,13 @@ class SettingsPage(QWidget):
             self.profile_state.setText(tr("Loading …"))
 
     def show_profile(self, error: str = "") -> None:
-        """Vorschau und Status nach dem Laden (auch beim Start)."""
+        """Preview and status after loading (also at start-up)."""
         from .. import roblox_profile
         from .widgets import round_pixmap
         info = roblox_profile.load_info() if self.main.engine.settings.roblox_username else None
         pix = round_pixmap(roblox_profile.avatar_file(), theme.px(48)) if info else None
         self.avatar_preview.setPixmap(pix) if pix else self.avatar_preview.clear()
-        self.avatar_preview.setVisible(pix is not None)          # ohne Profil keine leere Lücke
+        self.avatar_preview.setVisible(pix is not None)          # no empty gap without a profile
         if error:
             self.profile_state.setText(error)
         elif info:
@@ -608,16 +608,16 @@ class SettingsPage(QWidget):
         else:
             self.profile_state.setText("")
 
-    # ------------------------------------------------------------------ Reiter
+    # ------------------------------------------------------------------ Tabs
     def _assign_groups(self, root) -> None:
-        """Karten den Abschnitten zuordnen (Reihenfolge wie auf der Seite: Abschnittsüberschrift, dann ihre Karten)."""
+        """Assign cards to the sections (order as on the page: section heading, then its cards)."""
         from PySide6.QtWidgets import QLabel
         self._groups: dict = {}
-        self._holders: dict = {}                          # Abschnitt -> Zeilen-Widgets (ganz ausblenden, sonst
-        current = None                                    # bleiben die Abstände leerer Zeilen stehen)
+        self._holders: dict = {}                          # section -> row widgets (hide them entirely, otherwise
+        current = None                                    # the spacing of empty rows stays)
         for i in range(root.count()):
             item = root.itemAt(i)
-            if item.layout() is not None and current is not None:   # Kartenreihe in ein Widget packen
+            if item.layout() is not None and current is not None:   # pack a row of cards into a widget
                 stretch = root.stretch(i)
                 root.takeAt(i)
                 lay = item.layout()
@@ -632,24 +632,24 @@ class SettingsPage(QWidget):
                 current = w
                 self._groups[w] = []
                 self._holders[w] = []
-            elif current is not None and w is not None:          # Karte oder Reihe mit mehreren Karten
+            elif current is not None and w is not None:          # card or row with several cards
                 self._groups[current] += [w] if isinstance(w, Card) else w.findChildren(Card)
                 self._holders[current].append(w)
 
     def _show_group(self, key: str) -> None:
-        """Nur einen Abschnitt zeigen (weniger Scrollen); die Suche zeigt dagegen alle Treffer."""
+        """Show only one section (less scrolling); the search shows all matches instead."""
         self._group = key
         if self.search.text().strip():
             return
         for sec, cards in self._groups.items():
             visible = sec.text() == tr(key).upper()
-            sec.setVisible(False)                          # der Reiter ersetzt die Überschrift
+            sec.setVisible(False)                          # the tab replaces the heading
             for card in cards:
                 card.setVisible(visible)
             for holder in self._holders.get(sec, ()):
                 holder.setVisible(visible)
 
-    # ------------------------------------------------------------------ Suche
+    # ------------------------------------------------------------------ Search
     def _build_index(self) -> None:
         from ..search import Haystack
         import re
@@ -666,12 +666,12 @@ class SettingsPage(QWidget):
                     parts.append(w.placeholderText())
                 elif isinstance(w, QComboBox):
                     parts += [w.itemText(i) for i in range(w.count())]
-                parts.append(w.toolTip())                    # auch die Erklärungen hinter ⓘ
+                parts.append(w.toolTip())                    # also the explanations behind ⓘ
             self._search_index.append((card, Haystack(tags.sub(" ", " ".join(parts)))))
 
     def _filter(self, text: str) -> None:
-        """Nur Karten zeigen, in denen alle Suchwörter vorkommen (Titel, Beschriftungen, ⓘ-Erklärungen) – tolerant
-        gegen Umlaute, Bindestriche und kleine Tippfehler (search.py)."""
+        """Only show cards containing all search words (title, labels, ⓘ explanations) – tolerant of umlauts,
+                hyphens and small typos (search.py)."""
         from PySide6.QtWidgets import QLabel
 
         from ..search import matches
@@ -688,14 +688,14 @@ class SettingsPage(QWidget):
             card.setVisible(match)
             shown += match
         for sec, holders in self._holders.items():
-            for holder in holders:                         # Reihe zeigen, sobald eine ihrer Karten passt
+            for holder in holders:                         # show a row as soon as one of its cards matches
                 holder.setVisible(any(not c.isHidden() for c in self._groups[sec]
                                       if holder is c or holder.isAncestorOf(c)))
         for sec in self.findChildren(QLabel, "section"):
             sec.setVisible(not words)
         self.no_match.setVisible(bool(words) and not shown)
 
-    # ------------------------------------------------------------------ Über (klein, ganz unten)
+    # ------------------------------------------------------------------ About (small, at the very bottom)
     def _about_row(self) -> QHBoxLayout:
         from .. import updater
         row = QHBoxLayout()
@@ -716,7 +716,7 @@ class SettingsPage(QWidget):
         row.addStretch(1)
         return row
 
-    # ------------------------------------------------------------------ Server-Favoriten
+    # ------------------------------------------------------------------ Server favorites
     def load_servers(self, s) -> None:
         self.servers.blockSignals(True)
         self.servers.clear()
@@ -744,7 +744,7 @@ class SettingsPage(QWidget):
     def _server_selected(self, row: int) -> None:
         favs = self._favs()
         if 0 <= row < len(favs) and favs[row]["link"] != self.main.engine.settings.private_server_link:
-            self.main.set_server_favorites(favs, favs[row]["link"])      # Auswahl = markierter Server
+            self.main.set_server_favorites(favs, favs[row]["link"])      # selection = marked server
 
     def _add_server(self) -> None:
         favs = self._favs()
@@ -813,7 +813,7 @@ class SettingsPage(QWidget):
         from .versions_dialog import VersionsDialog
         VersionsDialog(self.main).exec()
 
-    # ------------------------------------------------------------------ Darstellung
+    # ------------------------------------------------------------------ Appearance
     def _swatch(self, hex_color: str) -> QToolButton:
         btn = QToolButton()
         btn.setCheckable(True)
@@ -869,7 +869,7 @@ class SettingsPage(QWidget):
         self._sync_look(self.main.engine.settings)
 
     def _sync_look(self, s) -> None:
-        """Bedienelemente der Darstellung auf den gespeicherten Stand setzen (ohne erneut auszulösen)."""
+        """Set the appearance controls to the saved state (without triggering again)."""
         widgets = [self.design, self.zoom, self.auto_fit, self.reduce_motion, self.intro, self.bg_dim, self.seasonal,
                    self.spooky] + [b for _p, b in self.zoom_buttons]
         widgets += self.mode_group.buttons() + self.accent_group.buttons()
@@ -894,7 +894,7 @@ class SettingsPage(QWidget):
             btn.setChecked(btn.property("accent") == s.ui_accent if btn is not self.accent_custom
                            else s.ui_accent not in preset)
         self.accent_custom.setToolTip(s.ui_accent if s.ui_accent not in preset else tr("Choose a custom color"))
-        light_ok = theme.has_mode(theme.design(), "light")      # wirksames Design (evtl. Saison)
+        light_ok = theme.has_mode(theme.design(), "light")      # effective design (maybe seasonal)
         for btn in self.mode_group.buttons():
             mode = btn.property("mode")
             btn.setEnabled(light_ok or mode == "dark")
@@ -910,7 +910,7 @@ class SettingsPage(QWidget):
         self.perf.setToolTip(tr("Wave counter every {interval} s, quests every {quest} s.",
                                   interval=dec(f"{preset['interval']:g}"), quest=f"{preset['quest']:g}"))
 
-    # ------------------------------------------------------------------ Speicher
+    # ------------------------------------------------------------------ Storage
     def refresh_storage(self) -> None:
         try:
             items = storage.usage()
@@ -931,7 +931,7 @@ class SettingsPage(QWidget):
         self.refresh_storage()
 
     def _bot_state_changed(self, state: str, app_id: str) -> None:
-        # Vor dem ersten Verbinden: dieselbe Anwendung wie beim Discord-Profilstatus nutzen (gleiche Anwendungs-ID)
+        # before the first connect: use the same application as the Discord profile status (same application ID)
         app_id = app_id or (self.main.engine.settings.rpc_client_id or "").strip()
         self.bot_state.setText(tr("State: {state}", state=state))
         self.bot_invite.setEnabled(app_id.isdigit())
@@ -949,7 +949,7 @@ class SettingsPage(QWidget):
         self.main.macro.start_explore(self)
 
     def _toggle_macro(self, on: bool) -> None:
-        if self.main.macro.set_enabled(on, self) != on:      # Warnung abgelehnt
+        if self.main.macro.set_enabled(on, self) != on:      # warning declined
             self.macro_on.blockSignals(True)
             self.macro_on.setChecked(False)
             self.macro_on.blockSignals(False)
@@ -958,7 +958,7 @@ class SettingsPage(QWidget):
         s = self.main.engine.settings
         s.macro_log_home = bool(on)
         try:
-            s.save()                                      # sofort, ohne Speichern-Leiste
+            s.save()                                      # right away, without the save bar
         except OSError:
             pass
         self.main.pages[0].set_log_visible(bool(on))

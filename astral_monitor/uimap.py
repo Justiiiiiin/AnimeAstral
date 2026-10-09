@@ -1,9 +1,9 @@
-"""Oberflächen-Karte des Spiels (mitgeliefert in uimap/, erstellt mit dem Entwickler-Werkzeug): benannte Fenster,
-Welt-Zeilen im Teleporter, Knöpfe und wer welches Fenster öffnet. Grundlage der Automatik (automation.py).
+"""UI map of the game (bundled in uimap/, created with the developer tool): named windows, world rows in the
+teleporter, buttons and who opens which window. Basis of the automation (automation.py).
 
-Einträge: name, kind (Art), parent (Name des Fensters/der Zeile), roi (Anteile des Roblox-Fensters), rel (Anteile in
-der Zeile), extra (template, layout_of, closes_to, marker, close), opened_by_id (Kennung des öffnenden Knopfs),
-file (Kennung), img (mitgeliefertes Bild, nur wo nötig)."""
+Entries: name, kind, parent (name of the window/row), roi (fractions of the Roblox window), rel (fractions within
+the row), extra (template, layout_of, closes_to, marker, close), opened_by_id (ID of the opening button),
+file (ID), img (bundled image, only where needed)."""
 from __future__ import annotations
 
 import json
@@ -21,7 +21,7 @@ ROW = "Zeile (Vorlage)"
 
 
 def natural(text: str) -> tuple:
-    """Sortierschlüssel „W2“ vor „W10“."""
+    """Sort key “W2” before “W10”."""
     return tuple((0, int(p)) if p.isdigit() else (1, p) for p in re.split(r"(\d+)", text.lower()) if p)
 
 
@@ -33,7 +33,7 @@ class UiMap:
 
     @classmethod
     def load(cls, base: Path = MAP_DIR, local: Optional[Path] = None) -> "UiMap":
-        """Mitgelieferte Karte + lokale Ergänzung (vom Erkunden, im Datenordner). Mitgeliefertes hat Vorrang."""
+        """Bundled map + local additions (from exploring, in the data folder). Bundled entries take precedence."""
         try:
             data = json.loads((base / "index.json").read_text(encoding="utf-8"))
         except (OSError, ValueError):
@@ -48,7 +48,7 @@ class UiMap:
         if local is not None:
             have = {e.get("file") for e in entries}
             entries += [e for e in load_local(local) if e.get("file") not in have]
-            try:                                          # vom Nutzer bestätigte/korrigierte Arten + Markierungen
+            try:                                          # kinds confirmed/corrected by the user + marks
                 from .review import annotation_elements, category_overrides
                 overrides = category_overrides(local.parent)
                 have = {e.get("file") for e in entries}
@@ -61,18 +61,18 @@ class UiMap:
         return cls(entries, base)
 
     def add(self, entry: dict) -> None:
-        """Eintrag zur Laufzeit ergänzen (Erkunden)."""
+        """Add an entry at runtime (exploring)."""
         self.entries.append(entry)
         self._by_id[entry.get("file")] = entry
 
     def windows_for(self, button: dict) -> list[dict]:
-        """Alle Fenster, die dieser Knopf öffnet (mitgeliefert + erkundet können doppelt sein)."""
+        """All windows this button opens (bundled + explored can be duplicates)."""
         return [e for e in self.entries if e.get("kind") in CONTAINER_KINDS and e.get("kind") != ROW and (
             e.get("opened_by_id") == button.get("file") if e.get("opened_by_id")
             else e.get("opened_by") and e.get("opened_by") == button.get("name"))]
 
     def window_for(self, button: dict) -> Optional[dict]:
-        """Fenster, das dieser Knopf öffnet (oder None)."""
+        """Window this button opens (or None)."""
         for e in self.entries:
             if e.get("kind") in CONTAINER_KINDS and e.get("kind") != ROW:
                 if e.get("opened_by_id"):
@@ -83,10 +83,10 @@ class UiMap:
         return None
 
     def hud(self) -> list[dict]:
-        """Knöpfe am Bildschirmrand (Shop, Guild, Equip Best …) – immer an derselben Stelle."""
+        """Buttons at the screen edge (Shop, Guild, Equip Best …) – always at the same place."""
         return [e for e in self.entries if (e.get("extra") or {}).get("hud") and e.get("kind") == "Knopf"]
 
-    # -- Nachschlagen
+    # -- lookup
     def find(self, name: str, kinds: Optional[tuple] = None) -> Optional[dict]:
         return next((e for e in self.entries if e.get("name") == name and (kinds is None or e.get("kind") in kinds)),
                     None)
@@ -109,12 +109,12 @@ class UiMap:
         return self.find(window["opened_by"], ("Knopf",)) if window.get("opened_by") else None
 
     def template_of(self, window: dict) -> Optional[dict]:
-        """Vorlage, nach der dieses Fenster aufgebaut ist (z. B. „W4 Pets-Roll“ -> „Pets-Roll (Vorlage)“)."""
+        """Template this window is built after (e.g. “W4 Pets-Roll” -> “Pets-Roll (Vorlage)”)."""
         name = (window.get("extra") or {}).get("layout_of")
         return self.container(name) if name else None
 
     def element(self, window: dict, name: str) -> Optional[dict]:
-        """Element eines Fensters – bei Fenstern nach Vorlage aus der Vorlage."""
+        """Element of a window – for windows built after a template, from the template."""
         for owner in (window, self.template_of(window)):
             if owner is not None:
                 hit = next((e for e in self.children(owner) if e.get("name") == name), None)
@@ -134,18 +134,18 @@ class UiMap:
         return sorted((e for e in self.children(window) if e.get("kind") == ROW), key=lambda r: natural(r["name"]))
 
     def list_windows(self) -> list[dict]:
-        """Fenster mit Welt-Zeilen (Teleporter)."""
+        """Windows with world rows (teleporter)."""
         return [e for e in self.entries if e.get("kind") in CONTAINER_KINDS and e.get("kind") != ROW
                 and any(c.get("kind") == ROW for c in self.children(e))]
 
     def targets(self) -> list[dict]:
-        """Ziele für „Hin navigieren“: Fenster mit bekanntem Öffner (keine Vorlagen)."""
+        """Targets: windows with a known opener (no templates)."""
         return sorted((e for e in self.entries if e.get("kind") in CONTAINER_KINDS and e.get("kind") != ROW
                        and self.opener_of(e) is not None and not (e.get("extra") or {}).get("template")),
                       key=lambda e: natural(e["name"]))
 
     def world_of(self, window: dict) -> Optional[int]:
-        """Welt-Nummer eines Fensters (über die Zeile seines Knopfs; Lobby = 0), None = Knopf am Rand o. Ä."""
+        """World number of a window (via the row of its button; lobby = 0), None = button at the edge or similar."""
         button = self.opener_of(window)
         holder = self.parent(button) if button is not None else None
         if holder is None or holder.get("kind") != ROW:
@@ -155,9 +155,9 @@ class UiMap:
         return world_number(holder["name"])
 
     def sorted_targets(self) -> list[tuple[str, str]]:
-        """Ziele für Makro und Warteschlange, nach Welt sortiert („Lobby · …“, „W1 · …“ …, danach die Knöpfe am
-        Rand). Progressions nur einmal (die erste): dort gibt es „Auto All“ für alle (Eigentümer 08.10.2026).
-        Rückgabe: (Anzeige, Fenstername)."""
+        """Targets for macro and routine, sorted by world (“Lobby · …”, “W1 · …” …, then the buttons at the edge).
+                Progressions only once (the first): it has “Auto All” for all (owner 08.10.2026).
+                Returns (display, window name)."""
         rows = []
         progression_seen = False
         for w in self.targets():
@@ -185,7 +185,7 @@ class UiMap:
         return out
 
     def first_progression(self) -> Optional[dict]:
-        """Erstes Progression-Fenster (niedrigste Welt) – „Auto All“ gilt dort für alle Progressions."""
+        """First progression window (lowest world) – “Auto All” there applies to all progressions."""
         for _label, name in self.sorted_targets():
             w = self.container(name)
             if w is not None and ((w.get("extra") or {}).get("category") == "progression"
@@ -194,7 +194,7 @@ class UiMap:
         return None
 
     def templates(self) -> list[tuple[dict, dict]]:
-        """(Vorlage, Erkennungsmerkmal) – Sonder-Menüs mit festem Aufbau."""
+        """(template, marker) – special menus with a fixed layout."""
         out = []
         for w in self.entries:
             if (w.get("extra") or {}).get("template"):
@@ -218,7 +218,7 @@ def _read_image(path: str) -> Optional[np.ndarray]:
         return None
 
 
-LOCAL_FILE = "uimap_local.json"     # Ergänzung durch „Erkunden“ (Datenordner, pro Nutzer)
+LOCAL_FILE = "uimap_local.json"     # additions from “Explore” (data folder, per user)
 
 
 def load_local(path: Path) -> list[dict]:
@@ -230,7 +230,7 @@ def load_local(path: Path) -> list[dict]:
 
 
 def save_local(path: Path, entries: list[dict]) -> None:
-    """Lokale Ergänzung schreiben (gleiche Kennung = ersetzen)."""
+    """Write the local additions (same ID = replace)."""
     merged: dict[str, dict] = {e["file"]: e for e in load_local(path)}
     for e in entries:
         merged[e["file"]] = e
@@ -241,7 +241,7 @@ def save_local(path: Path, entries: list[dict]) -> None:
 
 
 def world_number(name: str) -> Optional[int]:
-    """„W5 Solo City“ -> 5, „Lobby“ -> 0, sonst None."""
+    """“W5 Solo City” -> 5, “Lobby” -> 0, otherwise None."""
     m = re.match(r"W(\d+)\b", name)
     if m:
         return int(m.group(1))
@@ -249,7 +249,7 @@ def world_number(name: str) -> Optional[int]:
 
 
 def match_row(read: str, rows: list[dict]) -> Optional[dict]:
-    """Gelesenen Weltnamen („Ninja Village“, „Lobby Arena“) der gespeicherten Zeile zuordnen („W1 Ninja Village“)."""
+    """Match a read world name (“Ninja Village”, “Lobby Arena”) to the stored row (“W1 Ninja Village”)."""
     words = {_ocr_fold(w) for w in re.findall(r"[a-z0-9]+", read.lower())}
     if not words:
         return None
@@ -264,5 +264,5 @@ _FOLD = str.maketrans("0125869", "olzsbgg")
 
 
 def _ocr_fold(word: str) -> str:
-    """Leicht verwechselte Zeichen gleichsetzen („2 City“ gelesen, „Z City“ gespeichert; 0/O, 1/l, 5/S …)."""
+    """Treat easily confused characters as equal (“2 City” read, “Z City” stored; 0/O, 1/l, 5/S …)."""
     return word.translate(_FOLD)

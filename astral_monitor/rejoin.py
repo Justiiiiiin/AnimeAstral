@@ -1,16 +1,16 @@
-"""Verbindungswächter und Auto-Rejoin (optional, Standard aus): nach Verbindungsabbruch, Kick oder Absturz wieder dem
-Server beitreten. Läuft, solange Auto-Rejoin oder der Wächter an ist; der Wächter bekommt hier seinen Disconnect-Alarm
-(früher per Texterkennung in der Fenstermitte – das Protokoll ist genauer und braucht keine Bildaufnahme).
+"""Connection guard and auto-rejoin (optional, off by default): rejoin the server after a disconnect, kick or
+crash. Runs while auto-rejoin or the guard is on; the guard gets its disconnect alarm here (formerly via text
+recognition in the middle of the window – the log is more precise and needs no screen capture).
 
-Erkennung über das Protokoll des Roblox-Clients (%LOCALAPPDATA%\\Roblox\\logs) statt über Bilderkennung: alle paar
-Sekunden werden nur die neu geschriebenen Zeilen gelesen – praktisch keine CPU, kein Bildschirmzugriff.
-    „! Joining game … place <Nummer>“                  -> im Spiel
-    „Sending disconnect with reason: 285“ u. ä.          -> selbst verlassen (Menü, Fenster geschlossen, Serverwechsel)
-    „Disconnection Notification. Reason: 277“ u. ä.      -> Verbindung verloren / gekickt -> neu beitreten
-    Roblox-Prozess weg, ohne dass verlassen wurde        -> Absturz -> neu beitreten
-Beigetreten wird über den Link aus „Privater Server“ (roblox_join.py); ohne Link öffentlich in dasselbe Spiel.
-Vor dem Beitritt wird der hängende Client beendet. Mehrere Versuche mit wachsender Pause, danach Aufgabe bis zum
-nächsten erfolgreichen Beitritt."""
+Detection via the log of the Roblox client (%LOCALAPPDATA%\\Roblox\\logs) instead of image recognition: every few
+seconds only the newly written lines are read – practically no CPU, no screen access.
+    “! Joining game … place <number>”                  -> in game
+    “Sending disconnect with reason: 285” etc.           -> left yourself (menu, window closed, server change)
+    “Disconnection Notification. Reason: 277” etc.       -> connection lost / kicked -> rejoin
+    Roblox process gone without leaving                  -> crash -> rejoin
+Joining uses the link from “Private server” (roblox_join.py); without a link publicly into the same game.
+The hanging client is ended before joining. Several attempts with a growing pause, then giving up until the
+next successful join."""
 from __future__ import annotations
 
 import logging
@@ -26,17 +26,17 @@ from .i18n import tr
 
 log = logging.getLogger("rejoin")
 
-POLL_LOG_EVERY = 3.0          # Sekunden zwischen zwei Blicken ins Protokoll
+POLL_LOG_EVERY = 3.0          # seconds between two looks into the log
 POLL_PROCESS_EVERY = 5.0
-GRACE = 15.0                  # Abbruch erst nach dieser Zeit behandeln (Serverwechsel/Teleport beitreten selbst neu)
-CRASH_AFTER = 8.0             # Prozess so lange weg (ohne „verlassen“ im Protokoll) = Absturz
-JOIN_TIMEOUT = 150.0          # so lange auf „Joining game“ nach einem Versuch warten
+GRACE = 15.0                  # handle a disconnect only after this time (server changes/teleports rejoin by themselves)
+CRASH_AFTER = 8.0             # process gone this long (without “left” in the log) = crash
+JOIN_TIMEOUT = 150.0          # wait this long for “Joining game” after an attempt
 MAX_ATTEMPTS = 5
-BACKOFF = (0, 30, 60, 120, 300)       # Pause vor Versuch 1, 2, …
-BOOTSTRAP_BYTES = 512 * 1024  # beim Einschalten: so viel vom Ende des aktuellen Protokolls lesen (aktueller Stand)
-READ_LIMIT = 2 * 1024 * 1024  # höchstens so viel neue Daten je Datei und Durchlauf
+BACKOFF = (0, 30, 60, 120, 300)       # pause before attempt 1, 2, …
+BOOTSTRAP_BYTES = 512 * 1024  # when switching on: read this much from the end of the current log (current state)
+READ_LIMIT = 2 * 1024 * 1024  # at most this much new data per file and pass
 
-# Gründe, bei denen NICHT neu beigetreten wird: selbst verlassen (285), auf anderem Gerät beigetreten (264/273/276)
+# Reasons where we do NOT rejoin: left yourself (285), joined on another device (264/273/276)
 INTENTIONAL_REASONS = {264, 273, 276, 285}
 _JOIN_RE = re.compile(r"! Joining game '[^']*' place (\d+)")
 _REASON_RE = re.compile(r"(?:Disconnection Notification\. Reason|Disconnect reason received|"
@@ -45,7 +45,7 @@ PUBLIC_DEEP_LINK = "roblox://experiences/start?placeId={place}"
 
 
 def classify(line: str) -> Optional[tuple[str, int]]:
-    """Eine Protokollzeile einordnen: ("join", Spiel) | ("left", Grund) | ("lost", Grund) | None. Grund 0 = unbekannt."""
+    """Classify a log line: ("join", game) | ("left", reason) | ("lost", reason) | None. Reason 0 = unknown."""
     if "Joining game" in line:
         m = _JOIN_RE.search(line)
         return ("join", int(m.group(1))) if m else None
@@ -66,8 +66,8 @@ def log_dir() -> Path:
 
 
 class LogTail:
-    """Liest nur neu geschriebene Zeilen aller Client-Protokolle. Mehrere Dateien gleichzeitig, weil beim Beitritt
-    kurz ein Starter-Protokoll und das des eigentlichen Clients parallel wachsen."""
+    """Reads only newly written lines of all client logs. Several files at once because a launcher log and the
+        log of the actual client briefly grow in parallel when joining."""
 
     def __init__(self, folder: Path) -> None:
         self.folder = folder
@@ -90,7 +90,7 @@ class LogTail:
     def poll(self) -> list[str]:
         files = self._files()
         lines: list[str] = []
-        if not self._started:                       # erster Blick: nur das Ende der neuesten Datei (aktueller Stand)
+        if not self._started:                       # first look: only the end of the newest file (current state)
             self._started = True
             for path, size, _m in files:
                 self._offsets[path] = size
@@ -101,9 +101,9 @@ class LogTail:
         alive = set()
         for path, size, _m in sorted(files, key=lambda f: f[2]):
             alive.add(path)
-            start = self._offsets.get(path, 0)      # neue Datei: von vorn
+            start = self._offsets.get(path, 0)      # new file: from the start
             if size < start:
-                start = 0                           # Datei wurde neu angelegt
+                start = 0                           # the file was recreated
             if size > start:
                 lines += self._read(path, start, size)
         for gone in set(self._offsets) - alive:
@@ -123,7 +123,7 @@ class LogTail:
         data = self._rest.pop(path, b"") + data
         parts = data.split(b"\n")
         if parts and parts[-1]:
-            self._rest[path] = parts[-1][-65536:]   # unvollständige letzte Zeile beim nächsten Mal ergänzen
+            self._rest[path] = parts[-1][-65536:]   # complete an unfinished last line next time
         parts = parts[:-1]
         if skip_partial and start > 0:
             parts = parts[1:]
@@ -137,7 +137,7 @@ def _default_alive() -> Callable[[], bool]:
 
 
 def kill_roblox(timeout: float = 10.0) -> int:
-    """Beendet hängende Roblox-Clients (nur RobloxPlayerBeta). Rückgabe: Anzahl."""
+    """Ends hanging Roblox clients (RobloxPlayerBeta only). Returns the count."""
     import psutil
 
     from .guard import PROCESS_NAMES
@@ -157,7 +157,7 @@ def kill_roblox(timeout: float = 10.0) -> int:
 
 
 def launch(uri: str) -> None:
-    os.startfile(uri)                               # öffnet den registrierten Roblox-Client
+    os.startfile(uri)                               # opens the registered Roblox client
 
 
 class AutoRejoin(threading.Thread):
@@ -175,7 +175,7 @@ class AutoRejoin(threading.Thread):
 
     def _reset(self) -> None:
         self.tail: Optional[LogTail] = None
-        self.status = "off"         # off | idle | in_game | left | lost | rejoining | gave_up | down (nur gemeldet)
+        self.status = "off"         # off | idle | in_game | left | lost | rejoining | gave_up | down (reported only)
         self.place: Optional[int] = None
         self.attempt = 0
         self.next_try = 0.0
@@ -197,7 +197,7 @@ class AutoRejoin(threading.Thread):
                 log.exception("Auto-Rejoin: unerwarteter Fehler")
 
     def info(self, now: Optional[float] = None) -> str:
-        """Kurzer Zustand für die Kopfzeile ("" = nichts Besonderes)."""
+        """Short state for the header ("" = nothing special)."""
         now = self._clock() if now is None else now
         if self.status == "lost":
             return tr("Rejoin in {time}", time=messages.fmt_duration(max(0.0, self.next_try - now)))
@@ -207,13 +207,13 @@ class AutoRejoin(threading.Thread):
             return tr("Rejoin gave up")
         return ""
 
-    # ------------------------------------------------------------------ Ablauf
+    # ------------------------------------------------------------------ Flow
     def tick(self, now: float) -> None:
-        """Ein Durchlauf (öffentlich für Tests)."""
+        """One pass (public for tests)."""
         s = self._get()
         if not (s.auto_rejoin_enabled or s.guard_enabled or getattr(s, "auto_monitor", False)):
             if self.status != "off":
-                self._reset()                       # alles aus: nichts lesen, nichts merken
+                self._reset()                       # everything off: read nothing, remember nothing
             return
         if self.status == "off":
             self.status = "idle"
@@ -228,7 +228,7 @@ class AutoRejoin(threading.Thread):
             self._check_process(now)
         if not s.auto_rejoin_enabled and self.status in ("lost", "rejoining", "gave_up") and now >= self.next_try:
             self._alert(s)
-            self.status = "down"                    # nur gemeldet; zurück auf „im Spiel“ beim nächsten Beitritt
+            self.status = "down"                    # reported only; back to “in game” at the next join
             return
         if self.status == "lost" and now >= self.next_try:
             self._alert(s)
@@ -249,8 +249,8 @@ class AutoRejoin(threading.Thread):
                              description=tr("Auto-rejoin worked (attempt {n}).", n=self.attempt))
             self.status, self.place, self.attempt, self._gone_since = "in_game", value, 0, None
         elif what == "left" and self.status in ("in_game", "lost"):
-            self.status = "left"                    # selbst verlassen: nicht zurück (auch wenn kurz davor „lost“)
-            log.info("Auto-Rejoin: Spiel verlassen (Grund %s) – kein Rejoin", value or "?")
+            self.status = "left"                    # left yourself: don't go back (even if “lost” shortly before)
+            log.info("Auto-rejoin: left the game (reason %s) – no rejoin", value or "?")
         elif what == "lost" and self.status == "in_game":
             self._lost(now, value, GRACE)
 
@@ -262,7 +262,7 @@ class AutoRejoin(threading.Thread):
         if self._gone_since is None:
             self._gone_since = now
         elif now - self._gone_since >= CRASH_AFTER:
-            for line in self.tail.poll():          # letzte Zeilen: wurde doch selbst verlassen?
+            for line in self.tail.poll():          # last lines: did you leave yourself after all?
                 self._on_line(line, now)
             if self.status == "in_game":
                 self._lost(now, -1, 0.0)
@@ -281,8 +281,8 @@ class AutoRejoin(threading.Thread):
             self._event(tr("Auto-rejoin: {reason} – rejoining shortly", reason=text), "warn")
 
     def _alert(self, s) -> None:
-        """Wächter-Alarm „Disconnect“ (einmal je Abbruch, erst nach der Wartezeit – Teleports lösen keinen aus).
-        Abstürze meldet der Wächter der Überwachung selbst über den Prozess."""
+        """Guard alarm “disconnect” (once per disconnect, only after the waiting time – teleports don't trigger it).
+                Crashes are reported by the monitoring's guard itself via the process."""
         if self._alerted or not s.guard_enabled or self._reason == -1:
             return
         self._alerted = True
@@ -292,7 +292,7 @@ class AutoRejoin(threading.Thread):
                      description=text + (" – " + tr("Auto-rejoin is rejoining.") if s.auto_rejoin_enabled else ""))
 
     def target(self, s) -> tuple[Optional[str], str]:
-        """(roblox://-Link, Beschreibung) für den Beitritt."""
+        """(roblox:// link, description) for joining."""
         uri = roblox_join.deep_link(s.private_server_link)
         if uri:
             return uri, tr("private server")
@@ -314,13 +314,13 @@ class AutoRejoin(threading.Thread):
                          description=tr("Rejoining ({where}).", where=where))
         try:
             if self._kill():
-                self._sleep(2.0)                    # Roblox die Fenster/Dateien freigeben lassen
+                self._sleep(2.0)                    # let Roblox release the windows/files
             self._start(uri)
         except Exception as exc:
             log.warning("Auto-Rejoin: Start fehlgeschlagen: %s", exc)
             self._failed(self._clock(), str(exc))
             return
-        self.launched_at = self._clock()            # Wartezeit ab dem eigentlichen Start
+        self.launched_at = self._clock()            # waiting time from the actual start
 
     def _failed(self, now: float, why: str) -> None:
         log.info("Auto-Rejoin: Versuch %d fehlgeschlagen: %s", self.attempt, why)
