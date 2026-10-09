@@ -6,7 +6,7 @@ import numpy as np
 
 from astral_monitor.automation import complete_raid_labels, fmt_wait, gig_cards, gig_next_due, gig_refresh_box, gig_refresh_read, \
     gig_pill, gig_slot_states, gig_timer_box, gig_timer_vote, guild_next_time, hud_locate, leave_before, next_task, \
-    parse_timer, pet_tiles, user_moved
+    parse_timer, pet_tiles, raid_side_steps, user_moved
 
 
 class QueueTest(unittest.TestCase):
@@ -68,6 +68,19 @@ class QueueTest(unittest.TestCase):
         self.assertEqual(gig_next_due(cards, {0: 3300, 1: 900}, 300), 300)       # new gigs come first
         self.assertEqual(gig_next_due(cards, {0: 3300, 1: 900}, None), 300)     # empty, no countdown: 5 min
         self.assertEqual(gig_next_due(cards, {0: 3300, 1: 9000}, 99999), 300)    # implausible “NEW GIGS IN”
+
+    def test_raid_side_steps(self):
+        # owner 09.10.2026: Farm (until stopped) → Auto Roll → Auto Roll – the rolls never started
+        raid = {"kind": "raid", "target": "W21 Militech Convoy Defense", "until": "never"}
+        roll1 = {"kind": "autoroll", "target": "W20 Classic Emblem"}
+        roll2 = {"kind": "autoroll", "target": "W21 Cyberware"}
+        pause = {"kind": "wait", "seconds": 600}
+        other = {"kind": "raid", "target": "W7 Raid"}
+        self.assertEqual(raid_side_steps([raid, roll1, roll2], 0), [1, 2])
+        self.assertEqual(raid_side_steps([raid, roll1, pause, roll2], 0), [1])     # a pause ends the block
+        self.assertEqual(raid_side_steps([raid, roll1, other, roll2], 0), [1])     # the next raid too
+        self.assertEqual(raid_side_steps([roll1, raid], 1), [])                     # rolls before run before
+        self.assertEqual(raid_side_steps([roll1, raid, roll2], 0), [])              # only for raid steps
 
     def test_complete_raid_labels(self):
         # owner 09.10.2026: “Wave cleared!” covered “Auto Retry”, the grey “Wave 12” field is never read – positions

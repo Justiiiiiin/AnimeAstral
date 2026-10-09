@@ -45,6 +45,7 @@ def macro_running() -> bool:
 TASK_KINDS = ("raid", "autoroll", "progression", "gigs", "guild_claim", "wait",
               "raid_farm", "raid_leave", "raid_create", "raid_join", "navigate", "pets", "close")   # from raid_farm on: older
 RAID_KINDS = ("raid", "raid_farm", "raid_create", "raid_join")     # tasks that lead into a raid/mode
+IN_RAID_KINDS = ("autoroll", "progression")      # quick menu tasks that also work inside a raid (owner 09.10.2026)
 CLAIM_LIMIT = 8           # at most this many “Claim” per page (protection against endless loops)
 CLAIM_GAP = 0.35          # between two “Claim” clicks of one reading
 CLAIM_SETTLE = 0.5        # after the clicks of one reading, before reading again
@@ -124,6 +125,20 @@ def next_task(tasks: list[dict], index: int, loop: bool) -> Optional[dict]:
     if index + 1 < len(tasks):
         return tasks[index + 1]
     return tasks[0] if loop and len(tasks) > 1 else None
+
+
+def raid_side_steps(tasks: list[dict], index: int) -> list[int]:
+    """Steps right after the raid step tasks[index] that run INSIDE the raid, once its settings are set: Auto Roll
+    and Progressions up to the next raid or pause (owner 09.10.2026: “Farm … until stopped” never ended, so the
+    gachas/pets after it never started)."""
+    if tasks[index].get("kind") != "raid":
+        return []
+    out = []
+    for j in range(index + 1, len(tasks)):
+        if tasks[j].get("kind") not in IN_RAID_KINDS:
+            break
+        out.append(j)
+    return out
 
 
 def leave_before(task: dict, following: Optional[dict]) -> bool:
@@ -497,6 +512,7 @@ class Navigator:
         self.wave_visible: Optional[Callable[[], bool]] = None       # is the monitoring reading a wave right now?
         self._in_raid: Optional[str] = None               # target of the raid the macro is farming right now
         self.gigs_next = 0.0                              # Fixer Gigs: check again at this time at the earliest (time.time)
+        self._side_steps: list = []                      # routine: steps to run inside the current raid
         self.gig_slots: list[dict] = []                  # last reading per slot (gig_slot_states) – pills on the start page
         self.guild_day = ""                              # guild missions: PC date (YYYY-MM-DD) of the last claim
         self.guild_retry = 0.0                            # … and not before this time today (time.time)
@@ -583,10 +599,16 @@ class Navigator:
             rounds += 1
             if loop:
                 self.log(tr("Round {n} starts.", n=rounds))
+            done_in_raid: set[int] = set()
             for i, task in enumerate(tasks):
+                if i in done_in_raid:                     # already ran inside the raid before
+                    continue
                 self.queue_pos = i
                 self.log(tr("Step {n}/{count}: {task}", n=i + 1, count=len(tasks), task=task_label(task)))
-                following = next_task(tasks, i, loop)
+                side = raid_side_steps(tasks, i)
+                following = next_task(tasks, side[-1] if side else i, loop)
+                self._side_steps = [(j, tasks[j], len(tasks)) for j in side]   # run by _raid_task inside the raid
+                done_in_raid.update(side)
                 self._run_extras()                        # due gigs/guild first
                 for attempt in (1, 2):                    # retry once, then skip
                     try:
@@ -600,6 +622,9 @@ class Navigator:
                         else:
                             self.log("⚠ " + tr("{reason} – trying once more.", reason=exc))
                             self._close_any_quiet()
+                if self._side_steps:                      # the raid failed before its side steps: run them normally
+                    done_in_raid.difference_update(j for j, _t, _c in self._side_steps)
+                    self._side_steps = []
                 time.sleep(0.6)                           # give the game a moment
             if not loop:
                 return
@@ -1021,6 +1046,7 @@ class Navigator:
             self._set_leave_wave(leave_wave)              # switched on first it could leave too early (owner 09.10.2026)
         self._set_toggle("leave", leave_wave > 0)
         self._close_raid_settings()
+        self._run_side_steps()
         until = task.get("until", "runs")
         runs, minutes = int(task.get("runs", 1)), float(task.get("minutes", 30))
         start, t0 = self.raid_count(), time.monotonic()
@@ -1052,6 +1078,28 @@ class Navigator:
             self._in_raid = None
         else:
             self.log(tr("Staying in the raid (Auto Retry keeps farming)."))
+
+    def _run_side_steps(self) -> None:
+        """Auto Roll & co. placed after the raid step: run them now, inside the raid (raid_side_steps)."""
+        steps, self._side_steps = getattr(self, "_side_steps", []), []
+        for j, side, count in steps:
+            self.queue_pos = j
+            self.log(tr("In the raid – step {n}/{count}: {task}", n=j + 1, count=count, task=task_label(side)))
+            for attempt in (1, 2):
+                try:
+                    self._task(side)
+                    break
+                except UserStop:
+                    raise
+                except Stop as exc:
+                    if attempt == 2:
+                        self.log("⚠ " + tr("Skipped: {reason}", reason=exc))
+                    else:
+                        self.log("⚠ " + tr("{reason} – trying once more.", reason=exc))
+                        self._close_any_quiet()
+            time.sleep(0.6)
+        if steps:
+            self.queue_pos = steps[0][0] - 1                  # back to the raid step for the display
 
     # ------------------------------------------------------------------ Claim helpers
     def _words(self) -> tuple[list[tuple[str, list[float]]], list[float]]:

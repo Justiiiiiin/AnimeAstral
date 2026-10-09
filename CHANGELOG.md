@@ -4,6 +4,12 @@ Newest version at the top. Short bullet points, no explanations (those are in th
 A version's section becomes its release notes automatically when it is published
 (`tools/release_notes.py`) and can be read in the program under Settings → Program → “All versions”.
 
+## 0.9.9-beta.19
+
+### 🔧 Improved
+- Farm routine: Auto Roll steps after a raid run inside that raid
+- Works with “until stopped” too – gachas and pets start right away
+
 ## 0.9.9-beta.18
 
 ### 🐞 Fixed

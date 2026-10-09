@@ -57,7 +57,8 @@ class MacroQueueCard(Card):
                             "until you press “Stop”, Esc or move the mouse.\n\nFarm raid / defense: starts the raid "
                             "(or joins), sets Auto Retry and Auto Leave and counts the raids via monitoring. It "
                             "only leaves if a different raid comes next.\nAuto Roll: opens the gacha or pet roll, "
-                            "presses Auto Roll and closes again – the game keeps rolling.\nPause: Roblox is free, "
+                            "presses Auto Roll and closes again – the game keeps rolling. Auto Roll steps right after a "
+                            "raid step run inside that raid, as soon as it is set up.\nPause: Roblox is free, "
                             "Anti-AFK keeps running.\n\nThe macro collects Fixer Gigs and guild missions in between "
                             "by itself (card “Auto collect”). Double-click removes a step."))
         self.main = main
