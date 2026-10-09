@@ -112,7 +112,8 @@ image names `debug/makro_*.jpg`. Tests that check German output set the language
 ```
 pip install -r requirements.txt           # Windows; windows-capture only there
 python run.py                             # start the program (UI)
-.venv\Scripts\python.exe -m unittest discover -s tests -v   # 188 tests, run without Qt/Tesseract/network
+.venv\Scripts\python.exe -m unittest discover -s tests -v   # ~214 tests incl. an offscreen UI smoke test; no Roblox/Tesseract/network
+.venv\Scripts\python.exe -m pyflakes astral_monitor tools build_exe.py run.py   # must be clean (CI fails otherwise)
 python -m astral_monitor.selftest image.png   # check the recognition on a screenshot (needs Tesseract)
 python build_exe.py [--no-zip] [--no-bundle-tesseract]   # EXE (PyInstaller, folder variant) + bundle Tesseract
 ```
@@ -139,7 +140,7 @@ tests use that). In it: `settings.json`, `raid_history.csv`, `monitor.log`, `pro
 | `presence.py` | Discord profile status (pypresence), game thumbnail from Roblox as the image |
 | `updater.py` | Update check via GitHub releases, download with SHA256 check, silent installer start |
 | `ocr.py` | Tesseract binding; the **bundled** Tesseract (`tesseract/` next to the EXE) takes precedence |
-| `uimap.py`, `vision.py`, `automation.py`, `explorer.py`, `knowledge.py`, `review.py`, `autosuggest.py` | Macro (beta): read the UI map, recognize rows/menus, walk paths (own thread, own OCR instance), explore, check findings; UI `ui/macro_controller.py`, `macro_queue_card.py`, `extras_card.py`, `macro_log.py`, `explore_review.py` |
+| `uimap.py`, `vision.py`, `automation.py`, `macro_base.py`, `macro_raid.py`, `macro_gigs.py`, `macro_guild.py`, `explorer.py`, `knowledge.py`, `review.py` | Macro (beta): read the UI map, recognize rows/menus, walk paths (own thread, own OCR instance), explore, check findings. `automation.Navigator` = core (routine, paths, input) + `RaidMixin`/`GigsMixin`/`GuildMixin` from the `macro_*` parts, shared pieces in `macro_base` (all names stay importable from `automation`); UI `ui/macro_controller.py`, `macro_queue_card.py`, `extras_card.py`, `macro_log.py`, `explore_review.py` |
 | `discord_bot.py` | Own Discord bot for remote control; handler in `ui/bot_bridge.py` |
 | `settings.py` | `Settings` dataclass (JSON), `Roi`, event definitions, migration via `settings_version` |
 | `debuglog.py` | Debug tab: `BUFFER` only hangs on the logger with `settings.debug_view` (off by default), preloads the end of monitor.log; display `ui/events_card.py` |
@@ -188,9 +189,9 @@ Important design decisions:
   every release). Wave numbers always exact, other amounts with k (`messages.fmt_k`). A glass/mica effect was
   discarded: Qt draws windows with a Windows frame opaque.
 - **Designs** (`theme.DESIGNS`, Settings → Appearance, `ui_design`/`ui_mode`): “Astral” (since 0.6.5: icons from the
-  Windows symbol font, gear at the bottom left, cross-fade on page change, light/dark/like Windows) and “Classic”
-  (since 0.5.0, dark only, unchanged). **Never delete old designs** – a new design = a new entry with a `since`
-  version. Colors only as `@token` in the templates or `theme.color("token")` in code (no fixed hex values in the
+  Windows symbol font, gear at the bottom left, cross-fade on page change, light/dark/like Windows), Nebula, Night City (default), Bubble, OLED and seasonal designs. “Classic” (0.5.0) was removed in
+  0.9.9-beta.20 on the owner's request (incomplete; `ui_design = "classic"` is switched to Night City on load). Don't
+  delete other designs without asking – a new design = a new entry with a `since` version. Colors only as `@token` in the templates or `theme.color("token")` in code (no fixed hex values in the
   pages), otherwise light mode and design changes break. Switching applies right away (`MainWindow.set_appearance`,
   `theme.on_change` for painted content). Check images of all variants: `_shots/shots.ps1`, switch test:
   `_shots/look_test.py`.
@@ -247,7 +248,8 @@ Important design decisions:
 
 ## Release process (GitHub, this repository – the build reads the name itself from `github.repository`)
 
-1. Commit and push changes (default branch `main`).
+1. Commit and push changes (default branch `main`). `.github/workflows/ci.yml` runs pyflakes and all tests (incl. the
+   offscreen UI test) on every push – check that it is green before tagging.
 2. Publish a version: create a release with the tag `vX.Y.Z` **or** Actions → “Release” → *Run workflow* with `X.Y.Z`.
    Betas: `vX.Y.Z-beta.N`. **Run the tests before tagging** – a changelog line over 70 characters fails the build.
 3. `.github/workflows/release.yml` (Windows runner): version from the tag/input, `pip install`, **Tesseract via
@@ -264,7 +266,10 @@ Important design decisions:
    builds have an update source (`build_info.GITHUB_REPO` empty = no check). To keep packages small, CI builds with
    **pinned versions** from `requirements-build.txt` (raise them on purpose). Program size: `build_exe.py` only packs
    the Tesseract DLLs that are actually loaded and removes unused Qt/OpenCV/Pillow parts (`PRUNE`, with a check that no
-   remaining file needs them): 380 → 228 MB installed.
+   remaining file needs them): 380 → 228 MB installed. **Small updates:** the program code is collected as separate
+   `.pyc` files (`tools/pyi_hooks/hook-astral_monitor.py`, not inside the EXE) and `build_exe.py` builds reproducibly
+   (`PYTHONHASHSEED=0`, `SOURCE_DATE_EPOCH`, it restarts itself with them) – a code change gives an update of a few KB
+   instead of ~10 MB (measured 09.10.2026: 43 KB). Don't undo either.
 
 The version number is in `astral_monitor/version.py` and is overwritten by the build from the tag. Count upwards.
 The release notes come from the matching `## X.Y.Z` section in `CHANGELOG.md` (English, short bullets, ≤ 70
@@ -331,6 +336,8 @@ As of 06.10.2026 (Claude Code on Windows): items 1, 3 and 5 done, 2 and 4 partly
   `ASTRAL_DATA_DIR`).
 - Extending settings: field in `Settings` + page `load()`/`apply()` + a migration via `settings_version` if needed.
 - New Discord events go into `settings.EVENT_DEFS` (they show up under “Alerts” automatically).
+- The Discord webhook is optional (monitoring, statistics and the macro work without Discord; only a wrongly entered
+  URL is rejected).
 - No webhook URL, no tokens, no personal data (IDs, links, names) in code or the repository – grep staged diffs before
   committing. The update check only accepts downloads from the own repository and checks SHA256 – don't weaken these
   protections. Commit with explicit paths (`git add astral_monitor tests …`), never stray downloads in the project

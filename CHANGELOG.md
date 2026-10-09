@@ -4,6 +4,28 @@ Newest version at the top. Short bullet points, no explanations (those are in th
 A version's section becomes its release notes automatically when it is published
 (`tools/release_notes.py`) and can be read in the program under Settings → Program → “All versions”.
 
+## Unreleased
+
+### ✨ New
+- Start page: “Raids today”; statistics: “Avg. time per raid”
+- Monitoring works without a Discord webhook
+- Updates are much smaller (often only a few KB)
+
+### 🔧 Improved
+- Hotkeys shown with English key names (same keys)
+- Statistics: hint in empty tables, “Trend” shows raids per hour
+- Color buttons under Alerts scale with the UI size
+- Automatic checks on every change (tests incl. the interface)
+- Program code tidied up and split into smaller parts
+
+### 🐞 Fixed
+- Unexpected macro errors are logged with the exact location
+- German: “Raids per day” had two different translations
+
+### 🗑️ Removed
+- Design “Classic” (incomplete) – switches to Night City
+- Old routine steps are converted to the current ones
+
 ## 0.9.9-beta.19
 
 ### 🔧 Improved
