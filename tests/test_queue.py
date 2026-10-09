@@ -69,6 +69,20 @@ class QueueTest(unittest.TestCase):
         self.assertEqual(gig_next_due(cards, {0: 3300, 1: 900}, None), 300)     # empty, no countdown: 5 min
         self.assertEqual(gig_next_due(cards, {0: 3300, 1: 9000}, 99999), 300)    # implausible “NEW GIGS IN”
 
+    def test_capture_rect(self):
+        # owner 09.10.2026: maximized Roblox window – the capture has the title bar (0–1440), the client area starts
+        # at 23; clicks used the client area and landed ~22 px too low (below the raid gear)
+        from unittest import mock
+        from astral_monitor import winapi
+        with mock.patch.object(winapi, "client_rect", return_value=(0, 23, 2560, 1440)), \
+                mock.patch.object(winapi, "frame_rect", return_value=(0, 0, 2560, 1440)):
+            self.assertEqual(winapi.capture_rect(1, (2560, 1440)), (0, 0, 2560, 1440))     # window capture
+            self.assertEqual(winapi.capture_rect(1, (2560, 1417)), (0, 23, 2560, 1440))    # screen fallback
+            self.assertEqual(winapi.capture_rect(1, None), (0, 23, 2560, 1440))            # no image yet
+        with mock.patch.object(winapi, "client_rect", return_value=(0, 0, 1920, 1080)), \
+                mock.patch.object(winapi, "frame_rect", return_value=(0, 0, 1920, 1080)):
+            self.assertEqual(winapi.capture_rect(1, (1920, 1080)), (0, 0, 1920, 1080))     # full screen (F11)
+
     def test_gig_timer_vote(self):
         # owner 09.10.2026: “43:41 left” was shown as 4 min, “2:59:47 left” not at all
         self.assertEqual(gig_timer_vote(["«3:11 Left", "_,, 43:41 left .", "43:41 left .", "43:41"], 10800), 2621)

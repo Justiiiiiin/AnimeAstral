@@ -4,6 +4,13 @@ Newest version at the top. Short bullet points, no explanations (those are in th
 A version's section becomes its release notes automatically when it is published
 (`tools/release_notes.py`) and can be read in the program under Settings → Program → “All versions”.
 
+## Unreleased
+
+### 🐞 Fixed
+- Clicks landed ~20 px too low in windowed mode (title bar) – gear hit
+- Raid/defense: gear clicked again while the loading screen is shown
+- Raid start faster: window counts as open without waiting 5 s
+
 ## 0.9.9-beta.16
 
 ### 🔧 Improved

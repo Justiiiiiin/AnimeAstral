@@ -56,6 +56,8 @@ RAID_GEAR = Path(__file__).with_name("uimap_static") / "raid_gear.png"   # gear 
 GEAR_REGION = [0.4, 0.0, 0.9, 0.16]
 LEAVE_REGION = [0.35, 0.0, 0.75, 0.2]
 GEAR_HIT = 0.75
+GEAR_TRIES = 6            # click the gear again if the menu doesn't open (loading screen swallows clicks)
+GEAR_WAIT = 2.0           # wait this long for the menu after each click
 
 
 def task_label(task: dict) -> str:
@@ -735,14 +737,17 @@ class Navigator:
         if gear is None:
             raise Stop(tr("No raid gear found – are you in a raid?"))
         self.log(tr("Opening the raid settings (gear)."))
-        self._click(((gear[0] + gear[2]) / 2, gear[1] + 0.45 * (gear[3] - gear[1])))   # rather at the top: the bottom is
-        # the edge of the bar, clicks there missed (owner 08.10.2026)
-        end = time.monotonic() + 4
-        while time.monotonic() < end:
-            time.sleep(0.4)
-            labels = self._labels(self._frame())
-            if "retry" in labels and "leave" in labels:
-                return labels
+        for attempt in range(GEAR_TRIES):
+            if attempt:                                   # loading screen (“Starting defense …”) swallowed the click
+                self.log(tr("Gear: no reaction yet (loading screen?) – clicking again."))
+                gear = self._gear(self._frame()) or gear
+            self._click(((gear[0] + gear[2]) / 2, (gear[1] + gear[3]) / 2))
+            end = time.monotonic() + GEAR_WAIT
+            while time.monotonic() < end:
+                time.sleep(0.3)
+                labels = self._labels(self._frame())
+                if "retry" in labels and "leave" in labels:
+                    return labels
         raise Stop(tr("The raid settings did not open."))
 
     def _set_toggle(self, key: str, on: bool) -> None:
@@ -1416,6 +1421,7 @@ class Navigator:
         for timeout in (1.5, 3.0):                       # under heavy game load an image sometimes comes too late
             res = self._source.grab([], full=True, timeout=timeout)
             if res is not None and res.full is not None:
+                self._frame_size = (res.full.shape[1], res.full.shape[0])   # clicks use the matching area (_point)
                 return res.full
         raise Stop(tr("No image from the Roblox window."))
 
@@ -1597,12 +1603,13 @@ class Navigator:
                 return False
             if self.map.list_windows() and window["name"] == self.map.list_windows()[0]["name"]:
                 return self._menu.is_base(st[1])
-            return vision.similar_title(st[1], window["name"])
+            alias = self._title_alias.get(window["name"]) if hasattr(self, "_title_alias") else None
+            return vision.similar_title(st[1], window["name"]) or bool(alias and vision.similar_title(st[1], alias))
         return False
 
     def _wait_open(self, window: dict) -> None:
         end = time.monotonic() + OPEN_TIMEOUT
-        seen = ""
+        seen, last = "", ""
         while time.monotonic() < end:
             time.sleep(STEP_WAIT)
             frame = self._frame()
@@ -1612,7 +1619,13 @@ class Navigator:
             kind, st = self._screen(frame)
             if kind == "menu" and st[1] and not self._menu.is_base(st[1]):
                 seen = st[1]
-        if seen:                                          # a menu is open, but the title doesn't match exactly
+                if seen == last:                          # the same other title twice: that's the window
+                    break                                 # (raids: “Defense Mode” for “… Defense”) – don't wait 5 s
+                last = seen
+        if seen:
+            if not hasattr(self, "_title_alias"):
+                self._title_alias = {}
+            self._title_alias[window["name"]] = seen      # next time it counts as open right away                                          # a menu is open, but the title doesn't match exactly
             self.log(tr("“{title}” is open – I was looking for “{name}”.", title=seen, name=window["name"]))
             return
         raise Stop(tr("“{name}” did not open.", name=window["name"]))
@@ -1681,7 +1694,8 @@ class Navigator:
         if self._cursor is not None:
             pt = wintypes.POINT()
             u32.GetCursorPos(ctypes.byref(pt))
-            moved = user_moved(self._cursor, (pt.x, pt.y), winapi.client_rect(self._hwnd) if self._hwnd else None)
+            rect = winapi.capture_rect(self._hwnd, getattr(self, "_frame_size", None)) if self._hwnd else None
+            moved = user_moved(self._cursor, (pt.x, pt.y), rect)
             if moved is None:                             # Roblox put the cursor in the middle by itself
                 _log.info("Macro: the game moved the cursor to the middle of the window – no abort.")
                 self._cursor = (pt.x, pt.y)
@@ -1693,7 +1707,7 @@ class Navigator:
             raise UserStop(tr("Cancelled – Roblox is no longer in the foreground."))
 
     def _point(self, fx: float, fy: float) -> tuple[int, int]:
-        rect = winapi.client_rect(self._hwnd)
+        rect = winapi.capture_rect(self._hwnd, getattr(self, "_frame_size", None))
         if rect is None:
             raise Stop(tr("Roblox window not found"))
         left, top, right, bottom = rect
