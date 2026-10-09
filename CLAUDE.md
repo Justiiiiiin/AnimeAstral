@@ -1,308 +1,334 @@
-# CLAUDE.md – Übergabe für Claude Code
+# CLAUDE.md – handover for Claude Code
 
-Dieses Dokument beschreibt das Projekt **Anime Astral Monitor**, damit du ohne Einarbeitung weiterarbeiten kannst.
-Der Entwicklungsverlauf stammt aus einem langen Chat (Claude im Browser), in dem **nichts unter Windows, nichts mit echtem
-Roblox, keine echte Oberfläche und kein echter GitHub-Lauf** getestet werden konnte. Alles Genannte unter „Ungetestet“
-ist deshalb die wichtigste Arbeit für dich: **selbst ausführen, Fehler lesen, beheben.**
+This document describes the project **Anime Astral Monitor** so you can keep working without ramp-up.
+The early development happened in a long chat (Claude in the browser) where **nothing could be tested on Windows, with
+real Roblox, a real UI or a real GitHub run**. Everything listed under “Untested” is therefore the most important work
+for you: **run it yourself, read the errors, fix them.**
 
-## Was das Programm ist
+## What the program is
 
-Windows-Desktop-App (Python 3.12, PySide6), die das Roblox-Fenster des Spiels **Anime Astral Simulator** per Bildaufnahme
-überwacht. Sie liest den Wellenzähler („Wave 12/100“) und die Quest-Liste per Texterkennung, zählt **Versuche und Wellen**,
-führt Statistiken je Raid und meldet per **Discord-Webhook** (Raid-Ende mit Screenshot, Alarme, eine sich selbst
-aktualisierende Statusnachricht, Statistik-Karten). Sie greift nicht in den Roblox-Prozess ein und **sendet keine
-Eingaben an Roblox – einzige Ausnahme ist das optionale Anti-AFK** (`antiafk.py`, Standard aus, Schalter in der
-Kopfzeile, auf ausdrücklichen Wunsch des Eigentümers 06.10.2026): alle N Minuten Roblox kurz nach vorne, einmal
-Leertaste, zurück. Roblox nimmt Tasten nur im Vordergrund an (getestet: `PostMessage` an das Hintergrundfenster wirkt
-nicht). **Seit 0.9.5-beta.2** nach dem AutoHotkey-Skript des Eigentümers: alle Roblox-Clients (Prozess
-RobloxPlayerBeta.exe), minimierte wiederherstellen und offen lassen (sonst keine Aufnahme), 4× Esc + 1× Esc direkt ans
-Fenster, danach `EmptyWorkingSet` auf Roblox; **kein Warten** auf Ruhe des Nutzers, nur Pause während das Makro
-klickt. **Seit 0.9.5-beta.1 zweite Ausnahme: Automatik (Beta)** (`automation.py`, Standard aus, Karte unter
-Einstellungen → Roblox, Einschalten nur nach Warnung zu den Roblox-Regeln; Wunsch des Eigentümers 07.10.2026, Ziel
-1.0.0): öffnet Menüs anhand der Oberflächen-Karte (`uimap.py` + `astral_monitor/uimap/`, Erkennung `vision.py`) –
-Teleporter auf, per Mausrad zur Welt scrollen, Symbol klicken, Titel prüfen; Pets-Roll „Auto!“ drücken und das
-Menü gleich wieder schließen (Auto-Roll läuft im Hintergrund weiter – nie auf das Rollen warten). **Oberfläche seit
-0.9.9-beta.7:** keine eigene Makro-Karte mehr; `ui/macro_controller.py` (`MainWindow.macro`) hält Karte, Navigator und
-das **Makro-Protokoll** (`ui/macro_log.py`, kompakt mit Uhrzeit, unter Einstellungen → Makro; auf der Startseite nur mit
-`settings.macro_log_home`). „Makro erlauben“, Stopp und Erkunden: Einstellungen → Makro. Startseite: links die
-**Farm-Routine** (bis beta.6 „Makro-Warteschlange“; `ui/macro_queue_card.py`, „Was?/Wo?“ + Optionen im festen Stapel –
-Breite springt nicht; `Navigator.run_queue`, laufender Schritt über `Navigator.queue_pos`; Aufgaben
-`automation.TASK_KINDS`, gespeichert in `settings.macro_queue`/`macro_loop`; während „Pause“ ist `_ACTIVE` aus, damit
-das Anti-AFK laufen kann), rechts Live, Quests und ganz unten **„Automatisch abholen“** (`ui/extras_card.py`).
-Schritte: **Raid / Defense farmen** (Create/Join, Ende nach N Raids / M Min. / nie, Auto Leave ab Welle; startet die
-Überwachung selbst, setzt den Raid der Statistik; schon im selben Raid = nicht neu starten; **verlassen nur, wenn
-danach ein anderer Raid/Modus folgt** – `automation.leave_before`), Auto Roll, Pause (Progressions nur noch als
-Knopf unter „Automatisch abholen“; alte Schritte laufen weiter).
-Automatisch abholen (Schalter, keine Schritte): **Fixer Gigs** (Claim, „Send Pets“ → Pets-Fenster nach unten, eins
-der letzten `GIGS_PETS` Pets – Raster `automation.pet_tiles` – anklicken = losgeschickt, kein Bestätigen, je Gig einzeln; jede Karte einzeln gelesen
-`automation.gig_cards`: Art QUICK 20 Min./STANDARD 1 Std./BIG JOB 3 Std. ist zufällig, Restzeit genau per
-Ziffern-Lesung `_read_timer`, `gig_next_due`; „FINISH NOW“ kostet Währung – nie drücken), **Gilden-Missionen**
-(Guild → Missions → Personal + Guild Weekly „Claim“, einmal am Tag `GUILD_EVERY`), Progressions: Auto All als Knopf
-für einmal. Zeiten überdauern Neustarts (`extras_state.json`). Fehler: einmal wiederholen, dann überspringen;
-Nutzer-Abbruch (`UserStop`) beendet die Routine. Unbekannte Schritte: Bild `debug/makro_*.jpg`.
-Ältere Aufgaben (raid_farm/leave/create/join/navigate/close) laufen weiter, sind aber nicht mehr wählbar
-(„Hin navigieren“/„Menü schließen“ entfernt – nur Test). Recherche InformaalFrog/Faxi: siehe Memory.
-**Erkunden (seit 0.9.7-beta.1, `explorer.py`, Wissen in `knowledge.py`):** übernimmt Roblox ein paar Minuten, geht
-den Teleporter durch, öffnet in neuen Welten und bei Symbolen ohne Fenster jedes Symbol einmal, ordnet es ein
-(Titel + gelesene Wörter), schließt (X, Vorlage-Close oder „Close“/„Exit“ bei ganzen Bildschirmen) – **seit
-0.9.9-beta.7 zuerst die Welten** (Pets, Crafting, Raids, Gachas haben Vorrang, Eigentümer), danach die
-Knöpfe am Bildschirmrand (`extra.hud`, feste Lage mit Bildprüfung). Nie Aktions-Knöpfe klicken
-(`knowledge.ACTION_WORDS`). Ergebnis: `uimap_local.json` im Datenordner (mitgelieferte Karte hat Vorrang) +
-`explore/<zeit>/report.json` mit Bildern. Fehlen der Karte Welt-Fenster (z. B. nach „Gelerntes vergessen“), holt
-`explorer.restore_from_reports` sie beim Start aus den Berichten zurück (nur Berichte nach `explore/forgot_at`). **„Nicht drücken“** (`extra.avoid` in der Karte, Bildvergleich
-`vision.same_icon`): Gates (W5) und Totenkopf/MaxTac Call (W21) sind zeitbasierte Modi – Klick schließt den Teleporter.
-**Raid-Steuerung (seit 0.9.7-beta.2):** Zahnrad oben rechts neben Welle/Timer (`uimap_static/raid_gear.png`, Suche in
-mehreren Größen) öffnet „Auto Retry“/„Auto Leave“ + Feld „Wave N“; Schalterzustand an der Farbe des Knopfs (größter
-grüner vs. rosa Fleck, `vision.toggle_state` – „Wave cleared!“-Meldungen liegen oft darüber). Mit Auto Retry an kann
-man nicht verlassen: `_leave_raid` = Auto Retry aus, dann „LEAVE!“. Aufgabe „Raid farmen“ wartet auf N Raid-Enden der
-Überwachung (`engine.stats.snapshot().total_attempts`). Kopfzeile: Start/Stopp/Pause/Status nur als gezeichnete
-Symbole (`widgets.media_icon`, `discord_icon`), Countdowns klein über den Schaltern (`MainWindow._stacked`).
-**Startseite seit 0.9.5-beta.4:** kein Titel/Fenster-Info/Raid-Auswahl; Start/Pause/Status als Knöpfe links in der
-Kopfzeile (`MainWindow._mount_controls`); Ereignisse als Debug-Karte unter Einstellungen → Programm
-(`ui/events_card.py`, gesammelt in `MainWindow.event_log`). Die Raid-Auswahl kommt neu (Eigentümer ändert das). Eingaben per
-SendInput nur mit Roblox im Vordergrund, Not-Aus bei Mausbewegung/Esc. **Kein Laufen/Teleportieren** (TELEPORT!-Knöpfe
-werden nicht benutzt – Wunsch des Eigentümers). Darüber hinaus nichts automatisieren, ohne zu fragen.
-**Oberflächen-Karte:** gepflegt im privaten Entwickler-Werkzeug (`_dev/calibrate.py`: Aufnahme, Baum, Vorlagen),
-für das Programm ausgegeben mit `_dev/library.export_for_program()` -> `astral_monitor/uimap/` (index.json + nur die
-nötigen Erkennungsbilder als JPG/PNG). Verknüpfung „Knopf öffnet Fenster“ über `opened_by_id` (Kennung), nicht über
-den Namen – „Crafting Unit“, „Progression“ gibt es in jeder Welt. Menüs im Teleporter-Rahmen erkennt man am rosa X
-oben rechts und am Titel im schrägen Banner; Sonder-Menüs (Pets-Roll) über eine Vorlage mit Erkennungsmerkmal.
-**Privater Server** (`roblox_join.py`): Teilen-Link oder klassischer Link -> `roblox://`-Protokoll-Link, `os.startfile`
-(kein Browser, kein Cookie/Passwort). Der Link bleibt lokal (Diagnose schwärzt ihn) – nie ins Repo.
-**Auto-Rejoin** (`rejoin.py`, Standard aus, Schalter in der Kopfzeile, Wunsch des Eigentümers 06.10.2026): liest alle
-3 s nur neue Zeilen der Client-Protokolle (`%LOCALAPPDATA%\Roblox\logs\*_Player_*.log`): „! Joining game … place N“ =
-im Spiel; „Disconnection Notification. Reason: N“ u. ä. = verloren, außer 264/273/276/285 (selbst verlassen / anderes
-Gerät) – dann nie zurückholen; Prozess weg ohne „verlassen“ = Absturz. Nach 15 s (Teleports treten selbst neu bei)
-Client beenden und neu beitreten (Link, sonst öffentlich dieselbe Place), 5 Versuche mit Pausen. Derselbe Thread
-liefert den **Disconnect-Alarm des Wächters** (läuft, solange Wächter oder Auto-Rejoin an ist; Alarm erst nach der
-Wartezeit, einmal je Abbruch). Die frühere OCR-Suche nach dem Dialog in der Fenstermitte (`disconnect_check`) ist seit
-0.6.4 entfernt. Hinweis: Startet man einen Beitritt, während ein Client läuft, übernimmt der laufende Client den
-Beitritt (getestet).
-**Oberfläche:** Seiten mit Einstellungen setzen `SAVES = True` und bekommen von `main_window._with_savebar` eine feste
-Speichern-Leiste unten (keine eigenen Speichern-Knöpfe, keine verschachtelten Scrollbereiche). Bausteine in
-`widgets.py`: `section()`, `columns()` (Karten nebeneinander), `form_grid()`, `short_field()`; Zahlenfelder sind auf
-`FIELD_WIDTH` begrenzt. Uptime-Intervall steht unter „Meldungen“ (nur ohne Live-Status aktiv); `total_offset` wird
-weiter angewendet, hat aber kein Eingabefeld mehr.
+Windows desktop app (Python 3.12, PySide6) that watches the Roblox window of the game **Anime Astral Simulator** via
+screen capture. It reads the wave counter (“Wave 12/100”) and the quest list with text recognition, counts **attempts
+and waves**, keeps statistics per raid and reports via **Discord webhook** (raid end, alerts, a self-updating status
+message, stats cards). It doesn't touch the Roblox process and **sends no input to Roblox – the only exception is the
+optional Anti-AFK** (`antiafk.py`, off by default, switch in the header, explicit wish of the owner 06.10.2026): every N
+minutes bring Roblox to the front briefly, press a key, go back. Roblox only accepts keys in the foreground (tested:
+`PostMessage` to the background window has no effect). **Since 0.9.5-beta.2**, following the owner's AutoHotkey script:
+all Roblox clients (process RobloxPlayerBeta.exe), restore minimized ones and leave them open (otherwise no capture),
+4× Esc + 1× Esc directly to the window, then `EmptyWorkingSet` on Roblox; **no waiting** for the user to be idle, only
+paused while the macro clicks. **Since 0.9.5-beta.1 a second exception: the macro (beta)** (`automation.py`, off by
+default, enabled only after a warning about the Roblox rules; owner's wish 07.10.2026, goal 1.0.0): opens menus using
+the UI map (`uimap.py` + `astral_monitor/uimap/`, recognition `vision.py`) – open the teleporter, scroll to the world
+with the mouse wheel, click the icon, check the title; press the pets roll “Auto!” and close the menu right away
+(auto roll keeps running in the background – never wait for the rolling). **UI since 0.9.9-beta.7:** no separate macro
+card anymore; `ui/macro_controller.py` (`MainWindow.macro`) holds the map, navigator and the **macro log**
+(`ui/macro_log.py`, compact with times, under Settings → Macro; on the start page only with `settings.macro_log_home`).
+“Allow macro”, stop and explore: Settings → Macro. Start page: on the left the **farm routine** (until beta.6 “macro
+queue”; `ui/macro_queue_card.py`, “What?/Where?” + options in a fixed stack – the width doesn't jump;
+`Navigator.run_queue`, running step via `Navigator.queue_pos`; tasks `automation.TASK_KINDS`, saved in
+`settings.macro_queue`/`macro_loop`; during “Pause” `_ACTIVE` is off so the Anti-AFK can run), on the right live,
+quests and at the very bottom **“Auto collect”** (`ui/extras_card.py`).
+Steps: **Farm raid / defense** (Create/Join, end after N raids / M min. / never, Auto Leave from wave; starts the
+monitoring itself, sets the raid for the statistics; already in the same raid = don't restart; **leave only if a
+different raid/mode follows** – `automation.leave_before`), Auto Roll, Pause (Progressions only as a button under
+“Auto collect”; old steps keep working).
+Auto collect (switches, not steps): **Fixer Gigs** (Claim, “Send Pets” → scroll the pets window down, click one of the
+last `GIGS_PETS` pets – grid `automation.pet_tiles` – clicking = sent, no confirmation, one gig at a time; every card
+is read on its own `automation.gig_cards`: the kind QUICK 20 min/STANDARD 1 h/BIG JOB 3 h is random, remaining time
+read exactly from the digits `_read_timer`, `gig_next_due`; the pets list bottom is detected with `scrolled_box` and two
+still reads; “FINISH NOW” costs currency – never press it), **guild missions** (Guild → Missions → Personal + Guild
+Weekly “Claim”, once a day `GUILD_EVERY`), Progressions: Auto All as a one-off button. Times survive restarts
+(`extras_state.json`). Errors: retry once, then skip; a user stop (`UserStop`) ends the routine. Unknown steps: image
+`debug/makro_*.jpg`. Older tasks (raid_farm/leave/create/join/navigate/close) still run but can't be chosen anymore
+(“Navigate there”/“Close menu” removed – test only). Research InformaalFrog/Faxi: see memory.
+**Explore (since 0.9.7-beta.1, `explorer.py`, knowledge in `knowledge.py`):** takes over Roblox for a few minutes, goes
+through the teleporter, opens every icon once in new worlds and for icons without a window, classifies it (title +
+words read), closes it (X, template close or “Close”/“Exit” for full screens) – **since 0.9.9-beta.7 the worlds first**
+(pets, crafting, raids, gachas have priority, owner), then the buttons at the screen edge (`extra.hud`, fixed position
+with an image check). Never click action buttons (`knowledge.ACTION_WORDS`). Result: `uimap_local.json` in the data
+folder (the bundled map takes precedence) + `explore/<time>/report.json` with images. If the map lacks world windows
+(e.g. after “Forget what was learned”), `explorer.restore_from_reports` restores them from the reports at startup (only
+reports after `explore/forgot_at`). **“Don't press”** (`extra.avoid` in the map, image comparison
+`vision.same_icon`): gates (W5) and the skull/MaxTac Call (W21) are time-based modes – a click closes the teleporter.
+Scroll probing: `PROBE_NOTCHES` with undo (otherwise the camera zooms into first person), at most `PROBE_MAX` spots
+with content; checked windows only scroll marked lists. W3/W9 have no slot 8 (`EMPTY_SLOTS`).
+**Raid controls (since 0.9.7-beta.2):** the gear at the top right next to wave/timer (`uimap_static/raid_gear.png`,
+searched at several sizes, clicked only once the wave counter is visible and the position is stable – `_stable_gear`)
+opens “Auto Retry”/“Auto Leave” + field “Wave N”; the switch state comes from the button color (largest green vs. pink
+blob, `vision.toggle_state` – “Wave cleared!” messages often lie on top). With Auto Retry on you can't leave:
+`_leave_raid` = Auto Retry off, then “LEAVE!”. The task “Farm raid” waits for N raid ends of the monitoring
+(`engine.stats.snapshot().total_attempts`). Header: start/stop/pause/status only as drawn icons
+(`widgets.media_icon`, `discord_icon`), countdowns small above the switches (`MainWindow._stacked`).
+**Start page since 0.9.5-beta.4:** no title/window info; start/pause/status as buttons on the left of the header
+(`MainWindow._mount_controls`); events as a debug card under Settings → Program (`ui/events_card.py`, collected in
+`MainWindow.event_log`). Input via SendInput only with Roblox in the foreground, emergency stop on mouse movement/Esc.
+**No walking/teleporting** (TELEPORT! buttons are not used – owner's wish). Beyond that, automate nothing without
+asking.
+**UI map:** maintained in the private developer tool (`_dev/calibrate.py`: capture, tree, templates), exported for the
+program with `_dev/library.export_for_program()` -> `astral_monitor/uimap/` (index.json + only the needed recognition
+images as JPG/PNG). The link “button opens window” goes through `opened_by_id` (an ID), not the name – “Crafting
+Unit”, “Progression” exist in every world. Menus in the teleporter frame are recognized by the pink X at the top right
+and the title in the slanted banner; special menus (pets roll) via a template with a recognition feature.
+**Private server** (`roblox_join.py`): share link or classic link -> `roblox://` protocol link, `os.startfile` (no
+browser, no cookie/password). The link stays local (diagnostics black it out) – never into the repo.
+**Auto-rejoin** (`rejoin.py`, off by default, switch in the header, owner's wish 06.10.2026): every 3 s reads only new
+lines of the client logs (`%LOCALAPPDATA%\Roblox\logs\*_Player_*.log`): “! Joining game … place N” = in the game;
+“Disconnection Notification. Reason: N” etc. = lost, except 264/273/276/285 (left yourself / other device) – then never
+bring back; process gone without “left” = crash. After 15 s (teleports rejoin by themselves) end the client and rejoin
+(link, otherwise publicly the same place), 5 tries with pauses. The same thread delivers the **guard's disconnect
+alert** (runs while the guard or auto-rejoin is on; alert only after the waiting time, once per drop). The earlier OCR
+search for the dialog in the window center (`disconnect_check`) was removed in 0.6.4. Note: starting a join while a
+client is running makes the running client take over the join (tested).
+**Discord bot** (`discord_bot.py`, `ui/bot_bridge.py`, off by default): every user creates their own bot; slash
+commands /status, /start, /stop, /pause, /screenshot, /raid, /macro, /antiafk, /autorejoin, /join, /pc, /help. Command
+names are fixed English words (Discord doesn't translate them); descriptions go through `tr()`.
+**UI:** pages with settings set `SAVES = True` and get a fixed save bar at the bottom from
+`main_window._with_savebar` (no own save buttons, no nested scroll areas). Building blocks in `widgets.py`:
+`section()`, `columns()` (cards side by side), `form_grid()`, `short_field()`; number fields are limited to
+`FIELD_WIDTH`. The uptime interval is under “Alerts” (only active without live status); `total_offset` is still
+applied but has no input field anymore. Settings tabs: the group keys are the English section names (“Roblox”,
+“Macro”, “Discord bot”, “Monitoring”, “Appearance”, “Program”, “Debug”), shown via `tr()` – `newdots` uses `tab:<key>`.
 
-Benutzer ist der Eigentümer (Deutsch, Windows 11); Freunde sollen es später ebenfalls nutzen („full release 1.0.0“).
-**Oberfläche und Meldungen gibt es auf Deutsch und Englisch** (Einstellungen → Oberfläche, gilt nach Neustart):
-Texte stehen im Code auf Deutsch und laufen durch `tr()` aus `i18n.py` (Platzhalter: `tr("Welle {wave}", wave=3)`);
-Texte in Listen/Konstanten mit `N_()` markieren und bei der Anzeige `tr()` anwenden; Zahlen mit `i18n.dec()`/
-`thousands()`. Englisch in `i18n_en.py`. **`tests/test_i18n.py` schlägt fehl, wenn ein Text keine Übersetzung hat**
-– neue Texte also immer mit `tr()` schreiben und übersetzen. Protokoll (monitor.log), Code, Kommentare und Doku
-bleiben Deutsch, Bezeichner englisch.
+The user is the owner (German, Windows 11); friends and international users should use it too (“full release 1.0.0”).
+**The UI and messages exist in English and German** (Settings → Appearance → Sprache / Language, applies after a
+restart; **English is the default since 0.9.9**). Texts are written **in English** in the code and go through `tr()`
+from `i18n.py` (placeholders: `tr("Wave {wave}", wave=3)`); mark texts in lists/constants with `N_()` and apply `tr()`
+when displaying; numbers with `i18n.dec()`/`thousands()`. The German translations are in `i18n_de.py`
+(`DE = {English: German}`). **`tests/test_i18n.py` fails if a text has no German translation**, if `i18n_de.py` has
+stale entries, if placeholders differ or if a key contains umlauts – so always write new texts with `tr()` and add
+the German. Code, comments, docs, the log (monitor.log) and identifiers are English. Exceptions (data, don't
+translate): stored values like the raid placeholder `stats.UNKNOWN = "Unbekannt"` and result `"abgebrochen"` in old
+CSV rows, the map kinds “Knopf”/“Fenster / Bereich”, name suffixes “… Fenster” of older explore runs, the debug
+image names `debug/makro_*.jpg`. Tests that check German output set the language per module (`setUpModule`);
+`tests/_env.py` sets English.
 
-## Befehle
+## Commands
 
 ```
-pip install -r requirements.txt           # Windows; windows-capture nur dort
-python run.py                             # Programm starten (Oberfläche)
-.venv\Scripts\python.exe -m unittest discover -s tests -v   # 63 Tests, ohne Qt/Tesseract/Netz lauffähig
-python -m astral_monitor.selftest bild.png   # Erkennung an einem Screenshot prüfen (braucht Tesseract)
-python build_exe.py [--no-zip] [--no-bundle-tesseract]   # EXE (PyInstaller, Ordner-Variante) + Tesseract bündeln
+pip install -r requirements.txt           # Windows; windows-capture only there
+python run.py                             # start the program (UI)
+.venv\Scripts\python.exe -m unittest discover -s tests -v   # 188 tests, run without Qt/Tesseract/network
+python -m astral_monitor.selftest image.png   # check the recognition on a screenshot (needs Tesseract)
+python build_exe.py [--no-zip] [--no-bundle-tesseract]   # EXE (PyInstaller, folder variant) + bundle Tesseract
 ```
 
-Datenordner zur Laufzeit: `%APPDATA%\AnimeAstralMonitor` (Umgebungsvariable `ASTRAL_DATA_DIR` überschreibt ihn, die Tests
-nutzen das). Dort: `settings.json`, `raid_history.csv`, `monitor.log`, `profiles/`, `status_message.json`, `ui_state.json`,
-`rpc_icon.json`, `updates/`, `debug/`.
+Data folder at runtime: `%APPDATA%\AnimeAstralMonitor` (the environment variable `ASTRAL_DATA_DIR` overrides it, the
+tests use that). In it: `settings.json`, `raid_history.csv`, `monitor.log`, `profiles/`, `status_message.json`,
+`ui_state.json`, `rpc_icon.json`, `updates/`, `debug/`, `explore/`, `uimap_local.json`, `extras_state.json`.
 
-## Architektur (Paket `astral_monitor/`)
+## Architecture (package `astral_monitor/`)
 
-| Datei | Aufgabe |
+| File | Purpose |
 |---|---|
-| `engine.py` | Zentrale Überwachungsschleife (eigener Thread), hält Zustand (`EngineState`), verbindet alle Teile, Ereignis-Queue zur Oberfläche |
-| `capture.py` | Bildquellen: `WgcSource` (Windows Graphics Capture über Paket `windows-capture`, funktioniert bei verdecktem Fenster) und `ScreenSource` (Fallback). Liefert nur angeforderte Ausschnitte |
-| `wave.py` | Wellenzähler **finden und lesen**: sucht „Wave x/y“ im Suchbereich selbst (Tesseract mit Wortpositionen), merkt sich den Ort, liest dann nur einen engen Bereich; Zwischenspeicher je Bild |
-| `tracker.py` | Zustandsautomat der Wellen: Lauf-Start/-Ende, Neustart-Erkennung (2 passende Lesungen), **Plausibilitätsfilter** (unmögliche Sprünge nach oben werden ignoriert), Raid-Ende bei 100/100 (fest) |
-| `quests.py` | Quest-Liste (Titel + Fortschritt) per OCR, `QuestTracker` in `tracker.py` |
-| `stats.py` | `StatsStore` (CSV `raid_history.csv`), alle Kennzahlen, Verteilung, Trend, Rekorde |
-| `profiles.py` | Raids als Namensliste (anlegen, umbenennen, löschen) – seit 0.9.0 ohne Einstellungen je Raid |
-| `guard.py` | Wächter: Roblox-Prozess, Stillstand, RAM/CPU (Disconnects: `rejoin.py`) |
-| `status.py` | **Live-Statusnachricht**: eine Discord-Nachricht, die per `PATCH` bearbeitet wird; „unten neu senden“ = `DELETE` + `POST` |
-| `discord_client.py`, `messages.py` | Versand (eigener Thread, Wiederholung bei 429) und Embeds |
-| `report_card.py` | Statistik-Karte als PNG (Pillow, kein Qt) |
-| `presence.py` | Discord-Profilstatus (pypresence), Spiel-Thumbnail von Roblox als Bild |
-| `updater.py` | Update-Prüfung über GitHub-Releases, Download mit SHA256-Prüfung, leiser Installer-Start |
-| `ocr.py` | Tesseract-Anbindung; **mitgeliefertes** Tesseract (`tesseract/` neben der EXE) hat Vorrang |
-| `uimap.py`, `vision.py`, `automation.py` | Automatik (Beta): Oberflächen-Karte lesen, Zeilen/Menüs erkennen, Wege gehen (eigener Thread, eigene OCR-Instanz); Oberfläche `ui/macro_controller.py`, `macro_queue_card.py`, `extras_card.py`, `macro_log.py` |
-| `settings.py` | `Settings`-Dataclass (JSON), `Roi`, Ereignis-Definitionen, Migration über `settings_version` |
-| `debuglog.py` | Debug-Reiter: `BUFFER` hängt nur bei `settings.debug_view` (Standard aus) am Logger, lädt das Ende von monitor.log vor; Anzeige `ui/events_card.py` |
-| `search.py` | Einstellungssuche: Umlaute/Bindestriche egal, kleine Tippfehler erlaubt (difflib); Strg+F = `MainWindow.open_search` |
-| `i18n.py`, `i18n_en.py` | Sprache: `tr()`, `N_()`, Zahlenformat; englische Texte |
-| `hotkeys.py`, `winapi.py`, `imaging.py`, `diagnostics.py`, `app_paths.py` | Hilfen (globale Hotkeys per `RegisterHotKey`, Fenstersuche per ctypes, Bildverarbeitung, Diagnose-ZIP, Pfade) |
-| `ui/` | PySide6-Oberfläche: `main_window.py` (Seitenleiste, Hotkeys, Update-Start, Assistent), Seiten `page_*.py`, `wizard.py` (Einrichtung), `update_dialog.py`, `widgets.py` (Bausteine, **Tabellen** `make_table`/`SortItem`), `theme.py` (dunkles QSS) |
+| `engine.py` | Central monitoring loop (own thread), holds the state (`EngineState`), connects all parts, event queue to the UI |
+| `capture.py` | Image sources: `WgcSource` (Windows Graphics Capture via the package `windows-capture`, works with a covered window) and `ScreenSource` (fallback). Delivers only the requested crops |
+| `wave.py` | **Find and read** the wave counter: searches “Wave x/y” in the search area by itself (Tesseract with word positions), remembers the place, then reads only a narrow area; cache per image |
+| `tracker.py` | State machine of the waves: run start/end, restart detection (2 matching reads), **plausibility filter** (impossible jumps up are ignored), raid end at 100/100 (fixed) |
+| `quests.py` | Quest list (title + progress) via OCR, `QuestTracker` in `tracker.py` |
+| `stats.py` | `StatsStore` (CSV `raid_history.csv`), all metrics, raids per day, trend, records |
+| `profiles.py` | Raids as a list of names (add, rename, delete) – since 0.9.0 without settings per raid |
+| `guard.py` | Guard: Roblox process, stall, RAM/CPU (disconnects: `rejoin.py`) |
+| `status.py` | **Live status message**: one Discord message edited via `PATCH`; “resend at the bottom” = `DELETE` + `POST` |
+| `discord_client.py`, `messages.py` | Sending (own thread, retry on 429) and embeds |
+| `report_card.py` | Stats card as PNG (Pillow, no Qt) |
+| `presence.py` | Discord profile status (pypresence), game thumbnail from Roblox as the image |
+| `updater.py` | Update check via GitHub releases, download with SHA256 check, silent installer start |
+| `ocr.py` | Tesseract binding; the **bundled** Tesseract (`tesseract/` next to the EXE) takes precedence |
+| `uimap.py`, `vision.py`, `automation.py`, `explorer.py`, `knowledge.py`, `review.py`, `autosuggest.py` | Macro (beta): read the UI map, recognize rows/menus, walk paths (own thread, own OCR instance), explore, check findings; UI `ui/macro_controller.py`, `macro_queue_card.py`, `extras_card.py`, `macro_log.py`, `explore_review.py` |
+| `discord_bot.py` | Own Discord bot for remote control; handler in `ui/bot_bridge.py` |
+| `settings.py` | `Settings` dataclass (JSON), `Roi`, event definitions, migration via `settings_version` |
+| `debuglog.py` | Debug tab: `BUFFER` only hangs on the logger with `settings.debug_view` (off by default), preloads the end of monitor.log; display `ui/events_card.py` |
+| `search.py` | Settings search: umlauts/hyphens don't matter, small typos allowed (difflib); Ctrl+F = `MainWindow.open_search` |
+| `i18n.py`, `i18n_de.py` | Language: `tr()`, `N_()`, number format; German texts |
+| `hotkeys.py`, `winapi.py`, `imaging.py`, `diagnostics.py`, `app_paths.py` | Helpers (global hotkeys via `RegisterHotKey`, window search via ctypes, image processing, diagnostics ZIP, paths) |
+| `ui/` | PySide6 UI: `main_window.py` (sidebar, hotkeys, update start, wizard), pages `page_*.py`, `wizard.py` (setup), `update_dialog.py`, `widgets.py` (building blocks, **tables** `make_table`/`SortItem`), `theme.py` (QSS designs) |
 
-Wichtige Entwurfsentscheidungen:
+Important design decisions:
 
-- **Oberfläche skaliert mit der Fenstergröße** (Entwurf 1180 × 800 = Faktor 1, 0,7–1,3): `theme.set_scale()` rechnet
-  alle px/pt im Stylesheet um; feste Größen im Code nur über `theme.track_margins/_spacing/_min_height/_fixed_width …`
-  (nie direkt `setMinimumHeight(320)` o. Ä.). Das Hauptfenster setzt den Faktor 150 ms nach dem Größenändern.
-  Faktor = **UI-Größe** (`ui_zoom` 50–200 %) × optional Fensteranpassung (`ui_auto_fit`), siehe `theme.factor_for`.
-- **Auto-Start** (`automonitor.py`, Schalter in der Kopfzeile, Standard aus): reine Entscheidungslogik
-  (`AutoMonitor.tick` → start/pause/resume/stop), Spielzustand aus `rejoin.py` (Log-Thread läuft auch nur für
-  Auto-Start). Nur **Übergänge** lösen aus: selbst gestoppt im Spiel → bleibt aus bis zum nächsten Betreten; selbst
-  gestartet außerhalb → wird nicht gestoppt; Disconnect → Pause (gleiche Session), Verlassen → Stopp nach 20 s.
-  Ausgeführt in `MainWindow._auto_tick` (läuft auch, wenn das Fenster im Tray ist).
-- **Geheimnisse** (`secure.py`): `settings.json` speichert `SECRET_FIELDS` und Favoriten-Links mit Windows-DPAPI
-  („dpapi:…“, `Settings.to_dict(protect=True)`); alte Klartext-Dateien laden weiter, auf fremdem PC werden die Werte
-  leer. PC-Wechsel: Export/Import als `.astralsettings` mit Passwort (AES-256-GCM, scrypt; `cryptography` gepinnt,
-  im Build als hidden import). Kein Server/Konto – bewusst.
-- **Erklärtexte gehören in ⓘ** (`Card(title, info)`, `InfoButton`), nicht als Fließtext auf die Seite;
-  auf den Seiten nur Bedienelemente und Statuszeilen (Wunsch des Eigentümers: weniger überladen).
-- **Design „Night City“** (seit 0.9.9-beta.7, Standard; Migration settings_version 12 stellt Nebula um): passend zum Spiel – violett-schwarz, Neon-Gelb/Magenta, Kartenränder Magenta → Cyan, kantiger; Vorlage `_NIGHTCITY` = Nebula + Überschreibungen, nur dunkel.
-- **Design „Nebula“** (seit 0.7.0, bis 0.9.9-beta.6 Standard): aus dem Logo abgeleitet; Layout-Flag `rail` = schmale Symbolleiste (76 px, Logo oben, Namen als Tooltip), Status als Pille in der Kopfzeile, Hinweise oben (`top_toast`). Vorlage = Astral + Überschreibungen (`_NEBULA`). Logo: `tools/make_icon.py`.
-- **Seit 0.9.0 – Erkennung ohne Einstellungen** (Wunsch des Eigentümers): keine Seiten „Erkennung“ und „Raids“
-  mehr (Symbolleiste: Überwachung, Statistik, Meldungen, Einstellungen; `PAGE_*`-Konstanten in `main_window.py`).
-  `settings.fix_detection()` setzt beim Laden immer die festen Werte (`FIXED_DETECTION`: Raid-Ende bei 100/100 mit
-  einer Lesung, Fenster-Aufnahme, Standardbereiche) – die Felder bleiben nur für Downgrades in der Datei.
-  Bereiche kommen aus `astral_monitor/regions.json` (fehlt sie: `DEFAULT_*_ROI`). **Kein „heißer“ Takt** mehr:
-  `PRESETS[…]["interval"]` (Standard 0,5 s; 100/100 steht bis ~1 s da). **Raid-Meldungen ohne Screenshot.**
-  Entwickler-Werkzeug (privat, `_dev/`, per `.git/info/exclude` nie im Repo): `_dev/calibrate.py` zeigt das
-  Roblox-Fenster mit den Bereichen, legt sie fest und schreibt `regions.json`; Bildbibliothek (`_dev/library/`,
-  Raids/Upgrade-Shops mit Namen und Position) als Vorarbeit für die Automatik in 1.0.0.
-- **Seit 0.8.0:** Einstellungen mit Reitern (Abschnitte = `section()`-Überschriften, `_assign_groups`) und Suche;
-  Saison-Designs mit Deko (`ui/seasonal.py`, gemalt von `ui/backdrop.py`, Karten leicht durchscheinend über
-  `cardGlass`-Tokens, 15 Bilder/s nur bei sichtbarem Fenster); Kürbisnacht-Überraschung (`ui/spooky.py`, höchstens
-  1×/Std.); Roblox-Profil (`roblox_profile.py`, nur öffentliche API, Name in `SECRET_FIELDS`); Statistik-Werte per
-  `@_cached` bis zum nächsten Raid zwischengespeichert (gemessen mit 120 000 Raids); „Neu“-Punkte je Version in
-  `ui/newdots.py` (`NEW_FEATURES` bei jedem Release pflegen). Wellenzahlen immer genau, andere Mengen mit k
-  (`messages.fmt_k`). Glas-/Mica-Effekt wurde verworfen: Qt zeichnet Fenster mit Windows-Rahmen deckend.
-- **Designs** (`theme.DESIGNS`, Einstellungen → Darstellung, `ui_design`/`ui_mode`): „Astral“ (seit 0.6.5, vorher Standard:
-  Symbole aus der Windows-Symbolschrift, Zahnrad unten links, Überblendung beim Seitenwechsel, Hell/Dunkel/Wie Windows)
-  und „Klassisch“ (seit 0.5.0, nur dunkel, unverändert). **Alte Designs nie löschen** – neues Design = neuer Eintrag mit
-  `since`-Version. Farben nur als `@token` in den Vorlagen bzw. `theme.color("token")` im Code (keine festen Hex-Werte in
-  den Seiten), sonst stimmen Hell-Modus und Designwechsel nicht. Umschalten wirkt sofort (`MainWindow.set_appearance`,
-  `theme.on_change` für gezeichnete Inhalte). Prüfbilder aller Varianten: `_shots/shots.ps1`, Umschalt-Test:
+- **The UI scales with the window size** (design 1180 × 800 = factor 1, 0.7–1.3): `theme.set_scale()` converts all
+  px/pt in the stylesheet; fixed sizes in code only via `theme.track_margins/_spacing/_min_height/_fixed_width …`
+  (never `setMinimumHeight(320)` directly or similar). The main window sets the factor 150 ms after resizing.
+  Factor = **UI size** (`ui_zoom` 50–200 %, default 75 %) × optionally window fitting (`ui_auto_fit`), see
+  `theme.factor_for`.
+- **Auto-start** (`automonitor.py`, switch in the header, off by default): pure decision logic
+  (`AutoMonitor.tick` → start/pause/resume/stop), game state from `rejoin.py` (the log thread also runs just for
+  auto-start). Only **transitions** trigger: stopped yourself in the game → stays off until the next time you enter;
+  started yourself outside → isn't stopped; disconnect → pause (same session), leaving → stop after 20 s.
+  Carried out in `MainWindow._auto_tick` (also runs while the window is in the tray).
+- **Secrets** (`secure.py`): `settings.json` stores `SECRET_FIELDS` and favorite links with Windows DPAPI
+  (“dpapi:…”, `Settings.to_dict(protect=True)`); old plain-text files still load, on another PC the values become
+  empty. Moving PCs: export/import as `.astralsettings` with a password (AES-256-GCM, scrypt; `cryptography` pinned,
+  a hidden import in the build). No server/account – on purpose.
+- **Explanations belong in ⓘ** (`Card(title, info)`, `InfoButton`), not as running text on the page; pages only have
+  controls and status lines (owner's wish: less cluttered).
+- **Design “Night City”** (since 0.9.9-beta.7, default; migration settings_version 12 switches Nebula): matching the
+  game – violet-black, neon yellow/magenta, card borders magenta → cyan, angular; template `_NIGHTCITY` = Nebula +
+  overrides, dark only.
+- **Design “Nebula”** (since 0.7.0, default until 0.9.9-beta.6): derived from the logo; layout flag `rail` = slim icon
+  bar (76 px, logo at the top, names as tooltips), status as a pill in the header, hints at the top (`top_toast`).
+  Template = Astral + overrides (`_NEBULA`). Logo: `tools/make_icon.py`.
+- **Since 0.9.0 – recognition without settings** (owner's wish): no “Detection” and “Raids” pages anymore (icon bar:
+  Monitor, Statistics, Alerts, Settings; `PAGE_*` constants in `main_window.py`). `settings.fix_detection()` always sets
+  the fixed values when loading (`FIXED_DETECTION`: raid end at 100/100 with one reading, window capture, default
+  areas) – the fields only stay in the file for downgrades. Areas come from `astral_monitor/regions.json` (if missing:
+  `DEFAULT_*_ROI`). **No “hot” tick** anymore: `PRESETS[…]["interval"]` (default 0.5 s; 100/100 shows for ~1 s).
+  **Raid messages without a screenshot.** Developer tool (private, `_dev/`, never in the repo via `.git/info/exclude`):
+  `_dev/calibrate.py` shows the Roblox window with the areas, sets them and writes `regions.json`; image library
+  (`_dev/library/`, raids/upgrade shops with name and position) as groundwork for the macro.
+- **Since 0.8.0:** settings with tabs (sections = `section()` headings, `_assign_groups`) and search; seasonal designs
+  with decoration (`ui/seasonal.py`, painted by `ui/backdrop.py`, cards slightly translucent via `cardGlass` tokens,
+  15 fps only while the window is visible); pumpkin night surprise (`ui/spooky.py`, at most 1×/h); Roblox profile
+  (`roblox_profile.py`, public API only, name in `SECRET_FIELDS`); statistics values cached via `@_cached` until the
+  next raid (measured with 120,000 raids); “New” dots per version in `ui/newdots.py` (maintain `NEW_FEATURES` with
+  every release). Wave numbers always exact, other amounts with k (`messages.fmt_k`). A glass/mica effect was
+  discarded: Qt draws windows with a Windows frame opaque.
+- **Designs** (`theme.DESIGNS`, Settings → Appearance, `ui_design`/`ui_mode`): “Astral” (since 0.6.5: icons from the
+  Windows symbol font, gear at the bottom left, cross-fade on page change, light/dark/like Windows) and “Classic”
+  (since 0.5.0, dark only, unchanged). **Never delete old designs** – a new design = a new entry with a `since`
+  version. Colors only as `@token` in the templates or `theme.color("token")` in code (no fixed hex values in the
+  pages), otherwise light mode and design changes break. Switching applies right away (`MainWindow.set_appearance`,
+  `theme.on_change` for painted content). Check images of all variants: `_shots/shots.ps1`, switch test:
   `_shots/look_test.py`.
-- **Infobereich (Tray):** Fenster schließen = im Hintergrund weiterlaufen (Einstellung `close_to_tray`), Beenden über
-  das Tray-Menü. Ein zweiter Programmstart schreibt `show.request` in den Datenordner und beendet sich; die laufende
-  Instanz zeigt dann ihr Fenster. Kein Autostart (Wunsch des Eigentümers).
-- **Wand:** `StatsStore.wall(raid)` – die Welle, an der ≥ 60 % der letzten 20 Versuche eines Raids enden (z. B. Boss);
-  angezeigt in Überwachung/Statistik/Statusnachricht, Meldung „Wand durchbrochen“ (Ereignis `wall`).
-- **Engine und Oberfläche sind getrennt.** Die Engine läuft in einem Thread; die Oberfläche liest `engine.state` per Timer und
-  Ereignisse aus `engine.events`. Widgets nur im GUI-Thread anfassen (`MainWindow.post(callable)` für Rückrufe aus Threads).
-- **Es gibt keine Fehlversuche** (seit 0.7.1, Wunsch des Eigentümers): In Anime Astral scheitert ein Raid nicht, man kommt
-  nur unterschiedlich weit, und jede Welle gibt Belohnungen. Jedes Raid-Ende läuft durch `Engine._finish_run` (gleiche
-  Meldung „Raid beendet · Welle X/100“, Raid-Nummer = alle Versuche). Neue CSV-Zeilen haben immer `ok`; alte Zeilen mit
-  `abgebrochen` zählen genauso. Keine Erfolgsquote, kein „bis zum Ende geschafft“ wieder einführen. Zeit-/Raten-Kennzahlen nutzen nur **gemessene** Dauern; geschätzte (Notiz
-  „geschätzt“, Anzeige mit `~`) fließen nicht ein.
-- **Wellenzähler-Suchbereich ist groß** (Standard obere Mitte), das Programm findet den Zähler selbst. Frühere enge Bereiche
-  funktionierten im Fenstermodus (Titelleiste) nicht.
-- **Performance ist Absicht** (Ziel: auch schwache PCs): kein OCR ohne Bildänderung, Zwischenspeicher, adaptiver Takt,
-  niedrige Prozesspriorität. Gemessen 06.10.2026 mit echtem Roblox (Raid läuft): **~1,6 % eines Kerns, ~120 MB privat**
-  (vorher 6,6 % + Tesseract-Prozesse, 706 MB). Die Hebel – nicht zurückbauen:
-  - WGC mit `minimum_update_interval` (halber „heißer“ Takt): ungedrosselt liefert Windows bis 60 Bilder/s, die Bibliothek
-    kopiert jedes in den RAM (~7 % CPU allein dafür).
-  - Tesseract **direkt über `libtesseract`** (ctypes, `ocr._TessLib`), Modell bleibt geladen: ~5 statt ~65 ms je Lesung,
-    keine Prozessstarts. Fallback `tesseract.exe` über pytesseract, falls die DLL nicht ladbar ist.
-  - `astral_monitor/__init__.py` setzt `OPENBLAS_NUM_THREADS=1` usw. **vor** dem numpy-Import (OpenBLAS legt sonst je Kern
-    Puffer an: 257 statt 32 MB), `cv2.setNumThreads(1)`.
-  - Oberfläche zeichnet nicht, solange das Fenster minimiert ist.
-  - Arbeitsspeicher: `winapi.trim_memory()` 30 s nach Start, alle 10 Min. und beim Minimieren. Der Working Set enthält
-    sonst Start-Reste und geteilte Seiten von Grafiktreibern (WGC lädt AMD- und NVIDIA-Treiber, ~370 MB) und Schriften;
-    gemessen 178 MB → dauerhaft ~50 MB (eigener Anteil/USS ~36 MB). Die Anzeige „Dieses Programm“ zeigt den Working Set.
-  - Update-Downloads werden beim Start gelöscht (`updater.cleanup_downloads`), sonst blieben ~60 MB liegen.
-- **Raid-Statistik je Raid oder gesamt** (Auswahlfeld „Alle Raids (gesamt)“). Raids sind nur noch **Namen**
-  (`profiles.py`; verwaltet unter Einstellungen → Roblox, `ui/raids_card.py`). Der aktuelle Raid wird auf der Startseite per
-  Dropdown gewählt (`settings.current_raid`, `Engine.set_current_raid` – gilt sofort, auch für den laufenden Versuch).
-  Umbenennen (`Engine.rename_raid`) benennt Ordner, CSV-Verlauf und Auswahl mit um; Löschen behält die Statistik.
-- **Server-Favoriten** (`settings.server_favorites`, max. 20; `private_server_link` = der markierte, gilt für
-  „Server beitreten“ und Auto-Rejoin). Änderungen werden sofort gespeichert (`MainWindow.set_server_favorites`), nicht
-  über die Speichern-Leiste. Kopfzeilen-Knopf mit Pfeil-Menü und Tray-Untermenü. Diagnose schwärzt die Links.
-- **Zeitangaben:** Die Engine nutzt `time.monotonic()` für Takt/Dauer; in Tests wird die Uhr teils künstlich gesetzt.
-- **Seit 0.9.7-beta.4/0.9.8 – Seiten ohne Scrollen** (Wunsch des Eigentümers): Seitenkopf `widgets.page_header`
-  (Titel + ⓘ + Bedienelemente in einer Zeile), Statistik-Listen als Reiter, Meldungen zweispaltig, Einstellungen mit
-  Reitern Roblox/Überwachung/Darstellung/Programm/Debug (`_assign_groups` packt Kartenreihen in Widgets, damit
-  ausgeblendete Reihen keinen Abstand lassen). Prüfen: `_shots/pages_fit.py [breite hoehe]` (meldet Scrollbedarf
-  je Seite/Reiter). Kopfzeilen-Knöpfe aktualisiert `MonitorPage.refresh_controls` auf jeder Seite.
-- **Erkennung (0.9.7-beta.4):** `WaveTracker` wertet „4“ nach „53/54“ (vordere Ziffer verdeckt, `_cut_digits`) erst
-  nach `CUT_CONFIRM` s als Neustart; solange das Makro klickt (`antiafk._macro_busy`), ruft die Engine nur
-  `tracker.hold()` auf und liest keine Quests. Makro-Bilderkennung: Zeilensuche nur im Streifen `X_BAND` um den
-  Zeilenanfang (~4× schneller), Titel werden vor der Texterkennung gerade gedreht (`read_title`), Wörter einer
-  Titelzeile verbunden (`_join_words`); Prüfung `_shots/title_regress.py` (136 echte Titel), Laufzeit
-  `_shots/bench_vision.py`. RapidOCR wurde verglichen und verworfen (nicht genauer, 18× langsamer, +60 MB).
+- **Tray:** closing the window = keep running in the background (setting `close_to_tray`), quit via the tray menu. A
+  second program start writes `show.request` into the data folder and exits; the running instance then shows its
+  window. No autostart (owner's wish).
+- **Wall:** `StatsStore.wall(raid)` – the wave where ≥ 60 % of the last 20 attempts of a raid end (e.g. a boss); shown
+  in monitor/statistics/status message, alert “Wall broken” (event `wall`).
+- **Engine and UI are separate.** The engine runs in a thread; the UI reads `engine.state` via a timer and events from
+  `engine.events`. Touch widgets only in the GUI thread (`MainWindow.post(callable)` for callbacks from threads).
+- **There are no failed attempts** (since 0.7.1, owner's wish): in Anime Astral a raid doesn't fail, you just get
+  differently far, and every wave gives rewards. Every raid end goes through `Engine._finish_run` (same message “Raid
+  finished · wave X/100”, raid number = all attempts). New CSV rows always have `ok`; old rows with `abgebrochen`
+  count the same. Don't reintroduce a success rate or “made it to the end”. Time/rate metrics only use **measured**
+  durations; estimated ones (note “geschätzt”, shown with `~`) don't count. **The final wave doesn't matter much**
+  (owner 09.10.2026: most raids go to 100) – the statistics chart shows **raids per day** (`stats.daily`) instead of a
+  final-wave distribution; don't bring that back.
+- **The wave counter search area is large** (default top center), the program finds the counter by itself. Earlier
+  narrow areas didn't work in windowed mode (title bar).
+- **Performance is intentional** (goal: weak PCs too): no OCR without an image change, caches, adaptive tick, low
+  process priority. Measured 06.10.2026 with real Roblox (raid running): **~1.6 % of a core, ~120 MB private**
+  (before: 6.6 % + Tesseract processes, 706 MB). The levers – don't undo them:
+  - WGC with `minimum_update_interval` (half the “hot” tick): unthrottled, Windows delivers up to 60 frames/s and the
+    library copies each into RAM (~7 % CPU just for that).
+  - Tesseract **directly via `libtesseract`** (ctypes, `ocr._TessLib`), the model stays loaded: ~5 instead of ~65 ms
+    per reading, no process starts. Fallback `tesseract.exe` via pytesseract if the DLL can't be loaded.
+  - `astral_monitor/__init__.py` sets `OPENBLAS_NUM_THREADS=1` etc. **before** the numpy import (OpenBLAS otherwise
+    allocates buffers per core: 257 instead of 32 MB), `cv2.setNumThreads(1)`.
+  - The UI doesn't draw while the window is minimized.
+  - Memory: `winapi.trim_memory()` 30 s after the start, every 10 min and when minimizing. The working set otherwise
+    contains startup leftovers and shared pages of graphics drivers (WGC loads AMD and NVIDIA drivers, ~370 MB) and
+    fonts; measured 178 MB → permanently ~50 MB (own share/USS ~36 MB). “This program” shows the working set.
+  - Update downloads are deleted at startup (`updater.cleanup_downloads`), otherwise ~60 MB would stay behind.
+- **Raid statistics per raid or in total** (choice “All raids (total)”). Raids are just **names** (`profiles.py`;
+  managed under Settings → Roblox, `ui/raids_card.py`). The current raid is chosen on the start page
+  (`settings.current_raid`, `Engine.set_current_raid` – applies right away, also for the running attempt). Renaming
+  (`Engine.rename_raid`) renames the folder, CSV history and selection too; deleting keeps the statistics.
+- **Server favorites** (`settings.server_favorites`, max. 20; `private_server_link` = the marked one, used for “Join
+  server” and auto-rejoin). Changes are saved right away (`MainWindow.set_server_favorites`), not via the save bar.
+  Header button with an arrow menu and tray submenu. Diagnostics black out the links.
+- **Times:** the engine uses `time.monotonic()` for tick/duration; tests partly set the clock artificially.
+- **Since 0.9.7-beta.4/0.9.8 – pages without scrolling** (owner's wish): page header `widgets.page_header` (title + ⓘ +
+  controls in one row), statistics lists as tabs, alerts in two columns, settings with tabs
+  Roblox/Macro/Discord bot/Monitoring/Appearance/Program/Debug (`_assign_groups` packs card rows into widgets so hidden
+  rows leave no gap). Check: `_shots/pages_fit.py [width height]` (reports scrolling per page/tab; env `AA_LANG`,
+  `AA_DESIGN`, `AA_DEMO`, `AA_ALL`, `AA_ANON` – **`AA_ANON=1` for every public screenshot**, it clears name, favorites,
+  links, IDs, tokens and webhooks). Header buttons are refreshed by `MonitorPage.refresh_controls` on every page.
+- **Recognition (0.9.7-beta.4):** `WaveTracker` treats “4” after “53/54” (front digit covered, `_cut_digits`) as a
+  restart only after `CUT_CONFIRM` s; while the macro clicks (`antiafk._macro_busy`), the engine only calls
+  `tracker.hold()` and doesn't read quests. Macro image recognition: row search only in the strip `X_BAND` around the
+  row start (~4× faster), titles are straightened before text recognition (`read_title`), words of a title line are
+  joined (`_join_words`); check `_shots/title_regress.py` (136 real titles), run time `_shots/bench_vision.py`.
+  RapidOCR was compared and discarded (not more accurate, 18× slower, +60 MB).
 
-## Release-Ablauf (GitHub, dieses Repository – der Build liest den Namen selbst aus `github.repository`)
+## Release process (GitHub, this repository – the build reads the name itself from `github.repository`)
 
-1. Änderungen committen und pushen (Standard-Branch `main`).
-2. Version veröffentlichen: Release mit Tag `vX.Y.Z` anlegen **oder** Actions → „Release“ → *Run workflow* mit `X.Y.Z`.
-3. `.github/workflows/release.yml` (Windows-Runner): Version aus Tag/Eingabe, `pip install`, **Tesseract per Chocolatey**,
-   Tests, `tools/write_build_info.py` (schreibt Version, `GITHUB_REPO`, `RPC_CLIENT_ID` aus Repository-Variable),
-   PyInstaller (`build_exe.py --no-zip`, bündelt Tesseract), **Inno Setup** (`installer/AnimeAstralMonitor.iss`),
-   SHA256-Datei, Veröffentlichung per `softprops/action-gh-release`.
-4. Ergebnis am Release: `AnimeAstralMonitor-Setup-X.Y.Z.exe`, `files-X.Y.Z.json` (Prüfsumme jeder Programmdatei),
-   `AnimeAstralMonitor-Update-X.Y.Z.zip` (nur die seit der vorigen Version geänderten Dateien, `tools/make_patch.py`)
-   und `SHA256SUMS.txt` über alle. Installierte Programme prüfen beim Start (nach ~6 s, höchstens alle 6 h)
-   `releases/latest`. **Kleines Update:** passt das Paket zum installierten Stand (`files.json` im Programmordner,
-   `updater.plan_patch`), werden nur diese Dateien geladen, einzeln per Prüfsumme kontrolliert und nach dem Beenden von
-   einem PowerShell-Skript ausgetauscht (`updater.APPLY_SCRIPT`: sichert vorher, stellt bei Fehler alles wieder her,
-   startet neu). Sonst (Version übersprungen, Ordner nicht beschreibbar …) der komplette Installer leise
-   (`/SILENT … /relaunch=1`). Nur Installer-Builds haben eine Update-Quelle (`build_info.GITHUB_REPO` leer = keine Prüfung).
-   Damit Pakete klein bleiben, baut CI mit **festen Versionen** aus `requirements-build.txt` (bewusst anheben).
-   Programmgröße: `build_exe.py` packt von Tesseract nur die tatsächlich geladenen DLLs ein und entfernt unbenutzte
-   Qt-/OpenCV-/Pillow-Teile (`PRUNE`, mit Prüfung, dass keine verbleibende Datei sie braucht): 380 → 228 MB installiert.
+1. Commit and push changes (default branch `main`).
+2. Publish a version: create a release with the tag `vX.Y.Z` **or** Actions → “Release” → *Run workflow* with `X.Y.Z`.
+   Betas: `vX.Y.Z-beta.N`. **Run the tests before tagging** – a changelog line over 70 characters fails the build.
+3. `.github/workflows/release.yml` (Windows runner): version from the tag/input, `pip install`, **Tesseract via
+   Chocolatey**, tests, `tools/write_build_info.py` (writes the version, `GITHUB_REPO`, `RPC_CLIENT_ID` from a
+   repository variable), PyInstaller (`build_exe.py --no-zip`, bundles Tesseract), **Inno Setup**
+   (`installer/AnimeAstralMonitor.iss`), SHA256 file, publishing via `softprops/action-gh-release`.
+4. Result on the release: `AnimeAstralMonitor-Setup-X.Y.Z.exe`, `files-X.Y.Z.json` (checksum of every program file),
+   `AnimeAstralMonitor-Update-X.Y.Z.zip` (only the files changed since the previous version, `tools/make_patch.py`)
+   and `SHA256SUMS.txt` over all of them. Installed programs check `releases/latest` at startup (after ~6 s, at most
+   every 6 h). **Small update:** if the package matches the installed state (`files.json` in the program folder,
+   `updater.plan_patch`), only those files are downloaded, each checked by checksum and swapped after quitting by a
+   PowerShell script (`updater.APPLY_SCRIPT`: backs up first, restores everything on error, restarts). Otherwise
+   (version skipped, folder not writable …) the full installer runs silently (`/SILENT … /relaunch=1`). Only installer
+   builds have an update source (`build_info.GITHUB_REPO` empty = no check). To keep packages small, CI builds with
+   **pinned versions** from `requirements-build.txt` (raise them on purpose). Program size: `build_exe.py` only packs
+   the Tesseract DLLs that are actually loaded and removes unused Qt/OpenCV/Pillow parts (`PRUNE`, with a check that no
+   remaining file needs them): 380 → 228 MB installed.
 
-Die Versionsnummer steht in `astral_monitor/version.py` und wird vom Build aus dem Tag überschrieben. Aufwärts zählen.
-`build_exe.bat` baut lokal (der alte ZIP-Updater `update.py` ist seit 0.7.1 entfernt).
+The version number is in `astral_monitor/version.py` and is overwritten by the build from the tag. Count upwards.
+The release notes come from the matching `## X.Y.Z` section in `CHANGELOG.md` (English, short bullets, ≤ 70
+characters per line); work in progress goes under `## Unreleased` and is renamed on release. `build_exe.bat` builds
+locally (the old ZIP updater `update.py` was removed in 0.7.1).
 
-## Ungetestet – bitte als Erstes prüfen
+## Untested – please check first
 
-Stand 06.10.2026 (Claude Code unter Windows): Punkte 1, 3 und 5 erledigt, 2 und 4 teilweise.
+As of 06.10.2026 (Claude Code on Windows): items 1, 3 and 5 done, 2 and 4 partly.
 
-1. ~~**Gesamte Oberfläche**~~ – geprüft (alle Seiten bei 1180×800 und 980×680, Assistent, Update-Dialog, Statistik:
-   sortieren, Spaltenbreite merken über `ui_state.json`). Behoben: Statistik- und Raids-Seite zu breit bei kleinem Fenster,
-   Hauptknöpfe in Karten unlesbar (QSS-Regel `QFrame#card QWidget` überschrieb `QPushButton#primary`), Update-Dialog zeigt
-   Versionshinweise jetzt als Markdown mit lesbaren Links. Offen: echte Klick-Bedienung durch den Eigentümer.
-2. **Fenster-Aufnahme (`WgcSource`):** Läuft mit echtem Roblox stundenlang stabil (v0.5.0, `windows-capture` 2.0.1,
-   Lesezeit ~81 ms). Verdecktes Fenster liefert weiter Bilder und Werte; minimiert kommen keine Bilder (wird gemeldet,
-   danach automatisch weiter). Beim Umschalten (F11) kommen kurz eingefrorene Bilder – dabei wurde „25“ als „29“
-   gelesen und als Fehlversuch gezählt; behoben im Tracker (kleiner Rückgang = Korrektur statt Neustart).
-   Prüfhilfe: `_shots/capture_probe.py` (nicht im Repo). Fenstermodus ↔ Vollbild (F11): Erkennung läuft in beiden.
-   **Gelber Rahmen:** erscheint trotz `draw_border=False` (wird von `windows-capture` 2.0.1 fehlerfrei angenommen, von
-   Windows 11 25H2 aber ignoriert). Kein Code-Fehler; Windows erlaubt das Ausblenden nur per Datenschutz-Einstellung.
-   Rahmen ist nur optisch, nicht in den Bildern.
-3. ~~**GitHub-Bau**~~ – Lauf vom 05.10.2026 erfolgreich, Release `v0.5.0` mit Installer + `SHA256SUMS.txt`.
-4. ~~**Installer**~~ – Update 0.5.0 → 0.5.1 über die App inkl. automatischem Neustart erfolgreich (06.10.2026).
-5. ~~**Mitgeliefertes Tesseract**~~ – findet `tessdata` neben sich ohne `TESSDATA_PREFIX`, TSV-Ausgabe funktioniert.
-6. **Discord-Profilstatus (`presence.py`):** Jeder Nutzer trägt seine **eigene** Anwendungs-ID in den Einstellungen ein.
-   **Keine persönlichen IDs/Nummern ins Repository oder in den Build** (Wunsch des Eigentümers; das Repo ist öffentlich und
-   wird an Freunde weitergegeben) – die Repository-Variable `RPC_CLIENT_ID` bleibt leer. Spiel: Place `102072869879193` = Universe `10502841145`
-   „[CYBER] Anime Astral Simulator“ (aus dem laufenden Roblox-Client gelesen); der alte Standard `9797806474` war ungültig und
-   wird per Migration (settings_version 6) ersetzt. Verbindung zur Discord-App und Thumbnail-Abruf funktionieren, im
-   Profil des Eigentümers war die Aktivität beim ersten Test aber **nicht sichtbar** – Ursache noch offen.
-7. ~~**Formatierung der Statusnachricht**~~ – `##` und `-#` werden in Embeds korrekt dargestellt (Screenshot des Eigentümers).
-8. ~~**Hotkeys**~~ – funktionieren laut Eigentümer. Tray/Autostart gibt es weiterhin nicht.
-9. **Disconnect-Erkennung** (seit 0.6.4 über das Roblox-Protokoll): Grund 276 („anderes Gerät“) und 285 (selbst
-   verlassen) an echten Protokollen geprüft. Echte Kicks (277, 278 = 20 Min. inaktiv, 279, 267, 268) noch nicht live
-   erlebt – sie landen als „verloren“ und lösen Alarm/Rejoin aus.
+1. ~~**Whole UI**~~ – checked (all pages at 1180×800 and 980×680, wizard, update dialog, statistics: sorting,
+   remembering column widths via `ui_state.json`). Fixed: statistics and raids page too wide in a small window, main
+   buttons in cards unreadable (QSS rule `QFrame#card QWidget` overrode `QPushButton#primary`), the update dialog now
+   shows release notes as Markdown with readable links. Open: real click-through by the owner.
+2. **Window capture (`WgcSource`):** runs stable for hours with real Roblox (v0.5.0, `windows-capture` 2.0.1, read
+   time ~81 ms). A covered window keeps delivering images and values; minimized, no images arrive (reported, then
+   continues automatically). When switching (F11) frozen images arrive briefly – “25” was read as “29” and counted as a
+   failed attempt; fixed in the tracker (a small drop = correction instead of restart). Check helper:
+   `_shots/capture_probe.py` (not in the repo). Windowed ↔ full screen (F11): recognition works in both.
+   **Yellow frame:** appears despite `draw_border=False` (accepted without error by `windows-capture` 2.0.1, but
+   ignored by Windows 11 25H2). Not a code bug; Windows only allows hiding it via a privacy setting. The frame is only
+   visual, not in the images.
+3. ~~**GitHub build**~~ – run of 05.10.2026 successful, release `v0.5.0` with installer + `SHA256SUMS.txt`.
+4. ~~**Installer**~~ – update 0.5.0 → 0.5.1 via the app including automatic restart successful (06.10.2026).
+5. ~~**Bundled Tesseract**~~ – finds `tessdata` next to itself without `TESSDATA_PREFIX`, TSV output works.
+6. **Discord profile status (`presence.py`):** every user enters their **own** application ID in the settings.
+   **No personal IDs/numbers in the repository or the build** (owner's wish; the repo is public and passed on to
+   friends) – the repository variable `RPC_CLIENT_ID` stays empty. Game: place `102072869879193` = universe
+   `10502841145` “[CYBER] Anime Astral Simulator” (read from the running Roblox client); the old default `9797806474`
+   was invalid and is replaced by a migration (settings_version 6). The connection to the Discord app and the thumbnail
+   download work, but in the owner's profile the activity was **not visible** in the first test – cause still open.
+7. ~~**Status message formatting**~~ – `##` and `-#` render correctly in embeds (owner's screenshot).
+8. ~~**Hotkeys**~~ – work according to the owner. There is still no autostart.
+9. **Disconnect detection** (since 0.6.4 via the Roblox log): reasons 276 (“other device”) and 285 (left yourself)
+   checked on real logs. Real kicks (277, 278 = 20 min idle, 279, 267, 268) not yet seen live – they count as “lost”
+   and trigger the alert/rejoin.
 
-## Bekannte Schwächen / Ideen
+## Known weaknesses / ideas
 
-- Die Wellenauswertung erwartet alle Läufe als „Wave x/y“ mit erlaubter Gesamtzahl (Einstellung `allowed_totals`, Standard `100`).
-  **Defense-Modi und andere Raids** könnten ein anderes Format haben – der Eigentümer liefert Screenshots; dann Parser/Suche erweitern.
-- Plausibilitätsfilter im Tracker: erlaubter Sprung `UP_BASE + UP_PER_SECOND * Sekunden` (4 + 1,5/s). Passt zu etwa einer Welle alle
-  3,7 s. Schnellere Modi könnten Anpassung brauchen (Simulationen setzen `UP_BASE` hoch, weil sie 100× schneller laufen).
-- **Keine Raid-Erkennung per Bild mehr** (seit 0.6.4, Wunsch des Eigentümers): Die Kamera im Spiel ist frei
-  einstellbar und zeigt zum Ressourcensparen manchmal nichts – der ORB-Vergleich (bis 0.6.3) war dadurch unzuverlässig.
-  Nicht wieder einbauen, ohne zu fragen. Die Wellenzähler-Texterkennung bleibt natürlich.
-- **Geplant für Version 1.0** (Vorschläge, noch nicht gebaut; Reihenfolge nach Wunsch des Eigentümers klären):
-  Dauerlauf-Test (Nacht) und Absturz-Neustart, Tray-Symbol + Autostart, Hilfe-Seite im Programm, Push per ntfy, Lizenz/„Über“-Seite,
-  Browser-Ansicht im Heimnetz (Handy), Deutsch/Englisch, Tages-/Wochenziele, Zeitraum-Vergleich, Excel-Export/Backup,
-  mehrere Roblox-Fenster. Eine Android-App ist **nicht** sinnvoll möglich (Windows-Aufnahme, MediaProjection-Einschränkungen).
-- Der Eigentümer legt Wert auf: **modernes, sauberes, dunkles Design**, kurze verständliche Erklärungen, geringe Systemlast,
-  ruhige Discord-Kanäle (eine Statusnachricht statt vieler Meldungen; Pings nur bei echten Problemen).
+- The wave evaluation expects all runs as “Wave x/y” with an allowed total (setting `allowed_totals`: round totals
+  20–2000) or modes without a total (“Wave 542”). **Other raid formats** may need parser/search changes – the owner
+  delivers screenshots.
+- Plausibility filter in the tracker: allowed jump `UP_BASE + UP_PER_SECOND * seconds` (4 + 1.5/s). Fits about one wave
+  every 3.7 s. Faster modes might need adjusting (simulations set `UP_BASE` high because they run 100× faster).
+- **No raid detection by scenery image anymore** (since 0.6.4, owner's wish): the in-game camera can be moved freely
+  and sometimes shows nothing to save resources – the ORB comparison (until 0.6.3) was unreliable. Don't bring it back
+  without asking. Raids are detected from the raid window and unique drops (`raidsense.py`); the wave counter text
+  recognition stays of course.
+- **Planned for version 1.0** (proposals, not built yet; order to be agreed with the owner): overnight endurance test
+  and crash restart, help page in the program, push via ntfy, license/“About” page, browser view on the home network
+  (phone), daily/weekly goals, period comparison, Excel export/backup, several Roblox windows. An Android app is
+  **not** sensibly possible (Windows capture, MediaProjection limits). An account switcher with stored Roblox logins
+  was declined (no cookies/passwords stored – on purpose).
+- The owner values: a **modern, clean, dark design**, short understandable explanations, low system load, calm Discord
+  channels (one status message instead of many alerts; pings only for real problems).
 
-## Arbeitsweise
+## Way of working
 
-- **Python auf dem Rechner des Eigentümers ist die Microsoft-Store-Version:** Sie leitet `%APPDATA%` um (sieht dort eine
-  alte Kopie statt der echten Daten) und scheitert bei globalem `pip install` an langen Pfaden. Deshalb immer die
-  virtuelle Umgebung `.venv` im Projektordner nutzen (`.venv\Scripts\python.exe`).
-
-- Vor größeren Änderungen einen Git-Stand anlegen. Nach jeder Änderung `python -m unittest discover -s tests` ausführen.
-- Neue Logik möglichst **ohne Qt** halten, damit sie in `tests/` prüfbar bleibt (Muster: `tests/_env.py` setzt `ASTRAL_DATA_DIR`).
-- Einstellungen erweitern: Feld in `Settings` + Seite `load()`/`apply()` + bei Bedarf Migration über `settings_version`.
-- Neue Discord-Ereignisse in `settings.EVENT_DEFS` eintragen (erscheinen automatisch unter „Meldungen“).
-- Keine Webhook-URL, keine Tokens, keine persönlichen Daten in Code oder Repository. Die Update-Prüfung akzeptiert nur Downloads
-  aus dem eigenen Repository und prüft SHA256 – diese Schutzmaßnahmen nicht aufweichen.
-- Nutzer-Screenshots/Logs: `Einstellungen → Diagnose-Paket erstellen` erzeugt eine ZIP (ohne Webhook) mit Protokoll, Wertverlauf,
-  Systeminfo und Fensterbild – ideal zur Fehlersuche.
+- **Python on the owner's PC is the Microsoft Store version:** it redirects `%APPDATA%` (sees an old copy there instead
+  of the real data) and fails with a global `pip install` on long paths. So always use the virtual environment
+  `.venv` in the project folder (`.venv\Scripts\python.exe`).
+- Create a Git commit before larger changes. Run `python -m unittest discover -s tests` after every change.
+- Keep new logic **free of Qt** where possible so it stays testable in `tests/` (pattern: `tests/_env.py` sets
+  `ASTRAL_DATA_DIR`).
+- Extending settings: field in `Settings` + page `load()`/`apply()` + a migration via `settings_version` if needed.
+- New Discord events go into `settings.EVENT_DEFS` (they show up under “Alerts” automatically).
+- No webhook URL, no tokens, no personal data (IDs, links, names) in code or the repository – grep staged diffs before
+  committing. The update check only accepts downloads from the own repository and checks SHA256 – don't weaken these
+  protections. Commit with explicit paths (`git add astral_monitor tests …`), never stray downloads in the project
+  folder.
+- User screenshots/logs: the “Diagnostics package” button (Settings → Program or Debug) creates a ZIP (without webhook) with the
+  log, value history, system info and window image – ideal for troubleshooting.
