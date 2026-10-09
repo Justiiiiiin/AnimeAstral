@@ -1,10 +1,10 @@
-"""Privatem Server beitreten, ohne Browser: aus dem Link Spielnummer und Code lesen und den Roblox-Client über seinen
-eigenen Protokoll-Link starten (roblox://…). Der Client nutzt seine gespeicherte Anmeldung – das Programm braucht
-weder Passwort noch Cookie. Unterstützte Links:
-    https://www.roblox.com/share?code=<Code>&type=Server        (Teilen-Link, auch /share-links?…)
-        -> roblox://navigation/share_links?code=<Code>&type=Server   (so steht er in Roblox' eigenem Link)
-    https://www.roblox.com/games/<Spielnummer>/<Name>?privateServerLinkCode=<Code>
-        -> roblox://experiences/start?placeId=<Spielnummer>&linkCode=<Code>"""
+"""Join a private server without a browser: read the game number and code from the link and start the Roblox client
+via its own protocol link (roblox://…). The client uses its saved login – the program needs
+neither a password nor a cookie. Supported links:
+    https://www.roblox.com/share?code=<code>&type=Server        (share link, also /share-links?…)
+        -> roblox://navigation/share_links?code=<code>&type=Server   (that's how it looks in Roblox's own link)
+    https://www.roblox.com/games/<game number>/<name>?privateServerLinkCode=<code>
+        -> roblox://experiences/start?placeId=<game number>&linkCode=<code>"""
 from __future__ import annotations
 
 import os
@@ -23,7 +23,7 @@ SHARE_DEEP_LINK = "roblox://navigation/share_links?code={code}&type=Server"     
 
 
 def _url(text: str):
-    text = (text or "").strip().strip("﻿​\"'<>").strip()   # BOM, Null-Breite, Anführungszeichen beim Kopieren
+    text = (text or "").strip().strip("﻿​\"'<>").strip()   # BOM, zero width, quotes when copying
     if not text:
         return None
     url = urlparse(text if "://" in text else "https://" + text)
@@ -32,7 +32,7 @@ def _url(text: str):
 
 
 def parse_private_link(text: str) -> Optional[tuple[int, str]]:
-    """(Spielnummer, Code) aus einem klassischen Private-Server-Link; None = kein passender Link."""
+    """(game number, code) from a classic private server link; None = no matching link."""
     url = _url(text)
     if url is None:
         return None
@@ -44,7 +44,7 @@ def parse_private_link(text: str) -> Optional[tuple[int, str]]:
 
 
 def parse_share_link(text: str) -> Optional[str]:
-    """Code aus einem Teilen-Link (roblox.com/share?… oder /share-links?…, type=Server); None = keiner."""
+    """Code from a share link (roblox.com/share?… or /share-links?…, type=Server); None = none."""
     url = _url(text)
     if url is None or not url.path.rstrip("/").endswith(("/share", "/share-links")):
         return None
@@ -56,7 +56,7 @@ def parse_share_link(text: str) -> Optional[str]:
 
 
 def deep_link(text: str) -> Optional[str]:
-    """roblox://-Link für den Client (klassischer oder Teilen-Link); None = kein gültiger Link."""
+    """roblox:// link for the client (classic or share link); None = no valid link."""
     classic = parse_private_link(text)
     if classic:
         return DEEP_LINK.format(place=classic[0], code=classic[1])
@@ -65,7 +65,7 @@ def deep_link(text: str) -> Optional[str]:
 
 
 def explain(text: str) -> str:
-    """Kurze Rückmeldung zum eingetragenen Link (für die Einstellungen)."""
+    """Short feedback on the entered link (for the settings)."""
     if not (text or "").strip():
         return tr("No link entered.")
     parsed = parse_private_link(text)
@@ -79,14 +79,14 @@ def explain(text: str) -> str:
 
 
 def join(text: str) -> tuple[bool, str]:
-    """Startet den Roblox-Client direkt im privaten Server. Rückgabe (gestartet?, Meldung)."""
+    """Starts the Roblox client directly in the private server. Returns (started?, message)."""
     uri = deep_link(text)
     if uri is None:
         return False, explain(text)
     if sys.platform != "win32":
         return False, tr("Only possible on Windows.")
     try:
-        os.startfile(uri)                              # öffnet den registrierten Roblox-Client
+        os.startfile(uri)                              # opens the registered Roblox client
     except OSError as exc:
         return False, tr("Roblox could not be started ({error}). Is Roblox installed?", error=exc)
     return True, tr("Starting Roblox and joining the private server …")
@@ -97,7 +97,7 @@ SHARE_PREFIX = "astral-server:"
 
 
 def share_code(name: str, link: str) -> str:
-    """Ein Favorit als eine Zeile zum Weitergeben (Name + Link). Kein Geheimnis – wer den Code hat, kann beitreten."""
+    """A favorite as one line to pass on (name + link). Not a secret – whoever has the code can join."""
     import base64
     import json
     raw = json.dumps({"n": name, "l": link}, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
@@ -105,7 +105,7 @@ def share_code(name: str, link: str) -> str:
 
 
 def parse_share_code(text: str) -> Optional[tuple[str, str]]:
-    """(Name, Link) aus einem geteilten Code; None = kein gültiger Code."""
+    """(name, link) from a shared code; None = no valid code."""
     import base64
     import binascii
     import json

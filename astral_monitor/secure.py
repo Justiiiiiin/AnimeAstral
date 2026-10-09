@@ -1,9 +1,9 @@
-"""Geheimnisse schützen.
+"""Protect secrets.
 
-1. Lokal (settings.json): Webhook-URL, Server-Links und IDs werden mit Windows-DPAPI verschlüsselt („dpapi:…“) – nur
-   dein Windows-Konto auf diesem PC kann sie lesen. Auf einem anderen PC bleiben sie leer → dafür gibt es:
-2. Export mit Passwort (.astralsettings): alle Einstellungen, AES-256-GCM, Schlüssel per scrypt aus dem Passwort.
-   Ohne Passwort unlesbar; ein vergessenes Passwort lässt sich nicht wiederherstellen."""
+1. Locally (settings.json): webhook URL, server links and IDs are encrypted with Windows DPAPI (“dpapi:…”) – only
+   your Windows account on this PC can read them. On another PC they stay empty → that's what this is for:
+2. Export with a password (.astralsettings): all settings, AES-256-GCM, key via scrypt from the password.
+   Unreadable without the password; a forgotten password can't be recovered."""
 from __future__ import annotations
 
 import base64
@@ -21,7 +21,7 @@ PREFIX = "dpapi:"
 EXPORT_FORMAT = "astral-settings-1"
 EXPORT_SUFFIX = ".astralsettings"
 MIN_PASSWORD = 8
-_SCRYPT = {"n": 2 ** 15, "r": 8, "p": 1}           # ~0,1 s und 32 MB je Versuch – bremst Passwort-Raten
+_SCRYPT = {"n": 2 ** 15, "r": 8, "p": 1}           # ~0.1 s and 32 MB per try – slows down password guessing
 
 
 class SecureError(ValueError):
@@ -53,36 +53,36 @@ def _dpapi(data: bytes, encrypt: bool) -> bytes:
 
 
 def protect(text: str) -> str:
-    """Für settings.json verschlüsseln (nur Windows; sonst unverändert)."""
+    """Encrypt for settings.json (Windows only; otherwise unchanged)."""
     if not text or text.startswith(PREFIX) or sys.platform != "win32":
         return text
     try:
         return PREFIX + base64.b64encode(_dpapi(text.encode("utf-8"), True)).decode("ascii")
     except Exception:
-        log.warning("Konnte nicht lokal verschlüsseln – wird unverschlüsselt gespeichert.", exc_info=True)
+        log.warning("Could not encrypt locally – saving unencrypted.", exc_info=True)
         return text
 
 
 def unprotect(text: str) -> str:
-    """Gegenstück zu protect(). Klartext (ältere Versionen) bleibt, wie er ist; nicht lesbar (anderer PC/Benutzer) → ""."""
+    """Counterpart to protect(). Plain text (older versions) stays as it is; unreadable (other PC/user) → ""."""
     if not isinstance(text, str) or not text.startswith(PREFIX):
         return text
     try:
         return _dpapi(base64.b64decode(text[len(PREFIX):]), False).decode("utf-8")
     except Exception:
-        log.warning("Ein gespeicherter Wert ist auf diesem PC nicht lesbar (anderer PC oder Benutzer?) – "
-                    "bitte neu eintragen oder Einstellungen importieren.")
+        log.warning("A saved value can't be read on this PC (other PC or user?) – please enter it again or import "
+                    "the settings.")
         return ""
 
 
-# ------------------------------------------------------------------ Export/Import mit Passwort
+# ------------------------------------------------------------------ Export/import with a password
 def _key(password: str, salt: bytes, params: dict) -> bytes:
     from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
     return Scrypt(salt=salt, length=32, n=params["n"], r=params["r"], p=params["p"]).derive(password.encode("utf-8"))
 
 
 def check_password(password: str, repeat: str | None = None) -> str | None:
-    """Fehlermeldung oder None."""
+    """Error message or None."""
     if len(password) < MIN_PASSWORD:
         return tr("The password needs at least {n} characters.", n=MIN_PASSWORD)
     if repeat is not None and password != repeat:
@@ -91,7 +91,7 @@ def check_password(password: str, repeat: str | None = None) -> str | None:
 
 
 def export_settings(data: dict, password: str, path: Path) -> Path:
-    """Einstellungen (Klartext-Dict) verschlüsselt als Datei speichern."""
+    """Save the settings (plain-text dict) encrypted as a file."""
     from cryptography.hazmat.primitives.ciphers.aead import AESGCM
     problem = check_password(password)
     if problem:
@@ -99,7 +99,7 @@ def export_settings(data: dict, password: str, path: Path) -> Path:
     salt, nonce = os.urandom(16), os.urandom(12)
     plain = json.dumps({"settings": data}, ensure_ascii=False).encode("utf-8")
     header = {"format": EXPORT_FORMAT, "kdf": "scrypt", **_SCRYPT}
-    aad = json.dumps(header, sort_keys=True).encode("ascii")          # Kopfdaten sind mit geschützt
+    aad = json.dumps(header, sort_keys=True).encode("ascii")          # the header data is protected too
     cipher = AESGCM(_key(password, salt, _SCRYPT)).encrypt(nonce, plain, aad)
     payload = dict(header, salt=base64.b64encode(salt).decode(), nonce=base64.b64encode(nonce).decode(),
                    data=base64.b64encode(cipher).decode())
@@ -111,7 +111,7 @@ def export_settings(data: dict, password: str, path: Path) -> Path:
 
 
 def import_settings(path: Path, password: str) -> dict:
-    """Datei entschlüsseln → Einstellungen (Klartext-Dict). Falsches Passwort/kaputte Datei → SecureError."""
+    """Decrypt the file → settings (plain-text dict). Wrong password/broken file → SecureError."""
     from cryptography.exceptions import InvalidTag
     from cryptography.hazmat.primitives.ciphers.aead import AESGCM
     try:

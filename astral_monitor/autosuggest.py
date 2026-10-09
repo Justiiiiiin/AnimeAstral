@@ -1,15 +1,15 @@
-"""Markierungen selbst vorschlagen (ohne Qt, Wunsch des Eigentümers 08.10.2026: „ich kann nicht alles per Hand
-eintragen“). Aus dem Fensterbild und den gelesenen Wörtern entstehen Rahmen wie im Markier-Werkzeug (review.py):
+"""Suggest markings by itself (without Qt, owner's wish 08.10.2026: “I can't enter everything by hand”). From the
+window image and the words read come boxes like in the marking tool (review.py):
 
-- **Knöpfe** nach Form und Farbe: gefüllte, einfarbige, abgerundete Flächen mit Schrift (Roll, Auto Roll, MAX,
-  Craft, Open, Claim All, Filters …). Text bestimmt die Art: Leave/Delete … = „nie drücken“, AUTO ON/OFF = Schalter.
-- **Schalter**: Beschriftung mit Doppelpunkt („AUTO CLAIM:“, „SYNC WITH EQUIP BEST:“, „Auto Rank Up:“) + Fläche darunter.
-- **Reiter**: links untereinander / unten nebeneinander (knowledge.side_tabs) oder ≥ 3 gleich große Knöpfe in einer Zeile.
-- **Werte/Fortschritt**: „64/700“, „6/7“, „Level 32/32“, „514δU / MAX“, „3/40 owned“.
-- **Kacheln** (Equip Best, Inventar, Pets): gleich große Quadrate mit farbigem Rand; ohne scrollbare Liste = Knöpfe,
-  mit Liste = ein Rahmen „Liste“ um das Raster.
-- **Listen**: Bereiche, die beim Erkunden wirklich gescrollt haben; **Suchfelder** („Search …“).
-Alle Rahmen in Anteilen des Fensterbilds; jeder Vorschlag trägt „auto“: True und wird im Werkzeug bestätigt."""
+- **Buttons** by shape and color: filled, single-colored, rounded areas with text (Roll, Auto Roll, MAX,
+  Craft, Open, Claim All, Filters …). The text decides the kind: Leave/Delete … = “never press”, AUTO ON/OFF = switch.
+- **Switches**: label with a colon (“AUTO CLAIM:”, “SYNC WITH EQUIP BEST:”, “Auto Rank Up:”) + area below.
+- **Tabs**: left one below the other / bottom side by side (knowledge.side_tabs) or ≥ 3 equally sized buttons in a row.
+- **Values/progress**: “64/700”, “6/7”, “Level 32/32”, “514δU / MAX”, “3/40 owned”.
+- **Tiles** (Equip Best, inventory, pets): equally sized squares with a colored border; without a scrollable list =
+  buttons, with a list = one “list” box around the grid.
+- **Lists**: areas that really scrolled while exploring; **search fields** (“Search …”).
+All boxes in fractions of the window image; every suggestion carries “auto”: True and is confirmed in the tool."""
 from __future__ import annotations
 
 import re
@@ -28,8 +28,8 @@ def _norm(t: str) -> str:
 
 
 def color_buttons(img: np.ndarray) -> list[list[float]]:
-    """Gefüllte, einfarbige, abgerundete Flächen (Knöpfe) – Anteile [x0,y0,x1,y1]. Farbige SCHRIFT fällt weg (zu
-    wenig gefüllt), ebenso Bilder (zu bunt)."""
+    """Filled, single-colored, rounded areas (buttons) – fractions [x0,y0,x1,y1]. Colored TEXT is dropped (too
+    little filled), as are images (too colorful)."""
     h, w = img.shape[:2]
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     sat = (hsv[..., 1] > 110) & (hsv[..., 2] > 110)
@@ -42,17 +42,17 @@ def color_buttons(img: np.ndarray) -> list[list[float]]:
         if not (0.03 * h < bh < 0.14 * h and bw > 0.05 * w and 1.6 < bw / bh < 9) or y < 0.12 * h:
             continue
         raw = sat[y:y + bh, x:x + bw]
-        if area / (bw * bh) < 0.55 or raw.mean() < 0.6:   # Schrift statt Fläche
+        if area / (bw * bh) < 0.55 or raw.mean() < 0.6:   # text instead of an area
             continue
         hue = hsv[y:y + bh, x:x + bw, 0][raw]
-        if hue.size and np.std(hue) > 25:                 # mehrfarbig = Bild, kein Knopf
+        if hue.size and np.std(hue) > 25:                 # multicolored = image, not a button
             continue
         out.append([x / w, y / h, (x + bw) / w, (y + bh) / h])
     return out
 
 
 def tiles(img: np.ndarray) -> list[list[float]]:
-    """Kacheln: annähernd quadratische Flächen mit farbigem Rand (Equip Best, Inventar, Pets), ähnliche Größe."""
+    """Tiles: roughly square areas with a colored border (Equip Best, inventory, pets), similar size."""
     h, w = img.shape[:2]
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     edge = ((hsv[..., 1] > 90) & (hsv[..., 2] > 120)).astype(np.uint8) * 255
@@ -62,7 +62,7 @@ def tiles(img: np.ndarray) -> list[list[float]]:
         x, y, bw, bh = cv2.boundingRect(c)
         if 0.06 * w < bw < 0.22 * w and 0.75 < bw / max(1, bh) < 1.35 and y > 0.12 * h:
             fill = edge[y:y + bh, x:x + bw].mean() / 255
-            if fill < 0.55:                                # Rand, innen Bild – keine gefüllte Fläche
+            if fill < 0.55:                                # border, image inside – no filled area
                 boxes.append([x / w, y / h, (x + bw) / w, (y + bh) / h])
     boxes = _dedupe(boxes)
     if len(boxes) < 3:
@@ -103,8 +103,8 @@ def _kind_for(text: str) -> str:
 
 def suggest(img: np.ndarray, words: list[tuple[str, list[float]]],
             scroll_boxes: Optional[list[list[float]]] = None) -> list[dict]:
-    """Vorschläge für ein Fensterbild. words: (Text, Lage) in Anteilen DIESES Bilds; scroll_boxes: Bereiche, die
-    beim Erkunden gescrollt haben (Anteile des Bilds)."""
+    """Suggestions for a window image. words: (text, position) in fractions of THIS image; scroll_boxes: areas that
+    scrolled while exploring (fractions of the image)."""
     out: list[dict] = []
 
     def add(box, kind, text):
@@ -115,9 +115,9 @@ def suggest(img: np.ndarray, words: list[tuple[str, list[float]]],
     full = [0.0, 0.0, 1.0, 1.0]
     for box in scroll_boxes or []:                         # 1. gemessene Listen
         add(box, "list", "Liste")
-    for t, b in knowledge.side_tabs(words, full):          # 2. Reiter links/unten
+    for t, b in knowledge.side_tabs(words, full):          # 2. tabs left/bottom
         add(b, "tab", t)
-    buttons = color_buttons(img)                           # 3. farbige Knöpfe (+ Reiter-Zeilen oben)
+    buttons = color_buttons(img)                           # 3. colored buttons (+ tab rows at the top)
     rows: dict[int, list] = {}
     for b in buttons:
         rows.setdefault(round(((b[1] + b[3]) / 2) / 0.03), []).append(b)
@@ -129,7 +129,7 @@ def suggest(img: np.ndarray, words: list[tuple[str, list[float]]],
         text = _text_in(b, words)
         if text:
             add(b, _kind_for(text), text)
-    for t, b in words:                                     # 4. Schalter: „AUTO CLAIM:“ + Fläche darunter
+    for t, b in words:                                     # 4. switches: “AUTO CLAIM:” + area below
         if t.endswith(":") and len(_norm(t)) >= 3:
             hh = b[3] - b[1]
             label = " ".join(x for x, o in words if abs(o[1] - b[1]) < 0.6 * hh and o[2] <= b[2] + 0.01

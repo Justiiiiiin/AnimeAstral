@@ -1,5 +1,5 @@
-"""Eigenes Hintergrundbild hinter den Seiten: füllend skaliert, mit der Hintergrundfarbe des Designs abgedunkelt.
-Karten bleiben deckend, nur die Flächen dazwischen werden durchsichtig (theme: Eigenschaft „glass“)."""
+"""Own background image behind the pages: scaled to fill, darkened with the design's background color.
+Cards stay opaque, only the areas between them become transparent (theme: property “glass”)."""
 from __future__ import annotations
 
 import shutil
@@ -16,7 +16,7 @@ from .. import app_paths
 from . import theme
 
 GLASS_TYPES = (QWidget, QStackedWidget, QLabel, QCheckBox, QRadioButton)
-MAX_SIDE = 2560                                   # größere Bilder werden beim Laden verkleinert (spart Speicher)
+MAX_SIDE = 2560                                   # larger images are scaled down when loading (saves memory)
 
 
 def stored_path(name: str) -> Optional[Path]:
@@ -25,7 +25,7 @@ def stored_path(name: str) -> Optional[Path]:
 
 
 def import_image(source: str) -> str:
-    """Bild in den Datenordner kopieren (bleibt auch, wenn das Original gelöscht wird). Gibt den Dateinamen zurück."""
+    """Copy the image into the data folder (stays even if the original is deleted). Returns the file name."""
     reader = QImageReader(source)
     if not reader.canRead():
         raise ValueError(reader.errorString())
@@ -38,7 +38,7 @@ def import_image(source: str) -> str:
 
 
 def mark_glass(root: QWidget) -> None:
-    """Reine Container-Flächen (keine Karten, Felder, Knöpfe) als „glass“ markieren."""
+    """Mark pure container areas (no cards, fields, buttons) as “glass”."""
     for w in [root] + root.findChildren(QWidget):
         if type(w) in GLASS_TYPES or isinstance(w, QAbstractScrollArea) or w.property("page"):
             w.setProperty("glass", True)
@@ -55,15 +55,15 @@ class Backdrop(QWidget):
         lay.addWidget(content)
         self._pixmap: Optional[QPixmap] = None
         self._dim = 0.7
-        self._decor = ""                            # Saison-Deko des Designs („halloween“, „winter“)
+        self._decor = ""                            # seasonal decoration of the design (“halloween”, “winter”)
         self._particles: list = []
         self._last = 0.0
         self._timer = QTimer(self)
-        self._timer.setTimerType(Qt.TimerType.PreciseTimer)   # gleichmäßige Abstände = ruhigere Bewegung
+        self._timer.setTimerType(Qt.TimerType.PreciseTimer)   # even spacing = calmer motion
         self._timer.timeout.connect(self._tick)
 
     def refresh_decor(self) -> None:
-        """Nach Design-/Animationswechsel: Deko des aktiven Designs übernehmen, Bewegung an/aus."""
+        """After a design/animation change: take over the active design's decoration, motion on/off."""
         from . import seasonal
         decor = theme.design_info().get("decor", "")
         if decor != self._decor:
@@ -92,8 +92,8 @@ class Backdrop(QWidget):
         before = seasonal.bounds(self._decor, area, self._particles)
         seasonal.step(self._particles, now, min(0.2, now - self._last))
         self._last = now
-        # Nur die Stellen neu zeichnen, an denen ein Teilchen war oder jetzt ist – nicht das ganze Fenster mit allen
-        # Karten (gemessen: das war der Großteil der Rechenzeit)
+        # Only redraw the spots where a particle was or is now – not the whole window with all
+        # cards (measured: that was most of the computing time)
         region = QRegion()
         for r in before + seasonal.bounds(self._decor, area, self._particles):
             region += r.toAlignedRect()
@@ -133,7 +133,7 @@ class Backdrop(QWidget):
             return
         p.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
         src = QRectF(self._pixmap.rect())
-        scale = max(self.width() / src.width(), self.height() / src.height())     # füllen, mittig zuschneiden
+        scale = max(self.width() / src.width(), self.height() / src.height())     # fill, crop centered
         w, h = self.width() / scale, self.height() / scale
         p.drawPixmap(QRectF(self.rect()), self._pixmap, QRectF((src.width() - w) / 2, (src.height() - h) / 2, w, h))
         bg.setAlphaF(self._dim)
@@ -148,8 +148,8 @@ class Backdrop(QWidget):
 
 
 def accent_from_image(path) -> Optional[str]:
-    """Kräftigste wiederkehrende Farbe eines Bildes als Akzent (Farbton mit dem meisten satten, hellen Anteil),
-    auf gut lesbare Helligkeit gebracht. None = Bild ohne kräftige Farben (z. B. schwarz-weiß)."""
+    """The strongest recurring color of an image as the accent (hue with the most saturated, bright share),
+    brought to a readable brightness. None = image without strong colors (e.g. black and white)."""
     from PySide6.QtGui import QImage
     image = QImage(str(path))
     if image.isNull():
@@ -160,7 +160,7 @@ def accent_from_image(path) -> Optional[str]:
         for x in range(small.width()):
             h, s, v, _a = small.pixelColor(x, y).getHsvF()
             if h < 0 or s < 0.35 or v < 0.35:
-                continue                              # graue, blasse und dunkle Stellen zählen nicht
+                continue                              # grey, pale and dark spots don't count
             b = int(h * 36) % 36
             weight = s * v
             acc = bins.setdefault(b, [0.0, 0.0, 0.0, 0.0])
@@ -171,7 +171,7 @@ def accent_from_image(path) -> Optional[str]:
     if not bins:
         return None
     total, hs, ss, vs = max(bins.values(), key=lambda a: a[0])
-    if total < 4:                                     # zu wenig Farbe im Bild
+    if total < 4:                                     # too little color in the image
         return None
     color = QColor.fromHsvF(hs / total, min(0.85, max(0.55, ss / total)), max(0.85, vs / total))
     return color.name().upper()

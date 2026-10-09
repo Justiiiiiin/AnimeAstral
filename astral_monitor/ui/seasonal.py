@@ -1,6 +1,6 @@
-"""Saison-Deko hinter den Seiten: Kürbisse und fallende Herbstblätter (Kürbisnacht), Schneeflocken (Frost),
-Feuerwerk (Silvester), Kirschblüten (Frühling), schwebende Lichtpunkte (Sommer).
-Bewegt sich nur, solange das Fenster sichtbar ist und Animationen an sind – sonst steht alles still."""
+"""Seasonal decoration behind the pages: pumpkins and falling autumn leaves (pumpkin night), snowflakes (frost),
+fireworks (New Year's Eve), cherry blossoms (spring), floating light dots (summer).
+Moves only while the window is visible and animations are on – otherwise everything stands still."""
 from __future__ import annotations
 
 import math
@@ -16,15 +16,15 @@ LEAF_COLORS = ("#E8742A", "#C9502A", "#E3A23B", "#9C4A26", "#D9622E")
 PETAL_COLORS = ("#FFB7D5", "#FF9CC6", "#FFD1E3", "#F7A8C8")
 FIREWORK_COLORS = ("#FFC94A", "#FF5FA2", "#7FE0FF", "#B98CFF", "#FFFFFF")
 COUNTS = {"halloween": 16, "winter": 40, "newyear": 9, "spring": 26, "summer": 26}
-FPS = 20                              # gleichmäßig getaktet; nur Teilchen-Bereiche neu (siehe backdrop._tick)
+FPS = 20                              # even tick; only redraw particle areas (see backdrop._tick)
 
 
 @dataclass
 class Flake:
-    x: float                          # 0–1 relativ zur Breite
-    y: float                          # 0–1 relativ zur Höhe
+    x: float                          # 0–1 relative to the width
+    y: float                          # 0–1 relative to the height
     size: float
-    speed: float                      # Höhe je Sekunde (relativ)
+    speed: float                      # height per second (relative)
     sway: float                       # Ausschlag seitlich
     phase: float
     spin: float
@@ -46,7 +46,7 @@ def make_particles(kind: str, count: int, seed: int = 7) -> list[Flake]:
             out.append(Flake(rnd.random(), rnd.random(), rnd.uniform(12, 18), rnd.uniform(0.02, 0.04),
                              rnd.uniform(0.02, 0.05), rnd.uniform(0, 6.28), rnd.uniform(-1.5, 1.5),
                              rnd.choice(PETAL_COLORS)))
-        elif kind == "summer":                      # Lichtpunkte steigen langsam auf (speed negativ)
+        elif kind == "summer":                      # light dots rise slowly (negative speed)
             out.append(Flake(rnd.random(), rnd.random(), rnd.uniform(2.5, 5), -rnd.uniform(0.01, 0.025),
                              rnd.uniform(0.01, 0.03), rnd.uniform(0, 6.28), rnd.uniform(0.6, 1.4), "#FFE38A"))
         else:
@@ -56,9 +56,9 @@ def make_particles(kind: str, count: int, seed: int = 7) -> list[Flake]:
 
 
 def step(particles: list[Flake], t: float, dt: float) -> None:
-    """Teilchen weiterbewegen (oben wieder herein, wenn sie unten heraus sind)."""
+    """Move the particles on (back in at the top when they leave at the bottom)."""
     for f in particles:
-        if f.sway == 0 and f.spin == 0:             # Feuerwerk: altert, dann neu an anderer Stelle
+        if f.sway == 0 and f.spin == 0:             # fireworks: age, then start anew elsewhere
             f.phase += dt
             if f.phase > f.speed:
                 f.phase = -random.uniform(0.3, 2.5)
@@ -140,7 +140,7 @@ def _pumpkin(p: QPainter, cx: float, bottom: float, w: float, alpha: float = 0.7
 
 
 def pumpkin_pixmap(size: int):
-    """Kleiner Kürbis als Bild (Seitenleiste in „Kürbisnacht“)."""
+    """Small pumpkin as an image (sidebar in “Pumpkin night”)."""
     from PySide6.QtGui import QPixmap
     ratio = 2.0
     pix = QPixmap(int(size * ratio), int(size * ratio))
@@ -154,7 +154,7 @@ def pumpkin_pixmap(size: int):
 
 
 def _burst(p: QPainter, cx: float, cy: float, radius: float, age: float, life: float, color: str) -> None:
-    """Feuerwerk: Funkenring breitet sich aus und verblasst, mit kurzen Schweifen."""
+    """Fireworks: a ring of sparks spreads and fades, with short trails."""
     if age <= 0:
         return
     a = min(1.0, age / life)
@@ -169,7 +169,7 @@ def _burst(p: QPainter, cx: float, cy: float, radius: float, age: float, life: f
         x1, y1 = cx + math.cos(ang) * r, cy + math.sin(ang) * r + drop
         x0, y0 = cx + math.cos(ang) * r * 0.7, cy + math.sin(ang) * r * 0.7 + drop
         p.drawLine(QPointF(x0, y0), QPointF(x1, y1))
-    if a < 0.35:                                                            # heller Blitz in der Mitte
+    if a < 0.35:                                                            # bright flash in the middle
         flash = QColor("#FFFFFF")
         flash.setAlphaF(0.6 * (1 - a / 0.35))
         p.setPen(Qt.PenStyle.NoPen)
@@ -207,7 +207,7 @@ def _glow(p: QPainter, cx: float, cy: float, size: float, phase: float, color: s
 
 
 def bounds(kind: str, rect: QRectF, particles: list[Flake]) -> list[QRectF]:
-    """Bereiche, die die Teilchen gerade belegen (zum gezielten Neuzeichnen statt des ganzen Fensters)."""
+    """Areas the particles currently occupy (for targeted redrawing instead of the whole window)."""
     w, h = rect.width(), rect.height()
     out = []
     for f in particles:
@@ -243,7 +243,7 @@ def paint(p: QPainter, kind: str, rect: QRectF, particles: list[Flake]) -> None:
             _glow(p, x, y, size, f.phase * f.spin, f.color)
         else:
             _flake(p, x, y, size, f.phase * f.spin)
-    if kind == "halloween":                               # Kürbisse in den unteren Ecken
+    if kind == "halloween":                               # pumpkins in the bottom corners
         base = rect.bottom() - theme.px(10)
         _pumpkin(p, rect.right() - theme.px(70), base, theme.px(64))
         _pumpkin(p, rect.right() - theme.px(128), base, theme.px(42))

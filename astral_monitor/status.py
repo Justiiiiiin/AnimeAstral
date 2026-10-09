@@ -1,6 +1,6 @@
-"""Live-Statusnachricht: EINE Discord-Nachricht, die sich selbst aktualisiert (Bearbeiten statt neu senden).
+"""Live status message: ONE Discord message that updates itself (edit instead of sending anew).
 
-Per Knopf/Hotkey kann sie gelöscht und ganz unten im Chat neu gesendet werden."""
+Via button/hotkey it can be deleted and sent again at the very bottom of the chat."""
 from __future__ import annotations
 
 import hashlib
@@ -35,21 +35,21 @@ class StatusPublisher(threading.Thread):
         self._last_sent = 0.0
         self._state_file = app_paths.data_dir() / "status_message.json"
 
-    # ------------------------------------------------------------------ Aufrufe von außen
+    # ------------------------------------------------------------------ Calls from outside
     def request_update(self) -> None:
         with self._lock:
             self._dirty = True
         self._wake.set()
 
     def request_resend(self, delay: float = 0.0) -> None:
-        """Alte Nachricht löschen und neu (ganz unten) senden."""
+        """Delete the old message and send it anew (at the very bottom)."""
         with self._lock:
             self._resend = True
             self._resend_at = max(self._resend_at, time.monotonic() + delay)
         self._wake.set()
 
     def finish(self) -> None:
-        """Letzte Aktualisierung (z. B. „Gestoppt“) senden und beenden."""
+        """Send the last update (e.g. “Stopped”) and finish."""
         with self._lock:
             self._final, self._halt = True, True
         self._wake.set()
@@ -79,7 +79,7 @@ class StatusPublisher(threading.Thread):
             if gap < MIN_GAP and not final:
                 time.sleep(MIN_GAP - gap)
             if due_resend:
-                self._wake.set()                      # später erneut prüfen
+                self._wake.set()                      # check again later
                 time.sleep(0.5)
                 continue
             try:
@@ -89,7 +89,7 @@ class StatusPublisher(threading.Thread):
                         self._resend = False
                     self._dirty = False
             except Exception:
-                log.exception("Statusnachricht konnte nicht gesendet werden")
+                log.exception("Could not send the status message")
             self._last_sent = time.monotonic()
             if halt:
                 return
@@ -112,11 +112,11 @@ class StatusPublisher(threading.Thread):
             else:
                 self._state_file.unlink(missing_ok=True)
         except OSError:
-            log.debug("Status-ID konnte nicht gespeichert werden", exc_info=True)
+            log.debug("Could not save the status ID", exc_info=True)
 
     @staticmethod
     def _request(method: str, url: str, **kwargs):
-        """HTTP mit Behandlung des Rate-Limits (einmal wiederholen)."""
+        """HTTP with rate-limit handling (retry once)."""
         for _attempt in range(2):
             resp = requests.request(method, url, timeout=15, **kwargs)
             if resp.status_code != 429:
@@ -137,7 +137,7 @@ class StatusPublisher(threading.Thread):
         if resend and message_id:
             resp = self._request("DELETE", f"{url}/messages/{message_id}")
             if resp.status_code not in (200, 204, 404):
-                log.warning("Alte Statusnachricht konnte nicht gelöscht werden (HTTP %s)", resp.status_code)
+                log.warning("Could not delete the old status message (HTTP %s)", resp.status_code)
             message_id = None
             self._save_id(url, None)
 
@@ -145,7 +145,7 @@ class StatusPublisher(threading.Thread):
             resp = self._request("PATCH", f"{url}/messages/{message_id}", json=edit_payload)
             if resp.status_code in (200, 204):
                 return
-            if resp.status_code != 404:                # 404 = Nachricht wurde gelöscht -> neu anlegen
+            if resp.status_code != 404:                # 404 = message was deleted -> create a new one
                 log.warning("Statusnachricht bearbeiten fehlgeschlagen (HTTP %s)", resp.status_code)
                 return
             self._save_id(url, None)
@@ -155,6 +155,6 @@ class StatusPublisher(threading.Thread):
             try:
                 self._save_id(url, str(resp.json()["id"]))
             except (ValueError, KeyError):
-                log.warning("Antwort ohne Nachrichten-ID – Bearbeiten nicht möglich")
+                log.warning("Response without a message ID – editing not possible")
         else:
             log.warning("Statusnachricht senden fehlgeschlagen (HTTP %s)", resp.status_code)

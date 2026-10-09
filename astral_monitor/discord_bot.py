@@ -1,13 +1,13 @@
-"""Discord-Bot zur Fernsteuerung (Einstellungen → Discord-Bot, Standard aus; Wunsch des Eigentümers 08.10.2026).
+"""Discord bot for remote control (Settings → Discord bot, off by default; owner's wish 08.10.2026).
 
-Jeder Nutzer legt seinen EIGENEN Bot im Discord-Entwicklerportal an und trägt dessen Token ein – ein gemeinsamer Bot
-ginge nicht (das Token wäre ein Geheimnis im öffentlichen Repo). Der Bot läuft im Programm selbst (eigener Thread mit
-asyncio), nur solange das Programm offen ist, und gehorcht nur den erlaubten Discord-IDs.
+Every user creates their OWN bot in the Discord developer portal and enters its token – a shared bot wouldn't
+work (the token would be a secret in the public repo). The bot runs inside the program itself (own thread with
+asyncio), only while the program is open, and obeys only the allowed Discord IDs.
 
-Befehle sind Slash-Befehle (/status, /start …); sie werden beim Verbinden für jeden Server, in dem der Bot ist, sofort
-registriert. Die eigentliche Arbeit macht `handler(befehl, argumente)` (im Hauptfenster, GUI-Thread) und liefert
-`Reply(text, png)` zurück. Ohne Qt."""
-# Kein „from __future__ import annotations“: discord.py liest die Typangaben der Slash-Befehle zur Laufzeit.
+Commands are slash commands (/status, /start …); they are registered right away for every server the bot is in
+when connecting. The actual work is done by `handler(command, arguments)` (in the main window, GUI thread), which
+returns `Reply(text, png)`. Without Qt."""
+# No “from __future__ import annotations”: discord.py reads the type hints of the slash commands at runtime.
 
 import asyncio
 import io
@@ -20,14 +20,14 @@ from .i18n import tr
 
 log = logging.getLogger("bot")
 
-PERMISSIONS = 2048 + 16384 + 32768      # Nachrichten senden, Links einbetten, Dateien anhängen
+PERMISSIONS = 2048 + 16384 + 32768      # send messages, embed links, attach files
 COMMANDS = ("status", "start", "stop", "pause", "screenshot", "raid", "makro", "antiafk", "autorejoin", "join", "pc",
             "hilfe")
-SHUTDOWN_DELAY = 60      # /pc herunterfahren: so viele Sekunden Zeit zum Abbrechen (/pc abbrechen)
+SHUTDOWN_DELAY = 60      # /pc shutdown: this many seconds to cancel (/pc cancel)
 
 
 def power_command(action: str) -> list[str]:
-    """Windows-Befehl für /pc (shutdown.exe): herunterfahren/neu starten mit Verzögerung, oder abbrechen."""
+    """Windows command for /pc (shutdown.exe): shut down/restart with a delay, or cancel."""
     if action == "shutdown":
         return ["shutdown", "/s", "/t", str(SHUTDOWN_DELAY), "/c", "Anime Astral Monitor: Discord-Befehl /pc"]
     if action == "restart":
@@ -44,13 +44,13 @@ class Reply:
 
 
 def invite_url(app_id: str) -> str:
-    """Einladungslink für den eigenen Bot (Bot + Slash-Befehle, nur die nötigen Rechte)."""
+    """Invite link for the own bot (bot + slash commands, only the needed permissions)."""
     return (f"https://discord.com/oauth2/authorize?client_id={app_id}&scope=bot%20applications.commands"
             f"&permissions={PERMISSIONS}")
 
 
 def allowed_ids(users: str, ping_id: str) -> set[int]:
-    """Erlaubte Discord-IDs: Liste aus den Einstellungen, sonst die Ping-ID aus „Meldungen“."""
+    """Allowed Discord IDs: list from the settings, otherwise the ping ID from “Alerts”."""
     ids = set()
     for part in (users or "").replace(";", ",").replace(" ", ",").split(","):
         if part.strip().isdigit():
@@ -61,14 +61,14 @@ def allowed_ids(users: str, ping_id: str) -> set[int]:
 
 
 class ControlBot:
-    """Startet/stoppt den Bot in einem eigenen Thread. state: „aus“, „verbinde …“, „verbunden als …“, Fehlertext."""
+    """Starts/stops the bot in its own thread. state: “off”, “connecting …”, “connected as …”, error text."""
 
     def __init__(self, token: str, allowed: set[int], handler: Callable[[str, dict], Reply],
                  choices: Callable[[str], list[str]], on_state: Callable[[str, str], None]) -> None:
         self.token = token.strip()
         self.allowed = allowed
         self.handler = handler                     # (befehl, argumente) -> Reply   (darf blockieren, max. ~20 s)
-        self.choices = choices                     # (art) -> Auswahl für Autovervollständigung („raid“, „server“)
+        self.choices = choices                     # (kind) -> choices for autocomplete (“raid”, “server”)
         self.on_state = on_state                   # (zustand, app_id)
         self.app_id = ""
         self._thread: Optional[threading.Thread] = None
@@ -136,7 +136,7 @@ class ControlBot:
                     tree.copy_global_to(guild=guild)
                     await tree.sync(guild=guild)          # je Server: sofort sichtbar (global dauert bis 1 Std.)
                 except Exception as exc:  # noqa: BLE001
-                    log.warning("Befehle für %s nicht registriert: %s", guild, exc)
+                    log.warning("Commands for %s not registered: %s", guild, exc)
 
         @client.event
         async def on_ready() -> None:
@@ -160,7 +160,7 @@ class ControlBot:
             if interaction.user.id not in bot.allowed:
                 await interaction.response.send_message(tr("No access – your Discord ID is not allowed in the "
                                                            "program."), ephemeral=True)
-                log.info("Discord-Bot: Befehl /%s von nicht erlaubter ID %s abgelehnt", name, interaction.user.id)
+                log.info("Discord bot: command /%s from a non-allowed ID %s rejected", name, interaction.user.id)
                 return
             await interaction.response.defer(thinking=True)
             log.info("Discord-Bot: /%s %s", name, args or "")
