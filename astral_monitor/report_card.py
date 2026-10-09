@@ -135,14 +135,14 @@ def render_card(stats: StatsStore, since: Optional[float], raid: Optional[str], 
         c.text((x + 18, y + 16), label, 14, MUTED)
         c.text((x + 18, y + 40), value, 38, color, bold=True)
 
-    # ---- Diagramm rechts: Endwellen-Verteilung (sonst Raids pro Stunde)
+    # ---- chart on the right: raids per day (how far a raid gets doesn't matter – owner)
     px0, py0, px1, py1 = 640, 120, W - 48, 350
     c.box((px0, py0, px1, py1))
-    hist = stats.wave_histogram(since, raid)
-    if hist:
-        c.text((px0 + 20, py0 + 16), tr("Where do attempts end?"), 17, TEXT, bold=True)
-        c.text((px0 + 20, py0 + 40), tr("Attempts per final wave"), 13, MUTED)
-        data = [(a, b) for a, b in hist]
+    days = stats.daily(14, raid)
+    if any(d["attempts"] for d in days):
+        c.text((px0 + 20, py0 + 16), tr("Raids per day"), 17, TEXT, bold=True)
+        c.text((px0 + 20, py0 + 40), tr("Last 14 days"), 13, MUTED)
+        data = [(f"{d['day'].day}.", d["attempts"]) for d in days]
     else:
         data = [(f"{h:02d}", n) for h, n in stats.hourly_waves(10, raid)]
         c.text((px0 + 20, py0 + 16), tr("Waves per hour"), 17, TEXT, bold=True)

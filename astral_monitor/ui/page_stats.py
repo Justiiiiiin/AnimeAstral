@@ -175,7 +175,7 @@ class StatsPage(QWidget):
         tabs = QHBoxLayout()
         self.chart_group = QButtonGroup(self)
         self.chart_group.setExclusive(True)
-        for i, text in enumerate((tr("Final waves"), tr("Trend"), tr("Waves per hour"), tr("Week"))):
+        for i, text in enumerate((tr("Raids per day"), tr("Trend"), tr("Waves per hour"), tr("Week"))):
             btn = QPushButton(text)
             btn.setCheckable(True)
             btn.setObjectName("tab")
@@ -318,8 +318,8 @@ class StatsPage(QWidget):
 
     def _chart_changed(self, index: int) -> None:
         self.charts.setCurrentIndex(index)
-        self.chart_info.set_info(tr((N_("Where do attempts end? Count per final wave (grouped if the range is "
-                                        "large)."),
+        # how far a raid gets doesn't matter (owner): raids per day instead of the final-wave distribution
+        self.chart_info.set_info(tr((N_("Raids per day over the last 14 days."),
                                     N_("Avg. final wave per hour (per day for long periods) – if it rises, you are "
                                        "getting better."),
                                     N_("Waves cleared in the last 10 hours."),
@@ -456,7 +456,7 @@ class StatsPage(QWidget):
         return {
             "names": stats.raid_names(), "summary": stats.summary(since, raid), "best": stats.best_wave(raid),
             "total": stats.snapshot().total_attempts, "wall": stats.wall(raid),
-            "rows": stats.last_runs(200, since, raid), "hist": stats.wave_histogram(since, raid),
+            "rows": stats.last_runs(200, since, raid), "days": stats.daily(14, raid),
             "trend": stats.trend(since, raid, by_day), "hours": stats.hourly_waves(10, raid),
             "week": stats.daily(7, raid), "records": stats.personal_records(), "per_raid": stats.per_raid(since),
         }
@@ -497,7 +497,7 @@ class StatsPage(QWidget):
                 SortItem(messages.fmt_duration_est(rec.duration_s, rec.estimated), rec.duration_s or -1, right=True)])
         self._fill(self.table, rows)
 
-        self.chart_hist.set_data(data["hist"])
+        self.chart_hist.set_data([(f"{d['day'].day}.", d["attempts"]) for d in data["days"]])
         self.chart_trend.set_data([(label_, int(round(avg))) for label_, avg, _n in data["trend"]])
         self.chart_hour.set_data([(f"{h:02d}", c) for h, c in data["hours"]])
         week = data["week"]
