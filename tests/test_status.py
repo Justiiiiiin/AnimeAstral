@@ -71,7 +71,7 @@ class StatusTests(unittest.TestCase):
         self.assertEqual(self.step(self.pub.request_update), ["POST"])
         self.assertEqual(self.step(self.pub.request_update), ["PATCH"])
         self.assertEqual(self.step(self.pub.request_resend, 1.4), ["DELETE", "POST"])
-        self.discord["exists"] = False                                  # Nutzer löscht die Nachricht
+        self.discord["exists"] = False                                  # user deletes the message
         self.assertEqual(self.step(self.pub.request_update), ["PATCH", "POST"])
         saved = json.loads(Path(_env.DATA, "status_message.json").read_text(encoding="utf-8"))
         self.assertEqual(saved["id"], self.discord["id"])
@@ -80,7 +80,7 @@ class StatusTests(unittest.TestCase):
         from astral_monitor import messages
         embed = messages.build_status(self.s, SNAP)["embeds"][0]
         self.assertIn("Läuft", embed["title"])
-        self.assertIn("Militech Convoy", embed["title"])                  # Raid im Titel
+        self.assertIn("Militech Convoy", embed["title"])                  # raid in the title
         self.assertIn("Welle 14/100", embed["description"])
         self.assertIn("▰", embed["description"])                           # Fortschrittsbalken
         self.assertIn("14 %", embed["description"])
@@ -104,9 +104,9 @@ class StatusTests(unittest.TestCase):
             embed = payload["embeds"][0]
             self.assertNotIn("fields", embed)
             self.assertIn("Raid #348 · New Leaf  ·  Welle 89/100  ·  Dauer 2:51", embed["description"])   # erste drei
-            self.assertEqual(embed["thumbnail"]["url"], "attachment://raid.jpg")              # Bild klein rechts
+            self.assertEqual(embed["thumbnail"]["url"], "attachment://raid.jpg")              # image small on the right
             status = messages.build_status(self.s, SNAP)["embeds"][0]
-            self.assertFalse([f for f in status["fields"] if f["inline"]])                    # keine Kachel-Felder
+            self.assertFalse([f for f in status["fields"] if f["inline"]])                    # no tile fields
             self.assertIn("7 Raids", status["description"])
         finally:
             self.s.message_style = "detailed"
@@ -117,11 +117,11 @@ class StatusTests(unittest.TestCase):
         payload, _ = messages.build_message(self.s, "record", "x", messages.COLOR_OK)
         self.assertEqual(payload["embeds"][0]["color"], 0xFF00AA)
         payload, _ = messages.build_message(self.s, "raid_done", "x", messages.COLOR_OK)
-        self.assertEqual(payload["embeds"][0]["color"], messages.COLOR_OK)          # ohne eigene Farbe: Standard
+        self.assertEqual(payload["embeds"][0]["color"], messages.COLOR_OK)          # without an own color: default
         loaded = Settings.from_dict(self.s.to_dict())
         self.assertEqual(loaded.events["record"]["color"], "#FF00AA")
         self.s.events["record"]["color"] = "rot"
-        self.assertNotIn("color", Settings.from_dict(self.s.to_dict()).events["record"])   # ungültig: verworfen
+        self.assertNotIn("color", Settings.from_dict(self.s.to_dict()).events["record"])   # invalid: discarded
 
     def test_logo_as_webhook_avatar(self):
         import os
@@ -135,7 +135,7 @@ class StatusTests(unittest.TestCase):
             self.assertEqual(payload["embeds"][0]["author"]["icon_url"], url)
         finally:
             del os.environ["ASTRAL_UPDATE_REPO"]
-        self.assertNotIn("avatar_url", messages.build_status(self.s, SNAP))      # ohne Repo (Quellcode): kein Bild
+        self.assertNotIn("avatar_url", messages.build_status(self.s, SNAP))      # without a repo (source code): no image
 
 
 if __name__ == "__main__":

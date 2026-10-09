@@ -17,7 +17,7 @@ from .settings import Settings, is_valid_webhook
 
 log = logging.getLogger("status")
 
-MIN_GAP = 5.0       # Sekunden zwischen zwei Sendungen (Discord-Limits schonen)
+MIN_GAP = 5.0       # seconds between two sends (go easy on Discord's limits)
 
 
 class StatusPublisher(threading.Thread):

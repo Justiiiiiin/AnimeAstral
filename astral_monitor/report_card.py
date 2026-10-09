@@ -11,7 +11,7 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 from . import app_paths, messages
 from .i18n import N_, dec, tr
-from .stats import StatsStore
+from .stats import UNKNOWN, StatsStore, raid_label
 
 W, H, S = 1200, 630, 2           # target size and supersampling (smooth edges)
 BG_TOP, BG_BOTTOM = (13, 18, 24), (18, 26, 35)
@@ -170,7 +170,7 @@ def render_card(stats: StatsStore, since: Optional[float], raid: Optional[str], 
     total = max((r.total_waves for r in recs), default=100) or 100
     for i, p in enumerate(per[:3]):
         y = 420 + i * 52
-        c.text((70, y), p["raid"], 18, TEXT, bold=True)
+        c.text((70, y), raid_label(p["raid"]), 18, TEXT, bold=True)
         sub = tr("{attempts} attempts · {waves} waves · avg. wave {avg}", attempts=p["attempts"],
                  waves=messages.fmt_int(p["waves_total"]), avg=dec(f"{p['avg_wave']:.1f}"))
         c.text((70, y + 24), sub, 13, MUTED)
@@ -247,7 +247,7 @@ def render_month_card(stats: StatsStore, year: int, month: int) -> bytes:
     c.text((70, 382), tr("Highlights"), 17, TEXT, bold=True)
     highlights = [(tr("Best day"), tr("{month} {day} · {count} raids", day=m["best_day"],
                                          month=tr(MONTHS[month - 1]), count=m["best_day_attempts"]), TEAL)]
-    if m["favorite_raid"] and m["favorite_raid"] != "Unbekannt":
+    if m["favorite_raid"] and m["favorite_raid"] != UNKNOWN:
         highlights.append((tr("Favorite raid"), tr("{raid} · {count}×", raid=m["favorite_raid"],
                                                    count=m["favorite_count"]), VIOLET))
     if m["peak_hour"] is not None:

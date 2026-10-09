@@ -23,20 +23,20 @@ class StatsTests(unittest.TestCase):
         self.st.add(RunRecord(now, 80.0, None, 40, 100, "abgebrochen", "geschätzt", raid="Defense"))
 
     def test_every_run_counts_the_same(self):
-        """Alte Zeilen mit „abgebrochen“ zählen genauso wie „ok“ – es gibt keine Fehlversuche."""
+        """Old rows with “abgebrochen” count just like “ok” – there are no failed attempts."""
         s = self.st.summary(None, "Militech Convoy")
         self.assertEqual(s.attempts, 11)
         self.assertEqual(s.waves_total, sum(25 + i % 3 for i in range(10)) + 99)
         self.assertAlmostEqual(s.avg_duration_all, (10 * 100.0 + 230.0) / 11)
-        self.assertAlmostEqual(self.st.summary(None, None).avg_duration_all, (10 * 100.0 + 230.0) / 11)  # ~ zählt nicht
+        self.assertAlmostEqual(self.st.summary(None, None).avg_duration_all, (10 * 100.0 + 230.0) / 11)  # ~ doesn't count
         snap = self.st.snapshot()
         self.assertEqual(snap.total_attempts, 12)
         self.assertFalse(hasattr(s, "failed"))
 
     def test_histogram_trend_and_best(self):
         hist = dict(self.st.wave_histogram(None, "Militech Convoy"))
-        self.assertEqual(sum(hist.values()), 11)          # alle Versuche, auch der bis zum Ende
-        self.assertLessEqual(len(hist), 10)               # lesbar: höchstens 10 Balken in runden Schritten
+        self.assertEqual(sum(hist.values()), 11)          # all attempts, also the one to the end
+        self.assertLessEqual(len(hist), 10)               # readable: at most 10 bars in round steps
         self.assertEqual(hist["20–29"], 10)
         self.assertEqual(hist["90–99"], 1)
         self.assertEqual(self.st.best_wave("Militech Convoy"), 99)
@@ -76,8 +76,8 @@ class WallTests(unittest.TestCase):
         st = self.store([29] * 30)
         wall = st.wall("Militech Convoy")
         self.assertEqual((wall.wave, wall.streak), (29, 30))
-        self.assertIsNone(st.wall(None))                       # nur je Raid
-        self.assertIsNone(self.store([60] * 20, raid="").wall("Unbekannt"))   # gemischte, nicht erkannte Läufe
+        self.assertIsNone(st.wall(None))                       # only per raid
+        self.assertIsNone(self.store([60] * 20, raid="").wall("Unbekannt"))   # mixed, unrecognized runs
         self.assertIsNone(st.wall("Anderer Raid"))
         self.assertIsNone(self.store([29] * 30 + [34]).wall("Militech Convoy"))   # gerade durchbrochen
         self.assertEqual(self.store([29] * 30 + [34, 29, 29]).wall("Militech Convoy").streak, 2)
@@ -92,7 +92,7 @@ if __name__ == "__main__":
 
 
 class CombinedStatsTests(unittest.TestCase):
-    """Alle Versuche zählen gleich: Wellen, Wellen pro Stunde, Ø Endwelle, Zeit pro Welle."""
+    """All attempts count the same: waves, waves per hour, Ø end wave, time per wave."""
 
     def test_combined_summary(self):
         st = store("combined.csv")
@@ -110,7 +110,7 @@ class CombinedStatsTests(unittest.TestCase):
         self.assertAlmostEqual(s.avg_wave_all, s.waves_total / 20)
         self.assertAlmostEqual(s.sec_per_wave, 3.7, delta=0.05)
         self.assertGreater(s.waves_per_hour, 0)
-        self.assertEqual(sum(c for _l, c in st.wave_histogram(None, "Militech Convoy")), 20)   # alle Versuche
+        self.assertEqual(sum(c for _l, c in st.wave_histogram(None, "Militech Convoy")), 20)   # all attempts
         entry = st.per_raid()[0]
         self.assertEqual((entry["attempts"], entry["waves_total"]), (20, s.waves_total))
         self.assertTrue(any(w > 0 for _h, w in st.hourly_waves(4, "Militech Convoy")))
@@ -124,16 +124,16 @@ class FarmTimeTests(unittest.TestCase):
         path.unlink(missing_ok=True)
         store = StatsStore(path)
         base = datetime(2026, 10, 6, 8, 0).timestamp()
-        for i in range(10):                                   # 10 Raids im Abstand von 2 Minuten
+        for i in range(10):                                   # 10 raids 2 minutes apart
             store.add(RunRecord(base + i * 120, 110.0, None, 50 + i, 100, "ok", "", "Alvarez"))
-        store.add(RunRecord(base + 3 * 3600, 100.0, None, 90, 100, "ok", "", ""))   # nach langer Pause
+        store.add(RunRecord(base + 3 * 3600, 100.0, None, 90, 100, "ok", "", ""))   # after a long break
         recs = store.last_runs(100)
-        self.assertAlmostEqual(farm_seconds(recs), 110 + 9 * 120 + 100)            # Pause zählt nicht
+        self.assertAlmostEqual(farm_seconds(recs), 110 + 9 * 120 + 100)            # the break doesn't count
         week = store.daily(7, end=datetime(2026, 10, 7))
         self.assertEqual([d["attempts"] for d in week], [0, 0, 0, 0, 0, 11, 0])
         m = store.month(2026, 10)
         self.assertEqual((m["attempts"], m["best_wave"], m["best_day"], m["active_days"]), (11, 90, 6, 1))
-        self.assertEqual(m["favorite_raid"], "Alvarez")                             # benannter Raid vor „Unbekannt“
+        self.assertEqual(m["favorite_raid"], "Alvarez")                             # named raid before “Unbekannt”
         self.assertEqual(m["peak_hour"], 8)
         self.assertEqual(store.month(2026, 11)["prev_attempts"], 11)
 
@@ -151,7 +151,7 @@ class ArchiveTests(unittest.TestCase):
         self.assertFalse((base / "raid_history.csv").exists())
         self.assertEqual(StatsStore.archives(base / "archive"), [archived])
         self.assertEqual(StatsStore(archived).best_wave(), 42)                 # Archiv bleibt lesbar
-        self.assertIsNone(store.archive(base / "archive"))                    # leer: nichts zu tun
+        self.assertIsNone(store.archive(base / "archive"))                    # empty: nothing to do
         store.add(RunRecord(time.time(), 100.0, None, 10, 100, "ok", "", ""))
         self.assertEqual(StatsStore(base / "raid_history.csv").best_wave(), 10)
 
@@ -163,13 +163,13 @@ class RecordTests(unittest.TestCase):
         store = StatsStore(Path(tempfile.mkdtemp(dir=_env.DATA)) / "h.csv")
         self.assertIsNone(store.personal_records()["best_wave"])
         day1 = datetime(2026, 10, 5, 20, 0).timestamp()
-        for i in range(3):                                            # Tag 1: 3 Raids in einer Session
+        for i in range(3):                                            # day 1: 3 raids in one session
             store.add(RunRecord(day1 + i * 120, 110.0, None, 50, 100, "ok", "", "A"))
         day2 = datetime(2026, 10, 6, 8, 0).timestamp()
-        for i in range(5):                                            # Tag 2: 5 Raids, einer mit Rekord
+        for i in range(5):                                            # day 2: 5 raids, one with a record
             store.add(RunRecord(day2 + i * 120, 110.0, None, 97 if i == 2 else 60, 100, "ok", "", "B"))
         rec = store.personal_records()
         self.assertEqual(rec["best_wave"][0], 97)
         self.assertEqual(rec["best_day"][1:], (5, 337))
         self.assertEqual(rec["best_hour"][1], 337)
-        self.assertEqual(rec["longest"][2], 5)                        # längste zusammenhängende Session
+        self.assertEqual(rec["longest"][2], 5)                        # longest continuous session

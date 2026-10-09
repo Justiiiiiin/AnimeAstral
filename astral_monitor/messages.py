@@ -196,7 +196,7 @@ def build_status(settings: Settings, snap: dict) -> dict:
             parts.append(tr("Best wave {wave}", wave=snap["best_wave"]))
         if snap.get("uptime"):
             parts.append(tr("Running {time}", time=fmt_duration(snap.get("uptime"))))
-        lines.insert(len(lines) - 1 if meta else len(lines), "-# " + "  ·  ".join(parts))   # vor „Gestartet …“
+        lines.insert(len(lines) - 1 if meta else len(lines), "-# " + "  ·  ".join(parts))   # before “Started …”
         fields = [f for f in fields if not f[2]]
 
     embed = {

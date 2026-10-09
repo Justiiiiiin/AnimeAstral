@@ -192,7 +192,7 @@ def trim_roblox_memory() -> int:
                 if psapi.EmptyWorkingSet(ctypes.c_void_p(handle)):
                     count += 1
                 k32.CloseHandle(ctypes.c_void_p(handle))
-    except Exception:  # noqa: BLE001 – nur eine Zugabe
+    except Exception:  # noqa: BLE001 – only an extra
         log.debug("Roblox-Speicher leeren fehlgeschlagen", exc_info=True)
     return count
 

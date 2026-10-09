@@ -16,6 +16,14 @@ from typing import Optional
 
 log = logging.getLogger("stats")
 
+UNKNOWN = "Unbekannt"     # raid name for runs without a raid (stored like this in older histories – keep it)
+
+
+def raid_label(name: str) -> str:
+    """Raid name for display: the placeholder for runs without a raid in the chosen language."""
+    from .i18n import tr
+    return tr("Unknown") if name == UNKNOWN else name
+
 TIME_BOUND = {"hourly_waves", "daily"}       # depend on the current time (the key contains the minute)
 
 
@@ -253,7 +261,7 @@ class StatsStore:
         recs = self.records if since is None else self._tail_since(since)
         if raid is None:
             return list(recs)
-        return [r for r in recs if (r.raid or "Unbekannt") == raid]
+        return [r for r in recs if (r.raid or UNKNOWN) == raid]
 
     def _hour_key(self, ts: float) -> tuple[float, float]:
         """(start of the local hour, start of the local day) – computed only once per full hour
@@ -272,7 +280,7 @@ class StatsStore:
         with self._lock:
             counts: dict[str, int] = {}
             for r in self.records:
-                counts[r.raid or "Unbekannt"] = counts.get(r.raid or "Unbekannt", 0) + 1
+                counts[r.raid or UNKNOWN] = counts.get(r.raid or UNKNOWN, 0) + 1
             return [n for n, _c in sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))]
 
     @_cached
@@ -283,7 +291,7 @@ class StatsStore:
     @_cached
     def wall(self, raid: Optional[str]) -> Optional[Wall]:
         """Wall of a raid (only makes sense per raid, not mixed over all raids)."""
-        if not raid or raid == "Unbekannt":            # unrecognized runs are different raids mixed together
+        if not raid or raid == UNKNOWN:            # unrecognized runs are different raids mixed together
             return None
         with self._lock:
             recs = self._in_range(None, raid)
@@ -347,7 +355,7 @@ class StatsStore:
         with self._lock:
             recs = self.records if since is None else self._tail_since(since)
             for r in reversed(recs):                       # newest first, stop as soon as there are enough groups
-                if raid is not None and (r.raid or "Unbekannt") != raid:
+                if raid is not None and (r.raid or UNKNOWN) != raid:
                     continue
                 base = self._hour_key(r.ts_end)[1 if by_day else 0]
                 if base not in groups and len(groups) >= limit:
@@ -418,7 +426,7 @@ class StatsStore:
         now = datetime.now().replace(minute=0, second=0, microsecond=0)
         starts = [(now.timestamp() - i * 3600) for i in range(hours - 1, -1, -1)]
         with self._lock:
-            recent = [r for r in self._tail_since(starts[0]) if raid is None or (r.raid or "Unbekannt") == raid]
+            recent = [r for r in self._tail_since(starts[0]) if raid is None or (r.raid or UNKNOWN) == raid]
         return [(datetime.fromtimestamp(st).hour, sum(r.max_wave for r in recent if st <= r.ts_end < st + 3600))
                 for st in starts]
 
@@ -430,7 +438,7 @@ class StatsStore:
         out = []
         with self._lock:
             first = (last - timedelta(days=days - 1)).timestamp()
-            recent = [r for r in self._tail_since(first) if raid is None or (r.raid or "Unbekannt") == raid]
+            recent = [r for r in self._tail_since(first) if raid is None or (r.raid or UNKNOWN) == raid]
             for i in range(days - 1, -1, -1):
                 start = last - timedelta(days=i)
                 lo, hi = start.timestamp(), (start + timedelta(days=1)).timestamp()
@@ -457,13 +465,13 @@ class StatsStore:
             per_day[datetime.fromtimestamp(r.ts_end).day - 1] += 1
         raids: dict[str, int] = {}
         for r in recs:
-            raids[r.raid or "Unbekannt"] = raids.get(r.raid or "Unbekannt", 0) + 1
+            raids[r.raid or UNKNOWN] = raids.get(r.raid or UNKNOWN, 0) + 1
         hours: dict[int, int] = {}
         for r in recs:
             h = datetime.fromtimestamp(r.ts_end).hour
             hours[h] = hours.get(h, 0) + 1
         best_day = max(range(n_days), key=lambda i: per_day[i]) if recs else None
-        named = {k: v for k, v in raids.items() if k != "Unbekannt"} or raids     # prefer named raids
+        named = {k: v for k, v in raids.items() if k != UNKNOWN} or raids     # prefer named raids
         favorite = max(named.items(), key=lambda kv: kv[1])[0] if named else ""
         return {"year": year, "month": month, "attempts": len(recs), "waves": sum(r.max_wave for r in recs),
                 "farm_s": farm_seconds(recs), "best_wave": max((r.max_wave for r in recs), default=0),
@@ -514,11 +522,11 @@ class StatsStore:
 
     @_cached
     def per_raid(self, since: Optional[float] = None) -> list[dict]:
-        """Metrics per raid name (empty name = “Unbekannt”)."""
+        """Metrics per raid name (empty name = UNKNOWN)."""
         with self._lock:
             groups: dict[str, list[RunRecord]] = {}
             for rec in self._in_range(since):
-                groups.setdefault(rec.raid or "Unbekannt", []).append(rec)
+                groups.setdefault(rec.raid or UNKNOWN, []).append(rec)
             out = []
             for name, recs in groups.items():
                 waves = [r.max_wave for r in recs]

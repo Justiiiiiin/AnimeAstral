@@ -10,23 +10,24 @@ from . import theme
 
 # Per version: where there is something new (“nav:<page>” = icon bar, “tab:<section>” = settings tab)
 NEW_FEATURES: dict[str, tuple[str, ...]] = {
-    "0.8.0": ("nav:1", "nav:2", "nav:5", "tab:Roblox", "tab:Darstellung", "tab:Programm"),
+    "0.8.0": ("nav:1", "nav:2", "nav:5", "tab:Roblox", "tab:Appearance", "tab:Program"),
     "0.9.0": ("nav:3", "tab:Roblox"),
-    "0.9.5-beta.1": ("nav:3", "tab:Roblox"),        # Automatik (Beta) unter Einstellungen → Roblox
-    "0.9.5-beta.2": ("nav:0",),                     # Startseite neu: Makro, Ereignisse, Live, Quests
-    "0.9.5-beta.4": ("nav:0", "nav:3", "tab:Programm"),   # Warteschlange; Ereignisse unter Einstellungen → Programm
+    "0.9.5-beta.1": ("nav:3", "tab:Roblox"),        # automation (beta) under Settings → Roblox
+    "0.9.5-beta.2": ("nav:0",),                     # new start page: macro, events, live, quests
+    "0.9.5-beta.4": ("nav:0", "nav:3", "tab:Program"),   # queue; events under Settings → Program
     "0.9.7-beta.1": ("nav:0",),                     # explore, Auto Roll, raids in the queue
-    "0.9.7-beta.4": ("nav:1", "nav:2", "tab:Debug"),   # Statistik/Meldungen ohne Scrollen; Debug als eigener Reiter
+    "0.9.7-beta.4": ("nav:1", "nav:2", "tab:Debug"),   # statistics/alerts without scrolling; debug as its own tab
     "0.9.7-beta.5": ("nav:3", "tab:Debug"),          # debug with on/off and the full log
     "0.9.8": ("nav:0", "nav:3"),                    # macro/queue (stable), settings search with Ctrl+F
     "0.9.9-beta.1": ("nav:0",),                     # start page for the macro, auto-collect, raid selection
-    "0.9.9-beta.2": ("nav:3", "tab:Makro", "tab:Discord-Bot"),   # Erkunden in Einstellungen, Discord-Bot
-    "0.9.9-beta.4": ("nav:3", "tab:Makro"),          # check findings with the marking tool
-    "0.9.9-beta.7": ("nav:0", "nav:3", "tab:Makro", "tab:Darstellung"),   # Farm-Routine, Protokoll, Night City
-    "0.9.9-beta.8": ("nav:3", "tab:Makro"),          # Funde ohne Dopplungen
+    "0.9.9-beta.2": ("nav:3", "tab:Macro", "tab:Discord bot"),   # explore in settings, Discord bot
+    "0.9.9-beta.4": ("nav:3", "tab:Macro"),          # check findings with the marking tool
+    "0.9.9-beta.7": ("nav:0", "nav:3", "tab:Macro", "tab:Appearance"),   # farm routine, log, Night City
+    "0.9.9-beta.8": ("nav:3", "tab:Macro"),          # findings without duplicates
     "0.9.9-beta.9": ("nav:0",),                      # Progressions: Auto All
-    "0.9.9-beta.10": ("nav:3", "tab:Makro"),         # explore: all worlds, sideways lists
-    "0.9.9-beta.11": ("nav:0",),                     # Automatisch abholen repariert, Routine ohne Progressions
+    "0.9.9-beta.10": ("nav:3", "tab:Macro"),         # explore: all worlds, sideways lists
+    "0.9.9-beta.11": ("nav:0",),                     # auto-collect fixed, routine without Progressions
+    "0.9.9-beta.13": ("nav:1", "nav:3", "tab:Appearance"),   # raids per day; English as the default language
 }
 
 

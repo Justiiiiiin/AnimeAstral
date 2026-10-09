@@ -27,7 +27,7 @@ class DebugBuffer(logging.Handler):
     def emit(self, record: logging.LogRecord) -> None:
         try:
             text = self.format(record)
-        except Exception:  # noqa: BLE001 – Protokoll darf nie stören
+        except Exception:  # noqa: BLE001 – the log must never disturb
             return
         self.add(text, record.levelname)
 

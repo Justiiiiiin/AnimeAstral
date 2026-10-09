@@ -182,7 +182,7 @@ def _line_conf(ocr, img: np.ndarray) -> tuple[str, float]:
     """Read one line (psm 7) with the mean confidence of the words."""
     try:
         words = ocr.words(img, psm=7)
-    except Exception:  # noqa: BLE001 – Lesefehler: leer
+    except Exception:  # noqa: BLE001 – read error: empty
         return "", 0.0
     words = [w for w in words if w.text.strip()]
     if not words:
@@ -349,7 +349,7 @@ def read_title_loose(window_img: np.ndarray, ocr) -> str:
             binary = cv2.threshold(turned, limit, 255, cv2.THRESH_BINARY_INV)[1]
             try:
                 words = ocr.words(binary, psm=11)
-            except Exception:  # noqa: BLE001 – Lesefehler: anderer Versuch
+            except Exception:  # noqa: BLE001 – read error: another try
                 continue
             good = [wd for wd in sorted(words, key=lambda wd: wd.x)
                     if wd.conf >= 60 and len(re.sub(r"[^A-Za-z]", "", wd.text)) >= 3]
@@ -456,7 +456,7 @@ def words_in(frame: np.ndarray, roi: list[float], ocr) -> list[tuple[str, list[f
         img = binary if scale == 1.0 else cv2.resize(binary, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
         try:
             words = ocr.words(img, psm=11)
-        except Exception:  # noqa: BLE001 – Lesefehler: dann eben weniger Wörter
+        except Exception:  # noqa: BLE001 – read error: fewer words then
             continue
         for wd in words:
             text = re.sub(r"^[^A-Za-z0-9%]+|[^A-Za-z0-9%!?]+$", "", wd.text)

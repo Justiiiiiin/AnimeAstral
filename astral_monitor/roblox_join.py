@@ -19,7 +19,7 @@ _PLACE_RE = re.compile(r"/games/(\d{3,20})(?:/|$)")
 _CODE_RE = re.compile(r"[A-Za-z0-9_-]{6,100}")
 _SHARE_RE = re.compile(r"[A-Fa-f0-9]{16,64}")
 DEEP_LINK = "roblox://experiences/start?placeId={place}&linkCode={code}"
-SHARE_DEEP_LINK = "roblox://navigation/share_links?code={code}&type=Server"     # so steht er auch in Roblox' Teilen-Link
+SHARE_DEEP_LINK = "roblox://navigation/share_links?code={code}&type=Server"     # that's how it looks in Roblox's share link too
 
 
 def _url(text: str):

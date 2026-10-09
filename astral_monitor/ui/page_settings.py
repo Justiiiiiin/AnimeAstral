@@ -50,7 +50,7 @@ class SettingsPage(QWidget):
         tabs.addSpacing(theme.px(14))
         self.tab_group = QButtonGroup(self)
         self.tab_group.setExclusive(True)
-        for key in ("Roblox", "Makro", "Discord-Bot", "Überwachung", "Darstellung", "Programm", "Debug"):
+        for key in ("Roblox", "Macro", "Discord bot", "Monitoring", "Appearance", "Program", "Debug"):
             btn = QPushButton(tr(key))
             btn.setObjectName("tab")
             btn.setCheckable(True)

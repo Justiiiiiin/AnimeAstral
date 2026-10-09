@@ -90,7 +90,7 @@ class ControlBot:
         if loop is not None and client is not None and not loop.is_closed():
             try:
                 asyncio.run_coroutine_threadsafe(client.close(), loop).result(timeout=5)
-            except Exception:  # noqa: BLE001 – beim Beenden egal
+            except Exception:  # noqa: BLE001 – doesn't matter when quitting
                 pass
         if self._thread is not None:
             self._thread.join(timeout=5)
@@ -100,7 +100,7 @@ class ControlBot:
     # ------------------------------------------------------------------ Thread
     def _run(self) -> None:
         try:
-            import discord  # noqa: F401 – schwere Abhängigkeit erst hier laden
+            import discord  # noqa: F401 – load the heavy dependency only here
         except ImportError:
             self.on_state(tr("Error: discord.py missing"), "")
             return
@@ -134,7 +134,7 @@ class ControlBot:
             for guild in client.guilds:
                 try:
                     tree.copy_global_to(guild=guild)
-                    await tree.sync(guild=guild)          # je Server: sofort sichtbar (global dauert bis 1 Std.)
+                    await tree.sync(guild=guild)          # per server: visible right away (global takes up to 1 h)
                 except Exception as exc:  # noqa: BLE001
                     log.warning("Commands for %s not registered: %s", guild, exc)
 

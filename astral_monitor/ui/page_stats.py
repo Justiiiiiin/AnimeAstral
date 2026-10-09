@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (QButtonGroup, QFileDialog, QGridLayout, QHBoxLayo
                                QPushButton, QStackedWidget, QToolButton, QVBoxLayout, QWidget)
 
 from .. import app_paths, messages
+from .. import stats as stats_mod
 from ..i18n import N_, dec, tr
 from . import theme
 from .widgets import (PARAGRAPH, BarChart, Card, ComboBox, SortItem, StatCard, label, make_table, page_header,
@@ -411,7 +412,7 @@ class StatsPage(QWidget):
         self.profile.clear()
         self.profile.addItem(tr(ALL_PROFILES), None)
         for name in names:
-            self.profile.addItem(name, name)
+            self.profile.addItem(stats_mod.raid_label(name), name)
         index = self.profile.findData(current)
         self.profile.setCurrentIndex(index if index >= 0 else 0)
         self.profile.blockSignals(False)
@@ -514,7 +515,7 @@ class StatsPage(QWidget):
         per_rows = []
         for item in data["per_raid"]:
             per_rows.append([
-                SortItem(item["raid"], item["raid"].lower()),
+                SortItem(stats_mod.raid_label(item["raid"]), item["raid"].lower()),
                 SortItem(str(item["attempts"]), item["attempts"], right=True),
                 SortItem(messages.fmt_int(item["waves_total"]), item["waves_total"], right=True),
                 SortItem(_num(item["avg_wave"]), item["avg_wave"], right=True),

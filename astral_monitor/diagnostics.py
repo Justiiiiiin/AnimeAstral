@@ -1,5 +1,5 @@
-"""Diagnose-Paket: sammelt Protokoll, Wertverlauf, Einstellungen und Bilder in einer ZIP-Datei – ohne Webhook,
-Server-Links, Discord-IDs und Windows-Benutzername (zum Weitergeben bei Fehlern)."""
+"""Diagnostics package: collects the log, value history, settings and images in a ZIP file – without the webhook,
+server links, Discord IDs and Windows user name (to pass on when something goes wrong)."""
 from __future__ import annotations
 
 import csv
@@ -27,7 +27,7 @@ def _pkg(name: str) -> str:
     try:
         return metadata.version(name)
     except metadata.PackageNotFoundError:
-        return "nicht installiert"
+        return "not installed"
 
 
 def _png(image: Optional[np.ndarray]) -> Optional[bytes]:
@@ -53,7 +53,7 @@ _SCRUB = [
 
 
 def scrub(text: str) -> str:
-    """Persönliches aus Protokolltext entfernen: Webhooks, Server-Links/-Codes, Discord-IDs, Windows-Benutzername."""
+    """Remove personal data from log text: webhooks, server links/codes, Discord IDs, Windows user name."""
     for pattern, repl in _SCRUB:
         text = pattern.sub(repl, text)
     user = os.environ.get("USERNAME", "")
@@ -63,7 +63,7 @@ def scrub(text: str) -> str:
 
 
 def build_report(engine, dest_dir: Path) -> Path:
-    """Schreibt das Diagnose-Paket und gibt den Pfad zurück. Enthält keine Webhook-URL."""
+    """Writes the diagnostics package and returns the path. Contains no webhook URL."""
     stamp = time.strftime("%Y%m%d_%H%M%S")
     path = dest_dir / f"astral_diagnose_{stamp}.zip"
     s = engine.settings
@@ -92,7 +92,7 @@ def build_report(engine, dest_dir: Path) -> Path:
               f"Datensätze: gesamt {len(engine.stats.records)}"]
 
     settings = s.to_dict()
-    for secret in SECRET_FIELDS:                                   # persönliche Zugänge/IDs
+    for secret in SECRET_FIELDS:                                   # personal access data/IDs
         if settings.get(secret):
             settings[secret] = "<entfernt>"
     settings["server_favorites"] = [{"name": f.get("name", ""), "link": "<entfernt>"}

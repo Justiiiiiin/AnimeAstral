@@ -203,7 +203,7 @@ class MacroController(QObject):
         from ..app_paths import data_dir
         folder = data_dir() / "explore"
         folder.mkdir(parents=True, exist_ok=True)
-        os.startfile(str(folder))                          # noqa: S606 – eigener Datenordner
+        os.startfile(str(folder))                          # noqa: S606 – own data folder
 
     def reload_map(self) -> None:
         self.map = UiMap.load()
@@ -222,7 +222,7 @@ class MacroController(QObject):
             from ..review import dedupe
             dedupe(data_dir())                            # duplicate findings (e.g. “Sword 1” / “Sword 1 Fenster”)
             count = restore_from_reports(data_dir(), self.map)
-        except Exception:  # noqa: BLE001 – nur eine Ergänzung, nie den Start stören
+        except Exception:  # noqa: BLE001 – only an extra, never disturb the start
             return
         if count:
             self.add_log(tr("{count} learned windows restored from earlier explore runs.", count=count))

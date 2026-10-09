@@ -1,4 +1,4 @@
-"""Gemeinsame Testumgebung: eigener Datenordner, Paket im Suchpfad."""
+"""Gemeinsame Testumgebung: own data folder, Paket im Suchpfad."""
 import atexit
 import os
 import shutil

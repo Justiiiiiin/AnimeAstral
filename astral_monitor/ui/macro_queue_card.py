@@ -69,7 +69,7 @@ class MacroQueueCard(Card):
         hint.setContentsMargins(0, 0, 0, 0)
         hint.addWidget(label(tr("The macro is off."), "muted"), 1)
         to_settings = QPushButton(tr("Turn on …"))
-        to_settings.clicked.connect(lambda: self.main.open_settings_tab("Makro"))
+        to_settings.clicked.connect(lambda: self.main.open_settings_tab("Macro"))
         hint.addWidget(to_settings)
         self.body.addWidget(self.off_hint)
 

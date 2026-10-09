@@ -43,7 +43,7 @@ class SettingsTests(unittest.TestCase):
         self.assertEqual(Settings.from_dict(d).rpc_game_link, RPC_GAME_LINK)
         d["rpc_game_link"] = "https://www.roblox.com/games/123456789/Eigenes"
         self.assertEqual(Settings.from_dict(d).rpc_game_link, d["rpc_game_link"])
-        d["settings_version"] = 1                       # sehr alte Einstellungen landen ebenfalls auf dem neuesten Stand
+        d["settings_version"] = 1                       # very old settings end up up to date as well
         self.assertEqual(Settings.from_dict(d).settings_version, Settings.settings_version)
 
     def test_validation(self):
@@ -148,7 +148,7 @@ class StorageTests(unittest.TestCase):
 class WaveColorTests(unittest.TestCase):
     def test_tiers(self):
         from astral_monitor.ui.page_monitor import wave_token
-        self.assertEqual(wave_token(50, 0), "")                         # noch keine Bestwelle
+        self.assertEqual(wave_token(50, 0), "")                         # no best wave yet
         self.assertEqual([wave_token(w, 80) for w in (10, 48, 72, 80, 95)], ["", "info", "accent", "warn", "warn"])
 
 
@@ -167,8 +167,8 @@ class DiagnosticsTests(unittest.TestCase):
             self.assertNotIn(secret, out)
         if len(user) >= 3:
             self.assertNotIn(user, out)
-        self.assertIn("Welle 42/100", out)                               # Nützliches bleibt
-        self.assertIn("place 102072869879193", out)                      # Spiel-ID (15 Stellen) ist öffentlich
+        self.assertIn("Welle 42/100", out)                               # useful stuff stays
+        self.assertIn("place 102072869879193", out)                      # game ID (15 digits) is public
 
 
 if __name__ == "__main__":
@@ -183,7 +183,7 @@ class SeasonDecorTests(unittest.TestCase):
         self.assertEqual((len(leaves), len(flakes)), (10, 10))
         for _ in range(400):                                   # 80 s Bewegung
             seasonal.step(leaves, 0, 0.2)
-        self.assertTrue(all(-0.06 <= f.y <= 1.05 for f in leaves))   # fallen unten raus, oben wieder rein
+        self.assertTrue(all(-0.06 <= f.y <= 1.05 for f in leaves))   # fall out at the bottom, back in at the top
 
 
 class SpookyTests(unittest.TestCase):
@@ -192,7 +192,7 @@ class SpookyTests(unittest.TestCase):
         from astral_monitor.ui import spooky
         rnd = random.Random(1)
         self.assertTrue(all(spooky.FIRST_MIN <= spooky.next_delay(True, rnd) for _ in range(50)))
-        self.assertTrue(all(spooky.next_delay(False, rnd) >= 3600 for _ in range(50)))   # höchstens 1× pro Stunde
+        self.assertTrue(all(spooky.next_delay(False, rnd) >= 3600 for _ in range(50)))   # at most 1× per hour
 
 
 class AccentFromImageTests(unittest.TestCase):
@@ -204,7 +204,7 @@ class AccentFromImageTests(unittest.TestCase):
         app = QGuiApplication.instance() or QGuiApplication([])          # noqa: F841
         from astral_monitor.ui.backdrop import accent_from_image
         img = QImage(100, 100, QImage.Format.Format_RGB32)
-        img.fill(QColor("#202020"))                                      # grau zählt nicht
+        img.fill(QColor("#202020"))                                      # grey doesn't count
         p = QPainter(img)
         p.fillRect(0, 0, 100, 60, QColor("#C0306A"))                     # viel Pink
         p.fillRect(0, 60, 100, 15, QColor("#2A70D0"))                    # etwas Blau
@@ -215,7 +215,7 @@ class AccentFromImageTests(unittest.TestCase):
         self.assertTrue(320 <= h <= 345, h)                              # Pink gewinnt
         img.fill(QColor("#808080"))
         img.save(path)
-        self.assertIsNone(accent_from_image(path))                       # grau: keine Farbe
+        self.assertIsNone(accent_from_image(path))                       # grey: no color
 
 
 class NewDotsTests(unittest.TestCase):
@@ -242,7 +242,7 @@ class FixedDetectionTests(unittest.TestCase):
         self.assertEqual(s.wave_roi.as_list(), DEFAULT_WAVE_ROI.as_list())
         self.assertEqual(s.quest_roi.as_list(), DEFAULT_QUEST_ROI.as_list())
         self.assertEqual((s.trigger_offset, s.confirm_reads, s.capture_mode, s.tesseract_path), (0, 1, "auto", ""))
-        self.assertTrue(all("interval" in p and "hot" not in p for p in PRESETS.values()))   # kein „heißer“ Takt
+        self.assertTrue(all("interval" in p and "hot" not in p for p in PRESETS.values()))   # no “hot” tick
         self.assertIsNone(Settings().validate_detection())
 
     def test_raids_of_any_length(self):
@@ -250,21 +250,21 @@ class FixedDetectionTests(unittest.TestCase):
         allowed = Settings().allowed_totals_list()
         for text, expected in (("Wave 12/30", (12, 30)), ("Wave 50/50", (50, 50)), ("Wave 99/100", (99, 100)),
                                ("Wave 1500/2000", (1500, 2000)), ("Wave 44/10", None), ("Wave 7/3", None)):
-            self.assertEqual(parse_wave(text, allowed), expected, text)       # 30, 50, 100 … 2000 Wellen
+            self.assertEqual(parse_wave(text, allowed), expected, text)       # 30, 50, 100 … 2000 waves
 
     def test_endless_modes_without_total(self):
         from astral_monitor import messages
         from astral_monitor.tracker import WaveTracker
         from astral_monitor.wave import parse_bare_wave
         self.assertEqual(parse_bare_wave("Wave 542"), 542)
-        self.assertIsNone(parse_bare_wave("Wave 54/1OO"))                 # mit „/“: nie als „54“ werten
-        self.assertIsNone(parse_bare_wave("542"))                         # ohne „Wave“ davor: nein
+        self.assertIsNone(parse_bare_wave("Wave 54/1OO"))                 # with “/”: never count as “54”
+        self.assertIsNone(parse_bare_wave("542"))                         # without “Wave” in front: no
         tr = WaveTracker(offset=0)
         events = []
         for i, v in enumerate(range(1, 30)):
             events += tr.update(v, 0, 100.0 + i * 4)
-        self.assertFalse([e for e in events if e[0] == "candidate"])       # ohne Ziel kein vorzeitiges Ende
-        events = tr.update(1, 0, 300.0) + tr.update(1, 0, 304.0)          # Zähler springt zurück: Raid endet
+        self.assertFalse([e for e in events if e[0] == "candidate"])       # without a target no early end
+        events = tr.update(1, 0, 300.0) + tr.update(1, 0, 304.0)          # counter jumps back: raid ends
         ends = [d for k, d in events if k == "run_end"]
         self.assertEqual((ends[0]["max_wave"], ends[0]["total"]), (29, 0))
         self.assertEqual(messages.fmt_wave(542, 0), "542")

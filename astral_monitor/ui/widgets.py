@@ -325,7 +325,7 @@ class ElidedLabel(QLabel):
         self.setMinimumWidth(1)
         self.setText(text)
 
-    def setText(self, text: str) -> None:  # noqa: N802 (Qt-Name)
+    def setText(self, text: str) -> None:  # noqa: N802 (Qt name)
         self._full = text
         self.setToolTip(text)
         self._elide()

@@ -567,7 +567,7 @@ class Navigator:
             path = debug_dir() / f"makro_raid_{time.strftime('%H%M%S')}.jpg"
             small = cv2.resize(frame, None, fx=0.5, fy=0.5, interpolation=cv2.INTER_AREA)
             cv2.imencode(".jpg", small, [cv2.IMWRITE_JPEG_QUALITY, 80])[1].tofile(str(path))
-        except Exception:  # noqa: BLE001 – nur Hilfe für die Fehlersuche
+        except Exception:  # noqa: BLE001 – only a debugging aid
             pass
 
     # ------------------------------------------------------------------ Raid: gear, Auto Retry, Auto Leave
@@ -925,7 +925,7 @@ class Navigator:
             small = cv2.resize(frame, None, fx=0.5, fy=0.5, interpolation=cv2.INTER_AREA)
             path = debug_dir() / f"makro_{tag}_{time.strftime('%H%M%S')}.jpg"
             cv2.imencode(".jpg", small, [cv2.IMWRITE_JPEG_QUALITY, 80])[1].tofile(str(path))
-        except Exception:  # noqa: BLE001 – nur Hilfe für die Fehlersuche
+        except Exception:  # noqa: BLE001 – only a debugging aid
             pass
 
     # ------------------------------------------------------------------ Guild: missions
@@ -1048,7 +1048,7 @@ class Navigator:
                                         cv2.BORDER_CONSTANT, value=255)
             try:
                 seconds = parse_timer(self._ocr.line(binary, 7, "0123456789:"))
-            except Exception:  # noqa: BLE001 – Lesefehler: dann eben nicht
+            except Exception:  # noqa: BLE001 – read error: then not
                 seconds = None
             if seconds is not None and 0 < seconds <= duration + 60:
                 return seconds
@@ -1182,7 +1182,7 @@ class Navigator:
             self.log("✔ " + tr("Done."))
         except Stop as exc:
             self.log("■ " + str(exc))
-        except Exception as exc:  # noqa: BLE001 – nie den Thread hart abbrechen lassen
+        except Exception as exc:  # noqa: BLE001 – never let the thread die hard
             self.log("✖ " + tr("Error: {error}", error=exc))
         finally:
             _ACTIVE.clear()
