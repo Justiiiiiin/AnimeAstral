@@ -1,4 +1,4 @@
-"""Einrichtungsassistent: Roblox verbinden, Zähler finden, Discord verbinden – in wenigen Schritten."""
+"""Setup wizard: connect Roblox, find the counter, connect Discord – in a few steps."""
 from __future__ import annotations
 
 import cv2
@@ -27,7 +27,7 @@ def chip(text: str = "", state: str = "") -> QLabel:
 
 
 class SetupWizard(QDialog):
-    """Fünf kurze Seiten. Gespeichert wird erst am Ende (oder beim Weiterklicken der Discord-Seite)."""
+    """Five short pages. Nothing is saved until the end (or when continuing past the Discord page)."""
 
     STEPS = [N_("Welcome"), N_("Roblox"), N_("Counter"), N_("Discord"), N_("Done")]
 
@@ -79,7 +79,7 @@ class SetupWizard(QDialog):
         root.addLayout(nav)
         self._go(0)
 
-    # ------------------------------------------------------------------ Seiten
+    # ------------------------------------------------------------------ Pages
     def _page(self, title: str, subtitle: str) -> tuple[QWidget, QVBoxLayout]:
         page = QWidget()
         lay = QVBoxLayout(page)
@@ -164,7 +164,7 @@ class SetupWizard(QDialog):
         lay.addStretch(1)
         return page
 
-    # ------------------------------------------------------------------ Aktionen
+    # ------------------------------------------------------------------ Actions
     def _check_roblox(self) -> None:
         from ..engine import EngineError
         from ..winapi import find_window
@@ -287,5 +287,5 @@ class SetupWizard(QDialog):
         else:
             self._go(i + 1)
 
-    def reject(self) -> None:                    # Fenster schließen = später fortsetzen (Assistent bleibt „offen“)
+    def reject(self) -> None:                    # closing the window = continue later (wizard stays “open”)
         super().reject()

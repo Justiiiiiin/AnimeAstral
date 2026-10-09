@@ -1,4 +1,4 @@
-"""Dialog „Versionen & Änderungen“: alle Versionshinweise lesen, beliebige Version installieren (auch älter)."""
+"""Dialog “Versions & changes”: read all release notes, install any version (older ones too)."""
 from __future__ import annotations
 
 import threading

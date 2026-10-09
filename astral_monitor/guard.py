@@ -1,4 +1,4 @@
-"""Wächter: Roblox-Prozess, Stillstand, Speicher. Disconnects erkennt rejoin.py über das Roblox-Protokoll."""
+"""Guard: Roblox process, stall, memory. Disconnects are detected by rejoin.py via the Roblox log."""
 from __future__ import annotations
 
 import logging
@@ -14,14 +14,14 @@ log = logging.getLogger("guard")
 
 PROCESS_NAMES = ("robloxplayerbeta.exe", "robloxplayerbeta")
 
-POLL_PROCESS_EVERY = 5.0          # Sekunden
+POLL_PROCESS_EVERY = 5.0          # seconds
 PROCESS_DOWN_AFTER = 6.0
 NO_FRAMES_AFTER = 30.0
 RAM_REPEAT_SECONDS = 1800.0
 
 
 def _default_finder():
-    """Sucht den Roblox-Prozess (mit Zwischenspeicher)."""
+    """Finds the Roblox process (cached)."""
     import psutil
     cache: dict = {"proc": None}
 
@@ -36,7 +36,7 @@ def _default_finder():
             cache["proc"] = None
         for candidate in psutil.process_iter(["name"]):
             if (candidate.info.get("name") or "").lower() in PROCESS_NAMES:
-                candidate.cpu_percent(None)                     # Messung beginnen
+                candidate.cpu_percent(None)                     # start measuring
                 cache["proc"] = candidate
                 return candidate
         return None
@@ -61,7 +61,7 @@ class Guard:
             pass
         self.reset(0.0)
 
-    # ------------------------------------------------------------------ Zustand
+    # ------------------------------------------------------------------ State
     def reset(self, now: float) -> None:
         self._seen_proc = False
         self._down_since: Optional[float] = None
@@ -81,7 +81,7 @@ class Guard:
     def enabled(self) -> bool:
         return self._get().guard_enabled
 
-    # ------------------------------------------------------------ Eingaben der Engine
+    # ------------------------------------------------------------ Inputs from the engine
     def on_frame(self) -> None:
         if self._missing_alerted:
             self._event(tr("Images from the Roblox window are arriving again"), "ok")
@@ -101,7 +101,7 @@ class Guard:
 
     def on_wave(self, value: Optional[int], now: float) -> None:
         if value is None:
-            self._wave_value = None          # ohne sichtbaren Zähler gibt es keinen Stillstand
+            self._wave_value = None          # without a visible counter there is no stall
             return
         if value != self._wave_value:
             self._wave_value = value
@@ -118,7 +118,7 @@ class Guard:
             self._noraid_alerted = False
             self._event(tr("Raids are running again"), "ok")
 
-    # ------------------------------------------------------------------ Prozess
+    # ------------------------------------------------------------------ Process
     def poll_process(self, now: float) -> None:
         if now < self._next_poll:
             return
@@ -164,7 +164,7 @@ class Guard:
                          [(tr("Roblox RAM"), f"{gb:.1f} GB", True), (tr("Limit"), f"{s.ram_alert_gb:g} GB", True)],
                          tr("For very long sessions, restarting Roblox helps."))
 
-    # ---------------------------------------------------------------- Stillstand
+    # ---------------------------------------------------------------- Stall
     def check_stall(self, now: float, in_raid: bool) -> None:
         s = self._get()
         if not s.guard_enabled:

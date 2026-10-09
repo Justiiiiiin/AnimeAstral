@@ -1,11 +1,10 @@
-"""Erzeugt Dateiliste und Update-Paket für einen Release (wird vom GitHub-Build aufgerufen).
+"""Creates the file list and update package for a release (called by the GitHub build).
 
-    python tools/make_patch.py <version> <programmordner> <ausgabeordner> [<dateiliste der vorigen Version>]
+    python tools/make_patch.py <version> <program folder> <output folder> [<file list of the previous version>]
 
-Ausgabe: files-<version>.json (Prüfsummen aller Dateien) und – wenn die vorige Dateiliste vorliegt –
-AnimeAstralMonitor-Update-<version>.zip mit nur den Dateien, die sich seitdem geändert haben. Installierte Programme
-der vorigen Version laden dann nur dieses kleine Paket statt des kompletten Installers.
-"""
+Output: files-<version>.json (checksums of all files) and – if the previous file list is available –
+AnimeAstralMonitor-Update-<version>.zip with only the files that changed since then. Installed programs
+of the previous version then load only this small package instead of the full installer."""
 import json
 import sys
 import zipfile
@@ -39,7 +38,7 @@ def main() -> int:
         print(f"Update-Paket {prev.get('version')} -> {version}: {len(changed)} von {len(files)} Dateien, "
               f"{zip_path.stat().st_size / 1048576:.1f} MB (Programm gesamt {full:.0f} MB)")
     else:
-        print("Keine Dateiliste der vorigen Version – nur kompletter Installer.")
+        print("No file list of the previous version – full installer only.")
     (out / f"files-{version}.json").write_text(json.dumps(manifest, indent=1), encoding="utf-8")
     return 0
 

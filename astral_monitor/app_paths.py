@@ -1,4 +1,4 @@
-"""Speicherorte der Anwendung (Einstellungen, Verlauf, Logs)."""
+"""Storage locations of the application (settings, history, logs)."""
 from __future__ import annotations
 
 import os
@@ -8,11 +8,11 @@ from pathlib import Path
 APP_NAME = "AnimeAstralMonitor"
 
 
-_made: set = set()                                   # bereits angelegte Ordner (nicht bei jedem Zugriff neu prüfen)
+_made: set = set()                                   # folders already created (don't check again on every access)
 
 
 def data_dir() -> Path:
-    """%APPDATA%/AnimeAstralMonitor (oder ASTRAL_DATA_DIR, z. B. für Tests)."""
+    """%APPDATA%/AnimeAstralMonitor (or ASTRAL_DATA_DIR, e.g. for tests)."""
     override = os.environ.get("ASTRAL_DATA_DIR")
     if override:
         base = Path(override)
@@ -26,7 +26,7 @@ def data_dir() -> Path:
 
 
 def resource_path(relative: str) -> Path:
-    """Ressourcen (z. B. Icon): im Entwicklungsordner oder im EXE-Paket (PyInstaller)."""
+    """Resources (e.g. icon): in the development folder or in the EXE bundle (PyInstaller)."""
     base = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent.parent))
     return base / relative
 
@@ -50,7 +50,7 @@ def profiles_dir() -> Path:
 
 
 def archive_dir() -> Path:
-    """Archivierte Statistiken (Statistik → ⋯ → Archivieren)."""
+    """Archived statistics (Statistics → ⋯ → Archive)."""
     return data_dir() / "archive"
 
 

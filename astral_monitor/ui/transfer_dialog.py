@@ -1,4 +1,4 @@
-"""Dialoge: Einstellungen mit Passwort exportieren / importieren (secure.py)."""
+"""Dialogs: export / import settings with a password (secure.py)."""
 from __future__ import annotations
 
 from PySide6.QtWidgets import QCheckBox, QDialog, QFrame, QHBoxLayout, QLineEdit, QPushButton, QVBoxLayout
@@ -10,7 +10,7 @@ from .widgets import form_grid, label
 
 
 class PasswordDialog(QDialog):
-    """export=True: Warnhinweis + Passwort zweimal. export=False: Passwort einmal (Import)."""
+    """export=True: warning + password twice. export=False: password once (import)."""
 
     def __init__(self, parent, export: bool) -> None:
         super().__init__(parent)

@@ -1,4 +1,4 @@
-"""Kurzes „Was ist neu“ nach einem Update: die wichtigsten Stichpunkte, alles Weitere unter „Alle Versionen“."""
+"""Short “What's new” after an update: the most important points, everything else under “All versions”."""
 from __future__ import annotations
 
 from PySide6.QtWidgets import QDialog, QHBoxLayout, QPushButton, QVBoxLayout
@@ -42,7 +42,7 @@ class WhatsNewDialog(QDialog):
 
 
 def should_show(seen: str, wizard_done: bool) -> bool:
-    """Nur nach einem Update: Neuinstallationen (Assistent noch offen) sehen es nicht, dieselbe Version nur einmal."""
+    """Only after an update: new installs (wizard still open) don't see it, the same version only once."""
     return wizard_done and seen != __version__
 
 

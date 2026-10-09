@@ -1,5 +1,5 @@
-"""Karte „Meine Raids“ (Einstellungen → Roblox): Raid-Namen anlegen, umbenennen, löschen.
-Welcher gerade läuft, wählst du auf der Startseite. Seit 0.9.0 ohne Raid-Einstellungen (Auslöser/Notiz)."""
+"""Card “My raids” (Settings → Roblox): create, rename and delete raid names.
+Which one is running is chosen on the start page. Since 0.9.0 without per-raid settings (trigger/note)."""
 from __future__ import annotations
 
 from PySide6.QtCore import Qt

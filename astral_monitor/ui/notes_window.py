@@ -1,4 +1,4 @@
-"""Notizbuch (Beta): freie Notizen zu Upgrades, Codes und Plänen – speichert automatisch, nur auf diesem PC."""
+"""Notebook (beta): free notes on upgrades, codes and plans – saves automatically, only on this PC."""
 from __future__ import annotations
 
 from PySide6.QtCore import Qt, QTimer

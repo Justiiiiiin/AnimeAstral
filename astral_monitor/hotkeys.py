@@ -1,4 +1,4 @@
-"""Globale Hotkeys über die Windows-Funktion RegisterHotKey (ohne Zusatzpaket, ohne Adminrechte)."""
+"""Global hotkeys via the Windows function RegisterHotKey (no extra package, no admin rights)."""
 from __future__ import annotations
 
 import logging
@@ -19,7 +19,7 @@ _SPECIAL = {"space": 0x20, "pause": 0x13, "insert": 0x2D, "delete": 0x2E, "home"
 
 
 def parse_hotkey(text: str) -> tuple[int, int]:
-    """'Ctrl+Alt+S' -> (Modifier-Maske, virtueller Tastencode). Wirft ValueError bei ungültiger Eingabe."""
+    """'Ctrl+Alt+S' -> (modifier mask, virtual key code). Raises ValueError for invalid input."""
     parts = [p.strip().lower() for p in text.replace(" ", "").split("+") if p.strip()]
     if len(parts) < 2:
         raise ValueError(tr("please give modifiers and a key, e.g. Ctrl+Alt+S"))
@@ -41,12 +41,12 @@ def parse_hotkey(text: str) -> tuple[int, int]:
 
 
 class HotkeyListener(threading.Thread):
-    """Registriert Hotkeys und ruft die Funktionen im Listener-Thread auf
-    (die Funktionen sollten nur eine Aktion an die Oberfläche weiterreichen)."""
+    """Registers hotkeys and calls the functions in the listener thread
+        (the functions should only hand an action over to the UI)."""
 
     def __init__(self, bindings: dict[str, tuple[str, Callable[[], None]]]) -> None:
         super().__init__(name="hotkeys", daemon=True)
-        self._bindings = bindings            # Name -> (Text, Funktion)
+        self._bindings = bindings            # name -> (text, function)
         self.failed: list[str] = []
         self.ready = threading.Event()
         self._thread_id = 0
@@ -61,7 +61,7 @@ class HotkeyListener(threading.Thread):
         user32, kernel32 = ctypes.windll.user32, ctypes.windll.kernel32
         self._thread_id = kernel32.GetCurrentThreadId()
         msg = wintypes.MSG()
-        user32.PeekMessageW(ctypes.byref(msg), None, 0x0400, 0x0400, 0)     # Nachrichten-Queue anlegen
+        user32.PeekMessageW(ctypes.byref(msg), None, 0x0400, 0x0400, 0)     # create the message queue
 
         actions: dict[int, Callable[[], None]] = {}
         for i, (name, (text, func)) in enumerate(self._bindings.items(), start=1):

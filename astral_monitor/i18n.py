@@ -24,17 +24,17 @@ def language() -> str:
 
 
 def dec(text: str) -> str:
-    """Dezimalzahl im Text: Deutsch mit Komma („1,6“), Englisch mit Punkt („1.6“)."""
+    """Decimal number in a text: German with comma (“1,6”), English with point (“1.6”)."""
     return text.replace(".", ",") if _lang == "de" else text
 
 
 def thousands(text: str) -> str:
-    """Tausendertrennung aus f"{x:,}": Deutsch mit Punkt („1.234“), Englisch mit Komma („1,234“)."""
+    """Thousands separator from f"{x:,}": German with point (“1.234”), English with comma (“1,234”)."""
     return text.replace(",", ".") if _lang == "de" else text
 
 
 def N_(text: str) -> str:
-    """Markiert Texte in Listen/Konstanten, die erst später mit tr() angezeigt werden (für die Vollständigkeitsprüfung)."""
+    """Marks texts in lists/constants that are shown later with tr() (for the completeness check)."""
     return text
 
 

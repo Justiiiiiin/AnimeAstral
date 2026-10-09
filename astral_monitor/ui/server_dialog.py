@@ -1,4 +1,4 @@
-"""Dialog: Server-Favorit anlegen oder ändern (Name + Private-Server-Link)."""
+"""Dialog: create or edit a server favorite (name + private server link)."""
 from __future__ import annotations
 
 from typing import Optional
@@ -67,7 +67,7 @@ class ServerDialog(QDialog):
         return None
 
     def _from_code(self, text: str) -> None:
-        """Geteilten Code eingefügt: Name und Link übernehmen (Name nur, wenn noch leer)."""
+        """Shared code pasted: take over name and link (name only if still empty)."""
         shared = roblox_join.parse_share_code(text)
         if not shared:
             return

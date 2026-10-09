@@ -1,7 +1,7 @@
-"""Versionshinweis einer Version aus CHANGELOG.md ausgeben (für den Release-Workflow und zum Nachtragen).
+"""Print the release notes of a version from CHANGELOG.md (for the release workflow and for adding them later).
 
     python tools/release_notes.py 0.6.6 > notes.md
-Gibt es keinen Abschnitt „## <Version>“, endet das Skript mit Fehler – so wird kein Release ohne Hinweise gebaut."""
+If there is no section “## <version>”, the script ends with an error – so no release is built without notes."""
 from __future__ import annotations
 
 import re
@@ -18,7 +18,7 @@ def section(version: str, text: str | None = None) -> str | None:
     if not match:
         return None
     body = match.group(1).strip()
-    return body.replace("### ", "#### ") if body else None      # im Release eine Stufe kleiner
+    return body.replace("### ", "#### ") if body else None      # one level smaller in the release
 
 
 def main() -> int:
