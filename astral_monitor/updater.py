@@ -1,7 +1,7 @@
-"""Automatische Updates über GitHub-Releases: prüfen, laden, Prüfsumme kontrollieren, installieren.
+"""Automatic updates via GitHub releases: check, download, verify the checksum, install.
 
-Zwei Wege: ein kleines Update-Paket mit nur den geänderten Dateien (siehe tools/make_patch.py) – passt es zum
-installierten Stand, werden nur diese Dateien geladen und nach dem Beenden ausgetauscht. Sonst der komplette Installer."""
+Two ways: a small update package with only the changed files (see tools/make_patch.py) – if it fits the installed
+state, only these files are downloaded and swapped after exiting. Otherwise the full installer."""
 from __future__ import annotations
 
 import hashlib
@@ -31,7 +31,7 @@ API_LIST = "https://api.github.com/repos/{repo}/releases?per_page=50"
 INSTALLER_RE = re.compile(r"^AnimeAstralMonitor-Setup-.+\.exe$", re.IGNORECASE)
 PATCH_RE = re.compile(r"^AnimeAstralMonitor-Update-.+\.zip$", re.IGNORECASE)
 MANIFEST_RE = re.compile(r"^files-.+\.json$", re.IGNORECASE)
-MANIFEST_NAME = "files.json"           # liegt im Programmordner: Prüfsummen aller Dateien dieser Version
+MANIFEST_NAME = "files.json"           # lives in the program folder: checksums of all files of this version
 CHECK_EVERY_SECONDS = 6 * 3600
 UNINSTALL_KEY = r"Software\Microsoft\Windows\CurrentVersion\Uninstall\{B7C1D0A4-5E2F-4C8B-9A3D-1F6E2A7C4D90}_is1"
 
@@ -54,20 +54,20 @@ class ReleaseInfo:
     patch_url: Optional[str] = None
     patch_name: str = ""
     patch_size: int = 0
-    published: str = ""                 # ISO-Zeit der Veröffentlichung (GitHub)
-    prerelease: bool = False            # Beta (Vorabversion)
+    published: str = ""                 # ISO time of the release (GitHub)
+    prerelease: bool = False            # beta (pre-release)
 
 
 @dataclass
 class PatchPlan:
-    """Kleines Update: diese Dateien kommen aus dem Paket, diese werden entfernt."""
+    """Small update: these files come from the package, these are removed."""
     manifest: dict
     changed: list = field(default_factory=list)
     removed: list = field(default_factory=list)
 
 
 def current_repo() -> str:
-    """„benutzer/repo“ – aus dem GitHub-Build (oder ASTRAL_UPDATE_REPO zum Testen)."""
+    """“user/repo” – from the GitHub build (or ASTRAL_UPDATE_REPO for testing)."""
     return (os.environ.get("ASTRAL_UPDATE_REPO") or build_info.GITHUB_REPO or "").strip().strip("/")
 
 
@@ -76,7 +76,7 @@ def is_installed_build() -> bool:
 
 
 def version_key(text: str) -> tuple:
-    """Sortierschlüssel: „0.7.2-beta.1“ < „0.7.2-beta.2“ < „0.7.2“ < „0.7.3-beta.1“."""
+    """Sort key: “0.7.2-beta.1” < “0.7.2-beta.2” < “0.7.2” < “0.7.3-beta.1”."""
     main, _, beta = text.strip().lstrip("vV").partition("-")
     nums = tuple(int(p) for p in re.findall(r"\d+", main)) or (0,)
     nums += (0,) * (4 - len(nums))                     # 0.7 == 0.7.0
@@ -99,7 +99,7 @@ def due(last_check: float, now: Optional[float] = None) -> bool:
 
 
 def pick_assets(release: dict, repo: str) -> tuple[Optional[dict], Optional[dict]]:
-    """Installer- und Prüfsummen-Datei aus der Release-Antwort; nur Downloads aus dem eigenen Repository."""
+    """Installer and checksum file from the release response; only downloads from our own repository."""
     prefix = f"https://github.com/{repo}/releases/download/"
     installer = sha = None
     for asset in release.get("assets", []):
@@ -120,7 +120,7 @@ def _get_json(url: str, timeout: float, getter: Callable):
     except requests.RequestException as exc:
         raise UpdateError(tr("No connection to GitHub ({error}).", error=exc.__class__.__name__)) from exc
     if resp.status_code == 404:
-        return None                                    # noch keine Veröffentlichung
+        return None                                    # no release yet
     if resp.status_code != 200:
         raise UpdateError(tr("GitHub answered with HTTP {code}.", code=resp.status_code))
     try:
@@ -135,7 +135,7 @@ def _check_repo(repo: str) -> None:
 
 
 def release_info(data: dict, repo: str) -> Optional[ReleaseInfo]:
-    """Eine Veröffentlichung aus der GitHub-Antwort; None = ohne Installer (nicht installierbar)."""
+    """One release from the GitHub response; None = without installer (not installable)."""
     if not isinstance(data, dict) or data.get("draft"):
         return None
     installer, sha = pick_assets(data, repo)
@@ -156,8 +156,8 @@ def release_info(data: dict, repo: str) -> Optional[ReleaseInfo]:
 
 def check_latest(repo: str, timeout: float = 12.0, getter: Callable = requests.get,
                  beta: bool = False) -> Optional[ReleaseInfo]:
-    """Neueste Veröffentlichung (mit beta=True auch Betas). None = keine passende Veröffentlichung (noch ohne
-    Installer). Fehler -> UpdateError."""
+    """Newest release (with beta=True betas too). None = no matching release (no installer yet).
+        Errors -> UpdateError."""
     _check_repo(repo)
     if beta:
         found = list_releases(repo, timeout, getter, beta=True)
@@ -168,8 +168,8 @@ def check_latest(repo: str, timeout: float = 12.0, getter: Callable = requests.g
 
 def list_releases(repo: str, timeout: float = 12.0, getter: Callable = requests.get,
                   beta: bool = False) -> list[ReleaseInfo]:
-    """Alle installierbaren Veröffentlichungen, neueste zuerst (für Versionshinweise und Downgrade).
-    Betas nur mit beta=True."""
+    """All installable releases, newest first (for release notes and downgrades).
+        Betas only with beta=True."""
     _check_repo(repo)
     data = _get_json(API_LIST.format(repo=repo), timeout, getter) or []
     out = [info for info in (release_info(d, repo) for d in data if isinstance(d, dict)) if info]
@@ -180,7 +180,7 @@ def list_releases(repo: str, timeout: float = 12.0, getter: Callable = requests.
 
 
 def pick_patch_assets(release: dict, repo: str) -> tuple[Optional[dict], Optional[dict]]:
-    """Dateiliste (files-X.json) und Update-Paket (AnimeAstralMonitor-Update-X.zip), nur aus dem eigenen Repository."""
+    """File list (files-X.json) and update package (AnimeAstralMonitor-Update-X.zip), only from our own repository."""
     prefix = f"https://github.com/{repo}/releases/download/"
     manifest = patch = None
     for asset in release.get("assets", []):
@@ -194,7 +194,7 @@ def pick_patch_assets(release: dict, repo: str) -> tuple[Optional[dict], Optiona
     return manifest, patch
 
 
-# ------------------------------------------------------------------ kleines Update (nur geänderte Dateien)
+# ------------------------------------------------------------------ small update (changed files only)
 def app_dir() -> Path:
     return Path(sys.executable).resolve().parent
 
@@ -208,13 +208,13 @@ def read_manifest(folder: Path) -> Optional[dict]:
 
 
 def _safe_rel(path: str) -> bool:
-    """Nur relative Pfade innerhalb des Programmordners (kein „..“, kein Laufwerk)."""
+    """Only relative paths inside the program folder (no “..”, no drive)."""
     parts = Path(path).parts
     return bool(parts) and not Path(path).is_absolute() and ".." not in parts and ":" not in path
 
 
 def plan_patch(local: Optional[dict], remote: Optional[dict], folder: Path) -> Optional[PatchPlan]:
-    """Passt das Update-Paket zum installierten Stand? None = nein (dann kompletter Installer)."""
+    """Does the update package fit the installed state? None = no (then the full installer)."""
     if not local or not remote or not isinstance(remote.get("files"), dict):
         return None
     lf, rf = local["files"], remote["files"]
@@ -223,9 +223,9 @@ def plan_patch(local: Optional[dict], remote: Optional[dict], folder: Path) -> O
     contains = set(remote["patch"].get("contains") or [])
     changed = sorted(p for p, digest in rf.items() if lf.get(p) != digest)
     if not set(changed) <= contains:
-        return None                                    # z. B. Version übersprungen: Paket enthält nicht alles
+        return None                                    # e.g. version skipped: the package doesn't contain everything
     if any(not (folder / p).is_file() for p in rf if p not in changed):
-        return None                                    # installierte Dateien fehlen: lieber komplett installieren
+        return None                                    # installed files missing: rather install completely
     removed = sorted(p for p in lf if p not in rf)
     return PatchPlan(manifest={"version": remote.get("version"), "files": rf}, changed=changed, removed=removed)
 
@@ -241,7 +241,7 @@ def folder_writable(folder: Path) -> bool:
 
 
 def fetch_manifest(info: ReleaseInfo, getter: Callable = requests.get) -> Optional[dict]:
-    """Lädt die Dateiliste der neuen Version und prüft sie gegen SHA256SUMS. None = nicht verfügbar."""
+    """Loads the file list of the new version and checks it against SHA256SUMS. None = not available."""
     if not info.manifest_url or not info.sha_url:
         return None
     headers = {"User-Agent": f"AnimeAstralMonitor/{__version__}"}
@@ -265,7 +265,7 @@ def fetch_manifest(info: ReleaseInfo, getter: Callable = requests.get) -> Option
 
 def prepare_patch(info: ReleaseInfo, getter: Callable = requests.get,
                   folder: Optional[Path] = None) -> Optional[PatchPlan]:
-    """Kleines Update möglich? (nur installierte Version, beschreibbarer Ordner, passendes Paket)."""
+    """Small update possible? (installed version only, writable folder, matching package)."""
     folder = folder or app_dir()
     if not info.patch_url or not folder_writable(folder):
         return None
@@ -273,7 +273,7 @@ def prepare_patch(info: ReleaseInfo, getter: Callable = requests.get,
 
 
 def expected_sha(sha_text: str, filename: str) -> Optional[str]:
-    """Liest „<hash>  <datei>“-Zeilen (sha256sum-Format, auch PowerShell-Ausgabe mit Sternchen)."""
+    """Reads “<hash>  <file>” lines (sha256sum format, also PowerShell output with asterisks)."""
     for line in sha_text.splitlines():
         parts = line.strip().split(None, 1)
         if len(parts) == 2 and re.fullmatch(r"[0-9a-fA-F]{64}", parts[0]) \
@@ -293,11 +293,11 @@ def sha256_of(path: Path) -> str:
 def download(info: ReleaseInfo, progress: Callable[[int, int], None] = lambda done, total: None,
              cancelled: Callable[[], bool] = lambda: False, getter: Callable = requests.get,
              dest_dir: Optional[Path] = None, patch: bool = False) -> Path:
-    """Lädt den Installer (oder mit patch=True das Update-Paket), prüft die Prüfsumme und gibt den Pfad zurück.
-    Ohne veröffentlichte Prüfsumme wird ein Update-Paket abgelehnt (es wird ohne Installer entpackt)."""
+    """Downloads the installer (or with patch=True the update package), verifies the checksum and returns the path.
+        Without a published checksum an update package is refused (it is unpacked without an installer)."""
     folder = dest_dir or (app_paths.data_dir() / "updates")
     folder.mkdir(parents=True, exist_ok=True)
-    for pattern in ("*.exe*", "*.zip*"):                 # Reste früherer Updates aufräumen
+    for pattern in ("*.exe*", "*.zip*"):                 # clean up leftovers of earlier updates
         for old in folder.glob(pattern):
             old.unlink(missing_ok=True)
     name, url, size = ((info.patch_name, info.patch_url, info.patch_size) if patch
@@ -333,15 +333,15 @@ def download(info: ReleaseInfo, progress: Callable[[int, int], None] = lambda do
     if expected and sha256_of(part) != expected:
         part.unlink(missing_ok=True)
         raise UpdateError(tr("The checksum of the downloaded file does not match – update cancelled."))
-    if not patch and part.stat().st_size < 1024 * 100:   # offensichtlich unvollständig
+    if not patch and part.stat().st_size < 1024 * 100:   # obviously incomplete
         part.unlink(missing_ok=True)
         raise UpdateError(tr("The downloaded file is incomplete."))
     part.replace(target)
     return target
 
 
-# Austausch nach dem Beenden (PowerShell ist auf jedem Windows 10/11 vorhanden). Sichert jede ersetzte/entfernte
-# Datei vorher und stellt bei einem Fehler alles wieder her; danach startet das Programm neu.
+# Swap after exiting (PowerShell exists on every Windows 10/11). Backs up every replaced/removed file first
+# and restores everything on an error; afterwards the program restarts.
 APPLY_SCRIPT = r"""param([string]$Plan)
 $ErrorActionPreference = 'Stop'
 $p = Get-Content -LiteralPath $Plan -Raw -Encoding UTF8 | ConvertFrom-Json
@@ -382,7 +382,7 @@ Remove-Item -LiteralPath $backup -Recurse -Force -ErrorAction SilentlyContinue
 
 
 def stage_patch(zip_path: Path, plan: PatchPlan, work: Path) -> Path:
-    """Entpackt nur die geplanten Dateien und prüft jede einzeln gegen die Prüfsumme der Dateiliste."""
+    """Unpacks only the planned files and checks each one against the checksum of the file list."""
     staging = work / "staging"
     if staging.exists():
         shutil.rmtree(staging)
@@ -412,7 +412,7 @@ def stage_patch(zip_path: Path, plan: PatchPlan, work: Path) -> Path:
 
 def launch_patch(zip_path: Path, plan: PatchPlan, relaunch: bool = True, folder: Optional[Path] = None,
                  work: Optional[Path] = None, pid: Optional[int] = None) -> Path:
-    """Bereitet den Austausch vor und startet ihn im Hintergrund. Danach muss sich das Programm beenden."""
+    """Prepares the swap and starts it in the background. Afterwards the program must exit."""
     folder = folder or app_dir()
     work = work or (app_paths.data_dir() / "updates" / "apply")
     staging = stage_patch(zip_path, plan, work)
@@ -426,7 +426,7 @@ def launch_patch(zip_path: Path, plan: PatchPlan, relaunch: bool = True, folder:
     script.write_text(APPLY_SCRIPT, encoding="utf-8-sig")
     flags = 0
     if sys.platform == "win32":
-        flags = subprocess.CREATE_NO_WINDOW | subprocess.CREATE_NEW_PROCESS_GROUP   # unsichtbar, überlebt das Programmende
+        flags = subprocess.CREATE_NO_WINDOW | subprocess.CREATE_NEW_PROCESS_GROUP   # invisible, survives the end of the program
     subprocess.Popen(["powershell.exe", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass",
                       "-WindowStyle", "Hidden", "-File", str(script), "-Plan", str(plan_file)],
                      close_fds=True, creationflags=flags)
@@ -434,8 +434,8 @@ def launch_patch(zip_path: Path, plan: PatchPlan, relaunch: bool = True, folder:
 
 
 def cleanup_downloads(folder: Optional[Path] = None) -> int:
-    """Beim Start: heruntergeladene Installer/Pakete früherer Updates löschen (sonst bleiben ~60 MB liegen).
-    Dateien, die gerade noch benutzt werden, bleiben bis zum nächsten Start. Das Austausch-Protokoll bleibt erhalten."""
+    """At start-up: delete downloaded installers/packages of earlier updates (otherwise ~60 MB stay behind).
+        Files still in use stay until the next start. The swap log is kept."""
     folder = folder or (app_paths.data_dir() / "updates")
     removed = 0
     for pattern in ("*.exe", "*.zip", "*.part", "apply/plan.json", "apply/apply.ps1"):
@@ -452,11 +452,11 @@ def cleanup_downloads(folder: Optional[Path] = None) -> int:
 
 
 def launch_installer(path: Path, relaunch: bool = True) -> None:
-    """Startet den Installer leise im Hintergrund. Danach muss sich das Programm beenden."""
+    """Starts the installer silently in the background. Afterwards the program must exit."""
     args = [str(path), "/SILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/CLOSEAPPLICATIONS"]
     if relaunch:
         args.append("/relaunch=1")
     flags = 0
     if sys.platform == "win32":
-        flags = subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP   # überlebt das Programmende
+        flags = subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP   # survives the end of the program
     subprocess.Popen(args, close_fds=True, creationflags=flags)

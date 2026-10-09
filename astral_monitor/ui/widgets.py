@@ -1,4 +1,4 @@
-"""Wiederverwendbare Bausteine."""
+"""Reusable building blocks."""
 from __future__ import annotations
 
 from typing import Optional
@@ -29,7 +29,7 @@ def bgr_to_pixmap(bgr: np.ndarray, max_width: Optional[int] = None) -> QPixmap:
 
 
 class _NoWheelMixin:
-    """Das Mausrad ändert den Wert nur bei fokussiertem Feld; sonst scrollt die Seite weiter."""
+    """The mouse wheel only changes the value of a focused field; otherwise the page keeps scrolling."""
 
     def _init_nowheel(self) -> None:
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
@@ -41,7 +41,7 @@ class _NoWheelMixin:
             event.ignore()
 
 
-FIELD_WIDTH = 170                                  # Zahlenfelder nicht über die ganze Breite ziehen
+FIELD_WIDTH = 170                                  # don't stretch number fields across the whole width
 
 
 class SpinBox(_NoWheelMixin, QSpinBox):
@@ -65,7 +65,7 @@ class ComboBox(_NoWheelMixin, QComboBox):
 
 
 class SortItem(QTableWidgetItem):
-    """Tabellenzelle mit eigenem Sortierwert (Zahlen werden als Zahlen sortiert, nicht als Text)."""
+    """Table cell with its own sort value (numbers sort as numbers, not as text)."""
 
     def __init__(self, text: str, key=None, right: bool = False) -> None:
         super().__init__(text)
@@ -81,8 +81,8 @@ class SortItem(QTableWidgetItem):
 
 
 def make_table(headers: list[str], rights: tuple = (), widths: tuple = (), selectable: bool = False) -> QTableWidget:
-    """Ordentliche Tabelle: Überschrift und Zellen gleich ausgerichtet, jede Spalte einzeln in der Breite
-    ziehbar, Spalten verschiebbar, per Klick auf die Überschrift sortierbar."""
+    """Tidy table: header and cells aligned the same, every column resizable on its own, columns movable,
+        sortable by clicking the header."""
     table = QTableWidget(0, len(headers))
     for i, text in enumerate(headers):
         item = QTableWidgetItem(text)
@@ -100,7 +100,7 @@ def make_table(headers: list[str], rights: tuple = (), widths: tuple = (), selec
     table.setShowGrid(False)
     table.setWordWrap(False)
     header = table.horizontalHeader()
-    header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)      # jede Spalte einzeln ziehbar
+    header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)      # every column can be resized on its own
     header.setStretchLastSection(True)
     header.setSectionsMovable(True)
     header.setSortIndicatorShown(True)
@@ -126,7 +126,7 @@ def _read_ui_state() -> dict:
 
 
 def save_header(table: QTableWidget, key: str) -> None:
-    """Spaltenbreiten, Reihenfolge und Sortierung merken."""
+    """Remember column widths, order and sorting."""
     state = _read_ui_state()
     state[key] = bytes(table.horizontalHeader().saveState().toBase64().data()).decode("ascii")
     try:
@@ -142,18 +142,18 @@ def restore_header(table: QTableWidget, key: str) -> None:
 
 
 def smooth(view: QAbstractItemView) -> None:
-    """Pixelweises, ruhiges Scrollen statt sprunghaftem Zeilen-Scrollen."""
+    """Smooth pixel scrolling instead of jumpy line scrolling."""
     view.setVerticalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
     view.setHorizontalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
     view.verticalScrollBar().setSingleStep(16)
 
 
 def scroll_page(page: QWidget) -> QScrollArea:
-    """Verpackt eine Seite: bei kleinem Fenster wird gescrollt, statt dass Elemente überlappen."""
+    """Wraps a page: with a small window it scrolls instead of elements overlapping."""
     area = QScrollArea()
     area.setWidgetResizable(True)
     area.setFrameShape(QFrame.Shape.NoFrame)
-    area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)   # nur bei großer UI-Größe nötig
+    area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)   # only needed at a large UI size
     area.verticalScrollBar().setSingleStep(24)
     area.setWidget(page)
     return area
@@ -168,20 +168,20 @@ def label(text: str = "", name: str = "", wrap: bool = False) -> QLabel:
 
 
 def section(text: str) -> QLabel:
-    """Zwischenüberschrift über einer Gruppe von Karten."""
+    """Subheading above a group of cards."""
     lbl = QLabel(text.upper())
     lbl.setObjectName("section")
     return lbl
 
 
 def short_field(widget: QWidget, width: int = 260) -> QWidget:
-    """Eingabefeld für kurze Werte (Hotkeys, Zahlenlisten) auf eine sinnvolle Breite begrenzen."""
+    """Limit an input field for short values (hotkeys, number lists) to a sensible width."""
     theme.track(widget, lambda o, f: o.setMaximumWidth(round(width * f)))
     return widget
 
 
 def columns(*cards: QWidget, spacing: int = 14) -> QHBoxLayout:
-    """Karten nebeneinander, gleich breit und gleich hoch."""
+    """Cards side by side, equally wide and equally tall."""
     row = QHBoxLayout()
     theme.track_spacing(row, spacing)
     for card in cards:
@@ -190,18 +190,18 @@ def columns(*cards: QWidget, spacing: int = 14) -> QHBoxLayout:
 
 
 def form_grid() -> QGridLayout:
-    """Raster Beschriftung | Feld; die Felder behalten ihre eigene Breite."""
+    """Grid label | field; the fields keep their own width."""
     grid = QGridLayout()
     grid.setColumnStretch(2, 1)
     theme.track_spacing(grid, 10)
     return grid
 
 
-PARAGRAPH = chr(10) * 2                            # Absatz in Info-Texten (Leerzeile)
+PARAGRAPH = chr(10) * 2                            # paragraph in info texts (blank line)
 
 
 class InfoButton(QToolButton):
-    """Kleines ⓘ: Erklärung erscheint beim Darüberfahren oder Anklicken – statt Fließtext auf der Seite."""
+    """Small ⓘ: the explanation appears on hover or click – instead of running text on the page."""
 
     def __init__(self, text: str) -> None:
         super().__init__()
@@ -213,7 +213,7 @@ class InfoButton(QToolButton):
         self.clicked.connect(lambda: QToolTip.showText(self.mapToGlobal(self.rect().bottomLeft()), self.toolTip(), self))
 
     def set_info(self, text: str) -> None:
-        # als Rich-Text, damit Qt lange Hinweise umbricht; Absätze mit Leerzeile
+        # as rich text so Qt wraps long hints; paragraphs with a blank line
         paras = "".join(f"<p style='margin:0 0 6px 0'>{part}</p>" for part in text.split(PARAGRAPH))
         self.setToolTip(f"<div style='max-width:360px'>{paras}</div>")
 
@@ -238,8 +238,8 @@ class Card(QFrame):
 
 
 def page_header(title: str, info: str = "") -> QHBoxLayout:
-    """Seitentitel mit ⓘ in einer Zeile; Bedienelemente rechts daneben mit addWidget anhängen (nach addStretch).
-    Spart die Zeile mit dem Untertitel – alle Seiten sollen ohne Scrollen passen."""
+    """Page title with ⓘ in one row; append controls to the right with addWidget (after addStretch).
+        Saves the subtitle row – all pages should fit without scrolling."""
     row = QHBoxLayout()
     theme.track_spacing(row, 8)
     row.addWidget(label(title, "h1"))
@@ -251,9 +251,9 @@ def page_header(title: str, info: str = "") -> QHBoxLayout:
 class StatCard(Card):
     def __init__(self, title: str, value: str = "–") -> None:
         super().__init__()
-        self.setProperty("kpi", True)                  # Nebula: Akzentkante oben
+        self.setProperty("kpi", True)                  # Nebula: accent edge at the top
         theme.track_spacing(self.body, 2)
-        self.title_label = label(title, "small", wrap=True)     # umbrechen statt die Kachelreihe zu verbreitern
+        self.title_label = label(title, "small", wrap=True)     # wrap instead of widening the row of tiles
         self.body.addWidget(self.title_label)
         self.value = label(value, "kpi")
         self.body.addWidget(self.value)
@@ -264,7 +264,7 @@ class StatCard(Card):
 
 
 def media_icon(kind: str, token: str = "text", size: int = 64):
-    """Start (▶), Stopp (■) oder Pause (❚❚) als gezeichnetes Symbol – unabhängig von der Schrift."""
+    """Start (▶), stop (■) or pause (❚❚) as a drawn icon – independent of the font."""
     from PySide6.QtCore import QPointF, QRectF
     from PySide6.QtGui import QColor, QIcon, QPainter, QPixmap, QPolygonF
     pix = QPixmap(size, size)
@@ -286,14 +286,14 @@ def media_icon(kind: str, token: str = "text", size: int = 64):
 
 
 def discord_icon(size: int = 64):
-    """Discord-Symbol (vereinfachte Spielfigur „Clyde“) in der Akzentfarbe – gezeichnet, keine Bilddatei."""
+    """Discord icon (simplified mascot “Clyde”) in the accent color – drawn, no image file."""
     from PySide6.QtGui import QColor, QIcon, QPainter, QPainterPath, QPixmap
     pix = QPixmap(size, size)
     pix.fill(Qt.GlobalColor.transparent)
     p = QPainter(pix)
     p.setRenderHint(QPainter.RenderHint.Antialiasing)
     s = size / 24.0
-    body = QPainterPath()                               # Kopf: breit, oben rund, unten zwei „Füße“
+    body = QPainterPath()                               # head: wide, round at the top, two “feet” at the bottom
     body.moveTo(5.0 * s, 6.0 * s)
     body.cubicTo(7.5 * s, 4.6 * s, 9.6 * s, 4.4 * s, 10.2 * s, 4.6 * s)
     body.lineTo(10.6 * s, 5.6 * s)
@@ -317,7 +317,7 @@ def discord_icon(size: int = 64):
 
 
 class ElidedLabel(QLabel):
-    """Einzeiliges Label, das zu langen Text mit „…“ kürzt (voller Text im Tooltip) – verbreitert die Seite nie."""
+    """Single-line label that shortens too long text with “…” (full text in the tooltip) – never widens the page."""
 
     def __init__(self, text: str = "") -> None:
         super().__init__()
@@ -355,7 +355,7 @@ class QuestRow(QWidget):
         theme.track_margins(lay, 0, 2, 0, 2)
         theme.track_spacing(lay, 4)
         top = QHBoxLayout()
-        self.title = ElidedLabel("")                    # eine Zeile, lange Titel mit „…“ (voller Titel im Tooltip)
+        self.title = ElidedLabel("")                    # one line, long titles with “…” (full title in the tooltip)
         self.value = QLabel("")
         self.value.setObjectName("muted")
         top.addWidget(self.title, 1)
@@ -375,13 +375,13 @@ class QuestRow(QWidget):
 
 
 class ToggleSwitch(QAbstractButton):
-    """Schiebeschalter (an/aus) – skaliert mit theme.px()."""
+    """Toggle switch (on/off) – scales with theme.px()."""
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
         self.setCheckable(True)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
-        self._pos = 0.0                                 # 0 = aus, 1 = an (animiert)
+        self._pos = 0.0                                 # 0 = off, 1 = on (animated)
         self._anim = QPropertyAnimation(self, b"knob", self)
         self._anim.setDuration(140)
         self._anim.setEasingCurve(QEasingCurve.Type.OutCubic)
@@ -397,7 +397,7 @@ class ToggleSwitch(QAbstractButton):
     knob = Property(float, _get_knob, _set_knob)
 
     def _animate(self, on: bool) -> None:
-        if not self.isVisible() or not theme.animations():     # unsichtbar oder abgeschaltet: sofort
+        if not self.isVisible() or not theme.animations():     # invisible or switched off: right away
             self._set_knob(1.0 if on else 0.0)
             return
         self._anim.stop()
@@ -429,17 +429,17 @@ class ToggleSwitch(QAbstractButton):
 
 
 class BarChart(QWidget):
-    """Einfaches Balkendiagramm ohne Zusatzbibliothek."""
+    """Simple bar chart without an extra library."""
 
     def __init__(self) -> None:
         super().__init__()
         self._data: list[tuple[str, int]] = []
-        self._fmt = str                                 # Beschriftung über den Balken
+        self._fmt = str                                 # label above the bars
         theme.track_min_height(self, 180)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
     def set_data(self, data: list[tuple[str, int]], fmt=None) -> None:
-        """fmt: Wert -> Beschriftung (z. B. Minuten als „2,5 h“); Standard: die Zahl."""
+        """fmt: value -> label (e.g. minutes as “2.5 h”); default: the number."""
         self._data = data
         self._fmt = fmt or str
         self.update()
@@ -458,7 +458,7 @@ class BarChart(QWidget):
         line = fm.height()
         top_pad, bottom_pad, gap = line + 6, line + 8, max(4, theme.px(8))
         bw = (w - gap * (n - 1)) / n
-        # Achsenbeschriftung nur so dicht, dass sie sich nicht überlappt (jede k-te)
+        # axis labels only as dense as they don't overlap (every k-th)
         widest = max(fm.horizontalAdvance(name) for name, _ in self._data) + theme.px(6)
         step = max(1, int(-(-widest // (bw + gap))))
         max_v = max(1, max(v for _, v in self._data))
@@ -473,7 +473,7 @@ class BarChart(QWidget):
             p.setPen(QColor(theme.color("muted")))
             if i % step == 0:
                 p.drawText(QRectF(x - gap, h - bottom_pad + 4, bw + 2 * gap, line), name, center)
-            if value:                                   # keine „0“ über leeren Balken
+            if value:                                   # no “0” above empty bars
                 p.setPen(QColor(theme.color("text")))
                 p.drawText(QRectF(x - gap, h - bottom_pad - bh - line - 2, bw + 2 * gap, line), self._fmt(value), center)
         p.end()
@@ -483,7 +483,7 @@ EMPTY_GLYPHS = {"events": 0xE81C, "quests": 0xF0E3, "chart": 0xE9D2, "servers": 
 
 
 def paint_empty(p: QPainter, rect: QRectF, glyph: str, text: str) -> None:
-    """Leerer Zustand: Symbol in einem sanft leuchtenden Kreis mit kleinen Sternen, darunter ein kurzer Text."""
+    """Empty state: icon in a softly glowing circle with small stars, a short text below."""
     from PySide6.QtGui import QFont, QRadialGradient
     p.save()
     p.setRenderHint(QPainter.RenderHint.Antialiasing)
@@ -500,7 +500,7 @@ def paint_empty(p: QPainter, rect: QRectF, glyph: str, text: str) -> None:
     p.setPen(Qt.PenStyle.NoPen)
     p.setBrush(glow)
     p.drawEllipse(QRectF(cx - size / 2, cy - size / 2, size, size))
-    for dx, dy, r in ((0.42, -0.34, 2.2), (-0.46, 0.18, 1.6), (0.30, 0.40, 1.3)):     # kleine Sterne
+    for dx, dy, r in ((0.42, -0.34, 2.2), (-0.46, 0.18, 1.6), (0.30, 0.40, 1.3)):     # small stars
         star = QColor(accent2)
         star.setAlphaF(0.75)
         p.setBrush(star)
@@ -521,7 +521,7 @@ def paint_empty(p: QPainter, rect: QRectF, glyph: str, text: str) -> None:
 
 
 class EmptyState(QWidget):
-    """Platzhalter für leere Bereiche (Ereignisse, Quests) – statt reinem Text."""
+    """Placeholder for empty areas (events, quests) – instead of plain text."""
 
     def __init__(self, glyph: str, text: str) -> None:
         super().__init__()
@@ -536,7 +536,7 @@ class EmptyState(QWidget):
 
 
 def round_pixmap(path, size: int):
-    """Bild als runder Ausschnitt (Avatar). None = Bild fehlt."""
+    """Image as a round crop (avatar). None = image missing."""
     from PySide6.QtGui import QPainterPath
     src = QPixmap(str(path))
     if src.isNull():

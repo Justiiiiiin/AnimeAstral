@@ -125,7 +125,7 @@ class PatchTests(unittest.TestCase):
         self.assertTrue((self.app / "_internal/neu.pyd").exists())
         self.assertFalse((self.app / "_internal/weg.dll").exists())
         self.assertEqual(json.loads((self.app / "files.json").read_text())["version"], "0.6.0")
-        self.assertIn("installiert", (self.root / "ok" / "apply.log").read_text(encoding="utf-8-sig"))
+        self.assertIn("installed", (self.root / "ok" / "apply.log").read_text(encoding="utf-8-sig"))
 
         # error case: the target of a new subfolder is a file -> copying fails -> old state restored
         self.local = make_app(self.app, OLD)
@@ -133,7 +133,7 @@ class PatchTests(unittest.TestCase):
         (self.app / "_internal").rename(self.app / "_internal_tmp")
         (self.app / "_internal").write_bytes(b"blockiert")       # “_internal” is now a file
         run(self.root / "bad")
-        self.assertIn("FEHLER", (self.root / "bad" / "apply.log").read_text(encoding="utf-8-sig"))
+        self.assertIn("ERROR", (self.root / "bad" / "apply.log").read_text(encoding="utf-8-sig"))
         self.assertEqual((self.app / "App.exe").read_bytes(), OLD["App.exe"])
         self.assertEqual(json.loads((self.app / "files.json").read_text())["version"], "0.5.0")
 
