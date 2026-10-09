@@ -4,93 +4,93 @@
 
 <br>
 
-[![Neueste Version](https://img.shields.io/github/v/release/Justiiiiiin/AnimeAstral?include_prereleases&label=Version&color=fce94f&labelColor=110c1c&style=for-the-badge)](https://github.com/Justiiiiiin/AnimeAstral/releases)
+[![Latest version](https://img.shields.io/github/v/release/Justiiiiiin/AnimeAstral?include_prereleases&label=Version&color=fce94f&labelColor=110c1c&style=for-the-badge)](https://github.com/Justiiiiiin/AnimeAstral/releases)
 [![Downloads](https://img.shields.io/github/downloads/Justiiiiiin/AnimeAstral/total?label=Downloads&color=ff3d9a&labelColor=110c1c&style=for-the-badge)](https://github.com/Justiiiiiin/AnimeAstral/releases)
 [![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011-4be3f0?labelColor=110c1c&style=for-the-badge&logo=windows&logoColor=white)](#installation)
 [![Build](https://img.shields.io/github/actions/workflow/status/Justiiiiiin/AnimeAstral/release.yml?label=Build&labelColor=110c1c&style=for-the-badge)](https://github.com/Justiiiiiin/AnimeAstral/actions)
 
-**Dein Begleiter für [Anime Astral Simulator](https://www.roblox.com/games/102072869879193) auf Roblox.**<br>
-Zählt jeden Raid und jede Welle, schreibt alles live nach Discord, holt dich nach einem Disconnect zurück
-und farmt auf Wunsch für dich.
+**Your companion for [Anime Astral Simulator](https://www.roblox.com/games/102072869879193) on Roblox.**<br>
+Counts every raid and every wave, posts everything live to Discord, gets you back in after a disconnect
+and farms for you if you want it to.
 
-[**⬇ Herunterladen**](https://github.com/Justiiiiiin/AnimeAstral/releases/latest) ·
-[Funktionen](#funktionen) · [Bilder](#so-sieht-es-aus) · [Installation](#installation) · [FAQ](#häufige-fragen)
+[**⬇ Download**](https://github.com/Justiiiiiin/AnimeAstral/releases/latest) ·
+[Features](#features) · [Screenshots](#screenshots) · [Installation](#installation) · [FAQ](#faq)
 
 </div>
 
 ---
 
-## Funktionen
+## Features
 
 <table>
 <tr>
 <td width="50%" valign="top">
 
-### 📊 Raids & Statistik
-- Liest den Wellenzähler (`Wave 12/100`) selbst – ohne Einrichtung
-- Jeder Raid mit Endwelle und Dauer, getrennt nach Raid oder gesamt
-- Wellen pro Stunde, Trend, Rekorde und die **„Wand“** (Boss-Welle)
-- Statistik-Karte und **Monatsrückblick** als Bild zum Teilen
-- Archiv, Wochenüberblick, Quest-Fortschritt
+### 📊 Raids & statistics
+- Reads the wave counter (`Wave 12/100`) by itself – no setup needed
+- Every raid with its final wave and duration, per raid or in total
+- Raids per day, waves per hour, trend, records and the **“wall”** (boss wave)
+- Stats card and **monthly recap** as images to share
+- Archive, weekly overview, quest progress
 
 </td>
 <td width="50%" valign="top">
 
 ### 💬 Discord
-- **Live-Status:** eine Nachricht, die sich selbst aktualisiert
-- Meldungen bei Raid-Ende, Rekord, Wand, Quests und Problemen
-- Ping nur, wenn es wirklich wichtig ist
-- Tages-Beiträge im Forum-Kanal, Profilstatus „Spielt …“
-- **Eigener Discord-Bot:** `/status`, `/start`, `/screenshot`, `/makro` …
+- **Live status:** one message that keeps itself up to date
+- Alerts for raid end, records, walls, quests and problems
+- Pings only when it really matters
+- Daily posts in a forum channel, “Playing …” profile status
+- **Your own Discord bot:** `/status`, `/start`, `/screenshot`, `/macro` …
 
 </td>
 </tr>
 <tr>
 <td width="50%" valign="top">
 
-### 🛡️ Immer im Spiel
-- **Privater Server** mit einem Klick – ohne Browser
-- **Auto-Rejoin** nach Disconnect, Kick oder Absturz
-- **Anti-AFK** gegen die Trennung nach 20 Minuten
-- **Auto-Start**, sobald du das Spiel betrittst
-- Wächter für Abstürze, Stillstand und Speicher
+### 🛡️ Always in the game
+- **Private server** with one click – no browser
+- **Auto-rejoin** after a disconnect, kick or crash
+- **Anti-AFK** against the 20-minute idle kick
+- **Auto-start** as soon as you join the game
+- Guard for crashes, stalls and memory
 
 </td>
 <td width="50%" valign="top">
 
-### 🤖 Makro (Beta)
-- **Farm-Routine:** Raids und Defense farmen, Auto Roll, Pausen
-- **Automatisch abholen:** Fixer Gigs, Gilden-Missionen, Progressions
-- **Erkunden:** lernt alle Welten und Fenster selbst kennen
-- Not-Aus per Mausbewegung oder Esc, gefährliche Knöpfe sind tabu
-- Ausführliches Makro-Protokoll
+### 🤖 Macro (beta)
+- **Farm routine:** farm raids and defense, Auto Roll, pauses
+- **Auto collect:** Fixer Gigs, guild missions, Progressions
+- **Explore:** learns all worlds and windows by itself
+- Emergency stop by moving the mouse or pressing Esc; dangerous buttons are off-limits
+- Detailed macro log
 
 </td>
 </tr>
 </table>
 
-Dazu: Designs wie **Night City**, Nebula, OLED und Saison-Designs, hell/dunkel, eigene Akzentfarbe und
-Hintergrundbild, globale Hotkeys, Tray-Symbol, Deutsch und Englisch – und **automatische Updates**, die meist nur
-wenige MB groß sind.
+Plus: designs like **Night City**, Nebula, OLED and seasonal themes, light/dark, your own accent color and
+background image, global hotkeys, a tray icon, English and German – and **automatic updates** that are usually
+just a few MB.
 
-## So sieht es aus
+## Screenshots
 
 <div align="center">
 
-<img src="docs/images/startseite.png" alt="Startseite mit Farm-Routine, Live-Erkennung und Abholungen" width="100%">
-<sub><b>Startseite</b> – Farm-Routine, Makro-Protokoll, Live-Erkennung und automatisches Abholen</sub>
+<img src="docs/images/home.png" alt="Start page with farm routine, live detection and auto collect" width="100%">
+<sub><b>Start page</b> – farm routine, macro log, live detection and auto collect</sub>
 
 <br><br>
 
-<img src="docs/images/statistik.png" alt="Statistik" width="100%">
-<sub><b>Statistik</b> – alle Raids, Endwellen, Trend und Rekorde</sub>
+<img src="docs/images/statistics.png" alt="Statistics" width="100%">
+<sub><b>Statistics</b> – every raid, raids per day, trend and records</sub>
 
 <br><br>
 
 <table>
 <tr>
-<td width="50%"><img src="docs/images/meldungen.png" alt="Discord-Meldungen"><br><sub><b>Meldungen</b> – was an Discord geht und wann gepingt wird</sub></td>
-<td width="50%"><img src="docs/images/makro.png" alt="Makro-Einstellungen"><br><sub><b>Makro</b> – Erkunden und Protokoll</sub></td>
+<td width="50%"><img src="docs/images/alerts.png" alt="Discord alerts"><br><sub><b>Alerts</b> – what goes to Discord and when you get pinged</sub></td>
+<td width="50%"><img src="docs/images/macro.png" alt="Macro settings"><br><sub><b>Macro</b> – explore and log</sub></td>
 </tr>
 </table>
 
@@ -98,84 +98,90 @@ wenige MB groß sind.
 
 ## Installation
 
-1. Auf **[Releases](https://github.com/Justiiiiiin/AnimeAstral/releases/latest)** die Datei
-   `AnimeAstralMonitor-Setup-….exe` herunterladen und starten.
-2. Meldet Windows „Der Computer wurde durch Windows geschützt“: **Weitere Informationen → Trotzdem ausführen**
-   (das Programm ist nicht kostenpflichtig signiert).
-3. Der Einrichtungsassistent führt dich in etwa einer Minute durch alles: Roblox verbinden, Wellenzähler finden,
-   Discord-Webhook eintragen.
+1. Download `AnimeAstralMonitor-Setup-….exe` from
+   **[Releases](https://github.com/Justiiiiiin/AnimeAstral/releases/latest)** and run it.
+2. If Windows says “Windows protected your PC”: **More info → Run anyway**
+   (the program isn't signed with a paid certificate).
+3. The setup wizard walks you through everything in about a minute: connect Roblox, find the wave counter,
+   enter your Discord webhook.
 
-Mehr braucht es nicht – die Texterkennung ist enthalten. Windows 10 oder 11, 64 Bit.
+That's all – text recognition is included. Windows 10 or 11, 64-bit.
 
 > [!TIP]
-> Updates kommen von selbst: Das Programm prüft beim Start auf neue Versionen und lädt meist nur die geänderten
-> Dateien. Unter **Einstellungen → Programm → Alle Versionen** findest du alle Änderungen und kannst bei Bedarf zu
-> einer älteren Version zurück.
+> Updates arrive by themselves: the program checks for new versions at startup and usually downloads only the
+> changed files. Under **Settings → Program → All versions** you can see every change and go back to an older
+> version if you need to.
 
-## Häufige Fragen
+## FAQ
 
 <details>
-<summary><b>Belastet das Programm meinen PC?</b></summary>
+<summary><b>Does it slow down my PC?</b></summary>
 
-Kaum. Gemessen mit laufendem Raid: rund 1–2 % eines CPU-Kerns und etwa 50–120 MB Arbeitsspeicher. Es liest nur,
-wenn sich das Bild ändert, und zeichnet nichts, solange das Fenster minimiert ist.
+Hardly. Measured during a raid: about 1–2 % of one CPU core and roughly 50–120 MB of memory. It only reads when
+the picture changes and draws nothing while its window is minimized.
 </details>
 
 <details>
-<summary><b>Muss Roblox im Vordergrund sein?</b></summary>
+<summary><b>Does Roblox have to be in the foreground?</b></summary>
 
-Für die Überwachung nicht – das Roblox-Fenster darf verdeckt sein, nur nicht minimiert. Anti-AFK und Makro holen
-Roblox kurz nach vorne, weil das Spiel Eingaben nur dann annimmt.
+Not for monitoring – the Roblox window may be covered, just not minimized. Anti-AFK and the macro bring Roblox to
+the front briefly, because the game only accepts input then.
 </details>
 
 <details>
-<summary><b>Ist das Makro erlaubt?</b></summary>
+<summary><b>Is the macro allowed?</b></summary>
 
-Makros verstoßen gegen die Roblox-Regeln. Das Makro ist deshalb standardmäßig aus und lässt sich nur nach einer
-deutlichen Warnung einschalten – die Nutzung geschieht auf eigene Verantwortung. Die reine Überwachung liest nur
-das Bild und sendet keine Eingaben an Roblox.
+Macros break the Roblox rules. That's why the macro is off by default and can only be turned on after a clear
+warning – using it is at your own risk. Plain monitoring only reads the picture and sends no input to Roblox.
 </details>
 
 <details>
-<summary><b>Wie bekomme ich einen Discord-Webhook?</b></summary>
+<summary><b>How do I get a Discord webhook?</b></summary>
 
-In Discord: Kanal bearbeiten → **Integrationen** → **Webhooks** → **Neuer Webhook** → **Webhook-URL kopieren**
-und im Assistenten oder unter **Meldungen** einfügen.
+In Discord: Edit channel → **Integrations** → **Webhooks** → **New Webhook** → **Copy Webhook URL**, then paste
+it in the wizard or under **Alerts**.
 </details>
 
 <details>
-<summary><b>Kann ich meine Einstellungen auf einen anderen PC mitnehmen?</b></summary>
+<summary><b>Can I take my settings to another PC?</b></summary>
 
-Ja: **Einstellungen → Programm → Exportieren** erstellt eine passwortgeschützte Datei, die du am neuen PC importierst.
+Yes: **Settings → Program → Export** creates a password-protected file that you import on the new PC.
 </details>
 
-## Datenschutz
+<details>
+<summary><b>Can I use it in German?</b></summary>
 
-Das Programm sendet Daten nur an die Discord-Webhook-URL, die du selbst einträgst, an GitHub (Update-Prüfung) und –
-nur wenn du deinen Roblox-Namen einträgst – an die öffentliche Roblox-Schnittstelle (Avatar, ohne Anmeldung).
-Einstellungen und Verlauf liegen lokal in `%APPDATA%\AnimeAstralMonitor`. Webhook-URL, Server-Links und IDs sind
-dort mit deinem Windows-Konto verschlüsselt. Es gibt keine Server, kein Konto und keine Werbung.
+Yes: **Settings → Appearance → Sprache / Language**. The change applies after a restart.
+</details>
 
-## Für Entwickler
+## Privacy
+
+The program only sends data to the Discord webhook URL you enter yourself, to GitHub (update check) and – only if
+you enter your Roblox name – to the public Roblox API (avatar, no login). Settings and history are stored locally in
+`%APPDATA%\AnimeAstralMonitor`. Webhook URL, server links and IDs are encrypted there with your Windows account.
+No servers, no account, no ads.
+
+## For developers
 
 <details>
-<summary>Selbst bauen und testen</summary>
+<summary>Build and test it yourself</summary>
 
 ```bash
 pip install -r requirements.txt
-python run.py                              # starten
-python -m unittest discover -s tests -v    # Tests (ohne Roblox, Qt oder Netz)
-python build_exe.py                        # EXE lokal bauen
+python run.py                              # start
+python -m unittest discover -s tests -v    # tests (no Roblox, Qt or network needed)
+python build_exe.py                        # build the EXE locally
 ```
 
-Neue Version: `astral_monitor/version.py` anheben, Abschnitt `## X.Y.Z` in `CHANGELOG.md` ergänzen und den Tag
-`vX.Y.Z` pushen – GitHub Actions baut Programm, Installer, Update-Paket und Versionshinweise automatisch.
-Python 3.12, PySide6, OpenCV, Tesseract.
+New version: bump `astral_monitor/version.py`, add a `## X.Y.Z` section to `CHANGELOG.md` and push the tag
+`vX.Y.Z` – GitHub Actions builds the program, installer, update package and release notes automatically.
+Python 3.12, PySide6, OpenCV, Tesseract. UI texts are written in English in the code (`tr()`); the German
+translation lives in `astral_monitor/i18n_de.py`.
 </details>
 
 ---
 
 <div align="center">
-<sub>Inoffizielles Fan-Werkzeug – keine Verbindung zu Roblox oder den Entwicklern von Anime Astral Simulator.
-Nutzung auf eigene Verantwortung.</sub>
+<sub>Unofficial fan tool – not affiliated with Roblox or the developers of Anime Astral Simulator.
+Use at your own risk.</sub>
 </div>

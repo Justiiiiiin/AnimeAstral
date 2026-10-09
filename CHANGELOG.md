@@ -1,454 +1,460 @@
-# Änderungen
+# Changes
 
-Neueste Version oben. Kurze Stichpunkte, keine Erklärungen (die stehen im Programm hinter dem ⓘ).
-Der Abschnitt einer Version wird beim Veröffentlichen automatisch als Versionshinweis übernommen
-(`tools/release_notes.py`) und ist im Programm unter Einstellungen → Updates → „Alle Versionen“ lesbar.
+Newest version at the top. Short bullet points, no explanations (those are in the program behind the ⓘ).
+A version's section becomes its release notes automatically when it is published
+(`tools/release_notes.py`) and can be read in the program under Settings → Program → “All versions”.
 
-## Unveröffentlicht
+## Unreleased
 
-### 🔧 Verbessert
-- Raid/Defense: Zahnrad erst nach dem Ladebild klicken, genauer getroffen
-- Gilden-Missionen: Reiter „Personal“ wird wieder abgeholt
+### ✨ New
+- English is now the default language (German under Appearance)
+- Statistics: “Raids per day” replaces the final-wave chart
+- Discord bot: commands /macro and /help (were /makro and /hilfe)
+
+### 🔧 Improved
+- Raid/defense: gear clicked after the loading screen, more precisely
+- Guild missions: the “Personal” tab is collected again
+- Settings tabs work in both languages
 
 ## 0.9.9-beta.12
 
-### 🔧 Verbessert
-- Fixer Gigs: Pets-Liste schon unten – kein Dauer-Scrollen mehr
+### 🔧 Improved
+- Fixer Gigs: pets list already at the bottom – no endless scrolling
 
 ## 0.9.9-beta.11
 
-### 🔧 Verbessert
-- Mana Contract (W19) auch vor hellem Hintergrund erkannt
-- Farm-Routine: Schritt „Progressions“ entfernt (Knopf unter Abholen)
-- Automatisch abholen: Schalter wirken auch nach dem Speichern
-- Automatisch abholen: Klick auf den Text schaltet um
-- Texte im Programm natürlicher formuliert
-- Startseite arbeitet nicht mehr, wenn das Fenster minimiert ist
+### 🔧 Improved
+- Mana Contract (W19) recognized on bright backgrounds too
+- Farm routine: “Progressions” step removed (button under collect)
+- Auto collect: switches also work after saving
+- Auto collect: clicking the text toggles the switch
+- Texts in the program reworded to sound more natural
+- Start page no longer works while the window is minimized
 
 ## 0.9.9-beta.10
 
-### 🔧 Verbessert
-- Erkunden: Weltnamen trotz Lesefehlern erkannt („2 City“ = „Z City“)
-- Erkunden: keine Welt mehr übersprungen (Suche in beide Richtungen)
-- Erkunden erkennt auch seitlich scrollbare Listen
-- Kleinere Fenster (Mana Contract) werden sicherer erkannt
-- W3/W9: leerer Platz 8 wird nicht mehr angeklickt
+### 🔧 Improved
+- Explore: world names found despite misreads (“2 City” = “Z City”)
+- Explore: no world skipped anymore (searches in both directions)
+- Explore recognizes sideways scrollable lists
+- Smaller windows (Mana Contract) are recognized more reliably
+- W3/W9: the empty slot 8 is no longer clicked
 
 ## 0.9.9-beta.9
 
-### 🔧 Verbessert
-- Progressions: Makro drückt „Auto All“ (statt „Roll All“)
-- Fensternamen wie im Spiel: Lesefehler berichtigt („Craft Genos“)
-- Erkunden: Scroll-Probe nur noch an bis zu 4 Stellen mit Inhalt
-- Mausrad ohne Wirkung wird zurückgedreht (Kamera zoomt nicht mehr)
-- Ich-Perspektive (Zeiger festgehalten) wird erkannt und verlassen
-- Geprüfte Fenster: nur markierte Listen scrollen, Raids nie
-- Raid-Fenster: Titel „Raid“ wird nicht mehr als Knopf getestet
-- Teleporter statt Fenster im Bild: nicht als Fund speichern
+### 🔧 Improved
+- Progressions: the macro presses “Auto All” (instead of “Roll All”)
+- Window names as in the game: misreads corrected (“Craft Genos”)
+- Explore: scroll probe only at up to 4 spots with content
+- A mouse wheel without effect is turned back (camera no longer zooms)
+- First-person view (cursor held) is detected and left
+- Checked windows: only marked lists scroll, raids never
+- Raid windows: the title “Raid” is no longer tested as a button
+- Teleporter instead of a window in the image: not saved as a finding
 
 ## 0.9.9-beta.8
 
-### 🔧 Verbessert
-- Fixer Gigs: Pet anklicken schickt es los, je Gig einzeln
-- Makro bricht nicht mehr ab, wenn das Spiel den Mauszeiger versetzt
-- Erkunden öffnet geprüfte Fenster nicht erneut
-- „Nicht öffnen“ in der Beschreibung wird beim Erkunden beachtet
-- Doppelte Einträge in „Funde prüfen“ zusammengelegt
-- Fenstertitel sicherer gelesen (graue Banner, Vollbild-Fenster)
+### 🔧 Improved
+- Fixer Gigs: clicking a pet sends it, one gig at a time
+- The macro no longer stops when the game moves the cursor
+- Explore doesn't reopen checked windows
+- “Don't open” in the description is respected while exploring
+- Duplicate entries in “Check findings” merged
+- Window titles read more reliably (grey banners, full-screen windows)
 
 ## 0.9.9-beta.7
 
-### ✨ Neu
-- Startseite neu: Farm-Routine links, Abholen rechts unten
-- Farm-Routine statt Warteschlange, laufender Schritt markiert
-- Makro-Protokoll mit Uhrzeit unter Einstellungen → Makro
-- Progressions: Roll All als Knopf unter „Automatisch abholen“
-- Neues Design „Night City“ passend zum Spiel (Nebula bleibt wählbar)
+### ✨ New
+- New start page: farm routine on the left, collect bottom right
+- Farm routine instead of the queue, the running step is marked
+- Macro log with times under Settings → Macro
+- Progressions: Roll All as a button under “Auto collect”
+- New design “Night City” matching the game (Nebula stays selectable)
 
-### 🔧 Verbessert
-- Fixer Gigs: Zeit jeder Karte gelesen (20 Min. / 1 Std. / 3 Std.)
-- Abhol-Zeiten bleiben nach einem Neustart erhalten
-- Gilden-Missionen nur noch einmal am Tag
-- Erkunden: zuerst die Welten, danach Shop & Co.
-- Gelernte Fenster aus früheren Erkundungen zurückgeholt
-- Raid-Auswahl zeigt alle erkundeten Raids und Defense-Modi
-- „Hin navigieren“ und „Menü schließen“ entfernt
-- Routine ändert ihre Breite beim Umschalten nicht mehr
+### 🔧 Improved
+- Fixer Gigs: the time of every card is read (20 min / 1 h / 3 h)
+- Collect times survive a restart
+- Guild missions only once a day
+- Explore: the worlds first, then shop & co.
+- Learned windows brought back from earlier explore runs
+- Raid selection shows all explored raids and defense modes
+- “Navigate there” and “Close menu” removed
+- The routine no longer changes its width when switching
 
 ## 0.9.9-beta.4
 
-### ✨ Neu (Beta)
-- Funde prüfen: Fensterbild groß, Rahmen ziehen und beschriften
-- Arten: Knopf, nie drücken, Schalter, Wert, Liste, Reiter, Info
-- Beschreibung und Name je Fenster selbst eintragen
-- „Nie drücken“ wird Sperrzone, „Liste“ wird gezielt gescrollt
-- Erkunden öffnet jedes Fenster einmal, bis es geprüft ist
+### ✨ New (beta)
+- Check findings: large window image, draw and label boxes
+- Kinds: button, never press, switch, value, list, tab, info
+- Enter a description and name per window yourself
+- “Never press” becomes a no-go zone, “List” is scrolled on purpose
+- Explore opens every window once until it has been checked
 
-### 🔧 Verbessert
-- Werte wie „514δU / MAX“ werden zusammen gelesen
+### 🔧 Improved
+- Values like “514δU / MAX” are read together
 
 ## 0.9.9-beta.3
 
-### ✨ Neu (Beta)
-- Funde prüfen: nach dem Erkunden jedes Fenster bestätigen
-- Erkunden öffnet jedes Fenster nur einmal (außer bei Rückfrage)
+### ✨ New (beta)
+- Check findings: confirm every window after exploring
+- Explore opens every window only once (unless asked to recheck)
 
-### 🔧 Verbessert
-- Erkunden findet scrollbare Listen selbst (nicht mehr blind)
-- Timer und Animationen gelten nicht mehr als Scrollen
-- Global Quests: nur bis zur ersten erledigten Quest scrollen
-- Gilden-Reiter auch beim großen Gilden-Fenster erkannt
-- Spät öffnende Fenster werden abgewartet, Boosts erkannt
-- Zweiter Versuch, wenn die Bildaufnahme kurz hakt
+### 🔧 Improved
+- Explore finds scrollable lists by itself (no longer blind)
+- Timers and animations no longer count as scrolling
+- Global Quests: only scroll down to the first finished quest
+- Guild tabs recognized in the large guild window too
+- Windows that open late are waited for, Boosts recognized
+- A second try when the capture stutters briefly
 
 ## 0.9.9-beta.2
 
-### ✨ Neu (Beta)
-- Discord-Bot: Programm per Slash-Befehl steuern (eigener Bot)
-- /pc: PC herunterfahren/neu starten (Schalter, 60 s, abbrechbar)
-- Progressions: Roll All als Knopf und Aufgabe
-- Einstellungen → Makro: Erkunden mit Dauer und Optionen
+### ✨ New (beta)
+- Discord bot: control the program with slash commands (own bot)
+- /pc: shut down/restart the PC (switch, 60 s, can be cancelled)
+- Progressions: Roll All as a button and a task
+- Settings → Macro: explore with duration and options
 
-### 🔧 Verbessert
-- Erkunden drückt nie Leave & Co. – auch kein Hover dort
-- Erkunden: Reiter streng erkannt, scrollt, testet Ansichts-Knöpfe
-- Erkunden öffnet nur Fenster mit Problemen erneut
-- Gilden-Fenster wird erkannt (größer als andere Menüs)
-- Ziel-Listen nach Welt sortiert, Progression nur einmal
-- UI-Größe standardmäßig 75 %
+### 🔧 Improved
+- Explore never presses Leave & co. – no hovering there either
+- Explore: tabs recognized strictly, scrolls, tests view buttons
+- Explore only reopens windows that had problems
+- The guild window is recognized (larger than other menus)
+- Target lists sorted by world, Progression only once
+- UI size 75 % by default
 
 ## 0.9.9-beta.1
 
-### ✨ Neu (Beta)
-- Warteschlange: eine Aufgabe „Raid“ mit Ende nach Raids/Minuten
-- Raid wird nur verlassen, wenn danach ein anderer Raid folgt
-- Automatisch abholen: Fixer Gigs (1 Pet je Gig) und Gilde
-- Raid-Auswahl als Dropdown in der Live-Karte
-- Raid wird am Raid-Fenster erkannt (auch wenn du selbst spielst)
-- Raid wird an eindeutigen Drops erkannt (z. B. Auto-Join)
-- Erkunden öffnet alles und klickt Reiter links durch
-- Knöpfe am Rand werden bei jeder GUI-Größe gefunden
+### ✨ New (beta)
+- Queue: one “Raid” task that ends after N raids/minutes
+- A raid is only left when a different raid follows
+- Auto collect: Fixer Gigs (1 pet per gig) and guild
+- Raid selection as a dropdown in the live card
+- The raid is recognized from the raid window (also when you play)
+- The raid is recognized from unique drops (e.g. auto-join)
+- Explore opens everything and clicks through tabs on the left
+- Buttons at the screen edge are found at any GUI size
 
 ### 🎨 Design
-- Startseite zeigt fast nur das Makro
-- UI-Größe standardmäßig 50 %
+- The start page shows almost only the macro
+- UI size 50 % by default
 
 ## 0.9.8
 
-### ✨ Neu seit 0.9.1 (Kurzfassung der Betas)
-- Makro (Beta, Startseite): Menüs öffnen, Auto Roll, Raids
-- Makro-Warteschlange mit Schleife: Auto Roll, Raid farmen, Warten
-- Raid farmen: Auto Retry/Auto Leave einstellen, danach verlassen
-- Erkunden: das Makro lernt Welten und Menüs selbst kennen
-- Anti-AFK neu (alle Roblox-Fenster, 4× Esc), pausiert beim Makro
-- Alle Seiten ohne Scrollen, Statistik und Meldungen neu geordnet
-- Debug-Reiter: ganzes Protokoll live, standardmäßig aus
+### ✨ New since 0.9.1 (summary of the betas)
+- Macro (beta, start page): open menus, Auto Roll, raids
+- Macro queue with loop: Auto Roll, farm raids, wait
+- Farm raids: set Auto Retry/Auto Leave, leave afterwards
+- Explore: the macro learns worlds and menus by itself
+- New Anti-AFK (all Roblox windows, 4× Esc), pauses for the macro
+- All pages without scrolling, statistics and alerts reorganized
+- Debug tab: the whole log live, off by default
 
-### 🔧 Verbessert in dieser Version
-- Fenstertitel werden gerade gedreht gelesen (21 von 136 besser)
-- Titel aus mehreren Wörtern werden ganz gelesen
-- Zeilensuche im Teleporter ~4× schneller
-- Quests werden nicht gelesen, solange das Makro Menüs öffnet
-- Erkunden liest jedes Fenster nur noch einmal (spart ~150 ms)
-- Einstellungssuche verzeiht Umlaute und Tippfehler
-- Strg+F öffnet die Einstellungssuche von jeder Seite
+### 🔧 Improved in this version
+- Window titles are straightened before reading (21 of 136 better)
+- Titles with several words are read completely
+- Row search in the teleporter ~4× faster
+- Quests aren't read while the macro opens menus
+- Explore reads every window only once (saves ~150 ms)
+- Settings search forgives umlauts and typos
+- Ctrl+F opens the settings search from every page
 
 ## 0.9.7-beta.6
 
-### 🔧 Verbessert
-- Erkunden schaltet Anti-AFK aus und danach wieder an
+### 🔧 Improved
+- Explore turns Anti-AFK off and back on afterwards
 
 ## 0.9.7-beta.5
 
-### ✨ Neu
-- Debug-Reiter: Schalter „Debug an“ (Standard aus, spart Last)
-- Debug zeigt live das ganze Protokoll wie im Diagnose-Paket
-- Debug: Filter, Kopieren, Leeren und Diagnose-Paket
+### ✨ New
+- Debug tab: switch “Debug on” (off by default, saves load)
+- Debug shows the whole log live, like in the diagnostics package
+- Debug: filter, copy, clear and diagnostics package
 
-### 🐞 Behoben
-- Start-/Pause-Symbole oben links fehlten auf anderen Seiten
+### 🐞 Fixed
+- Start/pause icons at the top left were missing on other pages
 
 ## 0.9.7-beta.4
 
 ### 🎨 Design
-- Alle Seiten passen ohne Scrollen
-- Statistik: Letzte Versuche, Raid-Vergleich und Rekorde als Reiter
-- Meldungen in zwei Spalten
-- Einstellungen neu sortiert, Debug als eigener Reiter
-- Titel und Bedienelemente in einer Zeile, Erklärungen im ⓘ
-- Warteschlange kompakter, Felder passend zur Aufgabe
+- All pages fit without scrolling
+- Statistics: recent attempts, raid comparison and records as tabs
+- Alerts in two columns
+- Settings reorganized, debug as its own tab
+- Title and controls in one row, explanations in the ⓘ
+- More compact queue, fields matching the task
 
-### 🔧 Verbessert
-- Verdeckte Ziffer („4“ statt „54“) beendet keinen Raid mehr
-- Während das Makro Menüs öffnet, wertet die Erkennung nichts
-- Debug-Liste zeigt ganze Sätze
-- Erkunden wartet nach Klicks kürzer
+### 🔧 Improved
+- A covered digit (“4” instead of “54”) no longer ends a raid
+- While the macro opens menus, the detection evaluates nothing
+- The debug list shows whole sentences
+- Explore waits less after clicks
 
 ## 0.9.7-beta.3
 
-### 🔧 Verbessert
-- Erkunden klickt keine leeren Plätze hinter dem letzten Symbol
-- Kleinere Fenster werden erkannt (Passives, Equip Best …)
-- Graue oder helle Fenstertitel werden besser gelesen
-- Raids heißen nach ihrem Namen („Holy Grail War“ statt „Raid“)
-- Neu eingeordnet: Shrines, Passives, Fixer Gigs, Nur Anzeige
-- „Magecraft Progression“ ist kein Crafting mehr
-- Plätze ohne Fenster werden gemerkt und nicht erneut geklickt
-- Erkunden: Standard 10 Minuten, höchstens 30
+### 🔧 Improved
+- Explore doesn't click empty slots after the last icon
+- Smaller windows are recognized (Passives, Equip Best …)
+- Grey or bright window titles are read better
+- Raids are named by their name (“Holy Grail War” instead of “Raid”)
+- Newly classified: shrines, passives, Fixer Gigs, display only
+- “Magecraft Progression” is no longer crafting
+- Slots without a window are remembered and not clicked again
+- Explore: 10 minutes by default, at most 30
 
 ## 0.9.7-beta.2
 
-### ✨ Neu (Beta)
-- Warteschlange: „Raid farmen“ – starten, N Raids, dann verlassen
-- Makro stellt Auto Retry und Auto Leave (ab Welle N) selbst ein
-- „Raid verlassen“: erst Auto Retry aus, dann LEAVE!
-- Erkunden lässt Gates und Totenkopf (zeitbasierte Modi) aus
+### ✨ New (beta)
+- Queue: “Farm raid” – start, N raids, then leave
+- The macro sets Auto Retry and Auto Leave (from wave N) itself
+- “Leave raid”: first Auto Retry off, then LEAVE!
+- Explore skips gates and the skull (time-based modes)
 
-### 🔧 Verbessert
-- Erkunden: Teleporter zu? Wieder öffnen und weitermachen
-- Fenster heißen wie deine Knöpfe („Ninja Raid“ statt „Raid“)
-- Neu erkannt: Quests, Inventar, Achievements, Index, Ranks …
-- Claim-Knöpfe werden im Bericht gezählt (nie geklickt)
-- Kopfzeile: Start/Stopp, Pause und Status nur als Symbole
-- Anti-AFK-Countdown klein über dem Schalter
+### 🔧 Improved
+- Explore: teleporter closed? Open it again and continue
+- Windows are named like your buttons (“Ninja Raid” instead of “Raid”)
+- Newly recognized: quests, inventory, achievements, index, ranks …
+- Claim buttons are counted in the report (never clicked)
+- Header: start/stop, pause and status only as icons
+- Anti-AFK countdown small above the switch
 
 ## 0.9.7-beta.1
 
-### ✨ Neu (Beta)
-- Erkunden: Makro öffnet neue Welten und Menüs selbst (3 Min.)
-- Eingebautes Wissen: Gacha, Titans, Pets, Crafting, Artefakte …
-- Liest Equip Best, Guild und die Knöpfe am Bildschirmrand
-- Gefundenes landet in der Karte – danach direkt anwählbar
-- Beim Erkunden nur öffnen/schließen, nie Roll, Buy oder Claim
-- Warteschlange: Auto Roll, Raid starten, Raid beitreten
-- Makro-Karte: „Auto Roll“ für jedes Ziel (auch Pets-Roll)
+### ✨ New (beta)
+- Explore: the macro opens new worlds and menus by itself (3 min)
+- Built-in knowledge: gacha, titans, pets, crafting, artifacts …
+- Reads Equip Best, Guild and the buttons at the screen edge
+- Findings go into the map – selectable right away afterwards
+- While exploring only open/close, never Roll, Buy or Claim
+- Queue: Auto Roll, start raid, join raid
+- Macro card: “Auto Roll” for every target (also pets roll)
 
 ## 0.9.5-beta.4
 
-### ✨ Neu (Beta)
-- Makro-Warteschlange: Aufgaben nacheinander, auf Wunsch in Schleife
-- Aufgaben: Menü öffnen, Pets rollen, Menü schließen, Warten
-- Während „Warten“ läuft das Anti-AFK weiter
+### ✨ New (beta)
+- Macro queue: tasks one after another, in a loop if you want
+- Tasks: open menu, roll pets, close menu, wait
+- During “Wait” the Anti-AFK keeps running
 
-### 🔧 Verbessert
-- Start/Stopp, Pause und Status-Knopf links oben in der Kopfzeile
-- Startseite ohne Titel, Fenster-Info und Raid-Auswahl
-- Ereignisse als Debug-Karte unter Einstellungen → Programm
+### 🔧 Improved
+- Start/stop, pause and status button at the top left of the header
+- Start page without title, window info and raid selection
+- Events as a debug card under Settings → Program
 
 ## 0.9.5-beta.3
 
-### 🐞 Behoben (Beta)
-- Makro scrollt im Teleporter (Maus vor dem Mausrad bewegen)
-- Bewegt das Mausrad nichts, zieht das Makro den Scrollbalken
-- Makro-Schritte stehen im Protokoll (Fehlersuche)
+### 🐞 Fixed (beta)
+- The macro scrolls in the teleporter (moves the mouse first)
+- If the mouse wheel moves nothing, the macro drags the scroll bar
+- Macro steps are in the log (troubleshooting)
 
 ## 0.9.5-beta.2
 
-### ✨ Neu (Beta)
-- „Automatik“ heißt jetzt Makro und sitzt auf der Startseite
-- Pets rollen: nach „Auto!“ schließt das Menü gleich wieder
-- Anti-AFK neu: alle Roblox-Fenster, 4× Esc, ohne Wartezeit
-- Minimiertes Roblox bleibt danach offen (Erkennung läuft)
-- Anti-AFK leert danach den Roblox-Arbeitsspeicher
+### ✨ New (beta)
+- “Automation” is now called macro and sits on the start page
+- Roll pets: after “Auto!” the menu closes right away
+- New Anti-AFK: all Roblox windows, 4× Esc, no waiting
+- A minimized Roblox stays open afterwards (detection keeps running)
+- Anti-AFK frees Roblox's memory afterwards
 
-### 🔧 Verbessert
-- Startseite neu: links Makro + Ereignisse, rechts Live + Quests
-- Ereignisse und Quests kompakt, je eine Zeile
-- Live-Erkennung ohne Vorschaubild
-- Größeres Fenster: Startseite ohne Scrollen
+### 🔧 Improved
+- New start page: macro + events on the left, live + quests right
+- Events and quests compact, one line each
+- Live detection without a preview image
+- Larger window: start page without scrolling
 
 ## 0.9.5-beta.1
 
-### ✨ Neu (Beta)
-- Automatik (Beta) unter Einstellungen → Roblox, standardmäßig aus
-- Menüs per Karte öffnen: Teleporter, zur Welt scrollen, Symbol
-- Pets rollen: Roll-Menü der Welt öffnen und „Auto!“ drücken
-- Not-Aus: Maus bewegen oder Esc
-- Kein Laufen, kein Teleportieren
+### ✨ New (beta)
+- Automation (beta) under Settings → Roblox, off by default
+- Open menus via the map: teleporter, scroll to the world, icon
+- Roll pets: open the world's roll menu and press “Auto!”
+- Emergency stop: move the mouse or press Esc
+- No walking, no teleporting
 
 ## 0.9.1
 
-### 🐞 Behoben (Hotfix)
-- Raids mit 30, 50 oder bis 2000 Wellen werden wieder erkannt
-- Modi ohne Gesamtzahl („Wave 542“) werden erkannt und gezählt
+### 🐞 Fixed (hotfix)
+- Raids with 30, 50 or up to 2000 waves are recognized again
+- Modes without a total (“Wave 542”) are recognized and counted
 
 ## 0.9.0
 
-### 🔧 Verbessert
-- Erkennung fest eingebaut – keine Bereiche mehr einzustellen
-- Immer Fenster-Aufnahme, Raid-Ende bei 100/100
-- Gleichmäßiger Takt (alle 0,5 s) statt „heißem“ Takt
-- Größerer Quest-Bereich: alle Quests samt Fortschritt
-- Raids verwalten unter Einstellungen → Roblox
-- Nur noch vier Seiten in der Symbolleiste
-- Alle Verbesserungen aus 0.8.1-beta.1
+### 🔧 Improved
+- Detection built in – no more areas to set up
+- Always window capture, raid end at 100/100
+- Even tick (every 0.5 s) instead of a “hot” tick
+- Larger quest area: all quests including progress
+- Manage raids under Settings → Roblox
+- Only four pages in the icon bar
+- All improvements from 0.8.1-beta.1
 
-### 🗑️ Entfernt
-- Seite „Erkennung“ (Bereiche, Auslöser, Bestätigungen)
-- Seite „Raids“ mit Auslöser und Notiz je Raid
-- Screenshots bei Raid-Meldungen
-- Alte Funktionen gibt es weiter in 0.8.1 und älter
+### 🗑️ Removed
+- “Detection” page (areas, triggers, confirmations)
+- “Raids” page with a trigger and note per raid
+- Screenshots in raid messages
+- The old features are still available in 0.8.1 and older
 
 ## 0.8.1-beta.1
 
-### 🔧 Verbessert
-- Start schneller: Seiten werden erst beim ersten Öffnen gebaut
-- Design- und Farbwechsel etwa doppelt so schnell
-- Statistik rechnet im Hintergrund – nie mehr Hänger
-- Auswertungen bis zu 160× schneller, Verlauf lädt ~4× schneller
-- Statistik-Karten werden im Hintergrund gezeichnet
-- Saison-Deko flüssiger (20 Bilder/s) ohne Mehrlast
-- Seitenwechsel knackiger
+### 🔧 Improved
+- Faster start: pages are only built when first opened
+- Design and color changes about twice as fast
+- Statistics are calculated in the background – no more freezes
+- Analyses up to 160× faster, history loads ~4× faster
+- Stats cards are drawn in the background
+- Smoother seasonal decoration (20 fps) without extra load
+- Snappier page switching
 
 ## 0.8.0
 
-### ✨ Neu
-- Einstellungen mit Reitern und Suchfeld
-- Dein Roblox-Profil: Avatar in Seitenleiste und auf Karten
-- Persönliche Rekorde in der Statistik
-- Statistik archivieren und neu beginnen
-- Designs „Bubble“ (rund) und „OLED“ (echtes Schwarz)
-- Saison-Designs Silvester, Kirschblüte und Sommer
-- Saison-Deko: Blätter, Kürbisse, Schnee, Feuerwerk, Blüten
-- Kürbisnacht-Überraschung (abschaltbar)
-- Nachrichtenstil „Kompakt“ für Discord
-- Akzentfarbe aus dem Hintergrundbild
-- „Was ist neu“ nach Updates und „Neu“-Punkte
-- „Fehler melden“ ganz unten in den Einstellungen
+### ✨ New
+- Settings with tabs and a search field
+- Your Roblox profile: avatar in the sidebar and on cards
+- Personal records in the statistics
+- Archive the statistics and start over
+- Designs “Bubble” (round) and “OLED” (true black)
+- Seasonal designs New Year's Eve, cherry blossom and summer
+- Seasonal decoration: leaves, pumpkins, snow, fireworks, blossoms
+- Pumpkin night surprise (can be turned off)
+- Message style “Compact” for Discord
+- Accent color from the background image
+- “What's new” after updates and “New” dots
+- “Report a problem” at the very bottom of the settings
 
-### 🔧 Verbessert
-- Statistik auch mit großem Verlauf flüssig
-- Versuche und Quest-Ziele kurz mit k (Wellen bleiben genau)
-- Zuletzt benutzte Raids stehen oben
-- Kräftigere Saison-Farben
-- Leere Bereiche mit kleiner Illustration
-- Logo-Animation beim Start zuverlässig sichtbar
+### 🔧 Improved
+- Statistics stay smooth with a large history
+- Attempts and quest goals shortened with k (waves stay exact)
+- Recently used raids at the top
+- Stronger seasonal colors
+- Empty areas with a small illustration
+- Logo animation at startup reliably visible
 
 ## 0.7.5.1
 
-### 🐞 Behoben
-- Windows zeigt an Verknüpfungen das neue Logo
-- Quest-Titel vollständiger (Text nach der Zahl bleibt)
-- Zerteilte Raid-Namen in Quests repariert („Conv oy“)
-- Quest-Fortschritt „1/90“ wird erkannt
-- Quests in derselben Reihenfolge wie im Spiel
+### 🐞 Fixed
+- Windows shows the new logo on shortcuts
+- Quest titles more complete (text after the number stays)
+- Split raid names in quests repaired (“Conv oy”)
+- Quest progress “1/90” is recognized
+- Quests in the same order as in the game
 
 ## 0.7.5
 
-### ✨ Neu
-- Monatsrückblick als Karte (speichern oder an Discord)
-- Wochenüberblick: Farmzeit je Tag (Statistik → Woche)
-- Raid-Meldungen als Tages-Beitrag im Forum-Kanal
-- Eigene Embed-Farbe je Ereignis
-- Server-Favoriten per Code mit Freunden teilen
-- Akzentfarbe frei wählbar
-- Eigenes Hintergrundbild (abdunkelbar)
-- Saison-Designs „Kürbisnacht“ und „Frost“
-- Logo-Animation beim Start (abschaltbar)
-- Abgesicherter Start (Umschalt halten)
-- Beta-Kanal für Vorabversionen
+### ✨ New
+- Monthly recap as a card (save or send to Discord)
+- Weekly overview: farming time per day (Statistics → Week)
+- Raid messages as a daily post in a forum channel
+- Own embed color per event
+- Share server favorites with friends via a code
+- Free choice of accent color
+- Own background image (can be dimmed)
+- Seasonal designs “Pumpkin night” and “Frost”
+- Logo animation at startup (can be turned off)
+- Safe start (hold Shift)
+- Beta channel for pre-releases
 
-### 🔧 Verbessert
-- Wellenzahl färbt sich nahe der Bestwelle
-- Schalter „Animationen reduzieren“
-- Speicher-Übersicht mit Aufräumen
-- Diagnose-Paket ohne IDs, Links und Benutzername
+### 🔧 Improved
+- The wave number changes color near the best wave
+- Switch “Reduce animations”
+- Storage overview with cleanup
+- Diagnostics package without IDs, links and user name
 
 ## 0.7.1
 
-### 🔧 Verbessert
-- Kein „Fehlversuch“ mehr: jeder Raid zählt normal
-- Raid-Meldung zeigt die erreichte Welle
-- Live-Status neu: Fortschrittsbalken, Symbole, Logo
-- Logo als Profilbild der Discord-Nachrichten
-- Programm aufgeräumt (alter Updater entfernt)
+### 🔧 Improved
+- No more “failed attempt”: every raid counts normally
+- The raid message shows the wave reached
+- New live status: progress bar, icons, logo
+- Logo as the avatar of the Discord messages
+- Program cleaned up (old updater removed)
 
 ## 0.7.0
 
-### ✨ Neu
-- Design „Nebula“: schmale Symbolleiste, Status-Pille
-- Auto-Start: Überwachung startet/stoppt mit Anime Astral
-- Einstellungen exportieren/importieren (mit Passwort)
-- Alle Versionshinweise im Programm lesbar
-- Ältere Version installieren (Downgrade)
-- Neues Logo
+### ✨ New
+- Design “Nebula”: slim icon bar, status pill
+- Auto-start: monitoring starts/stops with Anime Astral
+- Export/import settings (with a password)
+- All release notes readable in the program
+- Install an older version (downgrade)
+- New logo
 
-### 🔧 Verbessert
-- Webhook & Server-Links verschlüsselt gespeichert
-- Erklärungen hinter ⓘ statt als Text
-- Versionshinweise als Text im Update-Fenster
+### 🔧 Improved
+- Webhook & server links stored encrypted
+- Explanations behind ⓘ instead of as text
+- Release notes as text in the update window
 
 ## 0.6.5
 
-### ✨ Neu
-- Design „Astral“ mit Symbolen und Zahnrad
-- Hell-, Dunkel- oder Windows-Modus
-- UI-Größe 50–200 %
-- Altes Design als „Klassisch“ wählbar
+### ✨ New
+- Design “Astral” with icons and a gear
+- Light, dark or Windows mode
+- UI size 50–200 %
+- The old design selectable as “Classic”
 
-### 🔧 Verbessert
-- Statistik übersichtlicher, Diagramm lesbar
+### 🔧 Improved
+- Clearer statistics, readable chart
 
 ## 0.6.4
 
-### ✨ Neu
-- Server-Favoriten (anlegen, ändern, löschen)
-- Raid-Auswahl auf der Startseite
-- Raids umbenennen
+### ✨ New
+- Server favorites (add, edit, delete)
+- Raid selection on the start page
+- Rename raids
 
-### 🔧 Verbessert
-- Einstellungen neu sortiert, feste Speichern-Leiste
-- Disconnect-Alarm genauer (ohne Bilderkennung)
+### 🔧 Improved
+- Settings reorganized, fixed save bar
+- More precise disconnect alert (without image recognition)
 
-### 🗑️ Entfernt
-- Raid-Erkennung per Bild
+### 🗑️ Removed
+- Raid detection by image
 
 ## 0.6.3
 
-### ✨ Neu
-- Auto-Rejoin nach Disconnect, Kick oder Absturz
+### ✨ New
+- Auto-rejoin after a disconnect, kick or crash
 
 ## 0.6.2
 
-### ✨ Neu
-- Privaten Server ohne Browser betreten
+### ✨ New
+- Join a private server without a browser
 
 ## 0.6.1
 
-### ✨ Neu
-- Anti-AFK per Schalter
+### ✨ New
+- Anti-AFK switch
 
-### 🔧 Verbessert
-- Raid-Liste kompakter (max. 8 sichtbar)
+### 🔧 Improved
+- More compact raid list (max. 8 visible)
 
 ## 0.6.0
 
-### ✨ Neu
-- Wand-Erkennung (Boss-Welle)
-- Tray-Symbol: läuft im Hintergrund
-- Englische Oberfläche
-- Oberfläche skaliert mit dem Fenster
+### ✨ New
+- Wall detection (boss wave)
+- Tray icon: keeps running in the background
+- English interface
+- The interface scales with the window
 
-### 🔧 Verbessert
-- Weniger Arbeitsspeicher
+### 🔧 Improved
+- Less memory
 
 ## 0.5.2
 
-### 🔧 Verbessert
-- Kleine Updates (nur geänderte Dateien)
-- Weniger CPU und Speicher
+### 🔧 Improved
+- Small updates (only changed files)
+- Less CPU and memory
 
 ## 0.5.1
 
-### 🔧 Verbessert
-- Jeder Versuch zählt gleich
-- Sortierbare Tabellen
-- Eigene Discord-ID für den Profilstatus
+### 🔧 Improved
+- Every attempt counts the same
+- Sortable tables
+- Own Discord ID for the profile status
 
-### 🐞 Behoben
-- Kurzer Zählerrückgang zählt nicht mehr als Neustart
+### 🐞 Fixed
+- A short drop of the counter no longer counts as a restart
 
 ## 0.5.0
 
-### ✨ Neu
-- Erste Version: Wellenzähler, Statistik, Discord-Meldungen, Updates
+### ✨ New
+- First version: wave counter, statistics, Discord alerts, updates

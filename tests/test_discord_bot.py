@@ -71,7 +71,7 @@ class BotTest(unittest.TestCase):
         self.assertIn("Alvarez War", text)
         self.assertIn("aus", bridge.handle("pc", {"action": "shutdown"}).text)   # default: /pc locked
         self.assertIn("gibt es nicht", bridge.handle("raid", {"name": "Holy Grail War"}).text)
-        self.assertIn("/status", bridge.handle("hilfe", {}).text)
+        self.assertIn("/status", bridge.handle("help", {}).text)
 
 
 if __name__ == "__main__":

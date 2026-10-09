@@ -21,8 +21,8 @@ from .i18n import tr
 log = logging.getLogger("bot")
 
 PERMISSIONS = 2048 + 16384 + 32768      # send messages, embed links, attach files
-COMMANDS = ("status", "start", "stop", "pause", "screenshot", "raid", "makro", "antiafk", "autorejoin", "join", "pc",
-            "hilfe")
+COMMANDS = ("status", "start", "stop", "pause", "screenshot", "raid", "macro", "antiafk", "autorejoin", "join", "pc",
+            "help")
 SHUTDOWN_DELAY = 60      # /pc shutdown: this many seconds to cancel (/pc cancel)
 
 
@@ -163,7 +163,7 @@ class ControlBot:
                 log.info("Discord bot: command /%s from a non-allowed ID %s rejected", name, interaction.user.id)
                 return
             await interaction.response.defer(thinking=True)
-            log.info("Discord-Bot: /%s %s", name, args or "")
+            log.info("Discord bot: /%s %s", name, args or "")
             loop = asyncio.get_running_loop()
             try:
                 reply = await loop.run_in_executor(None, bot.handler, name, args)
@@ -205,25 +205,25 @@ class ControlBot:
         async def raid_names(interaction, current: str):
             return await complete("raid", current)
 
-        @tree.command(name="makro", description=tr("Macro: start the farm routine, stop, progressions …"))
-        @app_commands.describe(aktion=tr("What should the macro do?"))
-        @app_commands.choices(aktion=[app_commands.Choice(name=tr("Start farm routine"), value="queue"),
+        @tree.command(name="macro", description=tr("Macro: start the farm routine, stop, progressions …"))
+        @app_commands.describe(action=tr("What should the macro do?"))
+        @app_commands.choices(action=[app_commands.Choice(name=tr("Start farm routine"), value="queue"),
                                       app_commands.Choice(name=tr("Stop"), value="stop"),
                                       app_commands.Choice(name=tr("Progressions: Auto All"), value="progression"),
                                       app_commands.Choice(name=tr("Close menu"), value="close")])
-        async def makro(interaction, aktion: app_commands.Choice[str]):
-            await run(interaction, "makro", {"action": aktion.value})
+        async def macro(interaction, action: app_commands.Choice[str]):
+            await run(interaction, "macro", {"action": action.value})
 
         @tree.command(name="antiafk", description=tr("Anti-AFK on/off"))
-        async def antiafk(interaction, an: bool):
-            await run(interaction, "antiafk", {"on": an})
+        async def antiafk(interaction, on: bool):
+            await run(interaction, "antiafk", {"on": on})
 
         @tree.command(name="autorejoin", description=tr("Auto-rejoin on/off"))
-        async def autorejoin(interaction, an: bool):
-            await run(interaction, "autorejoin", {"on": an})
+        async def autorejoin(interaction, on: bool):
+            await run(interaction, "autorejoin", {"on": on})
 
-        @tree.command(name="join", description=tr("Join private server (favourite)"))
-        @app_commands.describe(server=tr("Favourite (empty = marked one)"))
+        @tree.command(name="join", description=tr("Join private server (favorite)"))
+        @app_commands.describe(server=tr("Favorite (empty = the marked one)"))
         async def join(interaction, server: Optional[str] = None):
             await run(interaction, "join", {"server": server or ""})
 
@@ -232,13 +232,13 @@ class ControlBot:
             return await complete("server", current)
 
         @tree.command(name="pc", description=tr("Shut down / restart the PC (60 s delay) or cancel"))
-        @app_commands.describe(aktion=tr("What should the PC do?"))
-        @app_commands.choices(aktion=[app_commands.Choice(name=tr("Shut down"), value="shutdown"),
+        @app_commands.describe(action=tr("What should the PC do?"))
+        @app_commands.choices(action=[app_commands.Choice(name=tr("Shut down"), value="shutdown"),
                                       app_commands.Choice(name=tr("Restart"), value="restart"),
                                       app_commands.Choice(name=tr("Cancel"), value="abort")])
-        async def pc(interaction, aktion: app_commands.Choice[str]):
-            await run(interaction, "pc", {"action": aktion.value})
+        async def pc(interaction, action: app_commands.Choice[str]):
+            await run(interaction, "pc", {"action": action.value})
 
-        @tree.command(name="hilfe", description=tr("All commands"))
-        async def hilfe(interaction):
-            await run(interaction, "hilfe", {})
+        @tree.command(name="help", description=tr("All commands"))
+        async def help_(interaction):
+            await run(interaction, "help", {})

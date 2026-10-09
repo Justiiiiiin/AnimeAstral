@@ -42,7 +42,7 @@ class EventsCard(Card):
         theme.track_spacing(row, 8)
         self.filter = short_field(QLineEdit(), 280)
         theme.track_min_width(self.filter, 260)
-        self.filter.setPlaceholderText(tr("Filter (e.g. makro, tracker, WARNING) …"))
+        self.filter.setPlaceholderText(tr("Filter (e.g. macro, tracker, WARNING) …"))
         self.filter.setClearButtonEnabled(True)
         self.filter.textChanged.connect(lambda _t: self._rebuild())
         row.addWidget(self.filter)

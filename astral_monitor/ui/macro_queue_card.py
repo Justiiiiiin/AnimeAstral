@@ -112,7 +112,7 @@ class MacroQueueCard(Card):
         rp.addWidget(_caption(tr("End")), 0, 0)
         rp.addWidget(self.until, 0, 1)
         rp.addWidget(self.runs, 0, 2)
-        rp.addWidget(_caption(tr("Auto Leave from wave")), 1, 0)
+        rp.addWidget(_caption(tr("Leave at wave")), 1, 0)
         rp.addWidget(self.leave_wave, 1, 1)
         rp.addWidget(self.join, 1, 2)
         rp.setColumnStretch(1, 1)

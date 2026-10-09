@@ -24,7 +24,7 @@ from . import vision, winapi
 from .i18n import N_, tr
 from .uimap import ROW, UiMap, match_row, world_number
 
-_log = logging.getLogger("makro")
+_log = logging.getLogger("macro")
 
 STEP_WAIT = 0.15          # spacing of the checks after a click
 OPEN_TIMEOUT = 5.0        # a menu may take this long to open

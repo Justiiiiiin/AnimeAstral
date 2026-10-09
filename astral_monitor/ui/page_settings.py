@@ -539,7 +539,7 @@ class SettingsPage(QWidget):
                       "discord.com/developers/applications → New Application → “Bot” on the left → “Reset Token” → "
                       "copy the token, enter it here and save. Then “Open invite link” and add the bot to your "
                       "server. It needs no special permissions (intents).\n\nCommands: /status, /start, /stop, "
-                      "/pause, /screenshot, /raid, /makro, /antiafk, /autorejoin, /join, /pc, /hilfe."))
+                      "/pause, /screenshot, /raid, /macro, /antiafk, /autorejoin, /join, /pc, /help."))
         self.bot_enabled = QCheckBox(tr("Discord bot active"))
         bot.body.addWidget(self.bot_enabled)
         bg = form_grid()

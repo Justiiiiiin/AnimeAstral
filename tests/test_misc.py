@@ -207,7 +207,7 @@ class AccentFromImageTests(unittest.TestCase):
         img.fill(QColor("#202020"))                                      # grey doesn't count
         p = QPainter(img)
         p.fillRect(0, 0, 100, 60, QColor("#C0306A"))                     # viel Pink
-        p.fillRect(0, 60, 100, 15, QColor("#2A70D0"))                    # etwas Blau
+        p.fillRect(0, 60, 100, 15, QColor("#2A70D0"))                    # some blue
         p.end()
         path = os.path.join(tempfile.mkdtemp(dir=_env.DATA), "bg.png")
         img.save(path)

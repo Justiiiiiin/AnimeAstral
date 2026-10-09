@@ -105,7 +105,7 @@ class BotBridge:
                 return Reply(tr("There is no raid “{name}”.", name=wanted))
             self.gui(lambda: main.select_raid(match))
             return Reply(tr("Current raid: {name}", name=match))
-        if name == "makro":
+        if name == "macro":
             return self._macro(args.get("action", ""))
         if name == "antiafk":
             self.gui(lambda: main.set_anti_afk(bool(args.get("on"))))
@@ -117,7 +117,7 @@ class BotBridge:
             return self._join(args.get("server", ""))
         if name == "pc":
             return self._power(args.get("action", ""))
-        if name == "hilfe":
+        if name == "help":
             return Reply(tr("Commands: {commands}", commands=", ".join("/" + c for c in COMMANDS)))
         return Reply(tr("Unknown command."))
 
@@ -167,7 +167,7 @@ class BotBridge:
             nav.stop()
             return Reply(tr("Macro stopped."))
         if nav.busy:
-            return Reply(tr("The macro is already running – first /makro Stop."))
+            return Reply(tr("The macro is already running – first /macro Stop."))
         if action == "queue":
             self.gui(self.main.pages[0].queue._start)
             return Reply(tr("Farm routine started."))
