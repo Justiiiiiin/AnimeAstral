@@ -125,7 +125,7 @@ def render_card(stats: StatsStore, since: Optional[float], raid: Optional[str], 
         (tr("Waves total"), messages.fmt_int(summary.waves_total), TEAL),
         (tr("Waves per hour"), messages.fmt_int(round(summary.waves_per_hour)) if summary.waves_per_hour else "–", TEXT),
         (tr("Best wave"), str(summary.best_wave), AMBER),
-        (tr("Avg. final wave"), dec(f"{summary.avg_wave_all:.1f}") if summary.avg_wave_all else "–", TEXT),
+        (tr("Attempts per hour"), dec(f"{summary.attempts_per_hour:.1f}") if summary.attempts_per_hour else "–", TEXT),
         (tr("Avg. duration per attempt"), messages.fmt_duration(summary.avg_duration_all), TEXT),
     ]
     tw, th, gap, x0, y0 = 184, 108, 14, 48, 120
@@ -171,8 +171,8 @@ def render_card(stats: StatsStore, since: Optional[float], raid: Optional[str], 
     for i, p in enumerate(per[:3]):
         y = 420 + i * 52
         c.text((70, y), raid_label(p["raid"]), 18, TEXT, bold=True)
-        sub = tr("{attempts} attempts · {waves} waves · avg. wave {avg}", attempts=p["attempts"],
-                 waves=messages.fmt_int(p["waves_total"]), avg=dec(f"{p['avg_wave']:.1f}"))
+        sub = tr("{attempts} attempts · {waves} waves · {time} per raid", attempts=p["attempts"],
+                 waves=messages.fmt_int(p["waves_total"]), time=messages.fmt_duration(p["avg_duration_all"]))
         c.text((70, y + 24), sub, 13, MUTED)
         bx0, bx1 = 560, W - 230
         c.bar((bx0, y + 12, bx1, y + 24), (30, 40, 52), radius=6)
@@ -218,7 +218,8 @@ def render_month_card(stats: StatsStore, year: int, month: int) -> bytes:
         (tr("Waves"), messages.fmt_int(m["waves"]), TEAL),
         (tr("Farming time"), tr("{hours} hrs", hours=dec(f"{m['farm_s'] / 3600:.0f}")), VIOLET),
         (tr("Best wave"), str(m["best_wave"]), AMBER),
-        (tr("Avg. final wave"), dec(f"{m['avg_wave']:.1f}") if m["avg_wave"] else "–", TEXT),
+        (tr("Raids per active day"), dec(f"{m['attempts'] / m['active_days']:.0f}") if m["active_days"] else "–",
+         TEXT),
         (tr("Active days"), f"{m['active_days']}/{len(m['per_day'])}", TEXT),
     ]
     tw, th, gap, x0, y0 = 184, 108, 14, 48, 120

@@ -64,7 +64,7 @@ class MonitorPage(QWidget):
         self.k_total = StatCard(tr("Attempts total"))
         self.k_session = StatCard(tr("Attempts (session)"))
         self.k_waves = StatCard(tr("Waves (session)"))
-        self.k_avg = StatCard(tr("Avg. final wave"))
+        self.k_avg = StatCard(tr("Raids today"))
         self.k_rate = StatCard(tr("Waves per hour"))
         for card in (self.k_total, self.k_session, self.k_waves, self.k_avg, self.k_rate):
             kpis.addWidget(card, 1)
@@ -204,7 +204,7 @@ class MonitorPage(QWidget):
             self.k_total.set_value(messages.fmt_k(snap.total_attempts))
             self.k_session.set_value(str(snap.session_attempts))
             self.k_waves.set_value(messages.fmt_int(snap.session_waves))
-            self.k_avg.set_value(dec(f"{snap.avg_wave:.1f}") if snap.avg_wave else "–")
+            self.k_avg.set_value(messages.fmt_k(snap.today_attempts))
             self.k_rate.set_value(messages.fmt_int(round(snap.waves_per_hour)) if snap.waves_per_hour else "–")
 
         if st.wave_value is not None:

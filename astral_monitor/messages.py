@@ -165,13 +165,13 @@ def build_status(settings: Settings, snap: dict) -> dict:
     if meta:
         lines.append("-# " + "  ·  ".join(meta))
 
-    wph, avg_wave = snap.get("waves_per_hour"), snap.get("avg_wave")
+    wph, avg_dur = snap.get("waves_per_hour"), snap.get("avg_duration")
     fields = [
         ("🔁 " + tr("Attempts"), f"**{snap.get('session_attempts', 0)}**\n-# "
          + tr("total {count}", count=fmt_k(snap.get("total_attempts", 0))), True),
         ("🌊 " + tr("Waves"), f"**{fmt_int(snap.get('session_waves', 0))}**", True),
         ("⚡ " + tr("Waves/h"), f"**{fmt_int(round(wph))}**" if wph else "–", True),
-        ("📈 " + tr("Avg. final wave"), f"**{dec(f'{avg_wave:.1f}')}**" if avg_wave else "–", True),
+        ("⏳ " + tr("Time per raid"), f"**{fmt_duration(avg_dur)}**" if avg_dur else "–", True),
         ("🏆 " + tr("Best wave"), f"**{snap['best_wave']}**" if snap.get("best_wave") else "–", True),
         ("⏱️ " + tr("Running time"), f"**{fmt_duration(snap.get('uptime'))}**" if snap.get("uptime") else "–", True),
     ]

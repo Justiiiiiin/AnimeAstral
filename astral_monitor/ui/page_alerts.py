@@ -24,8 +24,13 @@ class ColorButton(QToolButton):
         menu.addAction(tr("Choose color …"), self._pick)
         menu.addAction(tr("Default color"), lambda: self.set_value(""))
         self.setMenu(menu)
-        self.setFixedSize(theme.px(44), theme.px(22))
+        self._factor = theme.scale()
         self.set_value("")
+        theme.track(self, ColorButton._rescale)          # size and text scale with the UI size like everything else
+
+    def _rescale(self, factor: float) -> None:
+        self._factor = factor
+        self._restyle()
 
     def _pick(self) -> None:
         color = QColorDialog.getColor(QColor(self.value or theme.color("accent")), self, tr("Embed color"))
@@ -34,17 +39,22 @@ class ColorButton(QToolButton):
 
     def set_value(self, value: str) -> None:
         self.value = value if is_hex_color(value) else ""
-        h = theme.px(22)
-        flat = (f"min-height: {h}px; max-height: {h}px; padding: 0; border-radius: {h // 2}px;")   # flat like a chip
+        self._restyle()
+
+    def _restyle(self) -> None:
+        f = self._factor
+        h = max(12, round(22 * f))
+        self.setFixedSize(max(24, round(44 * f)), h)
+        flat = f"min-height: {h}px; max-height: {h}px; padding: 0; border-radius: {h // 2}px;"   # flat like a chip
+        no_arrow = "QToolButton::menu-indicator { image: none; width: 0; }"
         if self.value:
             self.setText("")
-            self.setStyleSheet(f"QToolButton {{ background: {self.value}; {flat} }}"
-                               "QToolButton::menu-indicator { image: none; width: 0; }")
+            self.setStyleSheet(f"QToolButton {{ background: {self.value}; {flat} }}" + no_arrow)
             self.setToolTip(tr("Custom color {color}", color=self.value))
         else:
             self.setText(tr("Auto"))
-            self.setStyleSheet(f"QToolButton {{ font-size: 8pt; {flat} }}"
-                               "QToolButton::menu-indicator { image: none; width: 0; }")
+            # the page's own text size at this scale (a fixed 8 pt didn't scale and looked too big)
+            self.setStyleSheet(f"QToolButton {{ font-size: {max(6.0, 8.5 * f):.1f}pt; {flat} }}" + no_arrow)
             self.setToolTip(tr("The program's default color"))
 
 

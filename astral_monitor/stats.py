@@ -94,6 +94,7 @@ class StatsSnapshot:
     avg_wave: Optional[float] = None
     avg_duration: Optional[float] = None          # last 50 measured attempts
     per_hour: Optional[float] = None              # attempts per hour in this session
+    today_attempts: int = 0                       # raids since local midnight (PC time)
 
 
 @dataclass
@@ -350,7 +351,7 @@ class StatsStore:
     @_cached
     def trend(self, since: Optional[float] = None, raid: Optional[str] = None,
               by_day: bool = False, limit: int = 24) -> list[tuple[str, float, int]]:
-        """Avg. wave reached per hour (or day): [(label, avg. wave, number of attempts)]."""
+        """Per hour (or day): [(label, avg. wave, number of attempts)] – the chart “Trend” shows the attempts."""
         groups: dict[float, list[int]] = {}
         with self._lock:
             recs = self.records if since is None else self._tail_since(since)
@@ -410,6 +411,8 @@ class StatsStore:
                         break
             span = _span_hours(session)
             waves = sum(r.max_wave for r in session)
+            midnight = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
+            today = len(self._tail_since(midnight))
             return StatsSnapshot(
                 total_attempts=self.offset + len(self.records),
                 session_attempts=len(session),
@@ -418,6 +421,7 @@ class StatsStore:
                 avg_wave=(waves / len(session)) if session else None,
                 avg_duration=sum(durations) / len(durations) if durations else None,
                 per_hour=len(session) / elapsed_h if elapsed_h >= 5 / 60 else None,
+                today_attempts=today,
             )
 
     @_cached

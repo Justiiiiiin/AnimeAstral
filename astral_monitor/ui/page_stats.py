@@ -134,7 +134,7 @@ class StatsPage(QWidget):
         self.k_attempts = StatCard(tr("Attempts"))
         self.k_waves = StatCard(tr("Waves total"))
         self.k_wph = StatCard(tr("Waves per hour"))
-        self.k_avg_wave = StatCard(tr("Avg. final wave"))
+        self.k_avg_wave = StatCard(tr("Avg. time per raid"))
         self.k_best_wave = StatCard(tr("Best wave (record)"))
         root.addLayout(kpi_row(self.k_attempts, self.k_waves, self.k_wph, self.k_avg_wave, self.k_best_wave))
         # secondary values as one calm line instead of five more tiles
@@ -196,9 +196,9 @@ class StatsPage(QWidget):
         root.addLayout(mid, 1)
         self._chart_changed(0)
 
-        self.per_table = make_table([tr("Raid"), tr("Attempts"), tr("Waves total"), tr("Avg. final wave"), tr("Best wave"),
-                                     tr("Avg. duration"), tr("Waves/h")], rights=(1, 2, 3, 4, 5, 6),
-                                    widths=(170, 80, 110, 95, 85, 85, 95))
+        self.per_table = make_table([tr("Raid"), tr("Attempts"), tr("Waves total"), tr("Best wave"),
+                                     tr("Avg. duration"), tr("Waves/h")], rights=(1, 2, 3, 4, 5),
+                                    widths=(190, 90, 120, 95, 100, 100))
         restore_header(self.per_table, "stats_raids")
         self.lists.addWidget(self.per_table)
 
@@ -321,8 +321,7 @@ class StatsPage(QWidget):
         self.charts.setCurrentIndex(index)
         # how far a raid gets doesn't matter (owner): raids per day instead of the final-wave distribution
         self.chart_info.set_info(tr((N_("Raids per day over the last 14 days."),
-                                    N_("Avg. final wave per hour (per day for long periods) – if it rises, you are "
-                                       "getting better."),
+                                    N_("Raids per hour (per day for long periods) in the chosen period."),
                                     N_("Waves cleared in the last 10 hours."),
                                     N_("Farming time per day over the last 7 days – breaks longer than 15 minutes "
                                        "don't count."))
@@ -471,7 +470,7 @@ class StatsPage(QWidget):
         self.k_attempts.set_value(messages.fmt_k(s.attempts))
         self.k_waves.set_value(messages.fmt_int(s.waves_total))
         self.k_wph.set_value(messages.fmt_int(round(s.waves_per_hour)) if s.waves_per_hour else "–")
-        self.k_avg_wave.set_value(_num(s.avg_wave_all))
+        self.k_avg_wave.set_value(_dur(s.avg_duration_all))
         self.k_best_wave.set_value(str(data["best"] or "–"))
         self.details.setText(tr("Avg. {dur} per attempt  ·  {spw} per wave  ·  {aph} attempts/h  ·  {all} attempts "
                                 "in total",
@@ -499,7 +498,7 @@ class StatsPage(QWidget):
         self._fill(self.table, rows)
 
         self.chart_hist.set_data([(f"{d['day'].day}.", d["attempts"]) for d in data["days"]])
-        self.chart_trend.set_data([(label_, int(round(avg))) for label_, avg, _n in data["trend"]])
+        self.chart_trend.set_data([(label_, n) for label_, _avg, n in data["trend"]])
         self.chart_hour.set_data([(f"{h:02d}", c) for h, c in data["hours"]])
         week = data["week"]
         self.chart_week.set_data([(tr(WEEKDAYS[d["day"].weekday()]), round(d["farm_s"] / 60)) for d in week],
@@ -518,7 +517,6 @@ class StatsPage(QWidget):
                 SortItem(stats_mod.raid_label(item["raid"]), item["raid"].lower()),
                 SortItem(str(item["attempts"]), item["attempts"], right=True),
                 SortItem(messages.fmt_int(item["waves_total"]), item["waves_total"], right=True),
-                SortItem(_num(item["avg_wave"]), item["avg_wave"], right=True),
                 SortItem(str(item["best_wave"]), item["best_wave"], right=True),
                 SortItem(_dur(item["avg_duration_all"]), item["avg_duration_all"] or -1, right=True),
                 SortItem(_num(item["waves_per_hour"], 0), item["waves_per_hour"] or -1, right=True)])
