@@ -1,4 +1,4 @@
-"""Zustandslogik: Raid-Verlauf (WaveTracker) und Quest-Verfolgung (QuestTracker)."""
+"""State logic: raid progress (WaveTracker) and quest tracking (QuestTracker)."""
 from __future__ import annotations
 
 import difflib
@@ -13,17 +13,17 @@ from .quests import QuestLine
 
 log = logging.getLogger("tracker")
 
-START_MAX = 5            # ab diesem Wellenwert gilt der Raid-Beginn als „gesehen"
-ABSENT_SECONDS = 8.0     # so lange ohne Zähler = Raid vorbei
-DROP_MIN = 3             # Zähler fällt um mehr als so viel = Neustart (nach 2 passenden Lesungen)
-UP_BASE = 4              # erlaubter Sprung nach oben ...
-UP_PER_SECOND = 1.5      # ... plus so viele Wellen pro vergangener Sekunde (alles darüber = Fehllesung)
-CUT_CONFIRM = 2.0        # „4“ statt „54“ (vordere Ziffer verdeckt): Neustart erst, wenn die Lesung so lange bleibt
+START_MAX = 5            # from this wave value on, the raid start counts as “seen”
+ABSENT_SECONDS = 8.0     # this long without a counter = raid over
+DROP_MIN = 3             # counter drops by more than this = restart (after 2 matching readings)
+UP_BASE = 4              # allowed jump upwards ...
+UP_PER_SECOND = 1.5      # ... plus this many waves per elapsed second (anything above = misread)
+CUT_CONFIRM = 2.0        # “4” instead of “54” (front digit hidden): restart only once the reading stays this long
 
 
 def _cut_digits(value: int, last: int) -> bool:
-    """Sieht value aus wie last (oder die nächsten Wellen) mit fehlender vorderer Ziffer? Echter Fall 07.10.:
-    bei Welle 54 zweimal „4“ gelesen – ohne diese Prüfung ein falscher Neustart."""
+    """Does value look like last (or the next waves) with a missing front digit? Real case 07.10.:
+        at wave 54 “4” was read twice – without this check a false restart."""
     s = str(value)
     return any(len(str(n)) > len(s) and str(n).endswith(s) for n in (last, last + 1, last + 2))
 
@@ -36,13 +36,13 @@ class _Run:
     total: int
     completed: bool = False
     profile: Optional[str] = None
-    first_ts: float = 0.0          # Zeitpunkt der ersten Lesung (für die Dauer-Schätzung)
+    first_ts: float = 0.0          # time of the first reading (for the duration estimate)
 
 
 class WaveTracker:
-    """Verfolgt den Wellenzähler. Liefert Ereignisse:
-    ("candidate", None)  – Zähler >= Auslöser, bitte bestätigen
-    ("run_end", dict)    – Raid beendet ohne bestätigten Auslöser (abgebrochen/spät erkannt)"""
+    """Tracks the wave counter. Returns events:
+        ("candidate", None)  – counter >= trigger, please confirm
+        ("run_end", dict)    – raid finished without a confirmed trigger (aborted/detected late)"""
 
     def __init__(self, offset: int = 1, cooldown: float = 60.0) -> None:
         self.offset = offset
@@ -56,7 +56,7 @@ class WaveTracker:
         self._last_trigger = float("-inf")
         self._drop_value: Optional[int] = None
         self._drop_ts = 0.0
-        self.rejected = 0          # Anzahl verworfener Fehllesungen (Diagnose)
+        self.rejected = 0          # number of discarded misreads (diagnostics)
         self._rej_streak = 0
 
     def update(self, value: Optional[int], total: Optional[int], now: float) -> list[tuple[str, object]]:
@@ -66,7 +66,7 @@ class WaveTracker:
                 if self._absent_since is None:
                     self._absent_since = now
                 if now - self._absent_since >= ABSENT_SECONDS:
-                    log.info("Wellenzähler seit %.0f s nicht sichtbar – Lauf beendet (höchste Welle %d)",
+                    log.info("Wave counter not visible for %.0f s – run finished (highest wave %d)",
                              now - self._absent_since, self.run.max_wave)
                     info = self._finish()
                     if info:
@@ -77,11 +77,11 @@ class WaveTracker:
         if self.run is not None and self.last_value is not None:
             allowed = UP_BASE + UP_PER_SECOND * max(0.0, now - self._last_seen)
             if value > self.last_value + allowed:
-                # Unmöglicher Sprung nach oben (z. B. 25 als 95 gelesen): Lesung ignorieren, nichts ändern
+                # Impossible jump upwards (e.g. 25 read as 95): ignore the reading, change nothing
                 self.rejected += 1
                 self._rej_streak += 1
                 if self._rej_streak in (1, 10, 100):
-                    log.warning("Unplausible Lesung %d nach %d (%.1f s) – ignoriert (%dx in Folge)", value,
+                    log.warning("Implausible reading %d after %d (%.1f s) – ignored (%dx in a row)", value,
                                 self.last_value, now - self._last_seen, self._rej_streak)
                 return out
             self._rej_streak = 0
@@ -90,27 +90,27 @@ class WaveTracker:
             cand = self._drop_value
             if (cand is not None and cand <= value <= cand + DROP_MIN and _cut_digits(cand, self.last_value)
                     and now - self._drop_ts < CUT_CONFIRM):
-                return out                                # verdächtig (Ziffer verdeckt?): weiter abwarten
+                return out                                # suspicious (digit hidden?): keep waiting
             if cand is not None and cand <= value <= cand + DROP_MIN:
                 self._drop_value = None
                 if value > max(START_MAX, self.last_value // 2):
-                    # Ein neuer Lauf beginnt niedrig. Fällt der Zähler nur ein Stück (z. B. 29 -> 25), waren die
-                    # höheren Lesungen falsch (eingefrorenes Bild beim Umschalten o. Ä.) – innerhalb eines Laufs
-                    # sinkt der Zähler nie. Also korrigieren statt einen Fehlversuch einzutragen.
-                    log.info("Zähler-Korrektur: %d -> %d (höhere Lesung war falsch)", self.last_value, value)
+                    # A new run starts low. If the counter drops only a little (e.g. 29 -> 25), the higher
+                    # readings were wrong (frozen frame while switching or similar) – within a run
+                    # the counter never goes down. So correct instead of recording a failed attempt.
+                    log.info("Counter correction: %d -> %d (higher reading was wrong)", self.last_value, value)
                     self.run.first_wave = min(self.run.first_wave, value)
                     self.run.max_wave = value
                     self.last_value = value
                 else:
-                    restart_ts = self._drop_ts           # zweite passende Lesung: Neustart bestätigt
-                    log.info("Neustart bestätigt: %d -> %d (höchste Welle des Versuchs: %d)",
+                    restart_ts = self._drop_ts           # second matching reading: restart confirmed
+                    log.info("Restart confirmed: %d -> %d (highest wave of the attempt: %d)",
                              self.last_value, value, self.run.max_wave)
                     info = self._finish()
                     if info:
                         out.append(("run_end", info))
             else:
-                self._drop_value, self._drop_ts = value, now     # erste Lesung: noch abwarten
-                log.info("Zähler fällt von %d auf %d – warte auf Bestätigung", self.last_value, value)
+                self._drop_value, self._drop_ts = value, now     # first reading: wait a bit longer
+                log.info("Counter drops from %d to %d – waiting for confirmation", self.last_value, value)
                 return out
         else:
             self._drop_value = None
@@ -119,11 +119,11 @@ class WaveTracker:
             self.run = _Run(start_ts=start, first_wave=value, max_wave=value, total=total,
                             first_ts=(restart_ts if restart_ts is not None else now))
             self.armed = True
-            log.info("Neuer Lauf bei Welle %d/%d (Start %s)", value, total,
-                     "gesehen" if start is not None else "nicht gesehen")
+            log.info("New run at wave %d/%d (start %s)", value, total,
+                     "gesehen" if start is not None else "not seen")
 
         self.run.max_wave = max(self.run.max_wave, value)
-        if total or not self.run.total:                 # Lesung ohne Gesamtzahl ändert ein bekanntes Ziel nicht
+        if total or not self.run.total:                 # a reading without a total doesn't change a known target
             self.run.total = total
         self.last_value, self.total, self._last_seen = value, total, now
 
@@ -133,13 +133,13 @@ class WaveTracker:
         return out
 
     def hold(self) -> None:
-        """Makro klickt gerade Menüs: Zähler oft verdeckt oder andere Zahlen im Bild – nichts entscheiden. Ein
-        begonnener Rückgang oder eine Abwesenheit zählt nicht weiter; danach geht es normal weiter."""
+        """The macro is clicking menus: the counter is often hidden or other numbers are in the image – decide
+                nothing. A drop or absence that began doesn't count on; afterwards it continues normally."""
         self._absent_since = None
         self._drop_value = None
 
     def confirm(self, now: float) -> dict:
-        """Auslöser bestätigt: Raid zählt. Gibt Dauer/Wellen zurück."""
+        """Trigger confirmed: the raid counts. Returns duration/waves."""
         run = self.run
         assert run is not None
         run.completed = True
@@ -174,7 +174,7 @@ class Quest:
     votes: Counter = field(default_factory=Counter)
     missed: int = 0
     pending: Optional[int] = None
-    pos: int = 0                         # Platz in der Liste im Spiel (Anzeige in derselben Reihenfolge)
+    pos: int = 0                         # position in the in-game list (shown in the same order)
 
     @property
     def percent(self) -> Optional[int]:
@@ -195,8 +195,8 @@ def _norm(text: str) -> str:
 
 
 class QuestTracker:
-    """Gleicht gelesene Quest-Zeilen mit bekannten Quests ab (OCR-Fehler tolerant)
-    und meldet Fortschritt erst, wenn derselbe neue Wert zweimal gelesen wurde."""
+    """Matches read quest lines with known quests (tolerant of OCR errors)
+        and reports progress only once the same new value was read twice."""
 
     def __init__(self) -> None:
         self.items: list[Quest] = []

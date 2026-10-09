@@ -369,9 +369,9 @@ try {
     Copy-Item -LiteralPath (Join-Path $p.staging $rel) -Destination $dst -Force
   }
   try { Set-ItemProperty -Path ('HKCU:\' + $p.uninstall_key) -Name DisplayVersion -Value $p.version -ErrorAction Stop } catch {}
-  Log ('Update auf ' + $p.version + ' installiert: ' + @($p.changed).Count + ' Dateien ersetzt, ' + @($p.removed).Count + ' entfernt')
+  Log ('Update to ' + $p.version + ' installed: ' + @($p.changed).Count + ' files replaced, ' + @($p.removed).Count + ' removed')
 } catch {
-  Log ('FEHLER: ' + $_ + ' - stelle alten Stand wieder her')
+  Log ('ERROR: ' + $_ + ' - restoring the previous state')
   foreach ($rel in @($p.changed) + @('files.json')) { if ($rel -and -not $moved.Contains($rel)) { Remove-Item -LiteralPath (Join-Path $p.app $rel) -Force -ErrorAction SilentlyContinue } }
   foreach ($rel in $moved) { Move-Item -LiteralPath (Join-Path $backup $rel) -Destination (Join-Path $p.app $rel) -Force -ErrorAction SilentlyContinue }
 }
