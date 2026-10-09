@@ -192,7 +192,7 @@ EN: dict[str, str] = {
     "Keine Versionshinweise angegeben.": "No release notes provided.",
     "Konnte nicht speichern: {error}": "Could not save: {error}",
     "Lade herunter …": "Downloading …",
-    "Laufzeit": "Uptime",
+    "Laufzeit": "Running time",
     "Laufzeit {time}": "Running {time}",
     "Leistung": "Performance",
     "Lesezeit: {ms} ms": "Read time: {ms} ms",
@@ -287,7 +287,7 @@ EN: dict[str, str] = {
     "Status wird neu gesendet …": "Resending status …",
     "Stillstand erkannt": "Stall detected",
     "Stillstand-Alarm": "Stall alert",
-    "Stoppen": "Stop",
+    "Stoppen": "Stop monitoring",
     "Suchen": "Search",
     "Tagesbericht": "Daily report",
     "Tesseract lässt sich nicht starten ({path}): {error}": "Tesseract cannot be started ({path}): {error}",
@@ -371,7 +371,7 @@ EN: dict[str, str] = {
     "{count} Raids · {time}": "{count} raids · {time}",
     "{done} von {total} MB": "{done} of {total} MB",
     "{h} Std. {m} Min.": "{h} h {m} min",
-    "{minutes} Min.": "{minutes} min",
+    "{minutes} Min.": "{minutes} min.",
     "{name} ({key}) – evtl. von einem anderen Programm belegt": "{name} ({key}) – possibly used by another program",
     "Änderungen": "Changes",
     "Öffnen": "Open",
@@ -386,7 +386,7 @@ EN: dict[str, str] = {
     "Überwachung gestartet": "Monitoring started",
     "Überwachung gestoppt": "Monitoring stopped",
     "Überwachung starten": "Start monitoring",
-    "Überwachung stoppen": "Stop monitoring",
+    "Überwachung stoppen": "Stop the monitoring",
     "✅ Quest abgeschlossen": "✅ Quest completed",
     "🎉 Wand durchbrochen: Welle {wave}": "🎉 Wall broken: wave {wave}",
     "🏆 Neuer Rekord: Welle {wave}": "🏆 New record: wave {wave}",
@@ -687,7 +687,7 @@ EN: dict[str, str] = {
     "Der Forum-Webhook ist keine gültige Discord-Webhook-URL (Seite „Meldungen“).":
         "The forum webhook is not a valid Discord webhook URL (“Alerts” page).",
     # Abgesicherter Start (0.7.2)
-    "Abgesicherter Start": "Safe start",
+    "Abgesicherter Start": "Safe mode",
     "Das Programm läuft mit Standard-Einstellungen. Deine eigenen Einstellungen sind unverändert und kommen "
     "beim nächsten normalen Start zurück – Änderungen in diesem Modus werden nicht gespeichert.\n\n"
     "Statistik und Raids bleiben wie gewohnt erhalten.":
@@ -734,7 +734,7 @@ EN: dict[str, str] = {
     "In diesem Monat gibt es noch keine Raids": "No raids this month yet",
     "{change} % Raids zum Vormonat": "{change} % raids vs. last month",
     "Farmzeit": "Farming time",
-    "{hours} Std.": "{hours} h",
+    "{hours} Std.": "{hours} hrs",
     "Aktive Tage": "Active days",
     "Raids je Tag": "Raids per day",
     "Höhepunkte": "Highlights",
@@ -790,7 +790,7 @@ EN: dict[str, str] = {
     "OLED": "OLED",
     # Persönliche Rekorde (0.7.6)
     "Persönliche Rekorde": "Personal records",
-    "Stärkster Tag": "Best day",
+    "Stärkster Tag": "Strongest day",
     "Beste Stunde": "Best hour",
     "Längste Session": "Longest session",
     "{count} Raids": "{count} raids",
@@ -976,7 +976,7 @@ EN: dict[str, str] = {
     'Index': 'Index',
     'Ranks': 'Ranks',
     'Avatare': 'Avatars',
-    'Event': 'Event',
+    'Event': 'Game event',
     'Shrine (opfern)': 'Shrine (offerings)',
     'Fixer Gigs': 'Fixer Gigs',
     'Nur Anzeige': 'Display only',
