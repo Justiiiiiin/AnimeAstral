@@ -27,7 +27,7 @@ def main() -> int:
         return 2
     body = section(sys.argv[1])
     if body is None:
-        print(f"CHANGELOG.md hat keinen Abschnitt „## {sys.argv[1].lstrip('vV')}“.", file=sys.stderr)
+        print(f"CHANGELOG.md has no section “## {sys.argv[1].lstrip('vV')}”.", file=sys.stderr)
         return 1
     sys.stdout.reconfigure(encoding="utf-8")
     print(body)

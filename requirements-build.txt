@@ -1,5 +1,5 @@
-# Feste Versionen für den GitHub-Build (getestet). Gleiche Versionen = gleiche Dateien = kleine Update-Pakete,
-# weil sich zwischen zwei Releases nur das Programm selbst ändert. Bewusst anheben, nicht automatisch.
+# Pinned versions for the GitHub build (tested). Same versions = same files = small update packages,
+# because only the program itself changes between two releases. Raise them on purpose, not automatically.
 PySide6-Essentials==6.11.2
 shiboken6==6.11.2
 opencv-python-headless==5.0.0.93

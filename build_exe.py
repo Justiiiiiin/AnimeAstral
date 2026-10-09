@@ -91,7 +91,7 @@ def tesseract_dlls(folder: Path) -> set[str] | None:
                     todo.append(dep)
         return needed
     except Exception as exc:                        # pefile missing or similar: rather ship too much
-        print(f"Hinweis: Tesseract-Abhängigkeiten nicht ermittelbar ({exc}) – kopiere alle DLLs.")
+        print(f"Note: Tesseract dependencies can't be determined ({exc}) – copying all DLLs.")
         return None
 
 
@@ -140,7 +140,7 @@ def prune(out_dir: Path) -> None:
     if broken:
         print("ERROR: clean-up removed required files:\n  " + "\n  ".join(broken))
         raise SystemExit(1)
-    print(f"Aufgeräumt: {len(removed)} unbenutzte Teile entfernt ({size / 1048576:.0f} MB).")
+    print(f"Cleaned up: removed {len(removed)} unused parts ({size / 1048576:.0f} MB).")
 
 
 def bundle_tesseract(out_dir: Path) -> bool:
@@ -220,7 +220,7 @@ The program only sends data to the Discord webhook URL you enter yourself.
 
 def main() -> int:
     print("Python", sys.version.split()[0], "·", sys.platform)
-    print("Ordner:", ROOT)
+    print("Folder:", ROOT)
     verify_package()
     if importlib.util.find_spec("PyInstaller") is None:
         print("PyInstaller fehlt:  pip install pyinstaller")
@@ -271,7 +271,7 @@ def main() -> int:
         bundle_tesseract(out_dir)
     write_manifest(out_dir, __version__)
     if "--no-zip" in sys.argv:
-        print(f"\nFertig:\n  Programm: {exe}")
+        print(f"\nDone:\n  Program: {exe}")
         return 0
 
     zip_path = ROOT / "dist" / f"{NAME}-{__version__}-win64.zip"
@@ -280,7 +280,7 @@ def main() -> int:
             if file.is_file():
                 zf.write(file, Path(NAME) / file.relative_to(out_dir))
     size_mb = zip_path.stat().st_size / 1048576
-    print(f"\nFertig:\n  Programm: {exe}\n  ZIP:      {zip_path} ({size_mb:.0f} MB)")
+    print(f"\nDone:\n  Program: {exe}\n  ZIP:     {zip_path} ({size_mb:.0f} MB)")
     return 0
 
 

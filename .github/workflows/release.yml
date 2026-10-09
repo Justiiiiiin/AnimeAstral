@@ -1,15 +1,15 @@
 name: Release
 
-# Wird ausgelöst, sobald eine Version veröffentlicht bzw. ein Tag "v..." angelegt wird
-# (GitHub: Releases -> "Create a new release" -> Tag z. B. v0.5.0). Baut Programm + Installer und hängt sie an.
-# Tag v0.7.2-beta.1 = Beta (Vorabversion): erscheint nur bei eingeschalteten „Beta-Updates“.
+# Runs as soon as a version is published or a tag "v..." is created
+# (GitHub: Releases -> "Create a new release" -> tag e.g. v0.5.0). Builds the program + installer and attaches them.
+# Tag v0.7.2-beta.1 = beta (pre-release): only offered to users with “Beta updates” switched on.
 on:
   push:
     tags: ["v*"]
   workflow_dispatch:
     inputs:
       version:
-        description: "Versionsnummer für einen manuellen Testbau (nur Zahlen, z. B. 0.0.1)"
+        description: "Version number for a manual test build (numbers only, e.g. 0.0.1)"
         required: true
         default: "0.0.1"
 
@@ -31,78 +31,78 @@ jobs:
           cache: pip
           cache-dependency-path: requirements-build.txt
 
-      - name: Version bestimmen
+      - name: Determine the version
         shell: pwsh
         run: |
           if ("${{ github.ref_type }}" -eq "tag") { $v = "${{ github.ref_name }}" } else { $v = "$env:VERSION_INPUT" }
           $v = $v.Trim().TrimStart('v', 'V')
-          if ($v -notmatch '^\d+(\.\d+){1,3}(-beta\.\d+)?$') { throw "Ungültige Versionsnummer: $v" }
+          if ($v -notmatch '^\d+(\.\d+){1,3}(-beta\.\d+)?$') { throw "Invalid version number: $v" }
           "VERSION=$v" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
           Write-Host "Version: $v"
 
-      - name: Pakete installieren
-        run: python -m pip install -r requirements-build.txt     # feste Versionen = kleine Update-Pakete
+      - name: Install packages
+        run: python -m pip install -r requirements-build.txt     # pinned versions = small update packages
 
-      - name: Tesseract installieren (wird ins Programm gepackt)
+      - name: Install Tesseract (bundled with the program)
         shell: pwsh
         run: |
           choco install tesseract -y --no-progress
           $dir = "C:\Program Files\Tesseract-OCR"
-          if (-not (Test-Path "$dir\tesseract.exe")) { throw "Tesseract wurde nicht gefunden ($dir)" }
+          if (-not (Test-Path "$dir\tesseract.exe")) { throw "Tesseract was not found ($dir)" }
           & "$dir\tesseract.exe" --version
 
       - name: Tests
         run: python -m unittest discover -s tests -v
 
-      - name: Build-Angaben schreiben
-        run: python tools/write_build_info.py "$env:VERSION" "${{ github.repository }}"     # keine persönlichen IDs im Build
+      - name: Write build information
+        run: python tools/write_build_info.py "$env:VERSION" "${{ github.repository }}"     # no personal IDs in the build
 
-      - name: Programm bauen (PyInstaller)
+      - name: Build the program (PyInstaller)
         run: python build_exe.py --no-zip
 
-      - name: Inno Setup installieren
+      - name: Install Inno Setup
         run: choco install innosetup -y --no-progress
 
-      - name: Installer bauen
+      - name: Build the installer
         shell: pwsh
         run: |
           $iscc = (Get-Command ISCC.exe -ErrorAction SilentlyContinue).Source
           if (-not $iscc) { $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" }
           & $iscc "/DAppVersion=$env:VERSION" "installer\AnimeAstralMonitor.iss"
-          if ($LASTEXITCODE -ne 0) { throw "Installer-Bau fehlgeschlagen" }
+          if ($LASTEXITCODE -ne 0) { throw "Building the installer failed" }
 
-      - name: Update-Paket (nur geänderte Dateien seit der vorigen Version)
+      - name: Update package (only files changed since the previous version)
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           New-Item -ItemType Directory -Force prev | Out-Null
-          # neueste bisherige Veröffentlichung (dieser Release existiert erst nach dem letzten Schritt)
+          # latest previous release (this release only exists after the last step)
           gh release download --repo "${{ github.repository }}" --pattern "files-*.json" --dir prev 2>$null
           $prev = Get-ChildItem prev\files-*.json -ErrorAction SilentlyContinue | Select-Object -First 1
           if ($prev) { python tools/make_patch.py "$env:VERSION" dist\AnimeAstralMonitor dist $prev.FullName }
           else { python tools/make_patch.py "$env:VERSION" dist\AnimeAstralMonitor dist }
-          if ($LASTEXITCODE -ne 0) { throw "Update-Paket fehlgeschlagen" }
+          if ($LASTEXITCODE -ne 0) { throw "Update package failed" }
 
-      - name: Prüfsummen erzeugen
+      - name: Create checksums
         shell: pwsh
         run: |
           $files = @(Get-ChildItem dist\AnimeAstralMonitor-Setup-*.exe, dist\AnimeAstralMonitor-Update-*.zip, dist\files-*.json -ErrorAction SilentlyContinue)
-          if (-not ($files | Where-Object Name -like 'AnimeAstralMonitor-Setup-*')) { throw "Installer nicht gefunden" }
+          if (-not ($files | Where-Object Name -like 'AnimeAstralMonitor-Setup-*')) { throw "Installer not found" }
           $files | ForEach-Object { "$((Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower())  $($_.Name)" } |
             Out-File -FilePath dist\SHA256SUMS.txt -Encoding ascii
           Get-Content dist\SHA256SUMS.txt
 
-      - name: Versionshinweis aus CHANGELOG.md
+      - name: Release notes from CHANGELOG.md
         run: python tools/release_notes.py "$env:VERSION" | Out-File -FilePath dist/release_notes.md -Encoding utf8
 
-      - name: Veröffentlichen
+      - name: Publish
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.ref_type == 'tag' && github.ref_name || format('v{0}', env.VERSION) }}
           name: Anime Astral Monitor ${{ env.VERSION }}
           body_path: dist/release_notes.md
-          prerelease: ${{ contains(env.VERSION, '-beta') }}     # Beta: nur für Nutzer mit „Beta-Updates“
+          prerelease: ${{ contains(env.VERSION, '-beta') }}     # beta: only for users with “Beta updates”
           files: |
             dist/AnimeAstralMonitor-Setup-*.exe
             dist/AnimeAstralMonitor-Update-*.zip

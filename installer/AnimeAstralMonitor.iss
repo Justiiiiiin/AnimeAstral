@@ -1,5 +1,5 @@
-; Inno Setup 6 – Installer für Anime Astral Monitor
-; Aufruf (vom GitHub-Build):  ISCC.exe /DAppVersion=0.5.0 installer\AnimeAstralMonitor.iss
+; Inno Setup 6 – installer for Anime Astral Monitor
+; Call (from the GitHub build):  ISCC.exe /DAppVersion=0.5.0 installer\AnimeAstralMonitor.iss
 #ifndef AppVersion
   #define AppVersion "0.0.0"
 #endif
@@ -7,7 +7,7 @@
 #define AppExe "AnimeAstralMonitor.exe"
 
 [Setup]
-; Feste Kennung: neue Versionen ersetzen die alte statt daneben zu installieren
+; Fixed ID: new versions replace the old one instead of installing next to it
 AppId={{B7C1D0A4-5E2F-4C8B-9A3D-1F6E2A7C4D90}
 AppName={#AppName}
 AppVersion={#AppVersion}
@@ -15,7 +15,7 @@ AppPublisher=Anime Astral Monitor
 DefaultDirName={autopf}\{#AppName}
 DefaultGroupName={#AppName}
 DisableProgramGroupPage=yes
-; Installation nur für den aktuellen Benutzer: keine Administrator-Abfrage
+; Install for the current user only: no administrator prompt
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
 ArchitecturesAllowed=x64compatible
@@ -31,8 +31,13 @@ CloseApplications=yes
 RestartApplications=no
 
 [Languages]
-Name: "german"; MessagesFile: "compiler:Languages\German.isl"
+; the Windows display language decides; English for everything that isn't German
 Name: "english"; MessagesFile: "compiler:Default.isl"
+Name: "german"; MessagesFile: "compiler:Languages\German.isl"
+
+[CustomMessages]
+english.SafeMode=safe mode
+german.SafeMode=abgesichert
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
@@ -41,25 +46,25 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Source: "..\dist\AnimeAstralMonitor\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [UninstallDelete]
-; Kleine Updates tauschen Dateien ohne Installer aus – beim Deinstallieren den ganzen Programmordner entfernen
-; (Einstellungen und Statistik liegen in %APPDATA% und bleiben erhalten)
+; Small updates swap files without the installer – remove the whole program folder when uninstalling
+; (settings and statistics are in %APPDATA% and are kept)
 Type: filesandordirs; Name: "{app}"
 
 [Icons]
 Name: "{autoprograms}\{#AppName}"; Filename: "{app}\{#AppExe}"
-Name: "{autoprograms}\{#AppName} (abgesichert)"; Filename: "{app}\{#AppExe}"; Parameters: "--safe"
+Name: "{autoprograms}\{#AppName} ({cm:SafeMode})"; Filename: "{app}\{#AppExe}"; Parameters: "--safe"
 Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; Tasks: desktopicon
 
 [Run]
-; Windows-Symbolspeicher auffrischen (sonst zeigen Verknüpfungen noch das alte Logo)
+; Refresh the Windows icon cache (otherwise shortcuts still show the old logo)
 Filename: "{sys}\ie4uinit.exe"; Parameters: "-show"; Flags: runhidden nowait skipifdoesntexist
-; Normale Installation: Startoption am Ende
-Filename: "{app}\{#AppExe}"; Description: "{#AppName} starten"; Flags: nowait postinstall skipifsilent runasoriginaluser
-; Automatisches Update (leise): Programm danach wieder starten
+; Normal installation: launch option at the end
+Filename: "{app}\{#AppExe}"; Description: "{cm:LaunchProgram,{#AppName}}"; Flags: nowait postinstall skipifsilent runasoriginaluser
+; Automatic update (silent): start the program again afterwards
 Filename: "{app}\{#AppExe}"; Flags: nowait runasoriginaluser; Check: RelaunchRequested
 
 [Code]
-// Das Programm startet den Installer bei Updates mit /relaunch=1
+// The program starts the installer for updates with /relaunch=1
 function RelaunchRequested: Boolean;
 var
   I: Integer;
