@@ -4,9 +4,8 @@ import unittest
 import _env  # noqa: F401
 import numpy as np
 
-from astral_monitor.automation import fmt_wait, gig_cards, gig_next_due, gig_refresh_box, gig_refresh_read, gig_slots, \
-    gig_timer_box, hud_locate, \
-    leave_before, next_task, parse_timer, pet_tiles, user_moved
+from astral_monitor.automation import fmt_wait, gig_cards, gig_next_due, gig_refresh_box, gig_refresh_read, \
+    gig_timer_box, guild_next_time, hud_locate, leave_before, next_task, parse_timer, pet_tiles, user_moved
 
 
 class QueueTest(unittest.TestCase):
@@ -26,56 +25,71 @@ class QueueTest(unittest.TestCase):
         self.assertIsNone(parse_timer("12:75"))
 
     def test_gig_cards(self):
-        # words as from the real Fixer Gigs window (Big Job working, Quick ready, Big Job working)
-        words = [("NEW", [0.338, 0.277, 0.379, 0.298]), ("1:38:43", [0.452, 0.277, 0.51, 0.298]),
-                 ("BIS", [0.331, 0.373, 0.354, 0.393]), ("JOB", [0.36, 0.373, 0.389, 0.393]),
-                 ("3H", [0.409, 0.373, 0.428, 0.393]), ("QUICK", [0.54, 0.373, 0.586, 0.393]),
-                 ("20", [0.608, 0.373, 0.624, 0.393]), ("BIS", [0.768, 0.373, 0.792, 0.393]),
-                 ("WORKING", [0.352, 0.427, 0.408, 0.44]), ("READY", [0.579, 0.427, 0.618, 0.44]),
-                 ("WORKING", [0.791, 0.427, 0.845, 0.44]), ("4:36:98", [0.346, 0.702, 0.389, 0.719]),
-                 ("left", [0.393, 0.702, 0.414, 0.719]), ("left", [0.831, 0.702, 0.852, 0.719]),
-                 ("FINISH", [0.335, 0.841, 0.395, 0.862]), ("CLAIM", [0.568, 0.841, 0.629, 0.862])]
-        cards = gig_cards(words)
-        self.assertEqual([c["duration"] for c in cards], [10800, 1200, 10800])
-        self.assertEqual([c["state"] for c in cards], ["working", "ready", "working"])
-        self.assertIsNotNone(cards[1]["claim"])
+        # positions from the real Fixer Gigs window (fractions of the window roi); owner 09.10.2026: all three gigs
+        # were running, but only one was recognized – the macro waited an hour
+        words = [("NEW", [0.344, 0.276, 0.386, 0.298]), ("GIGS", [0.391, 0.276, 0.43, 0.298]),
+                 ("IN", [0.436, 0.276, 0.453, 0.298]), ("27:10", [0.459, 0.276, 0.504, 0.298]),
+                 ("STANDARD", [0.321, 0.373, 0.401, 0.392]), ("1H", [0.423, 0.373, 0.438, 0.392]),
+                 ("WORKING", [0.352, 0.426, 0.408, 0.44]), ("4:36:98", [0.33, 0.70, 0.37, 0.72]),
+                 ("left", [0.375, 0.70, 0.395, 0.72]), ("FINISH", [0.35, 0.84, 0.41, 0.861]),
+                 ("WORKING", [0.571, 0.426, 0.627, 0.44]), ("left", [0.60, 0.70, 0.62, 0.72]),   # header unread
+                 ("QUICK", [0.759, 0.373, 0.805, 0.392]), ("SEND", [0.78, 0.84, 0.82, 0.861]),
+                 ("PETS", [0.825, 0.84, 0.86, 0.861])]
+        cards = gig_cards(words, [0.0, 0.0, 1.0, 1.0])
+        self.assertEqual([c["state"] for c in cards], ["working", "working", "open"])
+        self.assertEqual([c["duration"] for c in cards], [3600, 10800, 1200])
+        self.assertEqual([c["unknown"] for c in cards], [False, True, False])
         self.assertIsNone(cards[0]["claim"])                 # “FINISH NOW” costs currency – never a button
+        self.assertIsNotNone(cards[2]["send"])
         box = gig_timer_box(cards[0])
-        self.assertLess(box[0], 0.346)                        # time to the left of “left” is inside the area
-        self.assertLess(box[2], 0.393)
-        self.assertEqual(gig_next_due(cards, {0: 5798, 2: 5822}), 0)          # one card is done
-        self.assertEqual(gig_next_due(cards[:1] + cards[2:], {0: 5798, 1: 5822}), 5798)
-        self.assertEqual(gig_next_due(cards[:1], {0: 99999}), 1200)       # implausible: discarded, check again soon
-        self.assertEqual(gig_next_due(cards[:1], {}), 1200)   # time unreadable: check again in 20 min
+        self.assertLess(box[0], 0.33)                         # time to the left of “left” is inside the area
+        self.assertLess(box[2], 0.375)
+        # the same window smaller and shifted (other GUI size): the slots move along with the roi
+        roi = [0.2, 0.1, 0.7, 0.6]
+        moved = [(w, [roi[0] + b[0] * 0.5, roi[1] + b[1] * 0.5, roi[0] + b[2] * 0.5, roi[1] + b[3] * 0.5])
+                 for w, b in words]
+        self.assertEqual([c["state"] for c in gig_cards(moved, roi)], ["working", "working", "open"])
+        # done / empty
+        ready = [("READY", [0.361, 0.426, 0.399, 0.44]), ("CLAIM", [0.35, 0.84, 0.41, 0.861])]
+        cards = gig_cards(ready, [0.0, 0.0, 1.0, 1.0])
+        self.assertEqual([c["state"] for c in cards], ["ready", "empty", "empty"])
+        self.assertIsNotNone(cards[0]["claim"])
+
+    def test_gig_next_due(self):
+        words = [("STANDARD", [0.321, 0.373, 0.401, 0.392]), ("WORKING", [0.352, 0.426, 0.408, 0.44]),
+                 ("WORKING", [0.571, 0.426, 0.627, 0.44]), ("WORKING", [0.79, 0.426, 0.846, 0.44])]
+        cards = gig_cards(words, [0.0, 0.0, 1.0, 1.0])
+        self.assertEqual(gig_next_due(cards, {0: 3300, 1: 900, 2: 2000}), 900)   # the first one to finish
+        self.assertEqual(gig_next_due(cards, {0: 3300, 1: 99999}), 1200)          # implausible/unread: 20 min
+        cards[2]["state"] = "ready"
+        self.assertEqual(gig_next_due(cards, {0: 3300, 1: 900}), 0)              # done: right away
+        cards[2]["state"] = "empty"
+        self.assertEqual(gig_next_due(cards, {0: 3300, 1: 900}, 300), 300)       # new gigs come first
+        self.assertEqual(gig_next_due(cards, {0: 3300, 1: 900}, None), 900)
+        self.assertEqual(gig_next_due(cards, {0: 3300, 1: 9000}, 99999), 1200)   # implausible “NEW GIGS IN”
+
+    def test_guild_next_time(self):
+        import time
+        now = time.mktime((2026, 10, 9, 8, 30, 0, 0, 0, -1))         # 09.10.2026 08:30 local PC time
+        midnight = time.mktime((2026, 10, 10, 0, 0, 0, 0, 0, -1))
+        self.assertEqual(guild_next_time("2026-10-09", 0.0, now), midnight)          # claimed today: tomorrow
+        self.assertEqual(guild_next_time("2026-10-08", 0.0, now), 0.0)               # new day: right away
+        self.assertEqual(guild_next_time("", 0.0, now), 0.0)                         # never claimed / old file
+        self.assertEqual(guild_next_time("2026-10-08", now + 3 * 3600, now), now + 3 * 3600)   # nothing yet: +3 h
+        late = time.mktime((2026, 10, 9, 23, 59, 0, 0, 0, -1))
+        self.assertEqual(guild_next_time("2026-10-09", 0.0, late), midnight)
 
     def test_gig_refresh(self):
-        # owner 09.10.2026: one Standard gig running (1 h), two slots empty, “NEW GIGS IN 27:10” – earlier the
-        # macro only knew the running gig and waited the whole hour
-        words = [("NEW", [0.338, 0.277, 0.379, 0.298]), ("GIGS", [0.384, 0.277, 0.43, 0.298]),
-                 ("IN", [0.435, 0.277, 0.448, 0.298]), ("27:10", [0.452, 0.277, 0.49, 0.298]),
-                 ("SLOTS", [0.6, 0.277, 0.65, 0.298]), ("1/3", [0.655, 0.277, 0.68, 0.298]),
-                 ("STANDARD", [0.331, 0.373, 0.4, 0.393]), ("1H", [0.41, 0.373, 0.428, 0.393]),
-                 ("WORKING", [0.352, 0.427, 0.408, 0.44]), ("left", [0.393, 0.702, 0.414, 0.719])]
-        cards = gig_cards(words)
-        self.assertEqual(len(cards), 1)
-        self.assertEqual(gig_slots(words), 3)
+        words = [("NEW", [0.344, 0.276, 0.386, 0.298]), ("GIGS", [0.391, 0.276, 0.43, 0.298]),
+                 ("IN", [0.436, 0.276, 0.453, 0.298]), ("27:10", [0.459, 0.276, 0.504, 0.298]),
+                 ("SLOTS", [0.6, 0.277, 0.65, 0.298]), ("3/3", [0.655, 0.277, 0.68, 0.298])]
         box = gig_refresh_box(words)
-        self.assertLessEqual(box[0], 0.452)                   # the time lies inside the area
-        self.assertGreaterEqual(box[2], 0.49)
-        self.assertEqual(gig_next_due(cards, {0: 3300}, 1630, 3), 1630)    # new gigs come first
-        self.assertEqual(gig_next_due(cards, {0: 900}, 1630, 3), 900)      # the running gig ends first
-        self.assertEqual(gig_next_due(cards, {0: 3300}, None, 3), 600)     # countdown unreadable: 10 min
-        self.assertEqual(gig_next_due(cards, {0: 3300}, 99999, 3), 600)    # implausible reading
-        self.assertEqual(gig_next_due([], {}, 1630, 3), 1630)              # all slots empty
-        # time not read: area right of “IN”; nothing after “NEW” read: no guessing
-        box = gig_refresh_box(words[:3])
-        self.assertGreater(box[0], 0.448)
-        self.assertIsNone(gig_refresh_box([("NEW", [0.338, 0.277, 0.379, 0.298])]))
+        self.assertGreater(box[0], 0.453)                     # not into “IN” (its “N” was read as “1”)
+        self.assertGreaterEqual(box[2], 0.504)
         self.assertEqual(gig_refresh_read(words), 1630)          # fallback: the general reading
-        self.assertIsNone(gig_refresh_box([("STANDARD", [0.331, 0.373, 0.4, 0.393])]))
-        self.assertEqual(gig_slots([("SLOTS", [0, 0, 0.1, 0.1]), ("3/3", [0.1, 0, 0.2, 0.1])]), 3)
-        self.assertEqual(gig_slots([("SLOTS2/4", [0, 0, 0.1, 0.1])]), 4)
-        self.assertEqual(gig_slots([]), 3)
+        box = gig_refresh_box(words[:3])                       # time not read: area right of “IN”
+        self.assertGreater(box[0], 0.453)
+        self.assertIsNone(gig_refresh_box([("NEW", [0.344, 0.276, 0.386, 0.298])]))   # nothing more read: no guess
 
     def test_user_moved(self):
         rect = (0, 0, 1920, 1080)

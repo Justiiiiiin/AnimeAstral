@@ -1,4 +1,7 @@
-"""German UI: every text in tr()/N_() has a translation with the same placeholders."""
+"""German UI: every text in tr()/N_() has a translation with the same placeholders.
+
+Betas are English only (owner 09.10.2026): translations are done for the full release – so missing and stale
+German entries only fail the tests for a version without “-beta”."""
 import ast
 import re
 import string
@@ -8,8 +11,10 @@ from pathlib import Path
 import _env  # noqa: F401
 from astral_monitor import i18n
 from astral_monitor.i18n_de import DE
+from astral_monitor.version import __version__
 
 PACKAGE = Path(__file__).resolve().parent.parent / "astral_monitor"
+BETA = "-beta" in __version__
 
 
 def keys_in_code() -> dict[str, str]:
@@ -34,6 +39,7 @@ def needs_translation(key: str) -> bool:
 
 
 class I18nTests(unittest.TestCase):
+    @unittest.skipIf(BETA, "betas are English only – translate for the full release")
     def test_every_text_has_german(self):
         missing = {k: where for k, where in keys_in_code().items() if k not in DE and needs_translation(k)}
         self.assertEqual(missing, {}, f"{len(missing)} texts without a German translation")
@@ -42,6 +48,7 @@ class I18nTests(unittest.TestCase):
         wrong = {k: v for k, v in DE.items() if placeholders(k) != placeholders(v)}
         self.assertEqual(wrong, {})
 
+    @unittest.skipIf(BETA, "betas are English only – clean up for the full release")
     def test_no_stale_entries(self):
         stale = sorted(set(DE) - set(keys_in_code()))
         self.assertEqual(stale, [], "translations not used in the code")

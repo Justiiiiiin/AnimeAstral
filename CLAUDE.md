@@ -33,11 +33,14 @@ monitoring itself, sets the raid for the statistics; already in the same raid = 
 different raid/mode follows** – `automation.leave_before`), Auto Roll, Pause (Progressions only as a button under
 “Auto collect”; old steps keep working).
 Auto collect (switches, not steps): **Fixer Gigs** (Claim, “Send Pets” → scroll the pets window down, click one of the
-last `GIGS_PETS` pets – grid `automation.pet_tiles` – clicking = sent, no confirmation, one gig at a time; every card
-is read on its own `automation.gig_cards`: the kind QUICK 20 min/STANDARD 1 h/BIG JOB 3 h is random, remaining time
-read exactly from the digits `_read_timer`, `gig_next_due`; the pets list bottom is detected with `scrolled_box` and two
-still reads; “FINISH NOW” costs currency – never press it), **guild missions** (Guild → Missions → Personal + Guild
-Weekly “Claim”, once a day `GUILD_EVERY`), Progressions: Auto All as a one-off button. Times survive restarts
+last `GIGS_PETS` pets – grid `automation.pet_tiles` – clicking = sent, no confirmation, one gig at a time; the three
+slots are read on their own at fixed places in the window (`GIG_SLOT_BOXES`, `automation.gig_cards`: running / done /
+needs a pet / empty – owner 09.10.2026: running gigs whose header wasn't read had been missed); the kind QUICK 20
+min/STANDARD 1 h/BIG JOB 3 h is random, remaining time read exactly from the digits `_read_timer`, empty slots wait
+for “NEW GIGS IN …” (`gig_refresh_box`), next visit `gig_next_due` = whichever comes first; the pets list bottom is
+detected with `scrolled_box` and two still reads; “FINISH NOW” costs currency – never press it), **guild missions**
+(Guild → Missions → Personal + Guild Weekly “Claim”, once per **PC day** – `guild_next_time`, state `guild_day`; nothing
+claimed = try again after `GUILD_RETRY` 3 h), Progressions: Auto All as a one-off button. Times survive restarts
 (`extras_state.json`). Errors: retry once, then skip; a user stop (`UserStop`) ends the routine. Unknown steps: image
 `debug/makro_*.jpg`. Older tasks (raid_farm/leave/create/join/navigate/close) still run but can't be chosen anymore
 (“Navigate there”/“Close menu” removed – test only). Research InformaalFrog/Faxi: see memory.
@@ -94,9 +97,11 @@ The user is the owner (German, Windows 11); friends and international users shou
 restart; **English is the default since 0.9.9**). Texts are written **in English** in the code and go through `tr()`
 from `i18n.py` (placeholders: `tr("Wave {wave}", wave=3)`); mark texts in lists/constants with `N_()` and apply `tr()`
 when displaying; numbers with `i18n.dec()`/`thousands()`. The German translations are in `i18n_de.py`
-(`DE = {English: German}`). **`tests/test_i18n.py` fails if a text has no German translation**, if `i18n_de.py` has
-stale entries, if placeholders differ or if a key contains umlauts – so always write new texts with `tr()` and add
-the German. Code, comments, docs, the log (monitor.log) and identifiers are English. Exceptions (data, don't
+(`DE = {English: German}`). Always write new texts with `tr()`. **Betas are English only** (owner 09.10.2026): add
+German (or other languages) only for a full release – `tests/test_i18n.py` skips the “missing”/“stale” checks while
+`version.py` contains “-beta”; for a full version it fails if a text has no German translation or `i18n_de.py` has
+stale entries, so translate everything before tagging it. Placeholder and “no umlauts in keys” checks always run.
+Code, comments, docs, the log (monitor.log) and identifiers are English. Exceptions (data, don't
 translate): stored values like the raid placeholder `stats.UNKNOWN = "Unbekannt"` and result `"abgebrochen"` in old
 CSV rows, the map kinds “Knopf”/“Fenster / Bereich”, name suffixes “… Fenster” of older explore runs, the debug
 image names `debug/makro_*.jpg`. Tests that check German output set the language per module (`setUpModule`);

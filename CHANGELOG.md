@@ -7,8 +7,10 @@ A version's section becomes its release notes automatically when it is published
 ## Unreleased
 
 ### 🔧 Improved
-- Fixer Gigs: reads “NEW GIGS IN …” and refills empty slots in time
-- Fixer Gigs: next visit = whichever comes first, new gig or finished gig
+- Fixer Gigs: every slot is read on its own (running, done, needs pet)
+- Fixer Gigs: running gigs are no longer missed – visit when one ends
+- Fixer Gigs: reads “NEW GIGS IN …” and fills empty slots in time
+- Guild missions: once per day by your PC's date, else retry in 3 h
 
 ## 0.9.9-beta.13
 

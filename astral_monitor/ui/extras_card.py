@@ -39,9 +39,11 @@ class ExtrasCard(Card):
     def __init__(self, main) -> None:
         super().__init__(tr("Auto collect"),
                          tr("Fixer Gigs (W21): the macro claims finished gigs and sends new ones with one pet each "
-                            "– one of the last three. Each gig takes 20 min, 1 h or 3 h; the macro reads the time "
-                            "left and only comes back when one is done. It never presses “Finish Now”.\n\nGuild "
-                            "missions: claim “Personal” and “Guild Weekly” once a day.\n\nProgressions: presses "
+                            "– one of the last three. It reads every slot (running, done, needs a pet, empty) and "
+                            "the time left, and comes back as soon as a gig is done or new gigs arrive. It never "
+                            "presses “Finish Now”.\n\nGuild missions: claim “Personal” and “Guild Weekly” once per "
+                            "day (your PC's date). If there is nothing to claim yet, it tries again 3 hours later."
+                            "\n\nProgressions: presses "
                             "“Auto All” once – it applies to all worlds.\n\nOnly works with “Allow macro” – between "
                             "the steps of the farm routine, while a raid is farming or on its own."))
         self.main = main
