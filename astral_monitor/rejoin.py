@@ -317,13 +317,13 @@ class AutoRejoin(threading.Thread):
                 self._sleep(2.0)                    # let Roblox release the windows/files
             self._start(uri)
         except Exception as exc:
-            log.warning("Auto-Rejoin: Start fehlgeschlagen: %s", exc)
+            log.warning("Auto-rejoin: start failed: %s", exc)
             self._failed(self._clock(), str(exc))
             return
         self.launched_at = self._clock()            # waiting time from the actual start
 
     def _failed(self, now: float, why: str) -> None:
-        log.info("Auto-Rejoin: Versuch %d fehlgeschlagen: %s", self.attempt, why)
+        log.info("Auto-rejoin: attempt %d failed: %s", self.attempt, why)
         if self.attempt >= MAX_ATTEMPTS:
             self._give_up(why)
             return

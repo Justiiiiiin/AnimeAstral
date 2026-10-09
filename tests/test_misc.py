@@ -200,19 +200,20 @@ class AccentFromImageTests(unittest.TestCase):
         import os
         import tempfile
         os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
-        from PySide6.QtGui import QColor, QGuiApplication, QImage, QPainter
-        app = QGuiApplication.instance() or QGuiApplication([])          # noqa: F841
+        from PySide6.QtGui import QColor, QImage, QPainter
+        from PySide6.QtWidgets import QApplication
+        app = QApplication.instance() or QApplication([])                # noqa: F841 – widgets need it, not QGuiApplication
         from astral_monitor.ui.backdrop import accent_from_image
         img = QImage(100, 100, QImage.Format.Format_RGB32)
         img.fill(QColor("#202020"))                                      # grey doesn't count
         p = QPainter(img)
-        p.fillRect(0, 0, 100, 60, QColor("#C0306A"))                     # viel Pink
+        p.fillRect(0, 0, 100, 60, QColor("#C0306A"))                     # lots of pink
         p.fillRect(0, 60, 100, 15, QColor("#2A70D0"))                    # some blue
         p.end()
         path = os.path.join(tempfile.mkdtemp(dir=_env.DATA), "bg.png")
         img.save(path)
         h = QColor(accent_from_image(path)).hsvHue()
-        self.assertTrue(320 <= h <= 345, h)                              # Pink gewinnt
+        self.assertTrue(320 <= h <= 345, h)                              # pink wins
         img.fill(QColor("#808080"))
         img.save(path)
         self.assertIsNone(accent_from_image(path))                       # grey: no color

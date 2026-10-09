@@ -146,7 +146,7 @@ class StatusPublisher(threading.Thread):
             if resp.status_code in (200, 204):
                 return
             if resp.status_code != 404:                # 404 = message was deleted -> create a new one
-                log.warning("Statusnachricht bearbeiten fehlgeschlagen (HTTP %s)", resp.status_code)
+                log.warning("Editing the status message failed (HTTP %s)", resp.status_code)
                 return
             self._save_id(url, None)
 
@@ -157,4 +157,4 @@ class StatusPublisher(threading.Thread):
             except (ValueError, KeyError):
                 log.warning("Response without a message ID – editing not possible")
         else:
-            log.warning("Statusnachricht senden fehlgeschlagen (HTTP %s)", resp.status_code)
+            log.warning("Sending the status message failed (HTTP %s)", resp.status_code)

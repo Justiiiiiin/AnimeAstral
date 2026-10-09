@@ -262,7 +262,7 @@ class Settings:
         return PRESETS.get(self.performance, PRESETS["balanced"])
 
     def validate(self) -> Optional[str]:
-        if not is_valid_webhook(self.webhook_url):
+        if self.webhook_url and not is_valid_webhook(self.webhook_url):   # empty = monitoring without Discord
             return tr("Please enter a valid Discord webhook URL (page “Alerts”).")
         if self.forum_webhook_url and not is_valid_webhook(self.forum_webhook_url):
             return tr("The forum webhook is not a valid Discord webhook URL (“Alerts” page).")

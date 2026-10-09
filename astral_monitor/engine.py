@@ -632,7 +632,7 @@ class Engine:
             if votes:
                 log.debug("Drops: %s", votes)
             if raid and raid != self.settings.current_raid:
-                log.info("Raid erkannt (Drops): %s", raid)
+                log.info("Raid detected (drops): %s", raid)
                 self._adopt_raid(raid)
         except Exception as exc:  # noqa: BLE001 – must never disturb the monitoring
             log.debug("Drops not readable: %s", exc)

@@ -109,7 +109,7 @@ class HotkeyListener(threading.Thread):
                 try:
                     actions[msg.wParam]()
                 except Exception:
-                    log.exception("Hotkey-Aktion fehlgeschlagen")
+                    log.exception("Hotkey action failed")
         for i in actions:
             user32.UnregisterHotKey(None, i)
 

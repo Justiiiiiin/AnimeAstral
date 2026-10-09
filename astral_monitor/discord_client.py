@@ -52,7 +52,7 @@ class DiscordSender(threading.Thread):
             else:
                 ok, info = self.send_now(payload, files)
             if not ok:
-                log.error("Discord-Meldung fehlgeschlagen: %s", info)
+                log.error("Discord message failed: %s", info)
             if on_done is not None:
                 try:
                     on_done()

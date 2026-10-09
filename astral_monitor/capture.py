@@ -121,7 +121,7 @@ class WgcSource(FrameSource):
                 full = np.ascontiguousarray(buf[:, :, :3]) if req.full else None
                 req.result = GrabResult(crops, full, (w, h))
             except Exception:
-                log.exception("Frame-Verarbeitung fehlgeschlagen")
+                log.exception("Processing a frame failed")
             finally:
                 req.event.set()
 

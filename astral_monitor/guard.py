@@ -128,7 +128,7 @@ class Guard:
         try:
             proc = self._find()
         except Exception:
-            log.debug("Prozesssuche fehlgeschlagen", exc_info=True)
+            log.debug("Process search failed", exc_info=True)
 
         if proc is None:
             st.roblox_alive, st.roblox_ram_mb, st.roblox_cpu = (False if self._seen_proc else None), None, None
@@ -192,6 +192,6 @@ class Guard:
             frame = self._grab_full()
             return ("alarm.jpg", encode_jpeg(frame)) if frame is not None else None
         except Exception:
-            log.debug("Alarm-Screenshot fehlgeschlagen", exc_info=True)
+            log.debug("Alert screenshot failed", exc_info=True)
             return None
 

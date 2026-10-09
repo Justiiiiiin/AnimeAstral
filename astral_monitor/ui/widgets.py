@@ -71,7 +71,7 @@ class SortItem(QTableWidgetItem):
         super().__init__(text)
         self._key = key
         align = Qt.AlignmentFlag.AlignRight if right else Qt.AlignmentFlag.AlignLeft
-        self.setTextAlignment(int(align | Qt.AlignmentFlag.AlignVCenter))
+        self.setTextAlignment(align | Qt.AlignmentFlag.AlignVCenter)
 
     def __lt__(self, other) -> bool:
         a, b = self._key, getattr(other, "_key", None)
@@ -87,7 +87,7 @@ def make_table(headers: list[str], rights: tuple = (), widths: tuple = (), selec
     for i, text in enumerate(headers):
         item = QTableWidgetItem(text)
         align = Qt.AlignmentFlag.AlignRight if i in rights else Qt.AlignmentFlag.AlignLeft
-        item.setTextAlignment(int(align | Qt.AlignmentFlag.AlignVCenter))
+        item.setTextAlignment(align | Qt.AlignmentFlag.AlignVCenter)
         table.setHorizontalHeaderItem(i, item)
     table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
     if selectable:
