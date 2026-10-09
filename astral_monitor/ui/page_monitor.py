@@ -142,8 +142,8 @@ class MonitorPage(QWidget):
         self.quest_empty = EmptyState("quests", tr("No quests read yet."))
         self.quest_box.addWidget(self.quest_empty)
         quests.body.addLayout(self.quest_box)
-        right.addWidget(quests)
-        right.addStretch(1)
+        quests.body.addStretch(1)                         # quests at the top, the card fills the column
+        right.addWidget(quests, 1)                        # no gap above “Auto collect”
         right.addWidget(self.extras)
 
         mid.addLayout(left, 3)

@@ -16,13 +16,21 @@ import threading
 from dataclasses import dataclass
 from typing import Callable, Optional
 
-from .i18n import tr
+from .i18n import N_, tr
 
 log = logging.getLogger("bot")
 
 PERMISSIONS = 2048 + 16384 + 32768      # send messages, embed links, attach files
 COMMANDS = ("status", "start", "stop", "pause", "screenshot", "raid", "macro", "antiafk", "autorejoin", "join", "pc",
             "help")
+# short descriptions – the same texts as the slash commands in Discord (settings card “Slash commands”)
+COMMAND_HELP = (("status", N_("State: monitoring, wave, raid, macro")), ("start", N_("Start monitoring")),
+                ("stop", N_("Stop the monitoring")), ("pause", N_("Pause / resume monitoring")),
+                ("screenshot", N_("Image of the Roblox window")), ("raid", N_("Choose the raid attempts count for")),
+                ("macro", N_("Macro: start the farm routine, stop, progressions …")),
+                ("antiafk", N_("Anti-AFK on/off")), ("autorejoin", N_("Auto-rejoin on/off")),
+                ("join", N_("Join private server (favorite)")),
+                ("pc", N_("Shut down / restart the PC (60 s delay) or cancel")), ("help", N_("All commands")))
 SHUTDOWN_DELAY = 60      # /pc shutdown: this many seconds to cancel (/pc cancel)
 
 

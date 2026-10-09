@@ -1024,4 +1024,5 @@ DE: dict[str, str] = {
     'No raids in this period yet.': 'Noch keine Raids in diesem Zeitraum.',
     'Raids per hour (per day for long periods) in the chosen period.': 'Raids pro Stunde (bei langen Zeiträumen pro Tag) im gewählten Zeitraum.',
     'Waiting for the Roblox window': 'Warte auf das Roblox-Fenster',
+    'Slash commands': 'Slash-Befehle',
 }

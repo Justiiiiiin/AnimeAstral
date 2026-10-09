@@ -78,9 +78,7 @@ class ExtrasCard(Card):
         self.prog = QPushButton(tr("Progressions: Auto All"))
         self.prog.setToolTip(tr("Run once: opens the first progression, presses “Auto All” and closes it again"))
         self.prog.clicked.connect(self._progression)
-        self.prog_state = label("", "small")
-        grid.addWidget(self.prog, 2, 0, 1, 3)
-        grid.addWidget(self.prog_state, 2, 3)
+        grid.addWidget(self.prog, 2, 0, 1, 4)              # whole width; “last …” is shown in the button
         self.body.addLayout(grid)
         for box in (self.gigs, self.guild):
             box.toggled.connect(self._save)
@@ -108,7 +106,7 @@ class ExtrasCard(Card):
 
     def _progression(self) -> None:
         if self.macro.run_progression():
-            self.prog_state.setText(tr("last {time}", time=time.strftime("%H:%M")))
+            self.prog.setText(tr("Progressions: Auto All") + "  ·  " + tr("last {time}", time=time.strftime("%H:%M")))
 
     def _update_state(self) -> None:
         on = self.macro.enabled

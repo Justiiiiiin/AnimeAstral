@@ -5,6 +5,15 @@ A version's section becomes its release notes automatically when it is published
 (`tools/release_notes.py`) and can be read in the program under Settings → Program → “All versions”.
 Each section covers the whole line (e.g. 0.6.0 = everything from 0.6.0 to 0.6.5).
 
+## Unreleased
+
+### 🔧 Improved
+- Counter jumps read consistently are accepted (no stuck counter)
+- Monitoring started before Roblox waits for its window
+- Settings: cards keep their size, no more empty boxes
+- Discord bot tab lists all slash commands
+- Start page: quests use the free space, wider Progressions button
+
 ## 0.9.11
 
 ### 🔧 Improved

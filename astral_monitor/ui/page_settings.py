@@ -8,8 +8,8 @@ from urllib.parse import urlencode
 
 from PySide6.QtCore import QUrl, Qt
 from PySide6.QtGui import QDesktopServices
-from PySide6.QtWidgets import (QButtonGroup, QCheckBox, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem,
-                               QMenu, QMessageBox, QPushButton, QToolButton, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QButtonGroup, QCheckBox, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QListWidget,
+                               QListWidgetItem, QMenu, QMessageBox, QPushButton, QToolButton, QVBoxLayout, QWidget)
 
 from .. import app_paths, roblox_join, storage
 from ..i18n import LANGUAGES, dec, tr
@@ -90,6 +90,7 @@ class SettingsPage(QWidget):
         theme.track_spacing(lay, 14)
         for card in cards:
             lay.addWidget(card)
+        lay.addStretch(1)                                 # cards keep their content height (no empty boxes)
         return col
 
     def _build_roblox(self, root) -> None:
@@ -171,6 +172,7 @@ class SettingsPage(QWidget):
             theme.track_spacing(lay, 14)
             for card in cards:
                 lay.addWidget(card)
+            lay.addStretch(1)                             # cards keep their content height
         root.addLayout(columns(left, right))
 
         keys = Card(tr("Hotkeys"),
@@ -603,8 +605,22 @@ class SettingsPage(QWidget):
         brow.addStretch(1)
         bot.body.addLayout(brow)
         bot.body.addStretch(1)
-        root.addLayout(columns(bot, QWidget()))
+        root.addLayout(columns(bot, self._stack(self._bot_commands_card())))
         main.bot.listeners.append(self._bot_state_changed) if hasattr(main, "bot") else None
+
+    @staticmethod
+    def _bot_commands_card() -> Card:
+        """All slash commands with their short description (the same texts Discord shows)."""
+        from ..discord_bot import COMMAND_HELP
+        card = Card(tr("Slash commands"))
+        grid = QGridLayout()
+        theme.track_spacing(grid, 6)
+        grid.setColumnStretch(1, 1)
+        for i, (name, text) in enumerate(COMMAND_HELP):
+            grid.addWidget(label("/" + name), i, 0)
+            grid.addWidget(label(tr(text), "small", wrap=True), i, 1)
+        card.body.addLayout(grid)
+        return card
 
     def _build_debug(self, root) -> None:
         """Tab “Debug”."""
