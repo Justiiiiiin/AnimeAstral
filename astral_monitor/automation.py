@@ -328,7 +328,8 @@ class Navigator(RaidMixin, GigsMixin, GuildMixin):
         elif kind == "progression":
             self._progression()
         elif kind == "autoroll":
-            self._autoroll(self._window(task.get("target", "")))
+            self._autoroll(self._window(task.get("target", "")),
+                           keep_teleporter=bool(following) and following.get("kind") == "autoroll")
 
     # ------------------------------------------------------------------ Tasks in the window
     def _window_area(self, window: dict) -> tuple[list[float], np.ndarray]:
@@ -372,9 +373,10 @@ class Navigator(RaidMixin, GigsMixin, GuildMixin):
         raise Stop(tr("Button “{button}” not found in “{name}”.", button=" / ".join(" ".join(x) for x in labels),
                       name=window["name"]))
 
-    def _autoroll(self, window: dict) -> None:
+    def _autoroll(self, window: dict, keep_teleporter: bool = False) -> None:
         """Open the window, press “Auto Roll” (gacha, titans) or “Auto!” (pets), close right away – the game keeps
-        rolling in the background."""
+        rolling in the background. keep_teleporter: another Auto Roll follows – only close the roll window, the
+        teleporter stays open for it (owner 09.10.2026: it was closed and reopened in between)."""
         self._open(window)
         auto = self.map.element(window, "Auto!")
         if auto is not None:
@@ -384,7 +386,7 @@ class Navigator(RaidMixin, GigsMixin, GuildMixin):
             self._press(window, ("auto", "roll"), ("autoroll",), ("auto",))
         time.sleep(AUTO_SETTLE)
         self.log(tr("Auto-roll keeps running in the background – closing the menu."))
-        self._close_any()
+        self._close_any(keep_teleporter)
 
 
     # ------------------------------------------------------------------ Raid: gear, Auto Retry, Auto Leave
@@ -603,6 +605,7 @@ class Navigator(RaidMixin, GigsMixin, GuildMixin):
                 except Exception:  # noqa: BLE001
                     pass
                 self._source = None
+            winapi.trim_memory()                          # frames/crops of the run: give the memory back right away
 
     def _prepare(self) -> None:
         if not self.map.entries:
@@ -613,7 +616,7 @@ class Navigator(RaidMixin, GigsMixin, GuildMixin):
         if winapi.is_minimized(self._hwnd):
             raise Stop(tr("Roblox is minimized"))
         if self._ocr is None:
-            self._ocr = self.ocr_factory()                # own text recognition (not the monitoring's)
+            self._ocr = self.ocr_factory()                # the monitoring's (shared, thread-safe – saves a model)
         if self._menu is None:
             lists = self.map.list_windows()
             if not lists:
@@ -858,12 +861,15 @@ class Navigator(RaidMixin, GigsMixin, GuildMixin):
         self._warped = 0.0
         self._cursor = None
 
-    def _close_any(self) -> None:
+    def _close_any(self, keep_teleporter: bool = False) -> None:
+        """Close everything that is open – with keep_teleporter=True stop as soon as only the teleporter is left."""
         for attempt in range(4):
             if attempt == 2 and time.monotonic() - getattr(self, "_warped", 0.0) < 10:
                 self._unlock_camera()                     # not closed twice and the cursor is held
             kind, st = self._screen(self._frame())
             if kind == "none":
+                return
+            if keep_teleporter and kind == "menu" and self._menu.is_base(st[1]):
                 return
             if kind == "template":
                 close = self.map.close_element(st.window)

@@ -336,7 +336,8 @@ class RaidMixin:
             self.log(tr("In the raid – step {n}/{count}: {task}", n=j + 1, count=count, task=task_label(side)))
             for attempt in (1, 2):
                 try:
-                    self._task(side)
+                    nxt = next((t for k, t, _c in steps if k > j), None)   # next step inside the raid
+                    self._task(side, nxt)
                     break
                 except UserStop:
                     raise

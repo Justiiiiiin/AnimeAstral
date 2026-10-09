@@ -675,7 +675,7 @@ class Engine:
         self._next_status = now + 60
         run = self.tracker.run
         log.info("Status: wave %s · run %s · reading time %.0f ms · image %s · attempts %d",
-                 self.state.wave_value, f"höchste {run.max_wave}" if run else "keiner", self.state.read_ms,
+                 self.state.wave_value, f"highest {run.max_wave}" if run else "none", self.state.read_ms,
                  "ok" if self._missing_since is None else "FEHLT",
                  sum(1 for r in self.stats.records if r.ts_end >= self.stats.session_start))
 

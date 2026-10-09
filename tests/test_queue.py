@@ -76,6 +76,34 @@ class QueueTest(unittest.TestCase):
         self.assertEqual(gig_next_due(cards, {0: 3300, 1: 900}, None), 300)     # empty, no countdown: 5 min
         self.assertEqual(gig_next_due(cards, {0: 3300, 1: 9000}, 99999), 300)    # implausible “NEW GIGS IN”
 
+    def test_close_keeps_teleporter_between_rolls(self):
+        # owner 09.10.2026: two Auto Rolls in a row – the teleporter was closed and opened again in between
+        from astral_monitor.automation import Navigator
+
+        def nav_with(screens):
+            nav = Navigator.__new__(Navigator)
+            nav.clicks, nav.screens = [], list(screens)
+            nav._frame = lambda: None
+            nav._screen = lambda _f: nav.screens[0]
+            nav._click = lambda pos: (nav.clicks.append(pos), nav.screens.pop(0))
+            nav._menu = type("M", (), {"is_base": staticmethod(lambda title: title == "Teleport")})()
+            nav.log = lambda _t: None
+            return nav
+
+        roll, tele, none = ("menu", ([0, 0, 1, 1], "Cyberware", (0.7, 0.2))), \
+            ("menu", ([0, 0, 1, 1], "Teleport", (0.8, 0.1))), ("none", None)
+        import astral_monitor.automation as automation
+        sleep, automation.time.sleep = automation.time.sleep, lambda _s: None
+        try:
+            nav = nav_with([roll, tele, none])
+            nav._close_any(keep_teleporter=True)
+            self.assertEqual(nav.clicks, [(0.7, 0.2)])           # only the roll window
+            nav = nav_with([roll, tele, none])
+            nav._close_any()
+            self.assertEqual(nav.clicks, [(0.7, 0.2), (0.8, 0.1)])   # last step: everything closed
+        finally:
+            automation.time.sleep = sleep
+
     def test_raid_side_steps(self):
         # owner 09.10.2026: Farm (until stopped) → Auto Roll → Auto Roll – the rolls never started
         raid = {"kind": "raid", "target": "W21 Militech Convoy Defense", "until": "never"}

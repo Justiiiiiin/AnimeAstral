@@ -5,6 +5,13 @@ A version's section becomes its release notes automatically when it is published
 (`tools/release_notes.py`) and can be read in the program under Settings → Program → “All versions”.
 Each section covers the whole line (e.g. 0.6.0 = everything from 0.6.0 to 0.6.5).
 
+## Unreleased
+
+### 🔧 Improved
+- Several Auto Rolls in a row: the teleporter stays open in between
+- Macro and monitoring share one text recognition (less RAM)
+- Memory is released right after every macro run
+
 ## 0.9.10
 
 ### ✨ New

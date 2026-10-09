@@ -85,7 +85,6 @@ class MacroController(QObject):
         if self.navigator is None:
             from .. import automation
             from ..app_paths import data_dir
-            from ..ocr import OcrEngine
             engine = self.main.engine
             # always read the settings fresh: “Save” replaces engine.settings with a new object – a remembered
             # old object didn't see the switches anymore afterwards (auto collect did nothing)
@@ -93,7 +92,7 @@ class MacroController(QObject):
                 source_factory=lambda: engine._source_factory(engine.settings.capture_mode,
                                                               engine.settings.window_title),
                 window_title=engine.settings.window_title,
-                ocr_factory=lambda: OcrEngine(engine.settings.tesseract_path),
+                ocr_factory=engine.get_ocr,              # one Tesseract model for monitoring + macro (RAM)
                 log=lambda text: self.main.post(lambda: self.add_log(text)),
                 uimap=self.map)
             nav.raid_count = lambda: engine.stats.snapshot().total_attempts   # raid ends (monitoring)
