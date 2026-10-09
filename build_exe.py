@@ -9,6 +9,7 @@ import json
 import os
 import re
 import shutil
+import subprocess
 import sys
 import zipfile
 from pathlib import Path
@@ -219,11 +220,16 @@ The program only sends data to the Discord webhook URL you enter yourself.
 
 
 def main() -> int:
+    if os.environ.get("PYTHONHASHSEED") != "0":
+        # Reproducible build: with a random hash seed and current timestamps the EXE and base_library.zip differ on
+        # every build, so every update package carried ~10 MB. Fixed values = identical files for identical code.
+        env = dict(os.environ, PYTHONHASHSEED="0", SOURCE_DATE_EPOCH=os.environ.get("SOURCE_DATE_EPOCH", "1700000000"))
+        return subprocess.call([sys.executable, str(Path(__file__).resolve()), *sys.argv[1:]], env=env)
     print("Python", sys.version.split()[0], "·", sys.platform)
     print("Folder:", ROOT)
     verify_package()
     if importlib.util.find_spec("PyInstaller") is None:
-        print("PyInstaller fehlt:  pip install pyinstaller")
+        print("PyInstaller is missing:  pip install pyinstaller")
         return 1
     import PyInstaller.__main__ as pyi
 
@@ -242,6 +248,7 @@ def main() -> int:
         "--add-data", f"{ROOT / 'astral_monitor' / 'uimap_static'}{os.pathsep}astral_monitor/uimap_static",  # gear …
         "--add-data", f"{ROOT / 'astral_monitor' / 'regions.json'}{os.pathsep}astral_monitor",  # recognition areas
         "--collect-submodules", "astral_monitor",
+        "--additional-hooks-dir", str(ROOT / "tools" / "pyi_hooks"),   # program code as files: small updates
         "--distpath", str(ROOT / "dist"),
         "--workpath", str(ROOT / "build"),
         "--specpath", str(ROOT / "build"),
@@ -256,7 +263,7 @@ def main() -> int:
     for module in ("tkinter", "matplotlib", "scipy", "pandas", "IPython", "PyQt5", "PyQt6", "PySide2"):
         args += ["--exclude-module", module]
 
-    print("Baue", NAME, __version__, "– this takes a few minutes …")
+    print("Building", NAME, __version__, "– this takes a few minutes …")
     pyi.run(args)
 
     out_dir = ROOT / "dist" / NAME
@@ -265,7 +272,7 @@ def main() -> int:
         print("Error: the EXE was not created.")
         return 1
     prune(out_dir)
-    shutil.copy(ROOT / "README.md", out_dir / "LIESMICH.md")
+    shutil.copy(ROOT / "README.md", out_dir / "README.md")
     write_third_party(out_dir)
     if "--no-bundle-tesseract" not in sys.argv:
         bundle_tesseract(out_dir)
