@@ -20,6 +20,22 @@ class TrackerTests(unittest.TestCase):
         self.assertEqual(tr.run.max_wave, 26)
         self.assertEqual(tr.rejected, 3)
 
+    def test_consistent_jump_is_accepted(self):
+        # owner's log 09.10.2026: “Implausible reading 57 after 4 … 10x in a row” – the counter really was at 55+
+        tr = WaveTracker(3, 0)
+        feed(tr, [1, 2, 3, 4], step=1.0)
+        events, _ = feed(tr, [55, 55, 56, 57, 57], start=10.0, step=0.5)
+        self.assertEqual(events, [])
+        self.assertEqual(tr.last_value, 57)               # accepted once it kept rising consistently
+        self.assertEqual(tr.run.max_wave, 57)
+
+    def test_consistent_jump_never_ends_the_raid(self):
+        tr = WaveTracker(1, 0)
+        feed(tr, [1, 2, 3, 4], step=1.0)
+        events, _ = feed(tr, [98, 99, 99, 99, 99], start=10.0, step=0.5)   # misread near the end: no raid end
+        self.assertEqual(events, [])
+        self.assertEqual(tr.last_value, 4)
+
     def test_restart_needs_two_matching_reads(self):
         tr = WaveTracker(3, 0)
         events, t = feed(tr, list(range(1, 28)))

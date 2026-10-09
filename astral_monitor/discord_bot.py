@@ -102,6 +102,7 @@ class ControlBot:
         try:
             import importlib
             importlib.import_module("discord")              # load the heavy dependency only here
+            logging.getLogger("discord.client").setLevel(logging.ERROR)   # no “PyNaCl/davey missing” (voice isn't used)
         except ImportError:
             self.on_state(tr("Error: discord.py missing"), "")
             return

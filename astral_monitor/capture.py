@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import logging
 import threading
+import time
 from dataclasses import dataclass
 from typing import Optional, Sequence
 
@@ -149,7 +150,25 @@ class WgcSource(FrameSource):
             try:
                 control.stop()
             except Exception:
-                log.debug("Capture-Stopp meldete einen Fehler", exc_info=True)
+                log.debug("Stopping the capture reported an error", exc_info=True)
+
+
+class WaitingSource(FrameSource):
+    """Roblox isn't open yet: no image, “not alive” – the engine creates the real source again every few seconds
+    (Engine._handle_no_frame) and gets the window capture as soon as the window exists. Before, the program fell
+    back to screen capture for good in that case (owner's log 09.10.2026)."""
+
+    name = N_("Waiting for the Roblox window")
+
+    def __init__(self, title: str) -> None:
+        self._title = title
+
+    def is_alive(self) -> bool:
+        return False
+
+    def grab(self, rois, full=False, timeout=1.0):
+        time.sleep(min(timeout, 0.2))                     # don't spin
+        return None
 
 
 class ScreenSource(FrameSource):
@@ -191,6 +210,8 @@ def create_source(mode: str, title: str, min_interval_ms: int = 125) -> FrameSou
         source: FrameSource = ScreenSource(title)
         source.start()
         return source
+    if winapi.find_window(title) is None:
+        return WaitingSource(title)                       # window not there yet: wait for it, don't fall back
     try:
         source = WgcSource(title, min_interval_ms)
         source.start()

@@ -18,6 +18,8 @@ ABSENT_SECONDS = 8.0     # this long without a counter = raid over
 DROP_MIN = 3             # counter drops by more than this = restart (after 2 matching readings)
 UP_BASE = 4              # allowed jump upwards ...
 UP_PER_SECOND = 1.5      # ... plus this many waves per elapsed second (anything above = misread)
+JUMP_CONFIRM = 3         # a jump read this often in a row (stable/rising plausibly) is real, not a misread
+JUMP_MIN_SECONDS = 1.0   # … over at least this long (owner's log 09.10.2026: “57 after 4” rejected 10× in a row)
 CUT_CONFIRM = 2.0        # “4” instead of “54” (front digit hidden): restart only once the reading stays this long
 
 
@@ -58,6 +60,7 @@ class WaveTracker:
         self._drop_ts = 0.0
         self.rejected = 0          # number of discarded misreads (diagnostics)
         self._rej_streak = 0
+        self._jump: Optional[tuple[int, int, float, float, int]] = None   # (first value, value, first, last, count)
 
     def update(self, value: Optional[int], total: Optional[int], now: float) -> list[tuple[str, object]]:
         out: list[tuple[str, object]] = []
@@ -77,14 +80,18 @@ class WaveTracker:
         if self.run is not None and self.last_value is not None:
             allowed = UP_BASE + UP_PER_SECOND * max(0.0, now - self._last_seen)
             if value > self.last_value + allowed:
-                # Impossible jump upwards (e.g. 25 read as 95): ignore the reading, change nothing
-                self.rejected += 1
-                self._rej_streak += 1
-                if self._rej_streak in (1, 10, 100):
-                    log.warning("Implausible reading %d after %d (%.1f s) – ignored (%dx in a row)", value,
-                                self.last_value, now - self._last_seen, self._rej_streak)
-                return out
+                # Impossible jump upwards (e.g. 25 read as 95): ignore the reading, change nothing – unless the new
+                # value keeps being read consistently (then the old one was wrong, e.g. a cut “4” for “54”)
+                if not self._jump_confirmed(value, now):
+                    self.rejected += 1
+                    self._rej_streak += 1
+                    if self._rej_streak in (1, 10, 100):
+                        log.warning("Implausible reading %d after %d (%.1f s) – ignored (%dx in a row)", value,
+                                    self.last_value, now - self._last_seen, self._rej_streak)
+                    return out
+                log.info("Counter jump accepted: %d -> %d (read consistently)", self.last_value, value)
             self._rej_streak = 0
+            self._jump = None
         restart_ts: Optional[float] = None
         if self.run is not None and self.last_value is not None and value < self.last_value - DROP_MIN:
             cand = self._drop_value
@@ -120,7 +127,7 @@ class WaveTracker:
                             first_ts=(restart_ts if restart_ts is not None else now))
             self.armed = True
             log.info("New run at wave %d/%d (start %s)", value, total,
-                     "gesehen" if start is not None else "not seen")
+                     "seen" if start is not None else "not seen")
 
         self.run.max_wave = max(self.run.max_wave, value)
         if total or not self.run.total:                 # a reading without a total doesn't change a known target
@@ -131,6 +138,20 @@ class WaveTracker:
                 and now - self._last_trigger >= self.cooldown):
             out.append(("candidate", None))
         return out
+
+    def _jump_confirmed(self, value: int, now: float) -> bool:
+        """Is this jumped value real? Read JUMP_CONFIRM times in a row, plausibly rising from reading to reading, at
+        least once really higher (a frozen misread like “95, 95, 95” stays constant) and for JUMP_MIN_SECONDS.
+        Never for values that would end the raid (a frozen misread “100” must not count)."""
+        if self.run is not None and self.run.total and value >= self.run.total - self.offset:
+            return False
+        jump = self._jump
+        if jump is not None and jump[1] <= value <= jump[1] + UP_BASE + UP_PER_SECOND * max(0.0, now - jump[3]):
+            self._jump = (jump[0], value, jump[2], now, jump[4] + 1)
+        else:
+            self._jump = (value, value, now, now, 1)
+        first_value, _v, first, _last, count = self._jump
+        return count >= JUMP_CONFIRM and value > first_value and now - first >= JUMP_MIN_SECONDS
 
     def hold(self) -> None:
         """The macro is clicking menus: the counter is often hidden or other numbers are in the image – decide
