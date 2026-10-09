@@ -1,4 +1,4 @@
-"""Discord-Profilstatus („Farmt … · Welle 14“) mit dem Spiel-Thumbnail von Roblox – über die lokale Discord-App."""
+"""Discord profile status (“Farming … · Wave 14”) with the game thumbnail from Roblox – via the local Discord app."""
 from __future__ import annotations
 
 import json
@@ -16,10 +16,10 @@ from .settings import Settings
 
 log = logging.getLogger("presence")
 
-INTERVAL = 15.0           # Discord aktualisiert den Status höchstens alle 15 Sekunden
-RETRY = 30.0              # Pause nach einem Verbindungsfehler (Discord-App nicht gestartet o. Ä.)
-ICON_TTL = 24 * 3600      # Thumbnail höchstens einmal am Tag neu laden
-ICON_RETRY = 600          # bei Fehlschlag nach 10 Minuten erneut versuchen
+INTERVAL = 15.0           # Discord updates the status at most every 15 seconds
+RETRY = 30.0              # pause after a connection error (Discord app not running etc.)
+ICON_TTL = 24 * 3600      # reload the thumbnail at most once a day
+ICON_RETRY = 600          # on failure try again after 10 minutes
 GAME_NAME = "Anime Astral"
 UNIVERSE_API = "https://apis.roblox.com/universes/v1/places/{id}/universe"
 ICON_API = ("https://thumbnails.roblox.com/v1/games/icons?universeIds={id}&returnPolicy=PlaceHolder"
@@ -32,15 +32,15 @@ def client_id(settings: Settings) -> str:
 
 # ------------------------------------------------------------------------ Spiel-Thumbnail
 def parse_game_id(text: str) -> Optional[int]:
-    """Aus einem Roblox-Link („…/games/12345/Name“) oder einer reinen Zahl die Spiel-Nummer lesen."""
+    """Read the game number from a Roblox link (“…/games/12345/Name”) or a plain number."""
     match = re.search(r"(?:games|experiences)/(\d+)", text) or re.fullmatch(r"\s*(\d{5,})\s*", text)
     return int(match.group(1)) if match else None
 
 
 def fetch_icon_url(game_id: int, getter: Callable = requests.get, timeout: float = 10.0) -> Optional[str]:
-    """Öffentliche Roblox-Schnittstellen: Spiel-/Place-Nummer -> Universe -> Thumbnail-Adresse."""
+    """Public Roblox APIs: game/place number -> universe -> thumbnail address."""
     headers = {"User-Agent": "AnimeAstralMonitor"}
-    universe = game_id                                     # falls die Nummer schon eine Universe-Nummer ist
+    universe = game_id                                     # in case the number already is a universe number
     try:
         resp = getter(UNIVERSE_API.format(id=game_id), timeout=timeout, headers=headers)
         if resp.status_code == 200:
@@ -53,7 +53,7 @@ def fetch_icon_url(game_id: int, getter: Callable = requests.get, timeout: float
             if entry.get("state") == "Completed" and url.startswith("https://"):
                 return url
     except (requests.RequestException, ValueError, TypeError):
-        log.debug("Thumbnail konnte nicht geladen werden", exc_info=True)
+        log.debug("Could not load the thumbnail", exc_info=True)
     return None
 
 
@@ -78,9 +78,9 @@ def save_cached_icon(game_id: int, url: str) -> None:
         pass
 
 
-# ------------------------------------------------------------------------ Aktivität
+# ------------------------------------------------------------------------ Activity
 def build_activity(settings: Settings, snap: dict, icon_url: Optional[str] = None) -> Optional[dict]:
-    """Argumente für Presence.update(); None = nichts anzeigen (Überwachung gestoppt)."""
+    """Arguments for Presence.update(); None = show nothing (monitoring stopped)."""
     if snap.get("status") == "stopped":
         return None
     profile = snap.get("profile") or ""
@@ -134,13 +134,13 @@ class PresenceUpdater(threading.Thread):
         self._poke.set()
 
     def poke(self) -> None:
-        """Einstellungen haben sich geändert: sofort neu prüfen (statt bis zu 15 s zu warten)."""
+        """Settings changed: check again right away (instead of waiting up to 15 s)."""
         self._poke.set()
 
     def _connect(self, cid: str):
         factory = self._factory
         if factory is None:
-            from pypresence import Presence               # erst hier laden: optionales Paket
+            from pypresence import Presence               # load only here: optional package
             factory = Presence
         rpc = factory(cid)
         rpc.connect()
@@ -182,7 +182,7 @@ class PresenceUpdater(threading.Thread):
         self._drop()
 
     def tick(self, now: float) -> None:
-        """Ein Durchlauf (öffentlich, damit er sich testen lässt)."""
+        """One pass (public so it can be tested)."""
         s = self._get()
         cid = client_id(s)
         if not s.rpc_enabled:
@@ -208,7 +208,7 @@ class PresenceUpdater(threading.Thread):
             except Exception as exc:
                 self._next_try = now + RETRY
                 self.status_text, self.status_ok = explain_error(exc), False
-                log.info("Discord-Profilstatus nicht möglich: %s", exc.__class__.__name__)
+                log.info("Discord profile status not possible: %s", exc.__class__.__name__)
                 return
         if activity != self._last and (now - self._last_update_at) >= INTERVAL - 0.5:
             try:

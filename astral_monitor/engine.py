@@ -183,7 +183,7 @@ class Engine:
         self._halt.clear()
         self._pause.clear()
         self.state = EngineState(running=True, started_at=time.monotonic(),
-                                 source_info=source.name, info=tr("Starting …"))
+                                 source_info=tr(source.name), info=tr("Starting …"))
         self.guard._state = self.state
         self.guard.reset(time.monotonic())
         self._thread = threading.Thread(target=self._loop, name="monitor", daemon=True)
@@ -194,7 +194,7 @@ class Engine:
         self.publisher.request_update()
         self._notify("start_stop", tr("Monitor started"), messages.COLOR_INFO,
                      [(tr("Attempts total"), messages.fmt_k(self.stats.snapshot().total_attempts), True),
-                      (tr("Capture"), source.name, True)])
+                      (tr("Capture"), tr(source.name), True)])
 
     def stop(self) -> None:
         if not self.running:
@@ -546,7 +546,7 @@ class Engine:
                 self._source.stop()
                 self._source = self._source_factory(self.settings.capture_mode, self.settings.window_title,
                                                     min_interval_ms=self._frame_interval_ms())
-                self.state.source_info = self._source.name
+                self.state.source_info = tr(self._source.name)
                 log.info("Image source reconnected.")
             except CaptureError:
                 pass

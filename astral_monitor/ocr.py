@@ -1,4 +1,4 @@
-"""Tesseract-Anbindung: bevorzugt direkt über libtesseract (Modell bleibt geladen), sonst ein Prozess pro Lesung."""
+"""Tesseract binding: preferably directly via libtesseract (the model stays loaded), otherwise one process per reading."""
 from __future__ import annotations
 
 import ctypes
@@ -34,7 +34,7 @@ class OcrWord:
 
 @dataclass
 class OcrLine:
-    y: float      # vertikale Mitte (Pixel im übergebenen Bild)
+    y: float      # vertical center (pixels in the given image)
     x: float
     text: str
 
@@ -45,16 +45,16 @@ _TSV_KEYS = ("level", "page_num", "block_num", "par_num", "line_num", "word_num"
 
 
 class _TessLib:
-    """libtesseract direkt per ctypes: kein Prozessstart und kein erneutes Laden des Modells je Lesung
-    (gemessen ~5 statt ~65 ms pro Zählerlesung). Eine Instanz, durch eine Sperre threadsicher."""
+    """libtesseract directly via ctypes: no process start and no reloading of the model per reading
+    (measured ~5 instead of ~65 ms per counter reading). One instance, thread-safe through a lock."""
 
     def __init__(self, folder: Path) -> None:
         dll = next(iter(sorted(folder.glob("libtesseract*.dll"))), None)
         tessdata = folder / "tessdata"
         if dll is None or not (tessdata / "eng.traineddata").is_file():
-            raise OSError("libtesseract oder eng.traineddata fehlt")
+            raise OSError("libtesseract or eng.traineddata missing")
         if hasattr(os, "add_dll_directory"):
-            self._dll_dir = os.add_dll_directory(str(folder))      # abhängige DLLs liegen daneben
+            self._dll_dir = os.add_dll_directory(str(folder))      # dependent DLLs are next to it
         lib = ctypes.CDLL(str(dll))
         vp, ci, cp = ctypes.c_void_p, ctypes.c_int, ctypes.c_char_p
         lib.TessBaseAPICreate.restype = vp
@@ -71,7 +71,7 @@ class _TessLib:
         lib.TessDeleteText.argtypes = [vp]
         lib.TessVersion.restype = cp
         api = lib.TessBaseAPICreate()
-        # Tesseract öffnet den Pfad mit der ANSI-Codepage; UTF-8 als zweiter Versuch (Umlaute im Benutzernamen)
+        # Tesseract opens the path with the ANSI code page; UTF-8 as a second try (umlauts in the user name)
         for encoding in ("mbcs" if sys.platform == "win32" else "utf-8", "utf-8"):
             try:
                 path = str(tessdata).encode(encoding)
@@ -80,7 +80,7 @@ class _TessLib:
             if lib.TessBaseAPIInit3(api, path, b"eng") == 0:
                 break
         else:
-            raise OSError("Tesseract-Modell konnte nicht geladen werden")
+            raise OSError("Could not load the Tesseract model")
         self._lib, self._api = lib, api
         self._lock = threading.Lock()
         self.version = lib.TessVersion().decode("ascii", "replace")
@@ -93,7 +93,7 @@ class _TessLib:
             lib.TessBaseAPISetPageSegMode(api, psm)
             lib.TessBaseAPISetVariable(api, b"tessedit_char_whitelist", whitelist.encode("ascii"))
             lib.TessBaseAPISetImage(api, img.ctypes.data, img.shape[1], img.shape[0], channels, img.strides[0])
-            lib.TessBaseAPISetSourceResolution(api, 70)       # wie der Prozessaufruf ohne DPI-Angabe
+            lib.TessBaseAPISetSourceResolution(api, 70)       # like the process call without a DPI value
             ptr = lib.TessBaseAPIGetTsvText(api, 0) if tsv else lib.TessBaseAPIGetUTF8Text(api)
             try:
                 return ctypes.string_at(ptr).decode("utf-8", "replace") if ptr else ""
@@ -104,7 +104,7 @@ class _TessLib:
 
 
 def _parse_tsv(text: str) -> dict[str, list]:
-    """TSV von libtesseract -> dieselbe Form wie pytesseract.image_to_data(..., Output.DICT)."""
+    """TSV from libtesseract -> the same form as pytesseract.image_to_data(..., Output.DICT)."""
     data: dict[str, list] = {key: [] for key in _TSV_KEYS}
     for row in text.splitlines():
         cols = row.split("\t")
@@ -121,7 +121,7 @@ def _parse_tsv(text: str) -> dict[str, list]:
 
 
 def bundled_dir() -> Optional[Path]:
-    """Ordner „tesseract“ neben dem Programm (EXE-Paket) oder im Entwicklungsordner – falls mitgeliefert."""
+    """Folder “tesseract” next to the program (EXE package) or in the development folder – if bundled."""
     roots: list[Path] = []
     if getattr(sys, "frozen", False):
         roots += [Path(sys.executable).resolve().parent, Path(getattr(sys, "_MEIPASS", "."))]
@@ -156,7 +156,7 @@ def find_tesseract(user_path: str = "") -> str:
 
 class OcrEngine:
     def __init__(self, tesseract_path: str = "") -> None:
-        # Tesseract nutzt sonst mehrere Threads pro Aufruf -> unnötig viel CPU
+        # otherwise Tesseract uses several threads per call -> needless CPU
         os.environ.setdefault("OMP_THREAD_LIMIT", "1")
         try:
             import pytesseract
@@ -171,7 +171,7 @@ class OcrEngine:
         pytesseract.pytesseract.tesseract_cmd = cmd
         bundled = bundled_dir()
         if bundled is not None and Path(cmd).resolve().parent == bundled.resolve():
-            os.environ.pop("TESSDATA_PREFIX", None)       # mitgeliefertes Tesseract findet seine Daten neben sich selbst
+            os.environ.pop("TESSDATA_PREFIX", None)       # the bundled Tesseract finds its data next to itself
         self.bundled = bundled is not None and Path(cmd).resolve().parent == bundled.resolve()
         self._pt = pytesseract
         self.cmd = cmd
@@ -180,7 +180,7 @@ class OcrEngine:
             try:
                 self._lib = _TessLib(Path(cmd).resolve().parent)
             except (OSError, AttributeError) as exc:
-                log.info("Tesseract direkt nicht nutzbar (%s) – nutze tesseract.exe je Lesung.", exc)
+                log.info("Tesseract not usable directly (%s) – using tesseract.exe per reading.", exc)
         if self._lib is not None:
             self.version = self._lib.version
             log.info("Tesseract %s direkt geladen (ohne Prozessstarts).", self.version)
@@ -204,7 +204,7 @@ class OcrEngine:
         return self._pt.image_to_data(image, config=f"--psm {psm}", output_type=self._pt.Output.DICT)
 
     def words(self, image: np.ndarray, psm: int = 6) -> list[OcrWord]:
-        """Alle erkannten Wörter mit Position (Pixel im übergebenen Bild)."""
+        """All recognized words with position (pixels in the given image)."""
         data = self._data(image, psm)
         out: list[OcrWord] = []
         for i, text in enumerate(data["text"]):

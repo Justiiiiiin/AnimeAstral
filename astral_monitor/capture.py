@@ -1,7 +1,7 @@
-"""Bildquellen: Windows-Fenster-Capture (auch bei verdecktem Fenster) mit Bildschirm-Fallback.
+"""Image sources: Windows window capture (also with a covered window) with a screen fallback.
 
-Beide Quellen liefern nur die angeforderten Ausschnitte (billig) und das ganze Bild
-nur auf Anfrage (z. B. für den Discord-Screenshot)."""
+Both sources deliver only the requested crops (cheap) and the whole image
+only on request (e.g. for the Discord screenshot)."""
 from __future__ import annotations
 
 import logging
@@ -13,7 +13,7 @@ import cv2
 import numpy as np
 
 from . import winapi
-from .i18n import tr
+from .i18n import N_, tr
 from .imaging import crop_roi
 from .settings import Roi
 
@@ -26,9 +26,9 @@ class CaptureError(RuntimeError):
 
 @dataclass
 class GrabResult:
-    crops: list           # BGR-Ausschnitte in der Reihenfolge der angeforderten ROIs
+    crops: list           # BGR crops in the order of the requested ROIs
     full: Optional[np.ndarray]
-    size: tuple           # (Breite, Höhe) des Gesamtbildes
+    size: tuple           # (width, height) of the whole image
 
 
 class FrameSource:
@@ -54,15 +54,15 @@ class _Request:
 
 
 class WgcSource(FrameSource):
-    """Windows Graphics Capture über das Paket „windows-capture“.
-    Der Callback tut nichts, solange niemand ein Bild anfordert (minimale Last)."""
+    """Windows Graphics Capture via the package “windows-capture”.
+    The callback does nothing as long as nobody requests an image (minimal load)."""
 
-    name = "Fenster-Capture (WGC)"
+    name = N_("Window capture (WGC)")
 
     def __init__(self, title: str, min_interval_ms: int = 125) -> None:
         self._title = title
-        # Ohne Drosselung liefert Windows jedes Spielbild (bis 60/s) und die Bibliothek kopiert jedes davon in den
-        # Arbeitsspeicher – gemessen ~7 % eines Kerns. Mit 125 ms sind es ~8 Bilder/s und ~0,8 %.
+        # Without throttling Windows delivers every game frame (up to 60/s) and the library copies each of them into
+        # memory – measured ~7 % of a core. With 125 ms it's ~8 frames/s and ~0.8 %.
         self._min_interval_ms = int(min_interval_ms)
         self._control = None
         self._pending: Optional[_Request] = None
@@ -80,7 +80,7 @@ class WgcSource(FrameSource):
         if winapi.is_minimized(hwnd):
             raise CaptureError(tr("The Roblox window is minimized. Please restore it."))
 
-        # Parameternamen unterscheiden sich je nach Version der Bibliothek -> der Reihe nach probieren
+        # parameter names differ depending on the library version -> try them in order
         attempts = [
             dict(window_hwnd=hwnd, cursor_capture=False, draw_border=False,
                  minimum_update_interval=self._min_interval_ms),
@@ -153,9 +153,9 @@ class WgcSource(FrameSource):
 
 
 class ScreenSource(FrameSource):
-    """Fallback: liest den Fensterbereich vom Bildschirm. Roblox muss sichtbar sein."""
+    """Fallback: reads the window area from the screen. Roblox must be visible."""
 
-    name = "Bildschirm-Capture (Fallback)"
+    name = N_("Screen capture (fallback)")
 
     def __init__(self, title: str) -> None:
         self._title = title
@@ -186,7 +186,7 @@ class ScreenSource(FrameSource):
 
 
 def create_source(mode: str, title: str, min_interval_ms: int = 125) -> FrameSource:
-    """mode: auto | wgc | screen. Bei „auto“ erst WGC, sonst Bildschirm."""
+    """mode: auto | wgc | screen. With “auto” first WGC, otherwise the screen."""
     if mode == "screen":
         source: FrameSource = ScreenSource(title)
         source.start()
@@ -198,7 +198,7 @@ def create_source(mode: str, title: str, min_interval_ms: int = 125) -> FrameSou
     except CaptureError as exc:
         if mode == "wgc":
             raise
-        log.warning("%s – wechsle zur Bildschirm-Aufnahme.", exc)
+        log.warning("%s – switching to screen capture.", exc)
         source = ScreenSource(title)
         source.start()
         return source

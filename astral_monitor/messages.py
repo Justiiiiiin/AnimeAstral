@@ -7,7 +7,7 @@ from typing import Optional
 from .settings import Settings, is_hex_color
 from .i18n import N_, dec, thousands, tr
 
-COLOR_OK = 0x45E0BF            # Logo-Türkis
+COLOR_OK = 0x45E0BF            # logo turquoise
 COLOR_WARN = 0xFFB547
 COLOR_INFO = 0x7B8CFF          # Logo-Violett
 COLOR_ERROR = 0xFF6B6B
@@ -15,19 +15,19 @@ COLOR_GRAY = 0x6C7891
 
 
 def logo_url() -> str:
-    """Programmlogo aus dem eigenen (öffentlichen) Repository – nur in GitHub-Builds bekannt, sonst leer."""
+    """Program logo from the own (public) repository – only known in GitHub builds, otherwise empty."""
     from .updater import current_repo
     repo = current_repo()
     return f"https://raw.githubusercontent.com/{repo}/main/assets/app.png" if repo else ""
 
 
 def _avatar() -> dict:
-    """Logo als Profilbild des Webhooks (gilt je Nachricht; die Webhook-Einstellungen in Discord bleiben unberührt)."""
+    """Logo as the webhook's avatar (applies per message; the webhook settings in Discord stay untouched)."""
     return {"avatar_url": logo_url()} if logo_url() else {}
 
 
 def brand(settings: Settings) -> dict:
-    """Kleiner Absender mit Logo über jeder Nachricht (einheitlicher Auftritt)."""
+    """Small author line with the logo above every message (consistent look)."""
     from .version import __version__
     author = {"name": f"{settings.username} · v{__version__}"}
     if logo_url():
@@ -36,7 +36,7 @@ def brand(settings: Settings) -> dict:
 
 
 def progress_bar(value: int, total: int, width: int = 16) -> str:
-    """Fortschrittsbalken aus Zeichen, z. B. ▰▰▰▰▰▰▱▱ (Discord kann keine echten Balken)."""
+    """Progress bar made of characters, e.g. ▰▰▰▰▰▰▱▱ (Discord can't do real bars)."""
     filled = 0 if not total else max(0, min(width, round(width * value / total)))
     return "▰" * filled + "▱" * (width - filled)
 
@@ -51,7 +51,7 @@ def fmt_duration(seconds: Optional[float]) -> str:
 
 
 def fmt_wave(wave, total) -> str:
-    """„50/100“ – oder nur „542“ in Modi ohne Gesamtzahl (total 0/None)."""
+    """“50/100” – or only “542” in modes without a total (total 0/None)."""
     return f"{wave}/{total}" if total else f"{wave}"
 
 
@@ -60,9 +60,9 @@ def fmt_int(value: int) -> str:
 
 
 def fmt_k(value: int) -> str:
-    """Mengen kurz mit k/M: 950 → „950“, 18 109 → „18,1k“, 843 231 → „843k“, 1 250 000 → „1,25M“.
-    Genau bleiben (fmt_int): Wellen (steigen langsam, man will sie exakt sehen), Raid-Nummer und der aktuelle Wert
-    bei Quests."""
+    """Short amounts with k/M: 950 → “950”, 18 109 → “18.1k”, 843 231 → “843k”, 1 250 000 → “1.25M”.
+    Stay exact (fmt_int): waves (rise slowly, you want to see them exactly), raid number and the current value
+    for quests."""
     v = abs(value)
     if v < 1000:
         return str(value)
@@ -89,8 +89,8 @@ def build_message(settings: Settings, kind: str, title: str, color: int,
                   fields: list[tuple[str, str, bool]] | None = None,
                   description: str | None = None,
                   image: tuple | None = None) -> tuple[dict, list]:
-    """Gibt (payload, files) zurück. `fields`: (Name, Wert, inline). Eine eigene Farbe je Ereignis hat Vorrang.
-    Stil „kompakt“: die ersten Werte als eine ruhige Zeile (ein Bild, z. B. beim Alarm, klein rechts)."""
+    """Returns (payload, files). `fields`: (name, value, inline). An event's own color takes precedence.
+    Style “compact”: the first values as one calm line (an image, e.g. for an alert, small on the right)."""
     compact = settings.message_style == "compact"
     if compact and fields:
         values = [f"{n} {' '.join(str(v).split())}" for n, v, inline in fields if inline and v][:3]   # „Dauer 2:51“
@@ -129,7 +129,7 @@ def build_message(settings: Settings, kind: str, title: str, color: int,
 
 
 def fmt_duration_est(seconds: Optional[float], estimated: bool = False) -> str:
-    """Wie fmt_duration, geschätzte Werte mit „~“."""
+    """Like fmt_duration, estimated values with “~”."""
     text = fmt_duration(seconds)
     return f"~{text}" if estimated and seconds is not None else text
 
@@ -139,15 +139,15 @@ STATUS_TEXT = {"running": ("🟢", N_("Running")), "paused": ("🟡", N_("Paused
 
 
 def build_status(settings: Settings, snap: dict) -> dict:
-    """Live-Statusnachricht: Status und Raid als Titel, Welle als großer Fortschrittsbalken, Kennzahlen mit Symbolen
-    in zwei Dreierreihen. „Gestartet vor …“ rechnet Discord selbst live weiter (<t:…:R>)."""
+    """Live status message: status and raid as the title, the wave as a large progress bar, key figures with icons
+    in two rows of three. Discord keeps counting “Started … ago” live by itself (<t:…:R>)."""
     status = snap.get("status", "stopped")
     emoji, word = STATUS_TEXT.get(status, ("", status))
     profile = snap.get("profile") or ""
     title = f"{emoji} {tr(word)}" + (f" · {profile}" if profile else "")
 
     wave, total = snap.get("wave"), snap.get("total_waves")
-    if wave is not None and not total:                  # Modus ohne Gesamtzahl: nur die Welle, kein Balken
+    if wave is not None and not total:                  # mode without a total: only the wave, no bar
         lines = ["## 🌊 " + tr("Wave {wave}", wave=fmt_wave(wave, total))]
     elif wave is not None and total:
         pct = round(100 * wave / total)
@@ -182,12 +182,12 @@ def build_status(settings: Settings, snap: dict) -> dict:
     if snap.get("ram_mb"):
         extra.append(("🖥️ Roblox", dec(f"{snap['ram_mb'] / 1024:.1f} GB RAM"), True))
     if extra:
-        while len(extra) < 3:                       # Reihe auffüllen, damit das Raster ruhig bleibt
+        while len(extra) < 3:                       # fill up the row so the grid stays calm
             extra.append(("​", "​", True))
         fields += extra
     if snap.get("quests") and settings.attach_quests:
         fields.append(("📜 " + tr("Quests"), quest_text(snap["quests"], limit=5), False))
-    if settings.message_style == "compact":          # kompakt: Kennzahlen als eine Zeile, Quests bleiben
+    if settings.message_style == "compact":          # compact: key figures as one line, quests stay
         parts = [tr("{count} raids", count=snap.get("session_attempts", 0)),
                  tr("{waves} waves", waves=fmt_int(snap.get("session_waves", 0)))]
         if wph:

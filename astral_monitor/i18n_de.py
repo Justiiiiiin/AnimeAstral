@@ -1024,4 +1024,6 @@ DE: dict[str, str] = {
     'Raids per day': 'Raids pro Tag',
     'Raids per day over the last 14 days.': 'Raids pro Tag in den letzten 14 Tagen.',
     'Last 14 days': 'Letzte 14 Tage',
+    'Window capture (WGC)': 'Fenster-Capture (WGC)',
+    'Screen capture (fallback)': 'Bildschirm-Capture (Fallback)',
 }
