@@ -16,17 +16,6 @@ from PySide6.QtWidgets import QApplication
 from ..i18n import N_
 
 # ------------------------------------------------------------------ Palettes
-_CLASSIC_DARK = {
-    "bg": "#0F1419", "sidebar": "#0B0F14", "topbar": "#0B0F14", "card": "#151B23", "border": "#222B36",
-    "text": "#E6EAF0", "muted": "#8B97A8", "accent": "#3DD6B5", "accent2": "#3DD6B5", "accentHover": "#52E0C1",
-    "accent2Hover": "#52E0C1", "onAccent": "#06201A", "warn": "#F5A524", "danger": "#FF9A9A", "okBg": "#12201E",
-    "okBorder": "#1F4A42", "line": "#1E2630", "field": "#0B0F14", "control": "#18212B", "controlHover": "#1E2A37",
-    "controlBorder": "#2B3644", "checkBorder": "#3A4656", "navHover": "#121A22", "navActive": "#18212B",
-    "select": "#25405A", "dangerBg": "#2A1519", "dangerBorder": "#6B3038", "dangerHover": "#351B20",
-    "disabled": "#5B6676", "disabledBg": "#10161D", "section": "#6F7D90", "scroll": "#2B3644", "scrollHover": "#3D4D62",
-    "headerLine": "#1B232D", "stepdot": "#26303C", "stepDone": "#2B6B60", "bar": "#2B6B60", "barEmpty": "#1E2630",
-    "trackOff": "#2B3644", "knobOff": "#8B97A8", "knobOn": "#06201A", "info": "#E6EAF0",
-}
 _ASTRAL_DARK = {
     "bg": "#0A0D13", "sidebar": "#0D1119", "topbar": "#0A0D13", "card": "#121722", "border": "#1C2331",
     "text": "#ECEFF5", "muted": "#8A94A7", "accent": "#45E0BF", "accent2": "#7B8CFF", "accentHover": "#62EACB",
@@ -51,129 +40,6 @@ _ASTRAL_LIGHT = {
 }
 
 # ------------------------------------------------------------------ Templates
-_CLASSIC = """
-QWidget { background: @bg; color: @text; font-family: @font; font-size: 10pt; }
-QMainWindow, QStackedWidget { background: @bg; }
-QFrame#sidebar { background: @sidebar; border-right: 1px solid @line; }
-QFrame#topbar { background: @topbar; border-bottom: 1px solid @line; }
-QFrame#topbar QWidget { background: transparent; }
-QFrame#topbar QToolButton#slim { background: @control; min-height: 28px; padding: 0 30px 0 12px; border-radius: 7px; }
-QFrame#topbar QToolButton#slim:hover { background: @controlHover; }
-QFrame#topbar QToolButton#slim::menu-button { border: none; border-left: 1px solid @controlBorder; width: 22px; }
-QFrame#topbar QToolButton#slim::menu-arrow { image: url("@arrow"); width: 9px; height: 6px; }
-QFrame#sidebar QWidget { background: transparent; }
-QFrame#card { background: @card; border: 1px solid @border; border-radius: 10px; }
-QFrame#card QWidget { background: transparent; }
-QFrame#statusbox { background: @okBg; border: 1px solid @okBorder; border-radius: 8px; }
-QFrame#statusbox[state="off"] { background: @card; border: 1px solid @border; }
-QLabel#h1 { font-size: 17pt; font-weight: 600; }
-QLabel#h2 { font-size: 11pt; font-weight: 600; }
-QLabel#brand { font-size: 11pt; font-weight: 600; }
-QLabel#muted { color: @muted; }
-QLabel#small { color: @muted; font-size: 9pt; }
-QLabel#kpi { font-family: Consolas; font-size: 20pt; font-weight: 600; }
-QLabel#wave { font-family: Consolas; font-size: 34pt; font-weight: 600; }
-QLabel#preview { background: @sidebar; border: 1px solid @border; border-radius: 8px; color: @disabled; padding: 8px; }
-QLabel#good { color: @accent; }
-QLabel#bad { color: @danger; }
-QLabel#warn { color: @warn; }
-QLabel#chip { background: @control; border: 1px solid @controlBorder; border-radius: 12px; padding: 5px 14px; color: @muted; }
-QLabel#chip[state="ok"] { background: @okBg; border: 1px solid @okBorder; color: @accent; }
-QLabel#chip[state="bad"] { background: @dangerBg; border: 1px solid @dangerBorder; color: @danger; }
-QLabel#gigpill { background: @control; border: 1px solid @controlBorder; border-radius: 10px; padding: 2px 8px; color: @muted; }
-QLabel#gigpill[state="run"] { color: @text; border: 1px solid @accent2; }
-QLabel#gigpill[state="done"] { background: @okBg; border: 1px solid @okBorder; color: @accent; }
-QLabel#gigpill[state="pet"] { border: 1px solid @warn; color: @warn; }
-QLabel#gigpill[state="empty"] { background: @dangerBg; border: 1px solid @dangerBorder; color: @danger; }
-QLabel#stepdot { background: @stepdot; border-radius: 5px; min-width: 10px; max-width: 10px; min-height: 10px; max-height: 10px; }
-QLabel#stepdot[state="active"] { background: @accent; min-width: 28px; max-width: 28px; border-radius: 5px; }
-QLabel#stepdot[state="done"] { background: @stepDone; }
-QLabel#hero { font-size: 24pt; font-weight: 600; }
-QLabel#section { color: @section; font-size: 8.5pt; font-weight: 700; padding-top: 6px; }
-QLabel#empty { color: @disabled; }
-QFrame#savebar { background: @sidebar; border-top: 1px solid @line; }
-QFrame#savebar QWidget { background: transparent; }
-QFrame#savebar QPushButton#primary { background: @accent; }
-QFrame#savebar QPushButton#primary:hover { background: @accentHover; }
-QPushButton { background: @control; border: 1px solid @controlBorder; border-radius: 8px;
-  padding: 0 18px; min-height: 40px; font-weight: 500; }
-QPushButton:hover { background: @controlHover; }
-QPushButton:disabled { color: @disabled; }
-QPushButton#primary { background: @accent; color: @onAccent; border: 1px solid @accent; font-weight: 600; }
-QPushButton#primary:hover { background: @accentHover; }
-QPushButton#primary:disabled { background: @control; color: @disabled; border: 1px solid @controlBorder; }
-QPushButton#danger { background: @dangerBg; color: @danger; border: 1px solid @dangerBorder; font-weight: 600; }
-QPushButton#danger:hover { background: @dangerHover; }
-QPushButton#chipbtn { min-height: 30px; padding: 0 12px; border-radius: 15px; }
-QPushButton#chipbtn:checked { background: @navActive; border: 1px solid @accent; color: @accent; }
-QFrame#card QPushButton { background: @control; }
-QFrame#card QPushButton:hover { background: @controlHover; }
-QFrame#card QPushButton#primary { background: @accent; }
-QFrame#card QPushButton#primary:hover { background: @accentHover; }
-QFrame#card QPushButton#danger { background: @dangerBg; }
-QFrame#card QPushButton#danger:hover { background: @dangerHover; }
-QFrame#card QPushButton#nav, QFrame#card QPushButton#tab { background: transparent; }
-QFrame#card QPushButton#nav:hover, QFrame#card QPushButton#tab:hover { background: @navHover; }
-QFrame#card QPushButton#nav:checked, QFrame#card QPushButton#tab:checked { background: @navActive; }
-QFrame#card QPushButton#chipbtn:checked { background: @navActive; }
-QPushButton#nav, QPushButton#tab { background: transparent; border: none; text-align: left; padding: 0 14px;
-  color: @muted; min-height: 42px; border-radius: 8px; }
-QPushButton#nav:hover, QPushButton#tab:hover { background: @navHover; }
-QPushButton#nav:checked, QPushButton#tab:checked { background: @navActive; color: @text; }
-QToolButton#info, QFrame#card QToolButton#info { background: transparent; border: 1px solid @controlBorder;
-  border-radius: 9px; min-width: 18px; max-width: 18px; min-height: 18px; max-height: 18px; padding: 0;
-  color: @muted; font-size: 8pt; font-weight: 700; }
-QToolButton#info:hover, QFrame#card QToolButton#info:hover { color: @accent; border: 1px solid @accent; }
-QToolButton#gear { background: transparent; border: none; border-radius: 8px; min-height: 40px; min-width: 40px; }
-QToolButton#gear:hover { background: @navHover; }
-QToolButton#gear:checked { background: @navActive; }
-QLineEdit, QSpinBox, QDoubleSpinBox, QComboBox, QPlainTextEdit, QTextBrowser { background: @field;
-  border: 1px solid @controlBorder; border-radius: 8px; padding: 6px 10px; min-height: 28px;
-  selection-background-color: @select; }
-QLineEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus, QComboBox:focus { border: 1px solid @accent; }
-QLineEdit:disabled, QSpinBox:disabled, QDoubleSpinBox:disabled, QComboBox:disabled, QCheckBox:disabled, QLabel:disabled { color: @disabled; }
-QCheckBox::indicator:disabled { background: @disabledBg; border: 1px solid @border; }
-QComboBox { padding-right: 28px; }
-QComboBox::drop-down { subcontrol-origin: padding; subcontrol-position: center right; width: 26px; border: none;
-  background: transparent; }
-QComboBox::down-arrow { image: url("@arrow"); width: 10px; height: 6px; }
-QComboBox QAbstractItemView { background: @card; border: 1px solid @controlBorder; selection-background-color: @select; }
-QCheckBox { spacing: 8px; }
-QCheckBox::indicator { width: 18px; height: 18px; border-radius: 4px; border: 1px solid @checkBorder; background: @field; }
-QCheckBox::indicator:checked { background: @accent; border: 1px solid @accent; }
-QProgressBar { background: @line; border: none; border-radius: 4px; max-height: 8px; min-height: 8px; text-align: center; color: transparent; }
-QProgressBar::chunk { background: @accent; border-radius: 4px; }
-QTableWidget { background: transparent; border: none; gridline-color: transparent; }
-QHeaderView::section { background: transparent; color: @muted; border: none; border-bottom: 1px solid @border;
-  border-right: 1px solid @headerLine; padding: 8px 10px; font-weight: 500; }
-QHeaderView::section:hover { color: @text; background: @control; }
-QTableWidget::item { padding: 4px 10px; border-bottom: 1px solid @line; }
-QTableWidget::item:selected { background: @select; color: @text; }
-QListWidget { background: transparent; border: none; outline: none; }
-QListWidget::item { padding: 7px 4px; border-bottom: 1px solid @line; }
-QListWidget::item:selected { background: @select; color: @text; border-radius: 6px; }
-QScrollArea { border: none; background: transparent; }
-QScrollBar:vertical { background: transparent; width: 14px; margin: 4px 3px 4px 3px; }
-QScrollBar:horizontal { background: transparent; height: 14px; margin: 3px 4px 3px 4px; }
-QScrollBar::handle:vertical { background: @scroll; border-radius: 4px; min-height: 44px; }
-QScrollBar::handle:horizontal { background: @scroll; border-radius: 4px; min-width: 44px; }
-QScrollBar::handle:vertical:hover, QScrollBar::handle:horizontal:hover { background: @scrollHover; }
-QScrollBar::handle:vertical:pressed, QScrollBar::handle:horizontal:pressed { background: @accent; }
-QScrollBar::add-line, QScrollBar::sub-line { width: 0; height: 0; background: none; border: none; }
-QScrollBar::add-page, QScrollBar::sub-page { background: none; }
-QAbstractScrollArea::corner { background: transparent; }
-QToolButton { background: @control; border: 1px solid @controlBorder; border-radius: 8px; padding: 0 14px;
-  min-height: 40px; min-width: 40px; font-weight: 500; }
-QToolButton:hover { background: @controlHover; }
-QToolButton::menu-indicator { image: none; width: 0; }
-QMenu { background: @card; border: 1px solid @controlBorder; border-radius: 8px; padding: 6px; }
-QMenu::item { padding: 8px 18px; border-radius: 6px; }
-QMenu::item:selected { background: @select; }
-QMenu::separator { height: 1px; background: @border; margin: 6px 4px; }
-QToolTip { background: @card; color: @text; border: 1px solid @controlBorder; }
-QDialog { background: @bg; }
-"""
-
 # Astral (0.6.5): softer surfaces, larger radii, gradient on primary buttons, icons in the navigation,
 # settings as a gear at the bottom left, slim scroll bars. Light and dark from the same template.
 _ASTRAL = """
@@ -516,8 +382,6 @@ DESIGNS: dict[str, dict] = {
                "animate": True, "rail": True, "font": ["Segoe UI Variable Text", "Segoe UI"],
                "palettes": {"dark": _WINTER_DARK, "light": _WINTER_LIGHT}, "season": ((12, 1), (1, 6)),
                "decor": "winter"},
-    "classic": {"name": N_("Classic"), "since": "0.5.0", "template": _CLASSIC, "icons": False, "gear": False,
-                "animate": False, "font": ["Segoe UI"], "palettes": {"dark": _CLASSIC_DARK}},
 }
 DEFAULT_DESIGN = "nightcity"   # since 0.9.9-beta.7 (before: Nebula)
 

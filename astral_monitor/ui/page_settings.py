@@ -1030,9 +1030,10 @@ class SettingsPage(QWidget):
         s.stall_minutes = self.stall.value()
         s.no_raid_minutes = self.no_raid.value()
         s.ram_alert_gb = self.ram.value()
-        s.hotkey_toggle = self.hk_toggle.text().strip()
-        s.hotkey_pause = self.hk_pause.text().strip()
-        s.hotkey_status = self.hk_status_edit.text().strip()
+        from ..hotkeys import english_hotkey
+        s.hotkey_toggle = english_hotkey(self.hk_toggle.text().strip())
+        s.hotkey_pause = english_hotkey(self.hk_pause.text().strip())
+        s.hotkey_status = english_hotkey(self.hk_status_edit.text().strip())
         s.update_check = self.update_check.isChecked()
         s.update_beta = self.update_beta.isChecked()
         s.rpc_enabled = self.rpc_enabled.isChecked()

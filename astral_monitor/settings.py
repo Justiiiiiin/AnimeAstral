@@ -239,7 +239,7 @@ class Settings:
     server_favorites: list = field(default_factory=list)   # [{"name", "link"}] – local only, diagnostics black out the links
     private_server_link: str = "" # roblox.com/games/…?privateServerLinkCode=… (local only, roblox_join.py)
     # Other
-    settings_version: int = 12
+    settings_version: int = 13
     uptime_minutes: int = 10
     total_offset: int = 0               # start value for "raids total"
     tesseract_path: str = ""
@@ -350,6 +350,12 @@ class Settings:
             s.ui_design = "nebula"           # “Astral” was just the default up to 0.6.6 – take over the new default design
         if int(data.get("settings_version", 1) or 1) < 12 and s.ui_design == "nebula":
             s.ui_design = "nightcity"        # 0.9.9-beta.7: new default design matching the game (Nebula stays selectable)
+        if s.ui_design == "classic":
+            s.ui_design = "nightcity"        # 0.9.9-beta.20: design “Classic” removed (owner: outdated, incomplete)
+        from .hotkeys import english_hotkey
+        s.hotkey_toggle, s.hotkey_pause, s.hotkey_status = (english_hotkey(s.hotkey_toggle),
+                                                            english_hotkey(s.hotkey_pause),
+                                                            english_hotkey(s.hotkey_status))
         if int(data.get("settings_version", 1) or 1) < 6:
             # The former default link pointed to a wrong game number; own links stay unchanged.
             if "9797806474" in s.rpc_game_link:

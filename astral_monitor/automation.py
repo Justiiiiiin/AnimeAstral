@@ -1464,6 +1464,7 @@ class Navigator:
         except Stop as exc:
             self.log("■ " + str(exc))
         except Exception as exc:  # noqa: BLE001 – never let the thread die hard
+            _log.exception("Macro: unexpected error in “%s”", label)   # with the code location for the log
             self.log("✖ " + tr("Error: {error}", error=exc))
         finally:
             _ACTIVE.clear()

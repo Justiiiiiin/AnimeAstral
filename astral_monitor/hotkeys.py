@@ -13,14 +13,39 @@ log = logging.getLogger("hotkeys")
 
 MOD_ALT, MOD_CONTROL, MOD_SHIFT, MOD_WIN, MOD_NOREPEAT = 0x0001, 0x0002, 0x0004, 0x0008, 0x4000
 _MODS = {"ctrl": MOD_CONTROL, "strg": MOD_CONTROL, "control": MOD_CONTROL, "alt": MOD_ALT,
-         "shift": MOD_SHIFT, "win": MOD_WIN}
+         "shift": MOD_SHIFT, "umschalt": MOD_SHIFT, "win": MOD_WIN}
 _SPECIAL = {"space": 0x20, "pause": 0x13, "insert": 0x2D, "delete": 0x2E, "home": 0x24, "end": 0x23,
             "pageup": 0x21, "pagedown": 0x22}
 
 
+# German key names (older settings, German keyboards) -> the English names shown in the program
+_EN_NAMES = {"strg": "Ctrl", "ctrl": "Ctrl", "control": "Ctrl", "alt": "Alt", "umschalt": "Shift", "shift": "Shift",
+             "win": "Win", "entf": "Delete", "einfg": "Insert", "pos1": "Home", "ende": "End", "leertaste": "Space",
+             "bildauf": "PageUp", "bildab": "PageDown", "space": "Space", "pause": "Pause", "insert": "Insert",
+             "delete": "Delete", "home": "Home", "end": "End", "pageup": "PageUp", "pagedown": "PageDown"}
+
+
+def english_hotkey(text: str) -> str:
+    """Same keys, English names: “Strg+F1” -> “Ctrl+F1”, “strg + umschalt + s” -> “Ctrl+Shift+S” (owner
+    09.10.2026). Unknown parts stay as they are (parse_hotkey reports them)."""
+    parts = [p.strip() for p in (text or "").split("+") if p.strip()]
+    out = []
+    for part in parts:
+        low = part.lower().replace(" ", "")
+        if low in _EN_NAMES:
+            out.append(_EN_NAMES[low])
+        elif len(part) == 1:
+            out.append(part.upper())
+        elif re.fullmatch(r"[fF]\d{1,2}", part):
+            out.append(part.upper())
+        else:
+            out.append(part)
+    return "+".join(out)
+
+
 def parse_hotkey(text: str) -> tuple[int, int]:
     """'Ctrl+Alt+S' -> (modifier mask, virtual key code). Raises ValueError for invalid input."""
-    parts = [p.strip().lower() for p in text.replace(" ", "").split("+") if p.strip()]
+    parts = [p.strip().lower() for p in english_hotkey(text).replace(" ", "").split("+") if p.strip()]
     if len(parts) < 2:
         raise ValueError(tr("please give modifiers and a key, e.g. Ctrl+Alt+S"))
     mods = 0
