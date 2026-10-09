@@ -225,6 +225,13 @@ Important design decisions:
     contains startup leftovers and shared pages of graphics drivers (WGC loads AMD and NVIDIA drivers, ~370 MB) and
     fonts; measured 178 MB → permanently ~50 MB (own share/USS ~36 MB). “This program” shows the working set.
   - Update downloads are deleted at startup (`updater.cleanup_downloads`), otherwise ~60 MB would stay behind.
+  - Raid-window check in the lobby (`raidsense.read_raid_window`, every 3 s) only looks at the standard frame
+    (`MenuFrame.state(wide=False)`): the wide search for smaller windows cost ~240 ms at 2560 px – 12.5 % → 0.9 % of
+    one core (measured 09.10.2026). The wide search itself (`vision._wide_x_search`) goes coarse (grey, half size)
+    → fine (color, only around the hit): 440 → 19 ms, same hits (`tests/test_vision_wide.py`).
+  - Process priority is lowered at program start (not only when monitoring starts); first start on a PC with ≤ 4
+    threads uses “Reduce animations” (seasonal designs cost ~7 % of one core while visible).
+  - **Never measure/profile with “Allow macro” + auto-collect switched on** – the macro then really clicks in Roblox.
 - **Raid statistics per raid or in total** (choice “All raids (total)”). Raids are just **names** (`profiles.py`;
   managed under Settings → Roblox, `ui/raids_card.py`). The current raid is chosen on the start page
   (`settings.current_raid`, `Engine.set_current_raid` – applies right away, also for the running attempt). Renaming

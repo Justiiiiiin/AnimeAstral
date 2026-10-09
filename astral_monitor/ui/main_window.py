@@ -1357,6 +1357,8 @@ def run() -> int:
         return 0
     try:
         engine = Engine(settings)
+        if settings.low_priority:                       # the game comes first – also for the macro and the UI,
+            Engine._lower_priority()                    # not only once monitoring runs (weak PCs)
     except Exception as exc:
         QMessageBox.critical(None, tr("Start failed"), f"{type(exc).__name__}: {exc}")
         return 1

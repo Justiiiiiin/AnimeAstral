@@ -12,6 +12,10 @@ A version's section becomes its release notes automatically when it is published
 - Updates are much smaller (often only a few KB)
 
 ### 🔧 Improved
+- Lobby: raid-window check ~14× cheaper (CPU)
+- Macro: window search ~20× faster – no more CPU spikes
+- Low priority right from the start (game comes first)
+- Weak PCs start with reduced animations
 - Hotkeys shown with English key names (same keys)
 - Statistics: hint in empty tables, “Trend” shows raids per hour
 - Color buttons under Alerts scale with the UI size

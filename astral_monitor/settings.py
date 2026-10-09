@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 from dataclasses import dataclass, field, fields
 from pathlib import Path
 from typing import Optional
@@ -144,6 +145,11 @@ def clean_favorites(value) -> list[dict]:
             seen.add(name.lower())
             out.append({"name": name, "link": link})
     return out[:MAX_FAVORITES]
+
+
+def weak_pc() -> bool:
+    """Few CPU threads (≤ 4): seasonal animations cost ~7 % of one core there – start with “Reduce animations”."""
+    return (os.cpu_count() or 8) <= 4
 
 
 def is_valid_webhook(url: str) -> bool:
@@ -401,7 +407,9 @@ class Settings:
             data = json.loads(app_paths.settings_file().read_text(encoding="utf-8"))
             return cls.from_dict(data)
         except (OSError, ValueError):
-            return cls()
+            fresh = cls()
+            fresh.ui_reduce_motion = weak_pc()      # first start on a weak PC: no animations (can be switched on)
+            return fresh
 
     @classmethod
     def safe_defaults(cls) -> "Settings":

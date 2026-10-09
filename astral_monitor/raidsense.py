@@ -95,7 +95,7 @@ class RaidSense:
 
 def read_raid_window(frame: np.ndarray, menu: "vision.MenuFrame", ocr) -> Optional[str]:
     """Is a raid window open? Then its name (red/orange below the banner), otherwise None."""
-    state = menu.state(frame, ocr)
+    state = menu.state(frame, ocr, wide=False)          # raid windows have the standard size: fast check only
     if state is None:
         return None
     roi, title, _x = state

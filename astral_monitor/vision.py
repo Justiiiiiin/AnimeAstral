@@ -26,6 +26,46 @@ X_BAND = 0.04         # this far left/right of the usual row start the heart is 
 def _scaled(img: np.ndarray, f: float) -> np.ndarray:
     return img if abs(f - 1) < 0.01 else cv2.resize(img, None, fx=f, fy=f, interpolation=cv2.INTER_AREA)
 
+WIDE_SCALES = (0.8, 0.85, 0.9, 0.95, 1.0, 1.1, 1.2, 1.3)   # smaller menus (Mana Contract) … guild (1.2×)
+
+
+def _wide_x_search(area: np.ndarray, tpl: np.ndarray) -> tuple[float, float, tuple[int, int], tuple[int, int]]:
+    """Best X in the wide area: (score, scale, position, template size). Coarse first – grey and half size over all
+    scales – then the exact color comparison at full size only around the best coarse hits (the scale and its
+    neighbors). Same result as searching everything in full color, but ~10× faster (owner 09.10.2026: CPU spikes
+    while the macro collects; before ~240 ms per search at 2560 px)."""
+    small = cv2.cvtColor(cv2.resize(area, None, fx=0.5, fy=0.5, interpolation=cv2.INTER_AREA), cv2.COLOR_BGR2GRAY)
+    gray = cv2.cvtColor(tpl, cv2.COLOR_BGR2GRAY)
+    coarse = []
+    for s in WIDE_SCALES:
+        t = cv2.resize(gray, None, fx=0.5 * s, fy=0.5 * s, interpolation=cv2.INTER_AREA)
+        if t.shape[0] < 6 or small.shape[0] < t.shape[0] or small.shape[1] < t.shape[1]:
+            continue
+        _a, score, _b, loc = cv2.minMaxLoc(cv2.matchTemplate(small, t, cv2.TM_CCOEFF_NORMED))
+        coarse.append((score, s, loc))
+    best = (0.0, 1.0, (0, 0), tpl.shape[:2])
+    if not coarse:
+        return best
+    coarse.sort(reverse=True)
+    checked = set()
+    for _score, s0, (cx, cy) in coarse[:2]:              # the two best coarse candidates
+        i = WIDE_SCALES.index(s0)
+        for s in WIDE_SCALES[max(0, i - 1):i + 2]:
+            if (s, cx, cy) in checked:
+                continue
+            checked.add((s, cx, cy))
+            t = _scaled(tpl, s)
+            m = 6 + int(0.15 * t.shape[1])               # search margin around the coarse hit (full pixels)
+            x0, y0 = max(0, 2 * cx - m), max(0, 2 * cy - m)
+            win = area[y0:min(area.shape[0], 2 * cy + t.shape[0] + m), x0:min(area.shape[1], 2 * cx + t.shape[1] + m)]
+            if win.shape[0] < t.shape[0] or win.shape[1] < t.shape[1]:
+                continue
+            _a, score, _b, (lx, ly) = cv2.minMaxLoc(cv2.matchTemplate(win, t, cv2.TM_CCOEFF_NORMED))
+            if score > best[0]:
+                best = (score, s, (x0 + lx, y0 + ly), t.shape[:2])
+    return best
+
+
 
 @dataclass
 class Row:
@@ -102,8 +142,10 @@ class MenuFrame:
         self.x_size = (2 * r / w * (x1 - x0), 2 * r / h * (y1 - y0))
         self.base_title = read_title(image, ocr) if ocr is not None else ""
 
-    def state(self, frame: np.ndarray, ocr) -> Optional[tuple[list[float], str, tuple[float, float]]]:
-        """(position of the menu, title, center of the X) – or None if no menu is open in the standard frame."""
+    def state(self, frame: np.ndarray, ocr, wide: bool = True) -> Optional[tuple[list[float], str, tuple[float, float]]]:
+        """(position of the menu, title, center of the X) – or None if no menu is open in the standard frame.
+        wide=False: only the standard frame (raid windows) – the search for smaller windows at 8 sizes costs ~240 ms
+        at 2560 px and is skipped (background check in the lobby every 3 s, owner 09.10.2026: CPU spikes)."""
         fh, fw = frame.shape[:2]
         tpl = _scaled(self.x_tpl, fw / self.window_w)
         ex, ey = int(self.x_at[0] * fw), int(self.x_at[1] * fh)
@@ -114,7 +156,7 @@ class MenuFrame:
             return None
         _a, score, _b, (lx, ly) = cv2.minMaxLoc(cv2.matchTemplate(region, tpl, cv2.TM_CCOEFF_NORMED))
         if score < X_HIT:
-            return self._state_wide(frame, ocr, tpl)
+            return self._state_wide(frame, ocr, tpl) if wide else None
         dx, dy = (rx + lx - ex) / fw, (ry + ly - ey) / fh
         x0, y0, x1, y1 = self.roi
         roi = [min(1.0, max(0.0, v)) for v in (x0 + dx, y0 + dy, x1 + dx, y1 + dy)]
@@ -128,15 +170,7 @@ class MenuFrame:
         fh, fw = frame.shape[:2]
         ax0, ay0 = int(X_WIDE[0] * fw), int(X_WIDE[1] * fh)
         area = frame[ay0:int(X_WIDE[3] * fh), ax0:int(X_WIDE[2] * fw)]
-        best = (0.0, 1.0, (0, 0), tpl.shape[:2])
-        for s in (0.8, 0.85, 0.9, 0.95, 1.0, 1.1, 1.2, 1.3):   # smaller menus (Mana Contract) … guild (1.2×)
-            t = _scaled(tpl, s)
-            if area.shape[0] < t.shape[0] or area.shape[1] < t.shape[1]:
-                continue
-            _a, score, _b, loc = cv2.minMaxLoc(cv2.matchTemplate(area, t, cv2.TM_CCOEFF_NORMED))
-            if score > best[0]:
-                best = (score, s, loc, t.shape[:2])
-        score, s, (lx, ly), (th, tw) = best
+        score, s, (lx, ly), (th, tw) = _wide_x_search(area, tpl)
         if score < X_WIDE_SOFT:
             return None                                   # just below (bright background behind the X, e.g.
         weak = score < X_WIDE_HIT                         # Mana Contract in a raid): only valid with a readable title
