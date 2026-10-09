@@ -1,4 +1,4 @@
-"""Discord-Webhook-Versand in eigenem Thread (blockiert nie die Erkennung)."""
+"""Sending to the Discord webhook in its own thread (never blocks the recognition)."""
 from __future__ import annotations
 
 import hashlib
@@ -20,7 +20,7 @@ log = logging.getLogger("discord")
 
 
 def _hook_id(url: str) -> str:
-    """Kurzer Fingerabdruck des Webhooks (anderer Webhook = neuer Beitrag), ohne die URL selbst zu speichern."""
+    """Short fingerprint of the webhook (other webhook = new post), without storing the URL itself."""
     return hashlib.sha256(url.encode("utf-8")).hexdigest()[:12]
 
 
@@ -32,7 +32,7 @@ class DiscordSender(threading.Thread):
 
     def submit(self, payload: dict, files: Optional[list] = None,
                on_done: Optional[Callable[[], None]] = None, daily: bool = False) -> None:
-        """daily=True: mit Forum-Webhook in den Beitrag des Tages (sonst wie immer in den Hauptkanal)."""
+        """daily=True: with a forum webhook into the post of the day (otherwise as always into the main channel)."""
         try:
             self._queue.put_nowait((payload, files or [], on_done, daily))
         except queue.Full:
@@ -57,9 +57,9 @@ class DiscordSender(threading.Thread):
                 try:
                     on_done()
                 except Exception:
-                    log.exception("Rückruf nach dem Senden fehlgeschlagen")
+                    log.exception("Callback after sending failed")
 
-    # ------------------------------------------------------------ Forum: ein Beitrag pro Tag
+    # ------------------------------------------------------------ Forum: one post per day
     @staticmethod
     def _thread_file():
         return app_paths.data_dir() / "forum_thread.json"
@@ -73,15 +73,15 @@ class DiscordSender(threading.Thread):
         return str(data["id"]) if same and data.get("id") else None
 
     def send_daily(self, payload: dict, files: Optional[list] = None) -> tuple[bool, str]:
-        """Erste Meldung des Tages eröffnet einen Forum-Beitrag „Raids · TT.MM.JJJJ“, alle weiteren landen darin.
-        Wurde der Beitrag gelöscht, wird ein neuer angelegt."""
+        """The first message of the day opens a forum post “Raids · DD.MM.YYYY”, all others go into it.
+                If the post was deleted, a new one is created."""
         url = self._get().forum_webhook_url.rstrip("/")
         thread = self._today_thread(url)
         if thread:
             ok, info, _data = self._post(f"{url}?thread_id={thread}", payload, files)
             if ok or not info.startswith(("HTTP 404", "HTTP 400")):
                 return ok, info
-            log.info("Forum-Beitrag des Tages nicht mehr verfügbar (%s) – lege neuen an.", info)
+            log.info("Forum post of the day no longer available (%s) – creating a new one.", info)
         day = date.today()
         payload = dict(payload, thread_name=tr("Raids · {date}", date=day.strftime("%d.%m.%Y")))
         ok, info, data = self._post(f"{url}?wait=true", payload, files)
@@ -90,7 +90,7 @@ class DiscordSender(threading.Thread):
                 self._thread_file().write_text(json.dumps({"day": day.isoformat(), "id": str(data["channel_id"]),
                                                            "hook": _hook_id(url)}), encoding="utf-8")
             except OSError:
-                log.warning("Forum-Beitrag konnte nicht gemerkt werden.")
+                log.warning("Could not remember the forum post.")
         return ok, info
 
     def send_now(self, payload: dict, files: Optional[list] = None, retries: int = 3) -> tuple[bool, str]:
@@ -115,7 +115,7 @@ class DiscordSender(threading.Thread):
                     except ValueError:
                         data = None
                     return True, "OK", data
-                if resp.status_code == 429:                 # Rate-Limit
+                if resp.status_code == 429:                 # rate limit
                     try:
                         wait = float(resp.json().get("retry_after", 2))
                     except ValueError:
@@ -124,7 +124,7 @@ class DiscordSender(threading.Thread):
                     message = "Rate-Limit"
                     continue
                 message = f"HTTP {resp.status_code}: {resp.text[:150]}"
-                if 400 <= resp.status_code < 500:           # falsche URL o. Ä.: nicht wiederholen
+                if 400 <= resp.status_code < 500:           # wrong URL or similar: don't retry
                     return False, message, None
             except requests.RequestException as exc:
                 message = str(exc)

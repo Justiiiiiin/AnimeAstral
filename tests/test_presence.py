@@ -99,9 +99,9 @@ class PresenceTests(unittest.TestCase):
         up = presence.PresenceUpdater(lambda: s, lambda: snap, factory=FakeRpc, icon_fetcher=lambda gid: ICON)
         up.tick(1000.0)
         self.assertTrue(up.status_ok)
-        up.tick(1005.0)                                       # unverändert
+        up.tick(1005.0)                                       # unchanged
         snap["wave"] = 15
-        up.tick(1008.0)                                       # geändert, aber < 15 s seit letztem Update -> wartet
+        up.tick(1008.0)                                       # changed, but < 15 s since the last update -> waits
         up.tick(1020.0)
         rpc = FakeRpc.created[0]
         self.assertEqual([u["details"] for u in rpc.updates],
@@ -131,7 +131,7 @@ class PresenceTests(unittest.TestCase):
         up2.tick(0.0)
         self.assertIn("Discord-Desktop-App", up2.status_text)
         self.assertFalse(up2.status_ok)
-        up2.tick(5.0)                                         # Wartezeit: kein neuer Versuch
+        up2.tick(5.0)                                         # waiting time: no new attempt
         self.assertIsNone(up2._rpc)
 
 

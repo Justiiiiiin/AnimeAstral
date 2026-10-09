@@ -1,8 +1,8 @@
-"""Karte „Automatisch abholen“ (Startseite, rechts ganz unten – Quests haben darüber Platz, ohne dass die Karte
-springt): Fixer Gigs und Gilden-Missionen als Schalter, „Progressions: Auto All“ als Knopf für einmal
-(Wunsch des Eigentümers 08.10.2026). Das Makro schiebt Fälliges ein: zwischen den Schritten der Farm-Routine,
-während ein Raid farmt oder – läuft nichts – über den Takt dieser Karte. Zeiten: Gigs je Karte gelesen
-(20 Min. / 1 Std. / 3 Std., zufällig), Gilde einmal am Tag; beides überdauert einen Neustart."""
+"""Card “Auto collect” (start page, bottom right – the quests have room above it without the card jumping):
+Fixer Gigs and guild missions as switches, “Progressions: Auto All” as a one-shot button (owner's wish
+08.10.2026). The macro slots in whatever is due: between the steps of the farm routine, while a raid is farming
+or – if nothing runs – via this card's timer. Times: gigs read per card (20 min / 1 h / 3 h, random), guild once a
+day; both survive a restart."""
 from __future__ import annotations
 
 import time
@@ -17,12 +17,12 @@ from .widgets import Card, ToggleSwitch, label
 
 
 def _shown(widget) -> bool:
-    """Nur zeichnen, wenn man es sieht (Fenster offen, nicht minimiert) – spart Last im Hintergrund."""
+    """Only draw when visible (window open, not minimized) – saves load in the background."""
     return widget.isVisible() and not widget.window().isMinimized()
 
 
 class _ClickLabel(QLabel):
-    """Beschriftung eines Schalters: ein Klick darauf schaltet um (wie der Text neben einem Häkchen)."""
+    """Label of a switch: a click on it toggles (like the text next to a checkbox)."""
 
     def __init__(self, text: str, switch) -> None:
         super().__init__(text)
@@ -56,7 +56,7 @@ class ExtrasCard(Card):
         self.gigs_state = label("", "small")
         self.guild_state = label("", "small")
         grid.addWidget(self.gigs, 0, 0)
-        grid.addWidget(_ClickLabel(tr("Fixer Gigs (W21)"), self.gigs), 0, 1)   # Text klickbar wie bei Häkchen
+        grid.addWidget(_ClickLabel(tr("Fixer Gigs (W21)"), self.gigs), 0, 1)   # text clickable like next to a checkbox
         grid.addWidget(self.gigs_state, 0, 2)
         grid.addWidget(self.guild, 1, 0)
         grid.addWidget(_ClickLabel(tr("Guild missions"), self.guild), 1, 1)
@@ -75,7 +75,7 @@ class ExtrasCard(Card):
         self.timer.setInterval(15_000)
         self.timer.timeout.connect(self._tick)
         self.timer.start()
-        self.fast = QTimer(self)                          # Anzeige (Knopf/Zeiten) öfter als der Takt
+        self.fast = QTimer(self)                          # display (button/times) more often than the tick
         self.fast.setInterval(1000)
         self.fast.timeout.connect(lambda: self._update_state() if _shown(self) else None)
         self.fast.start()
@@ -85,7 +85,7 @@ class ExtrasCard(Card):
         s = self.main.engine.settings
         s.auto_gigs, s.auto_guild = self.gigs.isChecked(), self.guild.isChecked()
         try:
-            s.save()                                      # sofort, ohne Speichern-Leiste
+            s.save()                                      # right away, without the save bar
         except OSError as exc:
             QMessageBox.critical(self, tr("Save"), tr("Could not save: {error}", error=exc))
         self._update_state()
@@ -100,7 +100,7 @@ class ExtrasCard(Card):
         on = self.macro.enabled
         nav = self.macro.navigator
         if on and nav is None and (self.gigs.isChecked() or self.guild.isChecked()):
-            nav = self.macro.ensure_navigator()           # gemerkte Zeiten laden (überdauern Neustarts)
+            nav = self.macro.ensure_navigator()           # load remembered times (survive restarts)
         now = time.time()
         for box, state, nxt in ((self.gigs, self.gigs_state, nav.gigs_next if nav else 0.0),
                                 (self.guild, self.guild_state, nav.guild_next if nav else 0.0)):
@@ -118,7 +118,7 @@ class ExtrasCard(Card):
         self.prog.setEnabled(on and not self.macro.busy)
 
     def _tick(self) -> None:
-        """Läuft gerade nichts im Makro: Fälliges selbst anstoßen (nur mit „Makro erlauben“ und offenem Roblox)."""
+        """If the macro isn't doing anything: start what is due (only with “Allow macro” and Roblox open)."""
         self._update_state()
         if not (self.gigs.isChecked() or self.guild.isChecked()) or not self.macro.enabled:
             return
@@ -126,5 +126,5 @@ class ExtrasCard(Card):
         if nav.busy or not nav.due_extras():
             return
         if winapi.find_window(self.main.engine.settings.window_title) is None:
-            return                                        # Roblox nicht offen: still warten
+            return                                        # Roblox not open: wait quietly
         nav.run_extras()

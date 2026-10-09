@@ -1,7 +1,7 @@
-"""Startseite: Kennzahlen, links Farm-Routine (+ Makro-Protokoll auf Wunsch), rechts Live-Erkennung, Quests
-und „Automatisch abholen“.
-Start/Stopp, Pause und „Status neu senden“ sitzen in der Kopfzeile des Hauptfensters (MainWindow._mount_controls);
-die Ereignisse stehen als Debug-Karte in den Einstellungen (ui/events_card.py)."""
+"""Start page: metrics, left the farm routine (+ macro log if wanted), right live recognition, quests
+and “Auto collect”.
+Start/stop, pause and “Resend status” sit in the header of the main window (MainWindow._mount_controls);
+the events are a debug card in the settings (ui/events_card.py)."""
 from __future__ import annotations
 
 import time
@@ -16,7 +16,7 @@ from .widgets import Card, ComboBox, EmptyState, QuestRow, StatCard, discord_ico
 
 
 def wave_token(wave: int, best: int) -> str:
-    """Farbe der Wellenzahl je nach Nähe zur Bestwelle: neuer Rekord (gold), knapp davor (türkis), gut (violett)."""
+    """Color of the wave number by closeness to the best wave: new record (gold), just below (teal), good (violet)."""
     if best <= 0:
         return ""
     if wave >= best:
@@ -41,8 +41,8 @@ class MonitorPage(QWidget):
         theme.track_margins(root, 28, 24, 28, 24)
         theme.track_spacing(root, 16)
 
-        # Steuerung: in der Kopfzeile des Hauptfensters (hier nur erzeugt, Zustand pflegt refresh())
-        self.btn_status = QPushButton()                     # nur Symbol (Kopfzeile ist schmal)
+        # controls: in the header of the main window (only created here, refresh() keeps the state)
+        self.btn_status = QPushButton()                     # icon only (the header is narrow)
         self.btn_status.setIcon(discord_icon())
         theme.track(self.btn_status, lambda o, f: o.setIconSize(QSize(round(20 * f), round(20 * f))))
         self.btn_status.setToolTip(tr("Resend status: the status message in Discord is deleted and sent again at "
@@ -54,11 +54,11 @@ class MonitorPage(QWidget):
         self.btn_start = QPushButton()
         self.btn_start.setToolTip(tr("Start"))
         for btn in (self.btn_start, self.btn_pause, self.btn_status):
-            theme.track_fixed_width(btn, 40)                # nur Symbole: ▶/■, ❚❚, Discord
+            theme.track_fixed_width(btn, 40)                # icons only: ▶/■, ❚❚, Discord
             theme.track(btn, lambda o, f: o.setIconSize(QSize(round(18 * f), round(18 * f))))
         self.btn_start.clicked.connect(self.main.toggle_monitoring)
 
-        # Kennzahlen
+        # metrics
         kpis = QHBoxLayout()
         theme.track_spacing(kpis, 12)
         self.k_total = StatCard(tr("Attempts total"))
@@ -70,9 +70,9 @@ class MonitorPage(QWidget):
             kpis.addWidget(card, 1)
         root.addLayout(kpis)
 
-        # Mitte (Wunsch des Eigentümers 08.10.2026): links die Farm-Routine (+ Makro-Protokoll, wenn unter
-        # Einstellungen → Makro gewünscht), rechts Live-Erkennung, Quests und ganz unten „Automatisch abholen“ –
-        # die Quests haben darüber Platz, ohne dass die Abhol-Karte springt
+        # middle (owner's wish 08.10.2026): left the farm routine (+ macro log if wanted under
+        # Settings → Macro), right live recognition, quests and at the very bottom “Auto collect” –
+        # the quests have room above it without the collect card jumping
         mid = QHBoxLayout()
         theme.track_spacing(mid, 16)
         left = QVBoxLayout()
@@ -90,7 +90,7 @@ class MonitorPage(QWidget):
         self.log_card.setVisible(bool(main.engine.settings.macro_log_home))
         self.extras = ExtrasCard(main)
 
-        live = Card(tr("Live detection"))                 # ohne Vorschaubild: Zahl, Balken, Kurzinfos
+        live = Card(tr("Live detection"))                 # without a preview image: number, bar, short info
         self.wave = label("–", "wave")
         self.wave.setAlignment(Qt.AlignmentFlag.AlignCenter)
         live.body.addWidget(self.wave)
@@ -105,8 +105,8 @@ class MonitorPage(QWidget):
         live.body.addLayout(info)
         self.status_line = label("", "muted", wrap=True)
         live.body.addWidget(self.status_line)
-        raid_row = QHBoxLayout()                          # Raid zum Selbst-Wählen (wenn man selbst spielt);
-        theme.track_spacing(raid_row, 6)                  # Makro-Raids setzen ihn selbst
+        raid_row = QHBoxLayout()                          # raid to choose yourself (when playing yourself);
+        theme.track_spacing(raid_row, 6)                  # macro raids set it themselves
         raid_row.addWidget(label(tr("Raid:"), "small"))
         self.raid_pick = ComboBox()
         self.raid_pick.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
@@ -115,7 +115,7 @@ class MonitorPage(QWidget):
                                      "itself – if you play yourself, pick it here."))
         self.raid_pick.activated.connect(lambda _i: self.main.select_raid(self.raid_pick.currentData() or ""))
         raid_row.addWidget(self.raid_pick, 1)
-        self.i_raid = label("", "small", wrap=True)       # Wand des gewählten Raids
+        self.i_raid = label("", "small", wrap=True)       # wall of the chosen raid
         self.i_proc = label("", "small", wrap=True)
         self.i_self = label("", "small", wrap=True)
         live.body.addLayout(raid_row)
@@ -130,7 +130,7 @@ class MonitorPage(QWidget):
         try:
             import psutil
             self._self_proc = psutil.Process()
-            self._self_proc.cpu_percent(None)          # Messung beginnen
+            self._self_proc.cpu_percent(None)          # start measuring
             self._cpu_count = psutil.cpu_count() or 1
         except Exception:
             self._self_proc = None
@@ -155,7 +155,7 @@ class MonitorPage(QWidget):
         self.log_card.setVisible(on)
 
     def recolor(self) -> None:
-        """Nach Design-/Farbwechsel: Wellenzahl und Start-Symbol in den neuen Farben."""
+        """After a design/color change: wave number and start icon in the new colors."""
         self.log_card.view.reload()
         self._wave_color = None
         self._was_running = None
@@ -163,7 +163,7 @@ class MonitorPage(QWidget):
         self.btn_status.setIcon(discord_icon())
 
     def reload_raids(self) -> None:
-        """Raid-Auswahl (Live-Karte) mit den Raids aus Einstellungen → Roblox füllen, aktuellen Raid zeigen."""
+        """Fill the raid selection (live card) with the raids from Settings → Roblox, show the current raid."""
         current = self.engine.settings.current_raid or None
         names = self.engine.profile_store.names()
         self.raid_pick.blockSignals(True)
@@ -176,14 +176,14 @@ class MonitorPage(QWidget):
         self.raid_pick.setCurrentIndex(max(0, self.raid_pick.findData(current)) if current else 0)
         self.raid_pick.blockSignals(False)
 
-    # ---------------------------------------------------------------- Aktualisieren
+    # ---------------------------------------------------------------- Refresh
     def refresh_controls(self) -> None:
-        """Start/Stopp und Pause in der Kopfzeile – läuft auf jeder Seite (MainWindow._tick), nicht nur hier."""
+        """Start/stop and pause in the header – runs on every page (MainWindow._tick), not only here."""
         st = self.engine.state
         running = st.running
         if running != self._was_running:
             self._was_running = running
-            # normaler Knopf-Rahmen (der Stil „primary“ greift in der Kopfzeile nicht), Symbol gezeichnet + gefärbt
+            # normal button frame (the “primary” style doesn't apply in the header), icon drawn + colored
             self.btn_start.setIcon(media_icon("stop", "danger") if running else media_icon("play", "accent"))
             self.btn_start.setToolTip(tr("Stop monitoring") if running else tr("Start"))
             self._paused = None
@@ -210,7 +210,7 @@ class MonitorPage(QWidget):
         if st.wave_value is not None:
             self.wave.setText(messages.fmt_wave(st.wave_value, st.wave_total))
             self.wave_bar.setValue(int(st.wave_value * 100 / st.wave_total) if st.wave_total else 0)
-            self.wave_bar.setVisible(bool(st.wave_total))      # ohne Gesamtzahl kein Fortschritt
+            self.wave_bar.setVisible(bool(st.wave_total))      # without a total there is no progress
             token = wave_token(st.wave_value, self._best)
         else:
             self.wave.setText("–")
@@ -218,7 +218,7 @@ class MonitorPage(QWidget):
             self.wave_bar.setVisible(True)
             token = ""
         color = theme.color(token) if token else ""
-        if color != self._wave_color:                   # nur bei Wechsel neu setzen (Stylesheet ist teuer)
+        if color != self._wave_color:                   # only set on change (stylesheets are expensive)
             self._wave_color = color
             self.wave.setStyleSheet(f"color: {color};" if color else "")
             self.wave.setToolTip(tr("Best wave: {wave}", wave=self._best) if self._best else "")
@@ -231,7 +231,7 @@ class MonitorPage(QWidget):
         if st.profile and now >= self._next_wall:
             self._next_wall = now + 5.0
             self._wall = self.engine.stats.wall(st.profile)
-        if now >= self._next_best:                      # Bestwelle des gewählten Raids (sonst gesamt), alle 5 s
+        if now >= self._next_best:                      # best wave of the chosen raid (otherwise overall), every 5 s
             self._next_best = now + 5.0
             self._best = self.engine.stats.best_wave(st.profile or None)
         if st.profile and self._wall:
@@ -247,7 +247,7 @@ class MonitorPage(QWidget):
             cpu = f"{st.roblox_cpu:.0f} % CPU" if st.roblox_cpu is not None else "–"
             self.i_proc.setText(tr("Roblox: running · {ram} · {cpu}", ram=ram, cpu=cpu))
         if self._self_proc is not None and now >= self._next_self:
-            self._next_self = now + 3.0                 # eigene Auslastung (gleich gemessen wie bei Roblox)
+            self._next_self = now + 3.0                 # own load (measured the same way as for Roblox)
             try:
                 ram_mb = self._self_proc.memory_info().rss / 1048576
                 cpu = self._self_proc.cpu_percent(None) / self._cpu_count
@@ -270,7 +270,7 @@ class MonitorPage(QWidget):
         for row, quest in zip(self._quest_rows, quests):
             row.set_quest(quest)
 
-    # Einstellungen werden auf dieser Seite nicht bearbeitet
+    # settings are not edited on this page
     def load(self, settings) -> None:
         self.reload_raids()
 

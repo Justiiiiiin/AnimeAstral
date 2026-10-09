@@ -1,4 +1,4 @@
-"""Kleine Updates: Paketwahl, Passt-Prüfung, Entpacken mit Prüfsummen, Austausch-Skript (nur Windows)."""
+"""Small updates: package choice, fit check, unpacking with checksums, swap script (Windows only)."""
 import hashlib
 import json
 import shutil
@@ -72,7 +72,7 @@ class PatchTests(unittest.TestCase):
         evil = remote_manifest(contains=("App.exe", "_internal/neu.pyd", "../boese.exe"))
         evil["files"]["../boese.exe"] = sha(b"x")
         self.assertIsNone(updater.plan_patch(self.local, evil, self.app))
-        (self.app / "tesseract/t.dll").unlink()                 # unveränderte Datei fehlt -> komplett installieren
+        (self.app / "tesseract/t.dll").unlink()                 # unchanged file missing -> full install
         self.assertIsNone(updater.plan_patch(self.local, remote_manifest(), self.app))
 
     def _zip(self, members: dict) -> Path:
@@ -102,19 +102,19 @@ class PatchTests(unittest.TestCase):
                      "apply/plan.json", "apply/apply.ps1", "apply/apply.log"):
             (folder / name).write_bytes(b"x")
         self.assertEqual(updater.cleanup_downloads(folder), 5)
-        self.assertEqual(sorted(p.name for p in folder.rglob("*") if p.is_file()), ["apply.log"])   # Protokoll bleibt
+        self.assertEqual(sorted(p.name for p in folder.rglob("*") if p.is_file()), ["apply.log"])   # log stays
         self.assertFalse((folder / "apply" / "staging").exists())
 
-    @unittest.skipUnless(sys.platform == "win32", "Austausch-Skript nur unter Windows")
+    @unittest.skipUnless(sys.platform == "win32", "swap script only on Windows")
     def test_apply_script_replaces_and_rolls_back(self):
         plan = updater.plan_patch(self.local, remote_manifest(), self.app)
         zip_path = self._zip({"App.exe": NEW["App.exe"], "_internal/neu.pyd": NEW["_internal/neu.pyd"]})
         done = subprocess.Popen([sys.executable, "-c", "pass"])
-        done.wait()                                              # „Programm“ ist schon beendet
+        done.wait()                                              # “program” has already ended
 
         def run(work: Path) -> None:
             plan_file = updater.launch_patch(zip_path, plan, relaunch=False, folder=self.app, work=work, pid=done.pid)
-            for _ in range(200):                                 # Skript läuft im Hintergrund
+            for _ in range(200):                                 # script runs in the background
                 if (work / "apply.log").exists() and not (work / "staging").exists():
                     break
                 time.sleep(0.1)
@@ -127,11 +127,11 @@ class PatchTests(unittest.TestCase):
         self.assertEqual(json.loads((self.app / "files.json").read_text())["version"], "0.6.0")
         self.assertIn("installiert", (self.root / "ok" / "apply.log").read_text(encoding="utf-8-sig"))
 
-        # Fehlerfall: Zielordner eines neuen Unterordners ist eine Datei -> Kopieren scheitert -> alter Stand zurück
+        # error case: the target of a new subfolder is a file -> copying fails -> old state restored
         self.local = make_app(self.app, OLD)
         plan = updater.plan_patch(self.local, remote_manifest(), self.app)
         (self.app / "_internal").rename(self.app / "_internal_tmp")
-        (self.app / "_internal").write_bytes(b"blockiert")       # „_internal“ ist jetzt eine Datei
+        (self.app / "_internal").write_bytes(b"blockiert")       # “_internal” is now a file
         run(self.root / "bad")
         self.assertIn("FEHLER", (self.root / "bad" / "apply.log").read_text(encoding="utf-8-sig"))
         self.assertEqual((self.app / "App.exe").read_bytes(), OLD["App.exe"])

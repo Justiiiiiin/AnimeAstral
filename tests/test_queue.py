@@ -1,4 +1,4 @@
-"""Makro-Warteschlange: wann verlassen, Gigs-Zeiten, Pet-Raster aus Namensschildern – ohne Roblox/OCR."""
+"""Macro queue: when to leave, gig times, pet grid from name tags – without Roblox/OCR."""
 import unittest
 
 import _env  # noqa: F401
@@ -12,10 +12,10 @@ class QueueTest(unittest.TestCase):
     def test_leave_only_before_another_raid(self):
         tasks = [{"kind": "raid", "target": "Alvarez War"}, {"kind": "autoroll", "target": "Pets"},
                  {"kind": "raid", "target": "Holy Grail War"}, {"kind": "raid", "target": "Holy Grail War"}]
-        self.assertFalse(leave_before(tasks[0], next_task(tasks, 0, False)))   # danach Gacha: drinbleiben
-        self.assertFalse(leave_before(tasks[2], next_task(tasks, 2, False)))   # gleicher Raid folgt
-        self.assertFalse(leave_before(tasks[3], next_task(tasks, 3, False)))   # Ende der Schlange
-        self.assertTrue(leave_before(tasks[3], next_task(tasks, 3, True)))     # Schleife: Alvarez War folgt
+        self.assertFalse(leave_before(tasks[0], next_task(tasks, 0, False)))   # gacha next: stay in
+        self.assertFalse(leave_before(tasks[2], next_task(tasks, 2, False)))   # same raid follows
+        self.assertFalse(leave_before(tasks[3], next_task(tasks, 3, False)))   # end of the queue
+        self.assertTrue(leave_before(tasks[3], next_task(tasks, 3, True)))     # loop: Alvarez War follows
         self.assertTrue(leave_before({"kind": "raid", "target": "A"}, {"kind": "raid_join", "target": "B"}))
 
     def test_parse_timer(self):
@@ -25,7 +25,7 @@ class QueueTest(unittest.TestCase):
         self.assertIsNone(parse_timer("12:75"))
 
     def test_gig_cards(self):
-        # Wörter wie aus dem echten Fixer-Gigs-Fenster (Big Job working, Quick ready, Big Job working)
+        # words as from the real Fixer Gigs window (Big Job working, Quick ready, Big Job working)
         words = [("NEW", [0.338, 0.277, 0.379, 0.298]), ("1:38:43", [0.452, 0.277, 0.51, 0.298]),
                  ("BIS", [0.331, 0.373, 0.354, 0.393]), ("JOB", [0.36, 0.373, 0.389, 0.393]),
                  ("3H", [0.409, 0.373, 0.428, 0.393]), ("QUICK", [0.54, 0.373, 0.586, 0.393]),
@@ -38,20 +38,20 @@ class QueueTest(unittest.TestCase):
         self.assertEqual([c["duration"] for c in cards], [10800, 1200, 10800])
         self.assertEqual([c["state"] for c in cards], ["working", "ready", "working"])
         self.assertIsNotNone(cards[1]["claim"])
-        self.assertIsNone(cards[0]["claim"])                 # „FINISH NOW“ kostet Währung – nie ein Knopf
+        self.assertIsNone(cards[0]["claim"])                 # “FINISH NOW” costs currency – never a button
         box = gig_timer_box(cards[0])
-        self.assertLess(box[0], 0.346)                        # Zeit links von „left“ liegt im Bereich
+        self.assertLess(box[0], 0.346)                        # time to the left of “left” is inside the area
         self.assertLess(box[2], 0.393)
-        self.assertEqual(gig_next_due(cards, {0: 5798, 2: 5822}), 0)          # eine Karte ist fertig
+        self.assertEqual(gig_next_due(cards, {0: 5798, 2: 5822}), 0)          # one card is done
         self.assertEqual(gig_next_due(cards[:1] + cards[2:], {0: 5798, 1: 5822}), 5798)
-        self.assertEqual(gig_next_due(cards[:1], {0: 99999}), 1200)       # unplausibel: verworfen, bald nachsehen
-        self.assertEqual(gig_next_due(cards[:1], {}), 1200)   # Zeit unlesbar: in 20 Min. nachsehen
+        self.assertEqual(gig_next_due(cards[:1], {0: 99999}), 1200)       # implausible: discarded, check again soon
+        self.assertEqual(gig_next_due(cards[:1], {}), 1200)   # time unreadable: check again in 20 min
 
     def test_user_moved(self):
         rect = (0, 0, 1920, 1080)
-        self.assertFalse(user_moved((500, 300), (510, 305), rect))       # kleine Abweichung: kein Abbruch
-        self.assertIsNone(user_moved((500, 300), (960, 540), rect))      # Spiel setzt Zeiger zur Mitte
-        self.assertTrue(user_moved((500, 300), (700, 300), rect))        # echte Bewegung
+        self.assertFalse(user_moved((500, 300), (510, 305), rect))       # small deviation: no abort
+        self.assertIsNone(user_moved((500, 300), (960, 540), rect))      # the game puts the cursor in the middle
+        self.assertTrue(user_moved((500, 300), (700, 300), rect))        # real movement
         self.assertTrue(user_moved((500, 300), (960, 540), None))
 
     def test_fmt_wait(self):
@@ -61,29 +61,29 @@ class QueueTest(unittest.TestCase):
         self.assertEqual(fmt_wait(24 * 3600), "24 h")
 
     def test_pet_grid_from_labels(self):
-        # 3 Zeilen × 8 Spalten Namensschilder (Lage wie im echten Pets-Fenster), in der letzten Zeile 5 Pets
+        # 3 rows × 8 columns of name tags (positions as in the real pets window), 5 pets in the last row
         words = []
         for r, y in enumerate((0.45, 0.63, 0.82)):
             for c in range(8 if r < 2 else 5):
                 x = 0.142 + c * 0.102
                 words.append(("Maine", [x - 0.02, y - 0.009, x + 0.02, y + 0.009]))
-        frame = np.zeros((867, 1525, 3), np.uint8)                       # leere Felder: glatt
+        frame = np.zeros((867, 1525, 3), np.uint8)                       # empty slots: smooth
         tiles = pet_tiles(frame, [0.06, 0.3, 0.94, 0.86], words)
         self.assertEqual(len(tiles), 21)
         last = tiles[-1]
         self.assertAlmostEqual((last[0] + last[2]) / 2, 0.142 + 4 * 0.102, places=3)
-        self.assertLess(last[1], 0.82)                                   # Kachel liegt über ihrem Namen
+        self.assertLess(last[1], 0.82)                                   # the tile sits above its name
 
 
     def test_hud_from_labels(self):
-        # Beschriftungen wie bei GUI 100 % gelesen (Lesefehler „OUESTS“); Symbol liegt über dem Namen
+        # labels as read at GUI 100 % (misread “OUESTS”); the icon sits above the name
         words = [("TELEPORT", [0.122, 0.508, 0.171, 0.52]), ("Equip", [0.535, 0.882, 0.556, 0.894]),
                  ("Best", [0.558, 0.882, 0.582, 0.894]), ("G.", [0.066, 0.983, 0.075, 0.995]),
                  ("OUESTS", [0.077, 0.983, 0.1, 0.995]), ("Guild", [0.015, 0.889, 0.038, 0.9])]
         found = hud_locate(words)
         self.assertEqual(sorted(found), ["Equip Best", "G. Quests", "Guild", "Teleporter"])
         tele = found["Teleporter"]
-        self.assertLess(tele[3], 0.509)                       # Symbol oberhalb der Beschriftung
+        self.assertLess(tele[3], 0.509)                       # icon above the label
         self.assertLess(found["Equip Best"][0], 0.536)
 
 
@@ -92,21 +92,21 @@ class QueueTest(unittest.TestCase):
         nav = Navigator(lambda: None, "Roblox", lambda: None, lambda _t: None)
         nav.forbidden = [[0.2, 0.75, 0.36, 0.9]]
         with self.assertRaises(Stop):
-            nav._guard((0.3, 0.8))                       # „Leave“ unten links: nie anfahren
-        nav._guard((0.5, 0.5))                           # anderswo: erlaubt
-        nav.forbidden = []                               # außerhalb von Gilde/Erkunden keine Sperrzonen:
-        nav._guard((0.5, 0.11))                          # Raid-„LEAVE!“ oben in der Mitte bleibt drückbar
+            nav._guard((0.3, 0.8))                       # “Leave” at the bottom left: never go there
+        nav._guard((0.5, 0.5))                           # elsewhere: allowed
+        nav.forbidden = []                               # outside guild/explore no no-go zones:
+        nav._guard((0.5, 0.11))                          # the raid “LEAVE!” at the top middle stays pressable
         from astral_monitor import knowledge
         zones = knowledge.forbidden_zones([("Leave", [0.265, 0.776, 0.331, 0.805])], [0.16, 0.15, 0.83, 0.88], "Guild")
-        self.assertFalse(knowledge.inside((0.5, 0.11), zones))   # Gilden-Sperre trifft das Raid-LEAVE! nicht
+        self.assertFalse(knowledge.inside((0.5, 0.11), zones))   # the guild block doesn't hit the raid LEAVE!
 
 
     def test_scroll_vs_animation(self):
-        """Scrollen = Inhalt verschiebt sich; laufende Timer/Animationen zählen nicht (Boosts, Equip Best)."""
+        """Scrolling = the content shifts; running timers/animations don't count (Boosts, Equip Best)."""
         from astral_monitor.explorer import scrolled_box
         rng = np.random.default_rng(1)
         img = (rng.random((180, 320)) * 255).astype(np.uint8)
-        img = np.repeat(np.repeat(img[::6, ::6], 6, axis=0), 6, axis=1)[:180, :320]   # grobe Struktur
+        img = np.repeat(np.repeat(img[::6, ::6], 6, axis=0), 6, axis=1)[:180, :320]   # coarse structure
         moved = img.copy()
         moved[50:165] = img[65:180]
         self.assertIsNotNone(scrolled_box(img, moved))
@@ -114,7 +114,7 @@ class QueueTest(unittest.TestCase):
         timer[80:92, 100:200] = 255 - timer[80:92, 100:200]
         self.assertIsNone(scrolled_box(img, timer))
         self.assertIsNone(scrolled_box(img, img))
-        side = img.copy()                                  # seitliche Liste (Swords, Professions)
+        side = img.copy()                                  # sideways list (Swords, Professions)
         side[:, 40:300] = img[:, 60:320]
         self.assertIsNotNone(scrolled_box(img, side))
 

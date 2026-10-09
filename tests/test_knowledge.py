@@ -1,4 +1,4 @@
-"""Erkunden: Fenster-Einordnung (knowledge), lokale Ergänzung der Karte, Symbol-Plätze – ohne Qt/Tesseract/Roblox."""
+"""Explore: window classification (knowledge), local additions to the map, icon slots – without Qt/Tesseract/Roblox."""
 import tempfile
 import unittest
 from pathlib import Path
@@ -11,12 +11,12 @@ from astral_monitor.uimap import UiMap, load_local, save_local
 
 
 def W(*texts):
-    """Wörter mit Dummy-Lage (untereinander)."""
+    """Words with a dummy position (one below the other)."""
     return [(t, [0.4, 0.1 + i * 0.05, 0.5, 0.13 + i * 0.05]) for i, t in enumerate(texts)]
 
 
 class ClassifyTest(unittest.TestCase):
-    """Wortlisten wie an den echten Aufnahmen gelesen (07.10.2026)."""
+    """Word lists as read from the real screenshots (07.10.2026)."""
 
     def test_gacha(self):
         a = knowledge.classify("DOUJUTSU", W("Current:", "Buffs:", "Cost:", "Roll", "Auto", "Roll", "Pity"))
@@ -48,7 +48,7 @@ class ClassifyTest(unittest.TestCase):
         self.assertEqual(knowledge.classify("", W("Open!", "Auto!"), "Pets-Roll (Vorlage)").category, "pets")
 
     def test_real_run_titles(self):
-        """Aus dem ersten echten Erkunden: Quests erwähnen Raids, sind aber Quests."""
+        """From the first real explore run: quests mention raids but are quests."""
         quests = W("Glo", "ests", "AUTO", "CLAIM", "Complete", "MaxTac", "Call", "times", "Join", "Timeless", "Raid")
         a = knowledge.classify("Global Quests", quests)
         self.assertEqual(a.category, "quests")
@@ -57,7 +57,7 @@ class ClassifyTest(unittest.TestCase):
         self.assertEqual(knowledge.classify("Achievements", W("Claim", "Veteran")).category, "achievements")
 
     def test_second_run_titles(self):
-        """Aus dem zweiten Erkunden (08.10.2026): Titel-Wörter nur am Wortanfang, neue Fensterarten."""
+        """From the second explore run (08.10.2026): title words only at the start of a word, new window kinds."""
         cases = {
             "Magecraft Progression": ("progression", W("Craft", "Craft", "Auto", "Roll")),
             "Street cred progression": ("progression", W("Tree", "Token")),
@@ -73,7 +73,7 @@ class ClassifyTest(unittest.TestCase):
             self.assertEqual(knowledge.classify(title, words).category, category, title)
 
     def test_side_tabs_without_leave(self):
-        # Gilde: Reiter links untereinander, „Leave“ ganz unten darf nie gedrückt werden
+        # guild: tabs on the left one below the other, “Leave” at the very bottom must never be pressed
         words = [(n, [0.12, 0.3 + i * 0.08, 0.25, 0.34 + i * 0.08]) for i, n in
                  enumerate(("Home", "Upgrades", "Members", "Missions", "Servers", "Rankings"))]
         words += [("Leave", [0.12, 0.9, 0.25, 0.94]), ("Claim", [0.85, 0.6, 0.92, 0.64]),
@@ -90,16 +90,16 @@ class ClassifyTest(unittest.TestCase):
         self.assertEqual(knowledge.raid_drops(words), ["Bankai Token", "Grail Shard"])
 
     def test_guild_leave_is_never_targeted(self):
-        """Gilde: „Leave“ (auch falsch gelesen als „Leaves“) und die ganze Ecke unten links sind gesperrt."""
+        """Guild: “Leave” (also misread as “Leaves”) and the whole bottom left corner are blocked."""
         roi = [0.161, 0.149, 0.832, 0.876]
         words = [("Home", [0.263, 0.342, 0.316, 0.362]), ("Members", [0.245, 0.445, 0.33, 0.476]),
                  ("Leaves", [0.265, 0.776, 0.331, 0.805]), ("Invite", [0.56, 0.774, 0.6, 0.793])]
         zones = knowledge.forbidden_zones(words, roi, "Guild")
-        self.assertTrue(knowledge.inside((0.298, 0.79), zones))        # auf „Leave“
-        self.assertTrue(knowledge.inside((0.3, 0.83), zones))          # knapp darunter (Rand)
-        self.assertTrue(knowledge.inside((0.2, 0.86), zones))          # Ecke unten links, auch ohne Text
-        self.assertFalse(knowledge.inside((0.29, 0.352), zones))       # „Home“ bleibt frei
-        no_text = knowledge.forbidden_zones([], roi, "Guild")          # Texterkennung hat „Leave“ übersehen
+        self.assertTrue(knowledge.inside((0.298, 0.79), zones))        # on “Leave”
+        self.assertTrue(knowledge.inside((0.3, 0.83), zones))          # just below it (margin)
+        self.assertTrue(knowledge.inside((0.2, 0.86), zones))          # bottom left corner, even without text
+        self.assertFalse(knowledge.inside((0.29, 0.352), zones))       # “Home” stays free
+        no_text = knowledge.forbidden_zones([], roi, "Guild")          # recognition missed “Leave”
         self.assertTrue(knowledge.inside((0.298, 0.79), no_text))
         for word in ("Leave", "LEAVE!", "Leaves", "Leav", "Kick", "Delete", "Pause", "Play", "Unequip"):
             self.assertTrue(knowledge.is_forbidden(word), word)
@@ -129,7 +129,7 @@ class LocalMapTest(unittest.TestCase):
             win = {"name": "W99 Crafting", "kind": "Fenster / Bereich", "roi": [0.2, 0.2, 0.8, 0.8],
                    "opened_by_id": "local:btn:W99:0", "file": "local:win:W99:0"}
             save_local(local, [row, btn, win])
-            save_local(local, [dict(win, roi=[0.21, 0.2, 0.8, 0.8])])        # gleiche Kennung: ersetzen
+            save_local(local, [dict(win, roi=[0.21, 0.2, 0.8, 0.8])])        # same ID: replace
             self.assertEqual(len(load_local(local)), 3)
             m = UiMap.load(local=local)
             self.assertEqual(len(m.entries), len(base.entries) + 3)
@@ -149,7 +149,7 @@ class LocalMapTest(unittest.TestCase):
 
 class AvoidTest(unittest.TestCase):
     def test_avoid_icons(self):
-        """Zeitbasierte Modi (Gates, Totenkopf W21) – nicht drücken; untereinander nicht verwechseln."""
+        """Time-based modes (gates, skull W21) – don't press; don't mix them up with each other."""
         m = UiMap.load(local=Path(tempfile.gettempdir()) / "gibt_es_nicht.json")
         imgs = [m.image(e) for e in m.entries if (e.get("extra") or {}).get("avoid")]
         self.assertEqual(len(imgs), 2)
@@ -164,11 +164,11 @@ class SlotLayoutTest(unittest.TestCase):
         self.assertGreaterEqual(lay.count, 10)
         self.assertGreater(lay.pitch, 0.03)
         self.assertEqual(lay.index_of([lay.x0, 0.5, lay.x0 + lay.w, 0.9]), 0)
-        self.assertIsNone(lay.index_of([0.78, 0.4, 0.98, 0.8]))             # breiter Knopf (TELEPORT!)
+        self.assertIsNone(lay.index_of([0.78, 0.4, 0.98, 0.8]))             # wide button (TELEPORT!)
         row = next(r for r in m.rows(m.list_windows()[0]) if m.image(r) is not None)
         filled = lay.slots(m.image(row))
-        self.assertGreaterEqual(len(filled), 8)                             # Lobby: 11 Symbole
-        self.assertEqual(lay.slots(np.full_like(m.image(row), 30)), [])     # leere Zeile: keine Plätze
+        self.assertGreaterEqual(len(filled), 8)                             # lobby: 11 icons
+        self.assertEqual(lay.slots(np.full_like(m.image(row), 30)), [])     # empty row: no slots
 
 
 if __name__ == "__main__":
@@ -184,7 +184,7 @@ class FixTitleTest(unittest.TestCase):
         self.assertEqual(fix_title("Cratt Genos", names), "Craft Genos")
         self.assertEqual(fix_title("AK Kagune Upgra", names), "Kagune Upgrade")
         self.assertEqual(fix_title("Ndex", names), "Index")
-        # richtige Titel bleiben, wie sie sind (Einzahl/Mehrzahl, Großschreibung, ähnliche Namen)
+        # correct titles stay as they are (singular/plural, case, similar names)
         self.assertEqual(fix_title("Fire Progression", names), "Fire Progression")
         self.assertEqual(fix_title("Lion Progression", names), "Lion Progression")
         self.assertEqual(fix_title("FLAME CORES", names), "FLAME CORES")

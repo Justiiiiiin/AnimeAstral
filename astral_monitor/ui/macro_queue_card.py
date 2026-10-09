@@ -1,10 +1,10 @@
-"""Karte „Farm-Routine“ (Startseite, links; bis 0.9.9-beta.6 „Makro-Warteschlange“): Schritte nacheinander ausführen,
-auf Wunsch in Runden – z. B. „Raid W20 Alvarez War · 50 Raids → Auto Roll W21 Cyberware → Warten 10 Min.“.
-Ausgeführt vom Navigator des MacroController (automation.py); Meldungen im Makro-Protokoll. Liste und Runden werden
-sofort gespeichert (settings.macro_queue, macro_loop).
+"""Card “Farm routine” (start page, left; up to 0.9.9-beta.6 “macro queue”): run steps one after another, in
+rounds if wanted – e.g. “Raid W20 Alvarez War · 50 raids → Auto Roll W21 Cyberware → Pause 10 min”.
+Run by the navigator of the MacroController (automation.py); messages in the macro log. List and rounds are saved
+right away (settings.macro_queue, macro_loop).
 
-Aufbau (Wunsch des Eigentümers 08.10.2026: übersichtlicher, gleiche Breite für jede Art): oben „Was?“ + „Wo?“, darunter
-die Optionen der gewählten Art in einem Stapel fester Größe – die Karte ändert ihre Breite beim Umschalten nicht."""
+Layout (owner's wish 08.10.2026: clearer, same width for every kind): “What?” + “Where?” at the top, below that the
+options of the chosen kind in a stack of fixed size – the card doesn't change its width when switching."""
 from __future__ import annotations
 
 import re
@@ -19,9 +19,9 @@ from ..i18n import N_, tr
 from . import theme
 from .widgets import Card, label, smooth
 
-# Ein Raid-Schritt mit Ende-Bedingung (Eigentümer 08.10.2026): verlassen wird nur, wenn danach ein anderer Raid/Modus
-# folgt (automation.leave_before). Fixer Gigs, Gilde und Progressions („Auto All“ als Knopf) stehen unter
-# „Automatisch abholen“ – keine Schritte der Routine (Eigentümer 08.10.2026). Alte „progression“-Schritte laufen weiter.
+# One raid step with an end condition (owner 08.10.2026): it only leaves if a different raid/mode comes next
+# (automation.leave_before). Fixer Gigs, guild and progressions (“Auto All” as a button) are under
+# “Auto collect” – not steps of the routine (owner 08.10.2026). Old “progression” steps keep working.
 KINDS = [("raid", N_("Farm raid / defense")), ("autoroll", N_("Start Auto Roll")), ("wait", N_("Pause"))]
 UNTIL = [("runs", N_("after number of raids")), ("minutes", N_("after minutes")), ("never", N_("never (until stopped)"))]
 RAID_CATS = ("raid", "defense")
@@ -29,21 +29,21 @@ ROLL_CATS = ("gacha", "pets")
 
 
 class _TaskList(QListWidget):
-    """Liste, die den freien Platz der Spalte füllt, aber selbst keinen fordert (Startseite ohne Scrollen)."""
+    """List that fills the free space of the column but doesn't demand any itself (start page without scrolling)."""
 
     def sizeHint(self) -> QSize:
         return QSize(super().sizeHint().width(), self.minimumHeight())
 
 
 def _caption(text: str) -> QWidget:
-    """Beschriftung links mit fester Breite – alle Zeilen (auch im Optionen-Stapel) beginnen gleich."""
+    """Label on the left with a fixed width – all rows (also in the options stack) start at the same place."""
     lbl = label(text, "small")
     theme.track_fixed_width(lbl, 112)
     return lbl
 
 
 def _fixed(combo: QComboBox, chars: int) -> QComboBox:
-    """Auswahlfeld mit fester Mindestbreite (lange Namen verbreitern die Seite nicht)."""
+    """Combo box with a fixed minimum width (long names don't widen the page)."""
     combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
     combo.setMinimumContentsLength(chars)
     combo.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
@@ -64,7 +64,7 @@ class MacroQueueCard(Card):
         self.macro = main.macro
         s = main.engine.settings
 
-        self.off_hint = QWidget()                         # Makro aus: Hinweis statt grauer Knöpfe ohne Erklärung
+        self.off_hint = QWidget()                         # macro off: a hint instead of grey buttons without explanation
         hint = QHBoxLayout(self.off_hint)
         hint.setContentsMargins(0, 0, 0, 0)
         hint.addWidget(label(tr("The macro is off."), "muted"), 1)
@@ -86,7 +86,7 @@ class MacroQueueCard(Card):
         grid.addWidget(_caption(tr("Where?")), 1, 0)
         grid.addWidget(self.target, 1, 1)
 
-        # Optionen je Art: fester Stapel (Größe = größte Seite), damit die Karte nicht springt
+        # options per kind: fixed stack (size = largest page) so the card doesn't jump
         self.options = QStackedWidget()
         self.options.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         raid_page = QWidget()
@@ -141,7 +141,7 @@ class MacroQueueCard(Card):
         smooth(self.list)
         self.list.setObjectName("routine")
         self.list.setWordWrap(True)
-        theme.track_min_height(self.list, 84)             # wächst in den freien Platz der Spalte
+        theme.track_min_height(self.list, 84)             # grows into the free space of the column
         self.list.itemDoubleClicked.connect(lambda _i: self._remove())
         self.body.addWidget(self.list, 1)
 
@@ -161,7 +161,7 @@ class MacroQueueCard(Card):
         remove.setToolTip(tr("Remove step"))
         remove.clicked.connect(self._remove)
         for btn in (up, down, remove):
-            btn.setObjectName("glyph")                    # nur ein Zeichen: ohne Innenabstand
+            btn.setObjectName("glyph")                    # just one character: no padding
             theme.track_fixed_width(btn, 38)
         self.run = QPushButton(tr("▶ Start"))
         self.run.setObjectName("primary")
@@ -200,10 +200,10 @@ class MacroQueueCard(Card):
         return w
 
     def reload(self) -> None:
-        """Nach dem Erkunden: neue Ziele in die Auswahl."""
+        """After exploring: new targets into the selection."""
         self._kind_changed()
 
-    # ------------------------------------------------------------------ Auswahl
+    # ------------------------------------------------------------------ Selection
     def _kind_changed(self, _i: int = 0) -> None:
         kind = self.kind.currentData()
         self.options.setCurrentIndex([k for k, _t in KINDS].index(kind))
@@ -221,7 +221,7 @@ class MacroQueueCard(Card):
             self._until_changed()
 
     def _targets(self, kind: str) -> list[tuple[str, str]]:
-        """Ziele nach Welt: bei Raid nur Raids/Defense, bei Auto Roll nur Gachas/Pets-Roll (sonst alles)."""
+        """Targets by world: for raids only raids/defense, for Auto Roll only gachas/pet rolls (otherwise everything)."""
         targets = self.macro.map.sorted_targets()
         want = RAID_CATS if kind == "raid" else ROLL_CATS
         picked = [t for t in targets if self._category(t[1]) in want]
@@ -232,7 +232,7 @@ class MacroQueueCard(Card):
         cat = (w.get("extra") or {}).get("category") or ""
         if cat:
             return cat
-        low = name.lower()                                # mitgelieferte Karte: Art aus dem Namen
+        low = name.lower()                                # bundled map: kind from the name
         if re.search(r"pets-roll", low):
             return "pets"
         if re.search(r"defense mode|defense$", low):
@@ -251,7 +251,7 @@ class MacroQueueCard(Card):
         self.runs.setPrefix("× " if until == "runs" else "")
         self.runs.setSuffix(tr(" min") if until == "minutes" else "")
 
-    # ------------------------------------------------------------------ Liste
+    # ------------------------------------------------------------------ List
     def _add(self) -> None:
         kind = self.kind.currentData()
         task: dict = {"kind": kind}
@@ -316,11 +316,11 @@ class MacroQueueCard(Card):
         s = self.main.engine.settings
         s.macro_queue, s.macro_loop = self._tasks(), self.loop.isChecked()
         try:
-            s.save()                                      # sofort, ohne Speichern-Leiste
+            s.save()                                      # right away, without the save bar
         except OSError as exc:
             QMessageBox.critical(self, tr("Save"), tr("Could not save: {error}", error=exc))
 
-    # ------------------------------------------------------------------ Ausführen
+    # ------------------------------------------------------------------ Run
     def _update(self) -> None:
         on = self.macro.enabled
         self.off_hint.setVisible(not on)
@@ -330,7 +330,7 @@ class MacroQueueCard(Card):
         self._kind_changed()
 
     def _tick(self) -> None:
-        """Laufenden Schritt hervorheben, Zustand darunter (nur sichtbar – im Hintergrund keine Arbeit)."""
+        """Highlight the running step, state below (only when visible – no work in the background)."""
         if not self.isVisible() or self.window().isMinimized():
             return
         nav = self.macro.navigator
@@ -357,7 +357,7 @@ class MacroQueueCard(Card):
 
     def showEvent(self, event) -> None:
         super().showEvent(event)
-        QTimer.singleShot(0, self._tick)                  # Zustand sofort zeigen, nicht erst nach dem Takt
+        QTimer.singleShot(0, self._tick)                  # show the state right away, not only after the tick
 
     def _start(self) -> None:
         self.macro.start_queue(self._tasks(), self.loop.isChecked())

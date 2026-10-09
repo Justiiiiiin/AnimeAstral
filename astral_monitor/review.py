@@ -1,7 +1,7 @@
-"""Funde des Erkundens bestätigen (ohne Qt, Wunsch des Eigentümers 08.10.2026): Jedes Fenster wird EINMAL gründlich
-gescannt; danach fragt das Programm mit allem, was es gefunden hat (Art, Reiter, scrollbare Bereiche, Knöpfe, Text),
-und der Nutzer bestätigt, korrigiert die Art oder setzt „nochmal prüfen“. Nur dann öffnet das Erkunden das Fenster
-erneut. Gespeichert in explore/review.json im Datenordner; korrigierte Arten wirken über UiMap.load auf die Karte."""
+"""Confirm the findings of exploring (without Qt, owner's wish 08.10.2026): every window is scanned thoroughly ONCE;
+afterwards the program asks with everything it found (kind, tabs, scrollable areas, buttons, text), and the user
+confirms, corrects the kind or sets “check again”. Only then does exploring open the window again. Stored in
+explore/review.json in the data folder; corrected kinds apply to the map via UiMap.load."""
 from __future__ import annotations
 
 import json
@@ -32,17 +32,17 @@ def save(data_dir: Path, data: dict) -> None:
     path.write_text(json.dumps(data, indent=1, ensure_ascii=False), encoding="utf-8")
 
 
-KEEP = ("annotations", "description", "display")     # Eingaben des Nutzers – überdauern einen neuen Scan
+KEEP = ("annotations", "description", "display")     # user input – survives a new scan
 
 
 def _alias(name: str) -> str:
-    """„Sword 1 Fenster“ und „Sword 1“ sind dasselbe Fenster (frühere Läufe hängten „Fenster“ an)."""
+    """“Sword 1 Fenster” and “Sword 1” are the same window (earlier runs appended “Fenster”)."""
     return re.sub(r"\s+Fenster$", "", name).strip().lower()
 
 
 def add_finding(data_dir: Path, window: str, finding: dict) -> None:
-    """Neuer Fund nach einem Scan: wartet auf Bestätigung (eine bestätigte Art und Markierungen/Beschreibung bleiben
-    erhalten). Doppelte Einträge desselben Fensters unter anderem Namen werden zusammengelegt."""
+    """New finding after a scan: waits for confirmation (a confirmed kind and marks/description are kept).
+        Duplicate entries of the same window under another name are merged."""
     data = load(data_dir)
     old = data.get(window) or {}
     for name in [n for n in data if n != window and _alias(n) == _alias(window)]:
@@ -58,8 +58,8 @@ def add_finding(data_dir: Path, window: str, finding: dict) -> None:
 
 
 def dedupe(data_dir: Path) -> int:
-    """Doppelte Funde zusammenlegen (gleiches Fenster, mit/ohne „Fenster“ im Namen): geprüfte gewinnen, Eingaben des
-    Nutzers wandern mit. Rückgabe: Anzahl entfernter Einträge."""
+    """Merge duplicate findings (same window, with/without “Fenster” in the name): checked ones win, the user's
+        input moves along. Returns the number of removed entries."""
     data = load(data_dir)
     groups: dict[str, list[str]] = {}
     for name in data:
@@ -103,19 +103,19 @@ NEVER_OPEN = ("nicht öffnen", "nie öffnen", "nicht oeffnen", "nie oeffnen", "n
 
 
 def never_open(data_dir: Path, window: str) -> bool:
-    """Vom Nutzer in der Beschreibung als „Nicht öffnen“ markiert (z. B. Shops mit Echtgeld) – Erkunden lässt es aus."""
+    """Marked by the user in the description as “don't open” (e.g. shops with real money) – exploring skips it."""
     text = (load(data_dir).get(window) or {}).get("description", "").lower()
     return any(k in text for k in NEVER_OPEN)
 
 
 def category_overrides(data_dir: Path) -> dict[str, str]:
-    """Vom Nutzer bestätigte/korrigierte Arten (Fenstername -> Kategorie)."""
+    """Kinds confirmed/corrected by the user (window name -> category)."""
     return {name: e["category"] for name, e in load(data_dir).items()
             if e.get("status") == OK and e.get("category")}
 
 
 def summary(entry: dict) -> str:
-    """Kurztext eines Funds für die Rückfrage."""
+    """Short text of a finding for the confirmation."""
     parts = []
     if entry.get("tabs"):
         parts.append(tr("Tabs: {tabs}", tabs=", ".join(entry["tabs"])))
@@ -130,9 +130,9 @@ def summary(entry: dict) -> str:
     return "\n".join(parts)
 
 
-# ---------------------------------------------------------------------- Markierungen des Nutzers
-# Arten für Rahmen, die der Nutzer im Fensterbild zieht (Text frei): das Programm nutzt sie selbst –
-# „nie drücken“ wird Sperrzone, „Liste“ wird gezielt gescrollt, Knöpfe/Schalter landen in der Karte.
+# ---------------------------------------------------------------------- User marks
+# Kinds for frames the user draws in the window image (free text): the program uses them itself –
+# “never press” becomes a no-go zone, “list” is scrolled on purpose, buttons/toggles go into the map.
 from .i18n import N_  # noqa: E402
 
 ANNOTATION_KINDS = [("button", N_("Button")), ("never", N_("Button – never press")), ("toggle", N_("Toggle")),
@@ -142,7 +142,7 @@ CLICKABLE = ("button", "toggle", "tab")
 
 
 def set_notes(data_dir: Path, window: str, annotations: list[dict], description: str, display: str = "") -> None:
-    """Rahmen ({box: [x0,y0,x1,y1] im Fensterbild (Anteile), kind, text}), Beschreibung und Anzeigename speichern."""
+    """Save frames ({box: [x0,y0,x1,y1] in the window image (fractions), kind, text}), description and display name."""
     data = load(data_dir)
     entry = data.setdefault(window, {})
     entry["annotations"] = [{"box": [round(v, 4) for v in a["box"]], "kind": a.get("kind", "info"),
@@ -154,7 +154,7 @@ def set_notes(data_dir: Path, window: str, annotations: list[dict], description:
 
 
 def annotation_elements(data_dir: Path) -> list[dict]:
-    """Markierungen als Einträge der Oberflächen-Karte (Lage im Roblox-Fenster), damit Makro/Erkunden sie nutzen."""
+    """Marks as entries of the UI map (position in the Roblox window) so macro/explore can use them."""
     out = []
     for window, entry in load(data_dir).items():
         roi = entry.get("roi")

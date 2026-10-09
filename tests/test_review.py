@@ -1,4 +1,4 @@
-"""Rückfrage nach dem Erkunden: Funde warten auf Bestätigung, korrigierte Arten gelten in der Karte."""
+"""Confirmation after exploring: findings wait for confirmation, corrected kinds apply in the map."""
 import tempfile
 import unittest
 from pathlib import Path
@@ -20,10 +20,10 @@ class ReviewTest(unittest.TestCase):
             review.save(data, raw)
             self.assertEqual(review.dedupe(data), 1)
             self.assertEqual(list(review.load(data)), ["Sword 1"])
-            review.add_finding(data, "Sword 1 Fenster", {"category": "unknown", "lines": []})   # neuer Scan
+            review.add_finding(data, "Sword 1 Fenster", {"category": "unknown", "lines": []})   # new scan
             entry = review.load(data)
             self.assertEqual(list(entry), ["Sword 1 Fenster"])
-            self.assertEqual(entry["Sword 1 Fenster"]["description"], "Gacha")    # Eingaben bleiben
+            self.assertEqual(entry["Sword 1 Fenster"]["description"], "Gacha")    # input stays
             self.assertEqual(entry["Sword 1 Fenster"]["category"], "gacha")
 
     def test_never_open(self):
@@ -46,7 +46,7 @@ class ReviewTest(unittest.TestCase):
             review.set_status(data, "Boosts Fenster", review.OK, "boosts")
             self.assertEqual(review.pending(data), [])
             self.assertEqual(review.category_overrides(data), {"Boosts Fenster": "boosts"})
-            # neuer Scan desselben Fensters: bestätigte Art bleibt, wartet wieder auf Bestätigung
+            # new scan of the same window: the confirmed kind stays, waits for confirmation again
             review.add_finding(data, "Boosts Fenster", {"category": "unknown"})
             self.assertEqual(review.load(data)["Boosts Fenster"]["category"], "boosts")
             review.set_status(data, "Boosts Fenster", review.RECHECK)
@@ -54,7 +54,7 @@ class ReviewTest(unittest.TestCase):
 
 
     def test_marks_become_map_entries(self):
-        """Markierungen des Nutzers: Lage im Roblox-Fenster, „nie drücken“ = Sperrzone, „Liste“ = scrollbar."""
+        """User marks: position in the Roblox window, “never press” = no-go zone, “list” = scrollable."""
         with tempfile.TemporaryDirectory() as d:
             data = Path(d)
             review.add_finding(data, "Ranks", {"category": "ranks", "roi": [0.2, 0.2, 0.8, 0.8]})

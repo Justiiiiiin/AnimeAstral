@@ -1,4 +1,4 @@
-"""Gelernte Welt-Fenster aus alten Erkundungs-Berichten zurückholen (nach „Vergessen“ oder abgebrochenem Lauf)."""
+"""Bring learned world windows back from old explore reports (after “Forget” or an aborted run)."""
 import json
 import tempfile
 import unittest
@@ -25,7 +25,7 @@ class RestoreTest(unittest.TestCase):
                     {"slot": 2, "window": "Crafting Unit Fenster", "category": "crafting", "title": "Crafting"},
                     {"slot": 4, "window": "Progression Fenster", "category": "upgrade_tree",
                      "title": "Street cred progression"}]},
-                {"name": "W13 2 City", "windows": [               # gelesen „2 City“, Karte: „W13 Z City“
+                {"name": "W13 2 City", "windows": [               # read “2 City”, map: “W13 Z City”
                     {"slot": 8, "window": "W13 Defense Mode!", "category": "defense", "title": "Defense Mode!"}]}])
             m = UiMap.load(local=data / LOCAL_FILE)
             if not m.list_windows():
@@ -38,8 +38,8 @@ class RestoreTest(unittest.TestCase):
             self.assertEqual(m.world_of(m.container("W21 Crafting")), 21)
             self.assertEqual((m.container("W21 Progression").get("extra") or {}).get("category"), "progression")
             self.assertEqual(m.world_of(m.container("W13 Defense Mode!")), 13)
-            self.assertEqual(explorer.restore_from_reports(data, m), 0)       # schon bekannt: nichts doppelt
-            explorer.forget_local(data)                                      # danach zählen alte Berichte nicht
+            self.assertEqual(explorer.restore_from_reports(data, m), 0)       # already known: nothing twice
+            explorer.forget_local(data)                                      # after that, old reports don't count
             self.assertEqual(explorer.restore_from_reports(data, UiMap.load(local=data / LOCAL_FILE)), 0)
 
 
@@ -52,11 +52,11 @@ class ProbeTest(unittest.TestCase):
         import numpy as np
         content = np.zeros((270, 480), np.uint8)
         for x in range(40, 200, 16):
-            content[150:240, x:x + 8] = 255                       # Inhalt unten links (Kacheln)
+            content[150:240, x:x + 8] = 255                       # content at the bottom left (tiles)
         pts = explorer.probe_points(content, [], [0.0, 0.0, 1.0, 1.0])
         self.assertTrue(pts)
         self.assertLessEqual(len(pts), explorer.PROBE_MAX)
-        self.assertTrue(all(x < 0.5 and y > 0.5 for x, y in pts))   # leere Flächen werden nicht probiert
+        self.assertTrue(all(x < 0.5 and y > 0.5 for x, y in pts))   # empty areas are not probed
 
     def test_teleporter_in_picture(self):
         words = [("TELEPORT!", [0, 0, 0.1, 0.1]), ("RESPAWN!", [0, 0.2, 0.1, 0.3]), ("Lobby", [0, 0, 0.1, 0.1])]
@@ -68,5 +68,5 @@ class RowMatchTest(unittest.TestCase):
     def test_ocr_confusion(self):
         from astral_monitor.uimap import match_row
         rows = [{"name": "W13 Z City"}, {"name": "W12 Lion Kingdom"}]
-        self.assertEqual(match_row("2 City", rows)["name"], "W13 Z City")    # „2“ statt „Z“ gelesen
+        self.assertEqual(match_row("2 City", rows)["name"], "W13 Z City")    # “2” read instead of “Z”
         self.assertIsNone(match_row("Fire City", rows))

@@ -1,7 +1,7 @@
-"""Makro-Steuerung ohne eigene Karte (seit 0.9.9-beta.7): hält Oberflächen-Karte, Navigator (automation.py) und das
-Makro-Protokoll. Die Startseite zeigt nur noch Farm-Routine und „Automatisch abholen“; Schalter „Makro erlauben“,
-Erkunden und das Protokoll stehen unter Einstellungen → Makro (Wunsch des Eigentümers 08.10.2026: keine doppelten
-Knöpfe, alles über die Routine). Gehört dem Hauptfenster (MainWindow.macro)."""
+"""Macro control without a card of its own (since 0.9.9-beta.7): holds the UI map, the navigator (automation.py) and
+the macro log. The start page only shows the farm routine and “Auto collect”; the switch “Allow macro”, exploring
+and the log are under Settings → Macro (owner's wish 08.10.2026: no duplicate buttons, everything through the
+routine). Owned by the main window (MainWindow.macro)."""
 from __future__ import annotations
 
 import re
@@ -23,15 +23,15 @@ class MacroController(QObject):
         self.main = main
         self.map = UiMap.load()
         self.navigator = None
-        self.lines: deque[tuple[str, str]] = deque(maxlen=LOG_LINES)   # (Uhrzeit, Text)
-        self.log_listeners: list = []                     # f(zeit, text) – Protokoll-Ansichten
-        self.clear_listeners: list = []                   # f() – Protokoll geleert
-        self.enabled_listeners: list = []                 # f(an) – „Makro erlauben“ geändert
-        self.map_listeners: list = []                     # f() – Karte neu geladen (neue Ziele)
+        self.lines: deque[tuple[str, str]] = deque(maxlen=LOG_LINES)   # (time, text)
+        self.log_listeners: list = []                     # f(time, text) – log views
+        self.clear_listeners: list = []                   # f() – log cleared
+        self.enabled_listeners: list = []                 # f(on) – “Allow macro” changed
+        self.map_listeners: list = []                     # f() – map reloaded (new targets)
         self._afk_restore = False
         QTimer.singleShot(2500, self._restore_learned)
 
-    # ------------------------------------------------------------------ Zustand
+    # ------------------------------------------------------------------ State
     @property
     def enabled(self) -> bool:
         return bool(self.main.engine.settings.automation_enabled) and bool(self.map.entries)
@@ -41,7 +41,7 @@ class MacroController(QObject):
         return self.navigator is not None and self.navigator.busy
 
     def set_enabled(self, on: bool, parent=None) -> bool:
-        """„Makro erlauben“ – Einschalten nur nach Warnung (Roblox-Regeln). Rückgabe: neuer Zustand."""
+        """“Allow macro” – switching on only after a warning (Roblox rules). Returns the new state."""
         s = self.main.engine.settings
         if on and not s.automation_enabled:
             answer = QMessageBox.warning(
@@ -54,7 +54,7 @@ class MacroController(QObject):
                 return False
         s.automation_enabled = bool(on)
         try:
-            s.save()                                      # sofort (wie Server-Favoriten), ohne Speichern-Leiste
+            s.save()                                      # right away (like server favorites), without the save bar
         except OSError as exc:
             QMessageBox.critical(parent or self.main, tr("Save"), tr("Could not save: {error}",
                                                                           error=exc))
@@ -68,7 +68,7 @@ class MacroController(QObject):
         if self.navigator is not None:
             self.navigator.stop()
 
-    # ------------------------------------------------------------------ Protokoll
+    # ------------------------------------------------------------------ Log
     def add_log(self, text: str) -> None:
         stamp = time.strftime("%H:%M:%S")
         self.lines.append((stamp, text))
@@ -87,8 +87,8 @@ class MacroController(QObject):
             from ..app_paths import data_dir
             from ..ocr import OcrEngine
             engine = self.main.engine
-            # Einstellungen immer frisch lesen: „Speichern“ ersetzt engine.settings durch ein neues Objekt – ein
-            # gemerktes altes Objekt sah danach die Schalter nicht mehr (Automatisch abholen tat nichts)
+            # always read the settings fresh: “Save” replaces engine.settings with a new object – a remembered
+            # old object didn't see the switches anymore afterwards (auto collect did nothing)
             nav = automation.Navigator(
                 source_factory=lambda: engine._source_factory(engine.settings.capture_mode,
                                                               engine.settings.window_title),
@@ -96,23 +96,23 @@ class MacroController(QObject):
                 ocr_factory=lambda: OcrEngine(engine.settings.tesseract_path),
                 log=lambda text: self.main.post(lambda: self.add_log(text)),
                 uimap=self.map)
-            nav.raid_count = lambda: engine.stats.snapshot().total_attempts   # Raid-Enden (Überwachung)
+            nav.raid_count = lambda: engine.stats.snapshot().total_attempts   # raid ends (monitoring)
             nav.monitoring = lambda: engine.running
-            nav.wave_visible = lambda: engine.state.wave_value is not None   # Raid läuft wirklich (kein Ladebild)
-            # Raid-Aufgabe: Überwachung selbst starten, Raid für die Statistik übernehmen (beides im GUI-Thread)
+            nav.wave_visible = lambda: engine.state.wave_value is not None   # the raid is really running (no loading screen)
+            # raid task: start monitoring itself, take over the raid for the statistics (both in the GUI thread)
             nav.start_monitoring = lambda: self.main.post(
                 lambda: None if engine.running else self.main.toggle_monitoring())
             nav.set_raid = lambda target: self.main.post(lambda: self._set_raid(target))
-            nav.auto_gigs = lambda: bool(engine.settings.auto_gigs)     # Schalter „Automatisch abholen“
+            nav.auto_gigs = lambda: bool(engine.settings.auto_gigs)     # switch “Auto collect”
             nav.auto_guild = lambda: bool(engine.settings.auto_guild)
-            nav.state_path = data_dir() / "extras_state.json"   # Zeiten der Abholungen überdauern Neustarts
+            nav.state_path = data_dir() / "extras_state.json"   # collect times survive restarts
             nav._load_state()
             self.navigator = nav
         return self.navigator
 
     def _set_raid(self, target: str) -> None:
-        """Raid der Routine als aktuellen Raid der Statistik setzen – nur, wenn es einen passenden Raid-Namen gibt
-        („Alvarez War“ zu „W20 Alvarez War“); sonst bleibt die Auswahl, wie sie ist."""
+        """Set the routine's raid as the current raid of the statistics – only if there is a matching raid name
+                (“Alvarez War” for “W20 Alvarez War”); otherwise the selection stays as it is."""
         engine = self.main.engine
         key = re.sub(r"[^a-z0-9]", "", re.sub(r"^W\d+\s+", "", target).lower())
         for name in engine.profile_store.names():
@@ -140,7 +140,7 @@ class MacroController(QObject):
         return self.ensure_navigator().run_queue(tasks, loop)
 
     def run_progression(self) -> bool:
-        """Einmal „Auto All“ im ersten Progression-Fenster (gilt für alle Progressions)."""
+        """Press “Auto All” once in the first progression window (applies to all progressions)."""
         if not self._ready():
             return False
         return self.ensure_navigator().progression()
@@ -150,7 +150,7 @@ class MacroController(QObject):
             return False
         return self.ensure_navigator().run_extras()
 
-    # ------------------------------------------------------------------ Erkunden
+    # ------------------------------------------------------------------ Explore
     def start_explore(self, parent=None) -> None:
         if not self.enabled:
             QMessageBox.information(parent or self.main, tr("Explore"),
@@ -169,7 +169,7 @@ class MacroController(QObject):
             self.add_log(tr("The macro is already running – press “Stop” first."))
             return
         from ..app_paths import data_dir
-        # Anti-AFK während des Erkundens aus (das Makro klickt ohnehin), danach wieder an (Wunsch des Eigentümers)
+        # Anti-AFK off while exploring (the macro clicks anyway), on again afterwards (owner's wish)
         self._afk_restore = s.anti_afk_enabled
         if self._afk_restore:
             self.main.set_anti_afk(False)
@@ -178,25 +178,25 @@ class MacroController(QObject):
         self._watch_explore()
 
     def _watch_explore(self) -> None:
-        """Nach dem Erkunden die Karte neu laden, damit neue Ziele auswählbar sind."""
+        """After exploring, reload the map so new targets can be chosen."""
         if self.busy:
             QTimer.singleShot(1000, self._watch_explore)
             return
         if self._afk_restore:
             self._afk_restore = False
-            self.main.set_anti_afk(True)                   # Zähler beginnt neu mit einem vollen Intervall
+            self.main.set_anti_afk(True)                   # the counter starts again with a full interval
             self.add_log(tr("Anti-AFK back on."))
         self.reload_map()
         self.open_review()
 
     def open_review(self, always: bool = False) -> None:
-        """Funde des Erkundens bestätigen lassen (nur wenn etwas offen ist, außer always)."""
+        """Let the user confirm the findings of exploring (only if something is open, unless always)."""
         from .. import app_paths, review
         if not always and not review.pending(app_paths.data_dir()):
             return
         from .explore_review import ReviewDialog
         ReviewDialog(self.main).exec()
-        self.reload_map()                                 # bestätigte Arten gelten sofort
+        self.reload_map()                                 # confirmed kinds apply right away
 
     def open_report(self) -> None:
         import os
@@ -213,14 +213,14 @@ class MacroController(QObject):
             f()
 
     def _restore_learned(self) -> None:
-        """Beim Start: Welt-Fenster aus früheren Erkundungs-Berichten, die der Karte fehlen, wieder aufnehmen."""
+        """At start-up: take world windows from earlier explore reports that are missing in the map back in."""
         from ..app_paths import data_dir
         from ..explorer import restore_from_reports
         if self.busy:
             return
         try:
             from ..review import dedupe
-            dedupe(data_dir())                            # doppelte Funde (z. B. „Sword 1“ / „Sword 1 Fenster“)
+            dedupe(data_dir())                            # duplicate findings (e.g. “Sword 1” / “Sword 1 Fenster”)
             count = restore_from_reports(data_dir(), self.map)
         except Exception:  # noqa: BLE001 – nur eine Ergänzung, nie den Start stören
             return
