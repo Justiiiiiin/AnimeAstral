@@ -272,6 +272,10 @@ def parse_timer(text: str) -> Optional[int]:
 # random (owner 08.10.2026) – so read per card instead of fixed times.
 GIG_KINDS = {"quick": 20 * 60, "standard": 3600, "big": 3 * 3600, "bis": 3 * 3600}
 GIG_NAMES = {20 * 60: N_("Quick 20 min"), 3600: N_("Standard 1 h"), 3 * 3600: N_("Big Job 3 h")}
+GIG_KIND_WORDS = {"job": 3 * 3600, "3h": 3 * 3600, "1h": 3600}
+# time line “43:41 left” of a card (fractions of the card frame, measured on the real window); two bands, so a
+# slightly different GUI size still hits it
+GIG_TIMER_BANDS = ((0.61, 0.70), (0.62, 0.69))
 GIG_UNKNOWN = 3 * 3600        # card without a readable header: duration unknown (at most a Big Job)
 # the three card frames in the Fixer Gigs window (fractions of the window roi, measured on the real window)
 GIG_SLOT_BOXES = ((0.276, 0.347, 0.481, 0.897), (0.496, 0.347, 0.700, 0.897), (0.714, 0.347, 0.919, 0.897))
@@ -280,8 +284,9 @@ GIG_EMPTY_CHECK = 5 * 60      # empty slot without a readable countdown: open th
 
 
 def _gig_kind(word: str) -> Optional[int]:
-    """Duration of a card header word – also glued together (“standard1h”, “quick20min”)."""
-    return next((d for k, d in GIG_KINDS.items() if word.startswith(k)), None)
+    """Duration of a card header word – also glued together (“standard1h”, “quick20min”); “JOB”, “3H”, “1H” alone
+    count too (owner 09.10.2026: “BIG” of “BIG JOB · 3H” was not read)."""
+    return GIG_KIND_WORDS.get(word) or next((d for k, d in GIG_KINDS.items() if word.startswith(k)), None)
 
 
 def gig_cards(words: list[tuple[str, list[float]]], roi: list[float]) -> list[dict]:
@@ -298,7 +303,7 @@ def gig_cards(words: list[tuple[str, list[float]]], roi: list[float]) -> list[di
         box = [rx + fx0 * rw, ry + fy0 * rh, rx + fx1 * rw, ry + fy1 * rh]
         inside = [(w, b) for w, b in norm if w and box[0] <= (b[0] + b[2]) / 2 <= box[2]
                   and box[1] <= (b[1] + b[3]) / 2 <= box[3]]
-        head_zone = box[1] + 0.15 * (box[3] - box[1])
+        head_zone = box[1] + 0.2 * (box[3] - box[1])
         duration = next((_gig_kind(w) for w, b in inside if b[1] < head_zone and _gig_kind(w)), None)
         found = {w for w, _b in inside}
         if found & {"ready", "claim"}:
@@ -315,6 +320,21 @@ def gig_cards(words: list[tuple[str, list[float]]], roi: list[float]) -> list[di
                       "claim": next((b for w, b in inside if w == "claim"), None),
                       "send": next((b for w, b in inside if w in ("send", "sendpets")), None)})
     return cards
+
+
+def gig_timer_vote(texts: list[str], duration: int) -> Optional[int]:
+    """Time left from several readings of the same line (“43:41 left”, “«3:11 Left”, “2:59:47 left”): every valid
+    time counts as one vote, the most frequent wins (a tie: the shorter one – better to come back too early).
+    Single readings slip now and then, but rarely the same way."""
+    votes: dict[int, int] = {}
+    for text in texts:
+        for m in re.finditer(r"(?<![\d:])(\d{1,2}:)?\d{1,2}:\d{2}(?![\d:])", text or ""):
+            seconds = parse_timer(m.group(0))
+            if seconds is not None and 0 < seconds <= duration + 60:
+                votes[seconds] = votes.get(seconds, 0) + 1
+    if not votes:
+        return None
+    return min(votes, key=lambda t: (-votes[t], t))
 
 
 def gig_timer_box(card: dict) -> Optional[list[float]]:
@@ -1123,8 +1143,8 @@ class Navigator:
             roi = window["roi"]
         cards = gig_cards(words, roi)
         frame = self._frame()
-        timers = {i: self._read_timer(frame, gig_timer_box(c), c["duration"]) for i, c in enumerate(cards)
-                  if c["state"] == "working"}
+        timers = {i: self._read_slot_timer(frame, c, words) for i, c in enumerate(cards) if c["state"] == "working"}
+        self._snap_gigs(frame, cards)
         refresh = None
         if any(c["state"] == "empty" for c in cards):    # new gigs only after “NEW GIGS IN …”
             refresh = self._read_timer(frame, gig_refresh_box(words), GIG_REFRESH_MAX) or gig_refresh_read(words)
@@ -1150,6 +1170,49 @@ class Navigator:
         self._save_state()
         self.log(tr("Fixer Gigs: next visit in {time}.", time=fmt_wait(wait)))
         self._close_any()
+
+    def _snap_gigs(self, frame: np.ndarray, cards: list[dict]) -> None:
+        """Check image of the last visit (debug/gigs_last.jpg, overwritten): slot frames and time bands drawn in –
+        shows at once whether the slots sit on the cards."""
+        try:
+            from .app_paths import debug_dir
+            img = frame.copy()
+            fh, fw = img.shape[:2]
+            for c in cards:
+                x0, y0, x1, y1 = c["box"]
+                cv2.rectangle(img, (int(x0 * fw), int(y0 * fh)), (int(x1 * fw), int(y1 * fh)), (255, 0, 255), 2)
+                for fy0, fy1 in GIG_TIMER_BANDS[:1]:
+                    cv2.rectangle(img, (int((x0 + 0.1 * (x1 - x0)) * fw), int((y0 + fy0 * (y1 - y0)) * fh)),
+                                  (int((x1 - 0.1 * (x1 - x0)) * fw), int((y0 + fy1 * (y1 - y0)) * fh)), (0, 255, 255), 1)
+            small = cv2.resize(img, None, fx=0.5, fy=0.5, interpolation=cv2.INTER_AREA)
+            cv2.imencode(".jpg", small, [cv2.IMWRITE_JPEG_QUALITY, 80])[1].tofile(str(debug_dir() / "gigs_last.jpg"))
+        except Exception:  # noqa: BLE001 – only a debugging aid
+            pass
+
+    def _read_slot_timer(self, frame: np.ndarray, card: dict, words: list) -> Optional[int]:
+        """Time left of a running gig: the time line at its fixed height in the card, read several ways (two bands ×
+        two thresholds) plus the general reading, then a vote (gig_timer_vote). Independent of “left” being read
+        (owner 09.10.2026: “2:59:47 left” was missed, “43:41” read as “4:41”)."""
+        texts = [w for w, b in words if card["box"][0] <= (b[0] + b[2]) / 2 <= card["box"][2]
+                 and card["box"][1] + 0.55 * (card["box"][3] - card["box"][1]) <= (b[1] + b[3]) / 2
+                 <= card["box"][1] + 0.75 * (card["box"][3] - card["box"][1])]
+        fh, fw = frame.shape[:2]
+        x0, y0, x1, y1 = card["box"]
+        for fy0, fy1 in GIG_TIMER_BANDS:
+            crop = frame[int((y0 + fy0 * (y1 - y0)) * fh):int((y0 + fy1 * (y1 - y0)) * fh),
+                         int((x0 + 0.1 * (x1 - x0)) * fw):int((x1 - 0.1 * (x1 - x0)) * fw)]
+            if crop.size == 0 or self._ocr is None:
+                continue
+            gray = cv2.resize(cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY), None, fx=3, fy=3, interpolation=cv2.INTER_CUBIC)
+            for thresh in (170, 0):
+                flag = cv2.THRESH_BINARY_INV | (cv2.THRESH_OTSU if thresh == 0 else 0)
+                binary = cv2.copyMakeBorder(cv2.threshold(gray, thresh, 255, flag)[1], 10, 10, 10, 10,
+                                            cv2.BORDER_CONSTANT, value=255)
+                try:
+                    texts.append(self._ocr.line(binary, 7))
+                except Exception:  # noqa: BLE001 – read error: one vote less
+                    pass
+        return gig_timer_vote(texts, card["duration"])
 
     def _read_timer(self, frame: np.ndarray, box: Optional[list[float]], duration: int) -> Optional[int]:
         """Read the time left exactly: crop scaled up 4×, bright text, only digits and “:” (the general reading likes

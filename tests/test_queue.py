@@ -5,8 +5,8 @@ import _env  # noqa: F401
 import numpy as np
 
 from astral_monitor.automation import fmt_wait, gig_cards, gig_next_due, gig_refresh_box, gig_refresh_read, \
-    gig_pill, gig_slot_states, gig_timer_box, guild_next_time, hud_locate, leave_before, next_task, parse_timer, \
-    pet_tiles, user_moved
+    gig_pill, gig_slot_states, gig_timer_box, gig_timer_vote, guild_next_time, hud_locate, leave_before, next_task, \
+    parse_timer, pet_tiles, user_moved
 
 
 class QueueTest(unittest.TestCase):
@@ -68,6 +68,20 @@ class QueueTest(unittest.TestCase):
         self.assertEqual(gig_next_due(cards, {0: 3300, 1: 900}, 300), 300)       # new gigs come first
         self.assertEqual(gig_next_due(cards, {0: 3300, 1: 900}, None), 300)     # empty, no countdown: 5 min
         self.assertEqual(gig_next_due(cards, {0: 3300, 1: 9000}, 99999), 300)    # implausible “NEW GIGS IN”
+
+    def test_gig_timer_vote(self):
+        # owner 09.10.2026: “43:41 left” was shown as 4 min, “2:59:47 left” not at all
+        self.assertEqual(gig_timer_vote(["«3:11 Left", "_,, 43:41 left .", "43:41 left .", "43:41"], 10800), 2621)
+        self.assertEqual(gig_timer_vote(["_ 2:59:47 left", ". 2:59:47 left °", "- 2:59:47 left 6"], 10800), 10787)
+        self.assertEqual(gig_timer_vote(["ABMS left", "", "im 43:43 left t"], 10800), 2623)
+        self.assertIsNone(gig_timer_vote(["4:36:98 left", "left", ""], 10800))            # no valid time
+        self.assertIsNone(gig_timer_vote(["9:59:59 left"], 3600))                         # longer than the gig
+        self.assertEqual(gig_timer_vote(["12:00 left", "11:00 left"], 3600), 660)        # tie: the shorter one
+        # header without “BIG”: “JOB”/“3H” still name the kind
+        words = [("JOB", [0.36, 0.373, 0.389, 0.393]), ("3H", [0.409, 0.373, 0.428, 0.393]),
+                 ("WORKING", [0.352, 0.426, 0.408, 0.44])]
+        card = gig_cards(words, [0.0, 0.0, 1.0, 1.0])[0]
+        self.assertEqual((card["duration"], card["unknown"]), (10800, False))
 
     def test_gig_pills(self):
         words = [("STANDARD", [0.321, 0.373, 0.401, 0.392]), ("WORKING", [0.352, 0.426, 0.408, 0.44]),
