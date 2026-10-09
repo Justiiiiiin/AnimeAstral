@@ -1,4 +1,4 @@
-"""Hauptfenster: Seitenleiste + Seiten, Takt zur Aktualisierung der Anzeige."""
+"""Main window: sidebar + pages, tick to refresh the display."""
 from __future__ import annotations
 
 import copy
@@ -33,16 +33,16 @@ from .page_stats import StatsPage
 from .widgets import ToggleSwitch, label, scroll_page
 
 
-# Seiten in der Symbolleiste (seit 0.9.0 ohne „Raids“ und „Erkennung“: Raids stehen unter Einstellungen → Roblox,
-# die Erkennung ist fest eingebaut)
+# Pages in the icon bar (since 0.9.0 without “Raids” and “Recognition”: raids are under Settings → Roblox,
+# the recognition is built in)
 PAGE_MONITOR, PAGE_STATS, PAGE_ALERTS, PAGE_SETTINGS = range(4)
 PAGE_COUNT = 4
 
 
 class PageList:
-    """Seiten erst beim ersten Öffnen bauen: weniger Bedienelemente = schnellerer Start und Designwechsel (Qt gestaltet
-    beim Wechsel jedes Element neu, ~0,35 ms pro Stück). Zugriff per Index baut die Seite; Schleifen sehen nur gebaute
-    Seiten (z. B. Einstellungen übernehmen – nie geöffnete Seiten haben nichts geändert)."""
+    """Build pages only when first opened: fewer controls = faster start and design switch (Qt restyles every element
+        on a switch, ~0.35 ms each). Index access builds the page; loops only see built pages (e.g. applying the
+        settings – pages never opened changed nothing)."""
 
     def __init__(self, build) -> None:
         self._build = build
@@ -60,7 +60,7 @@ class PageList:
         return (p for p in self._pages if p is not None)
 
     def built(self, index: int):
-        """Seite, falls schon gebaut – sonst None (für Hinweise wie „Statistik neu laden“)."""
+        """Page if already built – otherwise None (for hints like “reload statistics”)."""
         return self._pages[index]
 
 
@@ -69,22 +69,22 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.engine = engine
         self._ui_calls: "queue.Queue[Callable[[], None]]" = queue.Queue()
-        if engine.settings.debug_view:                   # Debug-Ansicht sammelt nur, wenn eingeschaltet
+        if engine.settings.debug_view:                   # the debug view only collects when switched on
             from .events_card import set_debug
             set_debug(True)
         self._status_key = None
         self.setWindowTitle(f"Anime Astral Monitor {__version__}")
-        # etwas größer als der Entwurf (1180 × 800), vor allem höher: auf der Startseite ist so alles zu sehen
+        # a bit larger than the design (1180 × 800), especially taller: that way everything fits on the start page
         screen = QApplication.primaryScreen()
         avail = screen.availableGeometry() if screen is not None else None
         width, height = 1260, 900
         if avail is not None:
             width, height = min(width, int(avail.width() * 0.95)), min(height, int(avail.height() * 0.92))
         self.resize(width, height)
-        self.setMinimumSize(760, 520)              # kleiner geht, weil die Oberfläche mitskaliert (theme.set_scale)
+        self.setMinimumSize(760, 520)              # smaller works because the UI scales along (theme.set_scale)
         self._scale_timer = QTimer(self)
         self._scale_timer.setSingleShot(True)
-        self._scale_timer.setInterval(150)         # erst nach dem Ziehen neu skalieren (flüssig)
+        self._scale_timer.setInterval(150)         # rescale only after dragging (smooth)
         self._scale_timer.timeout.connect(self._apply_scale)
 
         central = QWidget()
@@ -92,7 +92,7 @@ class MainWindow(QMainWindow):
         outer.setContentsMargins(0, 0, 0, 0)
         outer.setSpacing(0)
 
-        # Kopfzeile: Programmname, Anti-AFK-Schalter mit Countdown
+        # header: program name, Anti-AFK switch with countdown
         topbar = QFrame()
         topbar.setObjectName("topbar")
         top = QHBoxLayout(topbar)
@@ -102,10 +102,10 @@ class MainWindow(QMainWindow):
         self.brandmark = label("", "brandmark")
         top.addWidget(self.brandmark)
         self.brand = brand = label(tr("Anime Astral Monitor"), "brand")
-        brand.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)   # bei Platzmangel kürzen,
-        brand.setMinimumWidth(theme.px(40))                                    # nicht die Knöpfe
+        brand.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)   # shorten when space is tight,
+        brand.setMinimumWidth(theme.px(40))                                    # not the buttons
         top.addWidget(brand, 1)
-        self.pill = QFrame()                           # Nebula: Status als Pille statt Kasten in der Seitenleiste
+        self.pill = QFrame()                           # Nebula: status as a pill instead of a box in the sidebar
         self.pill.setObjectName("pill")
         pill_row = QHBoxLayout(self.pill)
         theme.track_margins(pill_row, 12, 4, 14, 4)
@@ -139,7 +139,7 @@ class MainWindow(QMainWindow):
         top.addWidget(self.join_btn)
         top.addSpacing(theme.px(12))
         top.addWidget(afk_label)
-        top.addLayout(self._stacked(self.afk_info, self.afk_switch))   # Countdown klein über dem Schalter
+        top.addLayout(self._stacked(self.afk_info, self.afk_switch))   # countdown small above the switch
         top.addSpacing(theme.px(12))
         rejoin_label = label(tr("Auto-rejoin"), "muted")
         rejoin_label.setToolTip(tr("Automatically rejoins your private server after a disconnect, kick or crash "
@@ -180,13 +180,13 @@ class MainWindow(QMainWindow):
         side = QVBoxLayout(sidebar)
         theme.track_margins(side, 12, 16, 12, 16)
         theme.track_spacing(side, 4)
-        self.rail_logo = label("", "brandmark")        # Nebula: Logo oben in der Symbolleiste
+        self.rail_logo = label("", "brandmark")        # Nebula: logo at the top of the icon bar
         self.rail_logo.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        theme.track(self.rail_logo, lambda o, f: o.setContentsMargins(0, 0, 0, round(12 * f)))   # Abstand nur mit Logo
+        theme.track(self.rail_logo, lambda o, f: o.setContentsMargins(0, 0, 0, round(12 * f)))   # spacing only with the logo
         side.addWidget(self.rail_logo)
 
         from .macro_controller import MacroController
-        self.macro = MacroController(self)                # Makro: Karte, Navigator, Protokoll (vor den Seiten)
+        self.macro = MacroController(self)                # macro: map, navigator, log (before the pages)
         self.stack = QStackedWidget()
         self._page_classes = [MonitorPage, StatsPage, AlertsPage, SettingsPage]
         self._hotkey_status: Optional[tuple] = None
@@ -204,7 +204,7 @@ class MainWindow(QMainWindow):
             theme.track(btn, lambda o, f: o.setIconSize(QSize(round(18 * f), round(18 * f))))
             self.nav.addButton(btn, i)
             side.addWidget(btn, 0, Qt.AlignmentFlag.AlignHCenter)
-            placeholder = QWidget()                       # wird beim ersten Öffnen durch die Seite ersetzt
+            placeholder = QWidget()                       # replaced by the page when opened for the first time
             placeholder.setProperty("glass", True)
             self.stack.addWidget(placeholder)
         self.nav.button(0).setChecked(True)
@@ -227,14 +227,14 @@ class MainWindow(QMainWindow):
         box.addWidget(self.status_title)
         box.addWidget(self.status_sub)
         bottom.addWidget(self.status_box, 1)
-        self.gear = QToolButton()                      # Design „Astral“: Einstellungen als Zahnrad unten links
+        self.gear = QToolButton()                      # design “Astral”: settings as a gear at the bottom left
         self.gear.setObjectName("gear")
         self.gear.setCheckable(True)
         self.gear.setToolTip(tr("Settings"))
         self.gear.setCursor(Qt.CursorShape.PointingHandCursor)
         theme.track(self.gear, lambda o, f: o.setIconSize(QSize(round(22 * f), round(22 * f))))
         self.gear.clicked.connect(lambda: self.nav.button(PAGE_SETTINGS).click())
-        self.notes_btn = QToolButton()                 # Notizbuch (nur mit Beta-Updates)
+        self.notes_btn = QToolButton()                 # notebook (only with beta updates)
         self.notes_btn.setObjectName("gear")
         self.notes_btn.setToolTip(tr("Notebook (beta)"))
         self.notes_btn.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -246,11 +246,11 @@ class MainWindow(QMainWindow):
         self._spooky = SpookyScheduler(self, lambda: self.engine.settings.ui_spooky)
         from .newdots import NewDots
         self.new_dots = NewDots(engine.settings, self._save_quietly)
-        self.avatar = QLabel()                          # eigenes Roblox-Profil (Avatar)
+        self.avatar = QLabel()                          # own Roblox profile (avatar)
         self.avatar.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.avatar.setVisible(False)
         side.addWidget(self.avatar, 0, Qt.AlignmentFlag.AlignHCenter)
-        self.season_mark = QLabel()                     # Saison-Deko in der Seitenleiste (z. B. Kürbis)
+        self.season_mark = QLabel()                     # seasonal decoration in the sidebar (e.g. pumpkin)
         self.season_mark.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.season_mark.setVisible(False)
         side.addWidget(self.season_mark, 0, Qt.AlignmentFlag.AlignHCenter)
@@ -265,11 +265,11 @@ class MainWindow(QMainWindow):
         mark_glass(self.stack)
         self.backdrop.set_image(engine.settings.ui_background, engine.settings.ui_background_dim)
         self.setCentralWidget(central)
-        self.pages[0]                                     # Startseite sofort, alle anderen beim ersten Öffnen
+        self.pages[0]                                     # start page right away, all others when first opened
         self._update_join_btn()
         theme.on_change(self._apply_design)
         self._apply_design()
-        try:                                       # „Wie Windows“: Wechsel hell/dunkel sofort übernehmen
+        try:                                       # “Like Windows”: apply light/dark changes right away
             QApplication.styleHints().colorSchemeChanged.connect(lambda _s: self._follow_system())
         except Exception:
             pass
@@ -279,25 +279,25 @@ class MainWindow(QMainWindow):
         self._setup_hotkeys()
         self._force_close = False
         if not engine.settings.wizard_done:
-            QTimer.singleShot(500, self.open_wizard)        # beim ersten Start: Einrichtungsassistent
+            QTimer.singleShot(500, self.open_wizard)        # at the first start: setup wizard
         else:
-            QTimer.singleShot(1500, self._whats_new)        # nach einem Update: kurz „Was ist neu“
+            QTimer.singleShot(1500, self._whats_new)        # after an update: a short “What's new”
             QTimer.singleShot(600, self._attach_new_dots)
-        QTimer.singleShot(4000, updater.cleanup_downloads)               # Reste früherer Updates entfernen
+        QTimer.singleShot(4000, updater.cleanup_downloads)               # remove leftovers of earlier updates
         QTimer.singleShot(5000, self._refresh_icons_once)
         QTimer.singleShot(2500, lambda: self.set_roblox_name(self.engine.settings.roblox_username, quiet=True))
-        QTimer.singleShot(6000, lambda: self.check_updates(False))     # leise im Hintergrund (höchstens alle 6 Stunden)
+        QTimer.singleShot(6000, lambda: self.check_updates(False))     # quietly in the background (at most every 6 hours)
 
         self.timer = QTimer(self)
         self.timer.setInterval(400)
         self.timer.timeout.connect(self._tick)
         self.timer.start()
         from .bot_bridge import BotBridge
-        self.bot = BotBridge(self)                         # eigener Discord-Bot des Nutzers (Standard aus)
+        self.bot = BotBridge(self)                         # the user's own Discord bot (off by default)
         QTimer.singleShot(3000, self.bot.apply_settings)
-        QShortcut(QKeySequence.StandardKey.Find, self, activated=self.open_search)   # Strg+F: Einstellung suchen
+        QShortcut(QKeySequence.StandardKey.Find, self, activated=self.open_search)   # Ctrl+F: search settings
 
-        # Speicher aufräumen: nach dem Start, danach alle 10 Minuten und beim Minimieren (siehe winapi.trim_memory)
+        # Clean up memory: after the start, then every 10 minutes and when minimizing (see winapi.trim_memory)
         self.trim_timer = QTimer(self)
         self.trim_timer.setInterval(10 * 60 * 1000)
         self.trim_timer.timeout.connect(winapi.trim_memory)
@@ -306,10 +306,10 @@ class MainWindow(QMainWindow):
         self._quitting = False
         self._tray_hint_shown = False
         self.tray = self._setup_tray()
-        show_request_file().unlink(missing_ok=True)          # Rest eines früheren Laufs
+        show_request_file().unlink(missing_ok=True)          # leftover of an earlier run
 
     def _build_page(self, index: int) -> QWidget:
-        """Seite bauen, an ihren Platz im Stapel setzen und mit den aktuellen Einstellungen füllen."""
+        """Build a page, put it at its place in the stack and fill it with the current settings."""
         from .backdrop import mark_glass
         page = self._page_classes[index](self)
         page.setProperty("page", True)
@@ -332,7 +332,7 @@ class MainWindow(QMainWindow):
         return page
 
     def _with_savebar(self, page: QWidget) -> QWidget:
-        """Seite mit Einstellungen: scrollt, die Speichern-Leiste bleibt unten immer sichtbar."""
+        """Page with settings: scrolls, the save bar always stays visible at the bottom."""
         box = QWidget()
         lay = QVBoxLayout(box)
         lay.setContentsMargins(0, 0, 0, 0)
@@ -351,12 +351,12 @@ class MainWindow(QMainWindow):
         save.clicked.connect(lambda: self.save_settings())
         row.addWidget(save)
         lay.addWidget(bar)
-        box.widget = lambda: page                  # wie QScrollArea.widget() (Prüfhilfen)
+        box.widget = lambda: page                  # like QScrollArea.widget() (check tools)
         return box
 
-    # --------------------------------------------------------------- Infobereich (Tray)
+    # --------------------------------------------------------------- Tray
     def _setup_tray(self) -> Optional[QSystemTrayIcon]:
-        """Symbol neben der Uhr: Fenster schließen = im Hintergrund weiterlaufen (kein Autostart)."""
+        """Icon next to the clock: closing the window = keep running in the background (no autostart)."""
         if not QSystemTrayIcon.isSystemTrayAvailable():
             return None
         tray = QSystemTrayIcon(self.windowIcon() if not self.windowIcon().isNull()
@@ -395,25 +395,25 @@ class MainWindow(QMainWindow):
             pass
 
     def _attach_new_dots(self) -> None:
-        """„Neu“-Punkte an Symbolleiste (bzw. Zahnrad) und Einstellungs-Reitern."""
+        """“New” dots on the icon bar (or the gear) and the settings tabs."""
         if not self.engine.settings.wizard_done:
             return
         for i in range(self.nav.buttons().__len__()):
             self.new_dots.attach(f"nav:{i}", self.gear if i == PAGE_SETTINGS and self.gear.isVisible()
                                  else self.nav.button(i))
-        settings_page = self.pages.built(PAGE_SETTINGS)               # Reiter-Punkte sonst beim Bauen der Seite
+        settings_page = self.pages.built(PAGE_SETTINGS)               # otherwise tab dots when building the page
         if settings_page is not None:
             for btn in settings_page.tab_group.buttons():
                 self.new_dots.attach(f"tab:{btn.property('group')}", btn)
 
     def _whats_new(self) -> None:
-        if self.isVisible():                            # nicht aufdrängen, wenn das Programm im Tray startet
+        if self.isVisible():                            # don't push it when the program starts in the tray
             from .whats_new import show_if_updated
             show_if_updated(self)
 
-    # --------------------------------------------------------------- Roblox-Profil
+    # --------------------------------------------------------------- Roblox profile
     def set_roblox_name(self, name: str, done: Optional[Callable] = None, quiet: bool = False) -> None:
-        """Profil setzen/aktualisieren: speichert den Namen, lädt Avatar im Hintergrund (höchstens einmal am Tag)."""
+        """Set/refresh the profile: saves the name, loads the avatar in the background (at most once a day)."""
         from .. import roblox_profile
         s = self.engine.settings
         if name != s.roblox_username:
@@ -456,7 +456,7 @@ class MainWindow(QMainWindow):
             self.pages.built(PAGE_SETTINGS).show_profile()
 
     def _refresh_icons_once(self) -> None:
-        """Nach jedem Update einmal: Windows-Symbolspeicher erneuern (sonst bleibt das alte Logo an Verknüpfungen)."""
+        """Once after every update: refresh the Windows icon cache (otherwise shortcuts keep the old logo)."""
         s = self.engine.settings
         if not getattr(sys, "frozen", False) or s.icons_refreshed == __version__:
             return
@@ -491,13 +491,13 @@ class MainWindow(QMainWindow):
         self.tray_auto.setChecked(self.auto_switch.isChecked())
         self.tray_auto.blockSignals(False)
 
-    # --------------------------------------------------------------- Privater Server
+    # --------------------------------------------------------------- Private server
     def join_private_server(self) -> None:
-        """Roblox direkt im markierten Server-Favoriten starten."""
+        """Start Roblox directly in the marked server favorite."""
         s = self.engine.settings
         if not s.private_server_link:
             self.show_from_tray()
-            self.nav.button(PAGE_SETTINGS).click()                  # Einstellungen öffnen
+            self.nav.button(PAGE_SETTINGS).click()                  # open the settings
             QMessageBox.information(self, tr("Private server"),
                                     tr("Please add a server first under Settings → Private server."))
             return
@@ -516,14 +516,14 @@ class MainWindow(QMainWindow):
         return next((f["name"] for f in s.server_favorites if f["link"] == s.private_server_link), "")
 
     def join_favorite(self, index: int) -> None:
-        """Server aus dem Menü: wird zum markierten Server (auch für Auto-Rejoin) und sofort betreten."""
+        """Server from the menu: becomes the marked server (also for auto-rejoin) and is joined right away."""
         favs = self.engine.settings.server_favorites
         if 0 <= index < len(favs):
             self.set_server_favorites(favs, favs[index]["link"])
             self.join_private_server()
 
     def set_server_favorites(self, favorites: list, active_link: str) -> None:
-        """Favoriten ändern (sofort gespeichert – wie bei den Raids, ohne Speichern-Leiste)."""
+        """Change favorites (saved right away – like the raids, without the save bar)."""
         s = self.engine.settings
         s.server_favorites = clean_favorites(favorites)
         links = [f["link"] for f in s.server_favorites]
@@ -556,9 +556,9 @@ class MainWindow(QMainWindow):
         self.show_from_tray()
         self.nav.button(PAGE_SETTINGS).click()
 
-    # --------------------------------------------------------------- Raid-Auswahl
+    # --------------------------------------------------------------- Raid selection
     def select_raid(self, name: str) -> None:
-        """Aktuellen Raid setzen (Startseite, Raids-Seite) – sofort wirksam und gespeichert."""
+        """Set the current raid (start page, raids page) – effective and saved right away."""
         self.engine.set_current_raid(name)
         try:
             self.engine.settings.save()
@@ -568,7 +568,7 @@ class MainWindow(QMainWindow):
         self.show_toast(tr("Current raid: {name}", name=name) if name else tr("No raid selected"))
 
     def raids_changed(self) -> None:
-        """Nach Anlegen/Umbenennen/Löschen: Auswahl und Statistik auffrischen."""
+        """After creating/renaming/deleting: refresh the selection and the statistics."""
         self.pages[0].reload_raids()
         if self.pages.built(1) is not None:
             self.pages.built(1).mark_dirty()
@@ -577,14 +577,14 @@ class MainWindow(QMainWindow):
 
     # --------------------------------------------------------------- Anti-AFK
     def open_search(self) -> None:
-        """Strg+F von jeder Seite: Einstellungen öffnen und ins Suchfeld springen."""
+        """Ctrl+F from every page: open the settings and jump into the search field."""
         self.nav.button(PAGE_SETTINGS).click()
         search = self.pages[PAGE_SETTINGS].search
         search.setFocus()
         search.selectAll()
 
     def open_settings_tab(self, key: str) -> None:
-        """Einstellungen auf einem Reiter öffnen (z. B. „Makro“ vom Hinweis der Farm-Routine)."""
+        """Open the settings on a tab (e.g. “Macro” from the farm routine's hint)."""
         self.nav.button(PAGE_SETTINGS).click()
         page = self.pages[PAGE_SETTINGS]
         for btn in page.tab_group.buttons():
@@ -593,7 +593,7 @@ class MainWindow(QMainWindow):
                 break
 
     def set_anti_afk(self, on: bool) -> None:
-        """Schalter oben / im Tray-Menü: sofort wirksam und gespeichert."""
+        """Switch at the top / in the tray menu: effective and saved right away."""
         if self.engine.settings.anti_afk_enabled == on:
             return
         self.engine.settings.anti_afk_enabled = on
@@ -609,7 +609,7 @@ class MainWindow(QMainWindow):
 
     def _update_afk_info(self) -> None:
         left = self.engine.anti_afk.seconds_left()
-        text = "" if left is None else f"{int(left) // 60}:{int(left) % 60:02d}"    # nur die Zeit (über dem Schalter)
+        text = "" if left is None else f"{int(left) // 60}:{int(left) % 60:02d}"    # only the time (above the switch)
         if self.afk_info.text() != text:
             self.afk_info.setText(text)
         text = self.engine.rejoin.info()
@@ -618,7 +618,7 @@ class MainWindow(QMainWindow):
 
     # --------------------------------------------------------------- Auto-Rejoin
     def set_auto_rejoin(self, on: bool) -> None:
-        """Schalter oben / im Tray-Menü: sofort wirksam und gespeichert."""
+        """Switch at the top / in the tray menu: effective and saved right away."""
         s = self.engine.settings
         if s.auto_rejoin_enabled == on:
             return
@@ -644,9 +644,9 @@ class MainWindow(QMainWindow):
         self.activateWindow()
 
     def quit_app(self) -> None:
-        """Wirklich beenden (aus dem Tray-Menü)."""
+        """Really quit (from the tray menu)."""
         self._quitting = True
-        self.show_from_tray() if self.engine.running else None     # Rückfrage braucht ein sichtbares Fenster
+        self.show_from_tray() if self.engine.running else None     # the question needs a visible window
         self.close()
 
     def resizeEvent(self, event) -> None:
@@ -654,19 +654,20 @@ class MainWindow(QMainWindow):
         self._scale_timer.start()
 
     def _apply_scale(self) -> None:
-        """Schrift, Abstände und feste Größen: UI-Größe (50–200 %) × optional Anpassung an die Fenstergröße."""
+        """Fonts, spacing and fixed sizes: UI size (50–200 %) × optionally fitting to the window size."""
         if self.isMinimized():
             return
         s = self.engine.settings
         if theme.set_scale(QApplication.instance(),
                            theme.factor_for(self.width(), self.height(), s.ui_zoom, s.ui_auto_fit)):
-            self._status_key = None                 # Statusfeld neu zeichnen
-            self._apply_design()                    # Logo/Symbole in der neuen Größe
+            self._status_key = None                 # redraw the status field
+            self._apply_design()                    # logo/icons at the new size
 
-    # --------------------------------------------------------------- Darstellung
+    # --------------------------------------------------------------- Appearance
     def _go(self, index: int) -> None:
-        """Seitenwechsel; im Design „Astral“ mit kurzer Überblendung (danach ohne Effekt – kostet sonst Leistung)."""
-        self.pages[index]                                  # beim ersten Öffnen bauen
+        """Page switch; in the design “Astral” with a short cross-fade (afterwards without effect – costs performance
+        otherwise)."""
+        self.pages[index]                                  # build when first opened
         self.stack.setCurrentIndex(index)
         self.gear.setChecked(index == PAGE_SETTINGS)
         self.new_dots.seen(f"nav:{index}")
@@ -678,7 +679,7 @@ class MainWindow(QMainWindow):
         effect = QGraphicsOpacityEffect(widget)
         widget.setGraphicsEffect(effect)
         anim = QPropertyAnimation(effect, b"opacity", self)
-        anim.setDuration(120)                         # kurz = knackig, aber noch weich
+        anim.setDuration(120)                         # short = snappy, but still smooth
         anim.setStartValue(0.0)
         anim.setEndValue(1.0)
         anim.setEasingCurve(QEasingCurve.Type.OutCubic)
@@ -687,7 +688,7 @@ class MainWindow(QMainWindow):
         anim.start()
 
     def _apply_design(self) -> None:
-        """Teile, die das Stylesheet nicht abdeckt: Symbole, Zahnrad, Titelleiste, Farben gezeichneter Inhalte."""
+        """Parts the stylesheet doesn't cover: icons, gear, title bar, colors of drawn content."""
         info = theme.design_info()
         if hasattr(self, "backdrop"):
             self.backdrop.refresh_decor()
@@ -704,7 +705,7 @@ class MainWindow(QMainWindow):
         self.notes_btn.setVisible(self.engine.settings.update_beta)
         self.gear.setChecked(self.stack.currentIndex() == 5)
         rail = bool(info.get("rail"))
-        for i, name in enumerate(self._nav_names):    # schmale Leiste: nur Symbole, Name als Tooltip
+        for i, name in enumerate(self._nav_names):    # slim bar: icons only, name as tooltip
             self.nav.button(i).setText("" if rail else name)
             self.nav.button(i).setToolTip(name if rail else "")
         self.sidebar.setFixedWidth(theme.px(76 if rail else 208))
@@ -714,7 +715,7 @@ class MainWindow(QMainWindow):
         self.top_toast.setVisible(rail)
         self.rail_logo.setVisible(rail)
         self.brandmark.setVisible(info["icons"] and not rail)
-        self.brand.setVisible(False)                 # Kopfzeile: links Start/Pause/Status (seit 0.9.5-beta.4)
+        self.brand.setVisible(False)                 # header: start/pause/status on the left (since 0.9.5-beta.4)
         logo = app_paths.resource_path("assets/app.png")
         if info["icons"] and logo.is_file():
             self.brandmark.setPixmap(QIcon(str(logo)).pixmap(QSize(theme.px(22), theme.px(22))))
@@ -733,7 +734,7 @@ class MainWindow(QMainWindow):
                        intro: Optional[bool] = None, background: Optional[str] = None,
                        background_dim: Optional[int] = None, seasonal: Optional[bool] = None,
                        spooky: Optional[bool] = None) -> None:
-        """Design, Farbschema und UI-Größe – sofort sichtbar und gespeichert (ohne Speichern-Leiste)."""
+        """Design, color scheme and UI size – visible and saved right away (without the save bar)."""
         s = self.engine.settings
         if design is not None:
             s.ui_design = design
@@ -758,7 +759,7 @@ class MainWindow(QMainWindow):
         if accent is not None:
             s.ui_accent = accent
             theme.set_accent(accent)
-            theme._mode = ""                          # erzwingt Neuberechnung der Palette
+            theme._mode = ""                          # forces the palette to be recalculated
         if reduce_motion is not None:
             s.ui_reduce_motion = reduce_motion
             theme.set_motion(not reduce_motion)
@@ -774,7 +775,7 @@ class MainWindow(QMainWindow):
     def _follow_system(self) -> None:
         s = self.engine.settings
         if s.ui_mode == "system":
-            theme._mode = ""                          # erzwingt Neuberechnung der Palette
+            theme._mode = ""                          # forces the palette to be recalculated
             theme.set_appearance(QApplication.instance(), theme.effective_design(s.ui_design, s.ui_seasonal),
                                  s.ui_mode)
 
@@ -782,7 +783,7 @@ class MainWindow(QMainWindow):
         super().showEvent(event)
         self._apply_scale()
         winapi.set_titlebar(int(self.winId()), theme.is_dark(), theme.color("topbar"))
-        if not self._intro_done:                      # Logo-Animation nur beim ersten Zeigen
+        if not self._intro_done:                      # logo animation only on the first show
             self._intro_done = True
             if self.engine.settings.ui_intro and theme.animations():
                 from .intro import IntroOverlay
@@ -791,11 +792,11 @@ class MainWindow(QMainWindow):
     def changeEvent(self, event) -> None:
         super().changeEvent(event)
         if event.type() == QEvent.Type.WindowStateChange:
-            self.backdrop._sync_timer()                 # Saison-Deko: minimiert keine Bewegung
+            self.backdrop._sync_timer()                 # seasonal decoration: no motion while minimized
             if self.isMinimized():
                 QTimer.singleShot(1000, winapi.trim_memory)
 
-    # --------------------------------------------------------------- Einstellungen
+    # --------------------------------------------------------------- Settings
     def collect_settings(self) -> Optional[Settings]:
         s = copy.deepcopy(self.engine.settings)
         try:
@@ -807,7 +808,7 @@ class MainWindow(QMainWindow):
         return s
 
     def apply_form(self) -> Optional[Settings]:
-        """Formularwerte sofort übernehmen (ohne zu speichern), z. B. für Tests."""
+        """Apply the form values right away (without saving), e.g. for tests."""
         s = self.collect_settings()
         if s is not None:
             self.engine.apply_settings(s)
@@ -828,7 +829,7 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, tr("Save"), tr("Could not save: {error}", error=exc))
             return False
         self._setup_hotkeys()
-        self.bot.apply_settings()                         # Bot an/aus bzw. mit neuem Token neu verbinden
+        self.bot.apply_settings()                         # bot on/off or reconnect with a new token
         self.notes_btn.setVisible(s.update_beta)
         if show_message:
             self.show_toast(tr("Saved ✓"))
@@ -840,8 +841,8 @@ class MainWindow(QMainWindow):
         return True
 
     def restart_app(self, safe: bool = False) -> None:
-        """Programm neu starten (z. B. nach Sprachwechsel); die neue Instanz wartet, bis diese beendet ist.
-        safe=True: abgesichert (Standard-Einstellungen), sonst normal."""
+        """Restart the program (e.g. after a language change); the new instance waits until this one has ended.
+                safe=True: safe mode (default settings), otherwise normal."""
         args = sys.argv[1:] if getattr(sys, "frozen", False) else sys.argv
         args = [a for a in args if a not in ("--restart", "--safe")] + ["--restart"] + (["--safe"] if safe else [])
         QProcess.startDetached(sys.executable, args)
@@ -869,19 +870,19 @@ class MainWindow(QMainWindow):
         else:
             self._hotkey_status = (tr("Active: {toggle} (start/stop), {pause} (pause), {status} (resend status)",
                                       toggle=s.hotkey_toggle, pause=s.hotkey_pause, status=s.hotkey_status), True)
-        if self.pages.built(PAGE_SETTINGS) is not None:                # sonst beim Bauen der Seite
+        if self.pages.built(PAGE_SETTINGS) is not None:                # otherwise when building the page
             self.pages.built(PAGE_SETTINGS).set_hotkey_status(*self._hotkey_status)
 
-    # --------------------------------------------------------------- Einstellungen übertragen
+    # --------------------------------------------------------------- Transfer settings
     def export_settings(self) -> None:
-        """Alle Einstellungen als passwortgeschützte Datei (für einen neuen PC)."""
+        """All settings as a password-protected file (for a new PC)."""
         from pathlib import Path
 
         from PySide6.QtWidgets import QFileDialog
 
         from .. import secure
         from .transfer_dialog import PasswordDialog
-        if not self.save_settings(show_message=False):   # aktuelle Eingaben zuerst übernehmen
+        if not self.save_settings(show_message=False):   # take over the current input first
             return
         dlg = PasswordDialog(self, export=True)
         if not dlg.exec():
@@ -902,7 +903,7 @@ class MainWindow(QMainWindow):
         self.show_toast(tr("Exported: {name} ✓", name=target.name))
 
     def import_settings(self) -> None:
-        """Passwortgeschützte Datei einlesen, Einstellungen ersetzen und das Programm neu starten."""
+        """Read a password-protected file, replace the settings and restart the program."""
         from pathlib import Path
 
         from PySide6.QtWidgets import QFileDialog
@@ -975,7 +976,7 @@ class MainWindow(QMainWindow):
 
     @staticmethod
     def _stacked(info, switch) -> QVBoxLayout:
-        """Kurze Zusatzinfo (z. B. Anti-AFK-Countdown) klein über dem Schalter statt daneben – spart Breite."""
+        """Short extra info (e.g. Anti-AFK countdown) small above the switch instead of beside it – saves width."""
         box = QVBoxLayout()
         box.setContentsMargins(0, 0, 0, 0)
         box.setSpacing(0)
@@ -985,21 +986,21 @@ class MainWindow(QMainWindow):
         return box
 
     def _mount_controls(self) -> None:
-        """Start/Stopp, Pause und „Status neu senden“ als Knöpfe links oben in die Kopfzeile (Wunsch des Eigentümers
-        07.10.2026). Die Knöpfe gehören zur Startseite, die ihren Zustand in refresh() pflegt."""
+        """Start/stop, pause and “Resend status” as buttons at the top left of the header (owner's wish
+                07.10.2026). The buttons belong to the start page, which keeps their state in refresh()."""
         page = self.pages[PAGE_MONITOR]
         for i, btn in enumerate((page.btn_start, page.btn_pause, page.btn_status), start=1):
             self._top.insertWidget(i, btn)
-        self.brand.setVisible(False)                      # Name steht im Fenstertitel, Logo in der Seitenleiste
+        self.brand.setVisible(False)                      # the name is in the window title, the logo in the sidebar
 
     def post(self, call: Callable[[], None]) -> None:
-        """Aus Hintergrund-Threads: Aufruf im GUI-Thread ausführen lassen."""
+        """From background threads: have a call run in the GUI thread."""
         self._ui_calls.put(call)
 
-    # --------------------------------------------------------------- Steuerung
+    # --------------------------------------------------------------- Control
     def toggle_monitoring(self) -> None:
         if self.engine.running:
-            self.auto.user_stopped()                # selbst gestoppt: Auto-Start wartet bis zum nächsten Betreten
+            self.auto.user_stopped()                # stopped yourself: auto-start waits until the next time you enter
             self.setCursor(Qt.CursorShape.WaitCursor)
             try:
                 self.engine.stop()
@@ -1022,7 +1023,7 @@ class MainWindow(QMainWindow):
 
     # --------------------------------------------------------------- Auto-Start
     def set_auto_monitor(self, on: bool) -> None:
-        """Schalter oben / im Tray-Menü: sofort wirksam und gespeichert."""
+        """Switch at the top / in the tray menu: effective and saved right away."""
         s = self.engine.settings
         if s.auto_monitor == on:
             return
@@ -1038,7 +1039,7 @@ class MainWindow(QMainWindow):
                         else tr("Auto-start off"))
 
     def _auto_tick(self) -> None:
-        """Läuft auch im Hintergrund (Tray), führt die Entscheidungen von AutoMonitor aus."""
+        """Also runs in the background (tray), carries out AutoMonitor's decisions."""
         s, engine = self.engine.settings, self.engine
         if not s.auto_monitor:
             if self.auto_info.text():
@@ -1056,7 +1057,7 @@ class MainWindow(QMainWindow):
                     engine._event(tr("Auto-start: entered Anime Astral – monitoring started"), "info")
                 except EngineError as exc:
                     self.auto.start_failed(now)
-                    if str(exc) != self._auto_error:      # gleichen Grund nur einmal melden
+                    if str(exc) != self._auto_error:      # report the same reason only once
                         self._auto_error = str(exc)
                         engine._event(tr("Auto-start: not possible yet ({error}) – retrying in 30 s",
                                          error=exc), "warn")
@@ -1073,7 +1074,7 @@ class MainWindow(QMainWindow):
         if self.auto_info.text() != text:
             self.auto_info.setText(text)
 
-    # --------------------------------------------------------------- Discord / Status / Assistent
+    # --------------------------------------------------------------- Discord / status / wizard
     def resend_status(self) -> None:
         s = self.engine.settings
         if not s.status_enabled or not is_valid_webhook(s.webhook_url):
@@ -1084,7 +1085,7 @@ class MainWindow(QMainWindow):
         self.show_toast(tr("Resending status …"))
 
     def test_webhook(self, url: str, done: Callable[[bool, str], None]) -> None:
-        """Sendet eine Test-Nachricht im Hintergrund; `done(ok, info)` läuft danach im GUI-Thread."""
+        """Sends a test message in the background; `done(ok, info)` runs afterwards in the GUI thread."""
         tmp = copy.deepcopy(self.engine.settings)
         tmp.webhook_url = url
         payload, _files = messages.build_message(tmp, "start_stop", tr("🔔 Test message"), messages.COLOR_INFO,
@@ -1157,7 +1158,7 @@ class MainWindow(QMainWindow):
             pass
 
     def quit_for_update(self) -> None:
-        """Beendet das Programm sauber, damit der Installer die Dateien ersetzen kann."""
+        """Ends the program cleanly so the installer can replace the files."""
         self._force_close = True
         self.close()
 
@@ -1167,15 +1168,15 @@ class MainWindow(QMainWindow):
 
     def finish_wizard(self, start: bool) -> None:
         self.engine.settings.wizard_done = True
-        self.engine.settings.seen_version = __version__        # Neuinstallation: kein „Was ist neu“
-        self.new_dots.mark_all_seen()                             # … und keine „Neu“-Punkte
+        self.engine.settings.seen_version = __version__        # new install: no “What's new”
+        self.new_dots.mark_all_seen()                             # … and no “New” dots
         self.save_settings(show_message=False)
         if start:
             self.toggle_monitoring()
 
-    # --------------------------------------------------------------- Takt
+    # --------------------------------------------------------------- Tick
     def _tray_tick(self) -> None:
-        """Etwa jede Sekunde: Tooltip am Symbol aktualisieren, Anzeige-Wunsch einer zweiten Instanz erfüllen."""
+        """About every second: update the icon tooltip, fulfill a second instance's request to show the window."""
         self._tray_count = getattr(self, "_tray_count", 0) + 1
         if self._tray_count % 3:
             return
@@ -1210,7 +1211,7 @@ class MainWindow(QMainWindow):
             except queue.Empty:
                 break
             if kind == "event":
-                refresh_stats = True               # Statistik beim nächsten Anzeigen neu laden (nur Markierung)
+                refresh_stats = True               # reload the statistics on the next display (only a flag)
         for _ in range(20):
             try:
                 self._ui_calls.get_nowait()()
@@ -1221,8 +1222,8 @@ class MainWindow(QMainWindow):
         self._tray_tick()
         self._auto_tick()
         if self.isMinimized() or not self.isVisible():
-            self._status_key = None                 # nach dem Wiederherstellen alles neu zeichnen
-            return                                  # minimiert: nichts zeichnen (spart CPU)
+            self._status_key = None                 # redraw everything after restoring
+            return                                  # minimized: draw nothing (saves CPU)
 
         st = self.engine.state
         key = "paused" if (st.running and st.paused) else ("on" if st.running else "off")
@@ -1232,11 +1233,11 @@ class MainWindow(QMainWindow):
         elif key != self._status_key:
             self.status_sub.setText("")
         title = {"paused": tr("Paused"), "on": tr("Running"), "off": tr("Stopped")}[key]
-        if self.pill.isVisible():                  # Nebula: Status + Laufzeit in der Pille
+        if self.pill.isVisible():                  # Nebula: status + running time in the pill
             pill = "● " + title + (f"  ·  {messages.fmt_duration(elapsed)}" if st.running else "")
             if self.pill_text.text() != pill:
                 self.pill_text.setText(pill)
-        if key != self._status_key:               # Stil nur bei Wechsel neu berechnen (spart CPU)
+        if key != self._status_key:               # recompute the style only on change (saves CPU)
             self._status_key = key
             self.status_title.setText("● " + title)
             self.status_title.setObjectName({"paused": "warn", "on": "good", "off": "muted"}[key])
@@ -1247,13 +1248,13 @@ class MainWindow(QMainWindow):
                 widget.style().unpolish(widget)
                 widget.style().polish(widget)
 
-        self.pages[0].refresh_controls()            # Kopfzeilen-Knöpfe auf jeder Seite aktuell halten
+        self.pages[0].refresh_controls()            # keep the header buttons current on every page
         self.pages[self.stack.currentIndex()].refresh()
 
     def closeEvent(self, event) -> None:
         if (self.tray is not None and self.engine.settings.close_to_tray
                 and not self._quitting and not self._force_close):
-            event.ignore()                          # weiterlaufen im Infobereich
+            event.ignore()                          # keep running in the tray
             self.hide()
             QTimer.singleShot(1000, winapi.trim_memory)
             if not self._tray_hint_shown:
@@ -1279,26 +1280,26 @@ class MainWindow(QMainWindow):
         if self.tray is not None:
             self.tray.hide()
         event.accept()
-        QApplication.quit()                         # Programm endet (läuft sonst mit verstecktem Fenster weiter)
+        QApplication.quit()                         # the program ends (otherwise it keeps running with a hidden window)
 
 
 def show_request_file():
-    """Datei, mit der eine zweite gestartete Instanz das laufende Programm bittet, sein Fenster zu zeigen."""
+    """File with which a second started instance asks the running program to show its window."""
     return app_paths.data_dir() / "show.request"
 
 
 def _install_qt_translation(app: QApplication, lang: str) -> None:
-    """Qt-eigene Texte (Ja/Nein, Abbrechen …) in der gewählten Sprache; Englisch ist Qt-Standard."""
+    """Qt's own texts (Yes/No, Cancel …) in the chosen language; English is Qt's default."""
     if lang != "de":
         return
     translator = QTranslator(app)
     if translator.load("qtbase_de", QLibraryInfo.path(QLibraryInfo.LibraryPath.TranslationsPath)):
         app.installTranslator(translator)
-        app._qt_translator = translator             # Referenz halten
+        app._qt_translator = translator             # keep a reference
 
 
 def _install_crash_logging() -> None:
-    """Unbehandelte Fehler ins Protokoll schreiben (im Fenstermodus der EXE gäbe es sonst keine Spur)."""
+    """Write unhandled errors to the log (in the EXE's windowed mode there would otherwise be no trace)."""
     log = logging.getLogger("crash")
 
     def handle(exc_type, exc, tb) -> None:
@@ -1318,37 +1319,37 @@ def _install_crash_logging() -> None:
 
 def run() -> int:
     if sys.platform == "win32":
-        try:    # eigenes Taskleisten-Symbol statt „python.exe“
+        try:    # own taskbar icon instead of “python.exe”
             import ctypes
             ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("AnimeAstralMonitor")
         except Exception:
             pass
     app = QApplication(sys.argv)
     app.setApplicationName("Anime Astral Monitor")
-    app.setQuitOnLastWindowClosed(False)            # Fenster zu = weiter im Infobereich
+    app.setQuitOnLastWindowClosed(False)            # window closed = keep running in the tray
     icon = app_paths.resource_path("assets/app.ico")
     if icon.is_file():
         app.setWindowIcon(QIcon(str(icon)))
     safe = "--safe" in sys.argv or bool(
-        QApplication.queryKeyboardModifiers() & Qt.KeyboardModifier.ShiftModifier)    # Umschalt beim Start halten
+        QApplication.queryKeyboardModifiers() & Qt.KeyboardModifier.ShiftModifier)    # hold Shift at start-up
     try:
         settings = Settings.safe_defaults() if safe else Settings.load()
     except Exception:
         settings = Settings()
     if safe:
         try:
-            settings.language = Settings.load().language    # Sprache darf bleiben
+            settings.language = Settings.load().language    # the language may stay
         except Exception:
             pass
-    i18n.set_language(settings.language)            # vor dem Aufbau der Oberfläche
+    i18n.set_language(settings.language)            # before building the UI
     _install_qt_translation(app, settings.language)
     theme.set_accent(settings.ui_accent)
     theme.apply(app, theme.effective_design(settings.ui_design, settings.ui_seasonal), settings.ui_mode)
     theme.set_motion(not settings.ui_reduce_motion)
 
-    lock = QLockFile(str(app_paths.data_dir() / "app.lock"))       # nur eine Instanz gleichzeitig
-    if not lock.tryLock(10_000 if "--restart" in sys.argv else 300):   # bei Neustart: auf die alte Instanz warten
-        # läuft schon (evtl. unsichtbar im Infobereich): dort das Fenster anzeigen lassen
+    lock = QLockFile(str(app_paths.data_dir() / "app.lock"))       # only one instance at a time
+    if not lock.tryLock(10_000 if "--restart" in sys.argv else 300):   # on restart: wait for the old instance
+        # already running (maybe invisible in the tray): let it show its window
         try:
             show_request_file().write_text("1", encoding="utf-8")
         except OSError:
