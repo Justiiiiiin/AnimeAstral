@@ -1,6 +1,6 @@
-"""Bilderkennung für die Automatik (ohne Qt): Welt-Zeilen im Teleporter finden und ihren Namen lesen, offenes
-Menü erkennen (rosa X oben rechts + Titel im Banner), Sonder-Menüs nach Vorlage (Pets-Roll) erkennen.
-Verfahren und Schwellen stammen aus dem Entwickler-Werkzeug und sind an echten Aufnahmen gemessen (07.10.2026)."""
+"""Image recognition for the automation (without Qt): find world rows in the teleporter and read their names,
+detect an open menu (pink X at the top right + title in the banner), detect special menus by template (Pets-Roll).
+Methods and thresholds come from the developer tool and were measured on real screenshots (07.10.2026)."""
 from __future__ import annotations
 
 import re
@@ -12,15 +12,15 @@ import numpy as np
 
 from .uimap import UiMap
 
-ROW_HIT = 0.85        # Herz-Merkmal links oben in jeder Zeile: echte Zeilen 0,98–1,0, anderes ≤ 0,6
-BOTTOM_HIT = 0.60     # unterer Zeilenrand vorhanden (sonst am Listenrand abgeschnitten)
-X_HIT = 0.85          # inneres X eines Menüs: andere Menüs 0,96, Teleporter 1,0
-X_WIDE_HIT = 0.78     # kleinere Fenster (X weiter links/unten, etwas kleiner): gemessen 0,80–0,89
-X_WIDE_SOFT = 0.7       # knapp darunter nur mit lesbarem Titel (Hintergrund hinter dem X stört)
-X_WIDE = (0.45, 0.05, 0.97, 0.55)    # Suchbereich dafür im Roblox-Fenster (Gilde: X weit rechts)
-MARKER_HIT = 0.80     # Erkennungsmerkmal eines Sonder-Menüs
-BAND = (0.03, 0.55, 0.22)   # Titel-Banner im Menürahmen: x von, x bis, y bis
-X_BAND = 0.04         # so weit links/rechts vom gewohnten Zeilenanfang wird nach dem Herz gesucht
+ROW_HIT = 0.85        # heart marker at the top left of every row: real rows 0.98–1.0, anything else ≤ 0.6
+BOTTOM_HIT = 0.60     # bottom edge of the row present (otherwise cut off at the edge of the list)
+X_HIT = 0.85          # inner X of a menu: other menus 0.96, teleporter 1.0
+X_WIDE_HIT = 0.78     # smaller windows (X further left/down, a bit smaller): measured 0.80–0.89
+X_WIDE_SOFT = 0.7       # just below that only with a readable title (the background behind the X interferes)
+X_WIDE = (0.45, 0.05, 0.97, 0.55)    # search area for it in the Roblox window (guild: X far right)
+MARKER_HIT = 0.80     # marker of a special menu
+BAND = (0.03, 0.55, 0.22)   # title banner in the menu frame: x from, x to, y to
+X_BAND = 0.04         # this far left/right of the usual row start the heart is searched
 
 
 def _scaled(img: np.ndarray, f: float) -> np.ndarray:
@@ -29,12 +29,12 @@ def _scaled(img: np.ndarray, f: float) -> np.ndarray:
 
 @dataclass
 class Row:
-    roi: list[float]                      # Lage im Roblox-Fenster
+    roi: list[float]                      # position in the Roblox window
     image: np.ndarray
 
 
 class RowFinder:
-    """Welt-Zeilen einer Liste am immer gleichen Herz oben links finden (Größe aus der Vorlage-Zeile)."""
+    """Find the world rows of a list by the always identical heart at the top left (size from the template row)."""
 
     def __init__(self, row: dict, image: np.ndarray) -> None:
         h, w = image.shape[:2]
@@ -43,8 +43,8 @@ class RowFinder:
         self.marker_off = (0.01, 0.05)
         self.marker = image[int(0.05 * h):int(0.45 * h), int(0.01 * w):int(0.07 * w)]
         self.bottom = image[int(0.86 * h):, :int(0.10 * w)]
-        # Zeilen beginnen immer an derselben Stelle: nur ein schmaler Streifen um den linken Rand wird abgesucht
-        # (gemessen: ~6× schneller als die ganze Liste, gleiche Treffer)
+        # rows always start at the same place: only a narrow strip around the left edge is searched
+        # (measured: ~6× faster than the whole list, same hits)
         roi = row.get("roi")
         self.x_band = (roi[0] - X_BAND, roi[0] + 0.07 * (roi[2] - roi[0]) + X_BAND) if roi else None
 
@@ -75,13 +75,13 @@ class RowFinder:
             bottom = image[int(0.86 * rh):, :int(0.10 * rw)]
             ref = cv2.resize(self.bottom, (bottom.shape[1], bottom.shape[0]), interpolation=cv2.INTER_AREA)
             if bottom.size == 0 or float(cv2.matchTemplate(bottom, ref, cv2.TM_CCOEFF_NORMED)[0, 0]) < BOTTOM_HIT:
-                continue                                  # unten abgeschnitten
+                continue                                  # cut off at the bottom
             out.append(Row([x / fw, y / fh, (x + rw) / fw, (y + rh) / fh], image))
         return sorted(out, key=lambda r: r.roi[1])
 
 
 def read_row_name(row_img: np.ndarray, ocr) -> str:
-    """Weltname (weiße Schrift oben links neben dem Globus)."""
+    """World name (white text at the top left next to the globe)."""
     h, w = row_img.shape[:2]
     gray = cv2.cvtColor(row_img[int(0.08 * h):int(0.45 * h), int(0.11 * w):int(0.62 * w)], cv2.COLOR_BGR2GRAY)
     _t, binary = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY_INV)
@@ -89,7 +89,7 @@ def read_row_name(row_img: np.ndarray, ocr) -> str:
 
 
 class MenuFrame:
-    """Menüs liegen im selben Rahmen wie der Teleporter: offen = rosa X oben rechts gefunden; Titel im Banner."""
+    """Menus sit in the same frame as the teleporter: open = pink X found at the top right; title in the banner."""
 
     def __init__(self, window: dict, image: np.ndarray, ocr=None) -> None:
         h, w = image.shape[:2]
@@ -103,7 +103,7 @@ class MenuFrame:
         self.base_title = read_title(image, ocr) if ocr is not None else ""
 
     def state(self, frame: np.ndarray, ocr) -> Optional[tuple[list[float], str, tuple[float, float]]]:
-        """(Lage des Menüs, Titel, Mitte des X) – oder None, wenn kein Menü im Standard-Rahmen offen ist."""
+        """(position of the menu, title, center of the X) – or None if no menu is open in the standard frame."""
         fh, fw = frame.shape[:2]
         tpl = _scaled(self.x_tpl, fw / self.window_w)
         ex, ey = int(self.x_at[0] * fw), int(self.x_at[1] * fh)
@@ -123,13 +123,13 @@ class MenuFrame:
         return roi, read_title(crop, ocr) or read_title_loose(crop, ocr), x_center
 
     def _state_wide(self, frame: np.ndarray, ocr, tpl: np.ndarray):
-        """Kleineres Fenster (Acc. Curses, Titan Passives, Equip Best …): X woanders und etwas kleiner. Lage des
-        Fensters geschätzt: oben rechts am X, waagerecht mittig wie alle Menüs, Größe im Verhältnis."""
+        """Smaller window (Acc. Curses, Titan Passives, Equip Best …): X elsewhere and a bit smaller. Position of the
+                window estimated: top right at the X, horizontally centered like all menus, size in proportion."""
         fh, fw = frame.shape[:2]
         ax0, ay0 = int(X_WIDE[0] * fw), int(X_WIDE[1] * fh)
         area = frame[ay0:int(X_WIDE[3] * fh), ax0:int(X_WIDE[2] * fw)]
         best = (0.0, 1.0, (0, 0), tpl.shape[:2])
-        for s in (0.8, 0.85, 0.9, 0.95, 1.0, 1.1, 1.2, 1.3):   # kleinere Menüs (Mana Contract) … Gilde (1,2×)
+        for s in (0.8, 0.85, 0.9, 0.95, 1.0, 1.1, 1.2, 1.3):   # smaller menus (Mana Contract) … guild (1.2×)
             t = _scaled(tpl, s)
             if area.shape[0] < t.shape[0] or area.shape[1] < t.shape[1]:
                 continue
@@ -138,8 +138,8 @@ class MenuFrame:
                 best = (score, s, loc, t.shape[:2])
         score, s, (lx, ly), (th, tw) = best
         if score < X_WIDE_SOFT:
-            return None                                   # knapp darunter (heller Hintergrund hinter dem X, z. B.
-        weak = score < X_WIDE_HIT                         # Mana Contract im Raid): nur gültig mit lesbarem Titel
+            return None                                   # just below (bright background behind the X, e.g.
+        weak = score < X_WIDE_HIT                         # Mana Contract in a raid): only valid with a readable title
         cx, cy = (ax0 + lx + tw / 2) / fw, (ay0 + ly + th / 2) / fh
         x0, y0, x1, y1 = self.roi
         std_cx, std_cy = self.x_at[0] + self.x_size[0] / 2, self.x_at[1] + self.x_size[1] / 2
@@ -157,13 +157,13 @@ class MenuFrame:
         return bool(title) and same_title(title, self.base_title)
 
 
-TITLE_CONF = 55          # darunter gilt eine Banner-Lesung als unsicher (Müll wie „Emtt dala Cowerl“) -> zweiter Weg
+TITLE_CONF = 55          # below this a banner reading counts as uncertain (junk like “Emtt dala Cowerl”) -> second way
 
 
 def read_title(window_img: np.ndarray, ocr) -> str:
-    """Titel im schrägen Banner oben links („Teleport“, „Trial Shop“). Erst die weiße Schrift im Banner
-    (_read_banner); ist die Lesung unsicher oder leer (graue Banner wie „Otsutsuki Shrine“, Vollbild-Fenster), die
-    größte Textzeile im Banner-Bereich über die normale Wortsuche. Lieber kein Titel als ein falscher."""
+    """Title in the slanted banner at the top left (“Teleport”, “Trial Shop”). First the white text in the banner
+        (_read_banner); if that reading is uncertain or empty (grey banners like “Otsutsuki Shrine”, full-screen windows),
+        the largest text line in the banner area via the normal word search. Better no title than a wrong one."""
     if ocr is None:
         return ""
     text, conf = _read_banner(window_img, ocr)
@@ -172,14 +172,14 @@ def read_title(window_img: np.ndarray, ocr) -> str:
     other, conf2 = _read_band_words(window_img, ocr)
     letters = re.sub(r"[^a-z]", "", other.lower())
     if letters and letters in re.sub(r"[^a-z]", "", text.lower()):
-        return text                                       # Banner hat mehr vom selben Titel („SixFold Spirit Contract“)
+        return text                                       # the banner has more of the same title (“SixFold Spirit Contract”)
     if other and conf2 >= TITLE_CONF and (not text or conf2 > conf):
         return other
     return text if conf >= 35 else ""
 
 
 def _line_conf(ocr, img: np.ndarray) -> tuple[str, float]:
-    """Eine Zeile lesen (psm 7) mit mittlerer Sicherheit der Wörter."""
+    """Read one line (psm 7) with the mean confidence of the words."""
     try:
         words = ocr.words(img, psm=7)
     except Exception:  # noqa: BLE001 – Lesefehler: leer
@@ -192,12 +192,12 @@ def _line_conf(ocr, img: np.ndarray) -> tuple[str, float]:
 
 def _clean_title(text: str) -> str:
     text = re.sub(r"^[^A-Za-z0-9]+|[^A-Za-z0-9!?)]+$", "", text).strip()
-    text = re.sub(r"\s+", " ", re.sub(r"[^\w !?'&.()/-]", " ", text)).strip()    # Sonderzeichen-Reste weg
+    text = re.sub(r"\s+", " ", re.sub(r"[^\w !?'&.()/-]", " ", text)).strip()    # remove leftover special characters
     return text[:1].upper() + text[1:]
 
 
 def _read_band_words(window_img: np.ndarray, ocr) -> tuple[str, float]:
-    """Zweiter Weg: Wörter im Banner-Bereich (allgemeine Suche), die größte Zeile von links nach rechts."""
+    """Second way: words in the banner area (general search), the largest line from left to right."""
     h, w = window_img.shape[:2]
     band = window_img[0:int(BAND[2] * h), 0:int(BAND[1] * w)]
     if band.size == 0:
@@ -219,11 +219,11 @@ def _read_band_words(window_img: np.ndarray, ocr) -> tuple[str, float]:
         line = sorted((wd for wd in words if wd.h >= 0.7 * top.h and abs((wd.y + wd.h / 2) - (top.y + top.h / 2))
                        < 0.6 * top.h), key=lambda wd: wd.x)
         parts = [line[0].text]
-        for prev, wd in zip(line, line[1:]):              # psm 11 trennt gern mitten im Wort („Kag une“)
+        for prev, wd in zip(line, line[1:]):              # psm 11 likes to split in the middle of a word (“Kag une”)
             parts.append(("" if wd.x - (prev.x + prev.w) < 0.2 * top.h else " ") + wd.text)
         text = _clean_title("".join(parts))
         if re.match(r"(?i)wave\b", text) or re.search(r"\d+\s*/\s*\d+", text):
-            continue                                      # Wellenzähler oben (Vollbild-Fenster), kein Titel
+            continue                                      # wave counter at the top (full-screen window), not a title
         conf = float(np.mean([wd.conf for wd in line]))
         if len(re.sub(r"[^A-Za-z]", "", text)) >= 3 and conf > best[1]:
             best = (text, conf)
@@ -231,8 +231,8 @@ def _read_band_words(window_img: np.ndarray, ocr) -> tuple[str, float]:
 
 
 def _read_banner(window_img: np.ndarray, ocr) -> tuple[str, float]:
-    """Weiße Schrift im Banner: Streifen über die Buchstabengröße aussortiert, Buchstaben von links nach rechts zur
-    (schrägen) Zeile verkettet, gerade gedreht. Rückgabe: (Text, Sicherheit 0–100)."""
+    """White text in the banner: stripes sorted out by letter size, letters chained left to right into the
+        (slanted) line, straightened. Returns (text, confidence 0–100)."""
     h, w = window_img.shape[:2]
     band = window_img[0:int(BAND[2] * h), int(BAND[0] * w):int(BAND[1] * w)]
     if band.size == 0:
@@ -267,7 +267,7 @@ def _read_banner(window_img: np.ndarray, ocr) -> tuple[str, float]:
     y1 = max(st[i, cv2.CC_STAT_TOP] + st[i, cv2.CC_STAT_HEIGHT] for i in best)
     ink = np.isin(lab, best).astype(np.uint8) * 255
     text, conf = "", 0.0
-    if len(best) >= 3:                                    # schräge Zeile gerade drehen (Tesseract liest sonst oft nichts)
+    if len(best) >= 3:                                    # straighten the slanted line (otherwise Tesseract often reads nothing)
         xs = [st[i, cv2.CC_STAT_LEFT] + st[i, cv2.CC_STAT_WIDTH] / 2 for i in best]
         slope = float(np.polyfit(xs, [mid[i] for i in best], 1)[0])
         letter_h = float(np.median([st[i, cv2.CC_STAT_HEIGHT] for i in best]))
@@ -283,7 +283,7 @@ def _read_banner(window_img: np.ndarray, ocr) -> tuple[str, float]:
             part = cv2.copyMakeBorder(part, 20, 20, 20, 20, cv2.BORDER_CONSTANT, value=255)
             text, conf = _line_conf(ocr, part)
             text = _clean_title(text)
-    if not text:                                          # bisheriger Weg (ungedreht)
+    if not text:                                          # previous way (not rotated)
         crop = 255 - ink[max(0, y0 - 10):y1 + 10, max(0, x0 - 10):x1 + 10]
         f = 48 / max(1, y1 - y0)
         crop = cv2.resize(crop, None, fx=f, fy=f, interpolation=cv2.INTER_AREA)
@@ -294,8 +294,8 @@ def _read_banner(window_img: np.ndarray, ocr) -> tuple[str, float]:
 
 
 def _join_words(best: list[int], chains: list[list[int]], st, mid: dict, hmax: float) -> list[int]:
-    """Weitere Wörter derselben (schrägen) Titelzeile anhängen: „AINCRAD“ + „SPOILS“, „RELICS OF THE“ + „OTHERWORLD“.
-    Bedingung: ähnliche Buchstabenhöhe, Lücke < 3,5 Buchstabenhöhen, Zeilenmitte passt am nächstgelegenen Buchstaben."""
+    """Append more words of the same (slanted) title line: “AINCRAD” + “SPOILS”, “RELICS OF THE” + “OTHERWORLD”.
+        Condition: similar letter height, gap < 3.5 letter heights, line center matches at the nearest letter."""
     def height(c):
         return float(np.median([st[i, cv2.CC_STAT_HEIGHT] for i in c]))
 
@@ -314,11 +314,11 @@ def _join_words(best: list[int], chains: list[list[int]], st, mid: dict, hmax: f
         for c in list(rest):
             if abs(height(c) - hb) > 0.3 * hb:
                 continue
-            if left(c) >= right(best):                     # rechts daneben
+            if left(c) >= right(best):                     # to the right
                 gap = left(c) - right(best)
                 a = max(best, key=lambda i: st[i, cv2.CC_STAT_LEFT])
                 b = min(c, key=lambda i: st[i, cv2.CC_STAT_LEFT])
-            elif right(c) <= left(best):                   # links daneben
+            elif right(c) <= left(best):                   # to the left
                 gap = left(best) - right(c)
                 a = min(best, key=lambda i: st[i, cv2.CC_STAT_LEFT])
                 b = max(c, key=lambda i: st[i, cv2.CC_STAT_LEFT])
@@ -332,8 +332,8 @@ def _join_words(best: list[int], chains: list[list[int]], st, mid: dict, hmax: f
 
 
 def read_title_loose(window_img: np.ndarray, ocr) -> str:
-    """Ersatz, wenn read_title nichts findet (Titel grau statt weiß, heller Banner): Banner leicht gedreht und mit
-    zwei Schwellen lesen, längstes Ergebnis nehmen (gemessen: Commandments, Kagune Upgrade, Goddess Shrine …)."""
+    """Fallback if read_title finds nothing (grey instead of white title, bright banner): read the banner slightly
+        rotated with two thresholds, take the longest result (measured: Commandments, Kagune Upgrade, Goddess Shrine …)."""
     if ocr is None:
         return ""
     h, w = window_img.shape[:2]
@@ -360,15 +360,15 @@ def read_title_loose(window_img: np.ndarray, ocr) -> str:
 
 
 def read_name_below_banner(window_img: np.ndarray, ocr) -> str:
-    """Großer roter/oranger Name unter dem Banner (Raids: „Holy Grail War“, Boss Rush: „Zaban Rush!“) – sonst leer.
-    Die farbige Textzeile wird über die Zeilensummen gefunden, ausgeschnitten und als eine Zeile gelesen."""
+    """Large red/orange name below the banner (raids: “Holy Grail War”, boss rush: “Zaban Rush!”) – otherwise empty.
+        The colored text line is found via row sums, cut out and read as one line."""
     if ocr is None:
         return ""
     h, w = window_img.shape[:2]
     area = window_img[int(0.22 * h):int(0.40 * h), int(0.07 * w):int(0.58 * w)]
     if area.size == 0:
         return ""
-    hsv = cv2.cvtColor(area, cv2.COLOR_BGR2HSV)               # Rot (Raid) oder Orange (Boss Rush)
+    hsv = cv2.cvtColor(area, cv2.COLOR_BGR2HSV)               # red (raid) or orange (boss rush)
     mask = (((hsv[..., 0] < 22) | (hsv[..., 0] > 165)) & (hsv[..., 1] > 120) & (hsv[..., 2] > 150)).astype(np.uint8)
     rows = mask.sum(axis=1)
     on = list(rows > max(3, 0.02 * mask.shape[1])) + [False]
@@ -404,7 +404,7 @@ def same_title(a: str, b: str) -> bool:
 
 
 def similar_title(read: str, name: str) -> bool:
-    """Passt ein gelesener Titel („Crafting“) zum Fensternamen („W3 Crafting“)? Großzügig: Lesefehler, Weltnummer."""
+    """Does a read title (“Crafting”) match the window name (“W3 Crafting”)? Generous: misreads, world number."""
     import difflib
     a = re.sub(r"[^a-z0-9]", "", read.lower())
     b = re.sub(r"[^a-z0-9]", "", re.sub(r"^W\d+\s+", "", name).lower())
@@ -412,7 +412,7 @@ def similar_title(read: str, name: str) -> bool:
 
 
 class TemplateMenu:
-    """Sonder-Menü mit festem Aufbau (Pets-Roll), erkannt am Erkennungsmerkmal an fester Stelle."""
+    """Special menu with a fixed layout (Pets-Roll), detected by the marker at a fixed place."""
 
     def __init__(self, window: dict, marker: dict, image: np.ndarray) -> None:
         self.window, self.marker, self.img = window, marker, image
@@ -439,8 +439,8 @@ def template_menus(m: UiMap) -> list[TemplateMenu]:
 
 
 def words_in(frame: np.ndarray, roi: list[float], ocr) -> list[tuple[str, list[float]]]:
-    """Alle Wörter in einem Bereich mit Lage im Roblox-Fenster (Anteile). Zwei Durchgänge: helle Schrift mit
-    Umriss (Knöpfe, Titel) und allgemein (Otsu) – doppelte Funde werden zusammengelegt."""
+    """All words in an area with their position in the Roblox window (fractions). Two passes: bright text with an
+        outline (buttons, titles) and general (Otsu) – duplicate hits are merged."""
     if ocr is None:
         return []
     fh, fw = frame.shape[:2]
@@ -473,7 +473,7 @@ def words_in(frame: np.ndarray, roi: list[float], ocr) -> list[tuple[str, list[f
 
 
 def find_word(frame: np.ndarray, roi: list[float], ocr, *wanted: str) -> list[float] | None:
-    """Lage des ersten Worts aus wanted (ohne Groß-/Kleinschreibung) im Bereich, sonst None."""
+    """Position of the first word from wanted (case-insensitive) in the area, otherwise None."""
     want = {w.lower() for w in wanted}
     for text, box in words_in(frame, roi, ocr):
         if text.lower() in want:
@@ -482,9 +482,9 @@ def find_word(frame: np.ndarray, roi: list[float], ocr, *wanted: str) -> list[fl
 
 
 class SlotLayout:
-    """Symbol-Plätze einer Welt-Zeile (aus der Vorlage-Zeile der Karte): Abstand, Breite, Höhe. Belegt = scharfe
-    Umrisse (Laplace-Varianz auf 40 × 40, gemessen 08.10.2026: Symbole ≥ 319, Hintergrund hinter dem letzten Symbol
-    ≤ 295, meist < 120). Symbole stehen lückenlos ab Platz 1 – der erste leere Platz beendet die Zeile."""
+    """Icon slots of a world row (from the map's template row): spacing, width, height. Occupied = sharp outlines
+        (Laplace variance on 40 × 40, measured 08.10.2026: icons ≥ 319, background behind the last icon ≤ 295, mostly
+        < 120). Icons are contiguous from slot 1 – the first empty slot ends the row."""
     SHARP_MIN = 250.0
 
     def __init__(self, uimap: UiMap, list_window: dict) -> None:
@@ -497,7 +497,7 @@ class SlotLayout:
                 wide = [e["rel"] for e in kids if e["rel"][2] - e["rel"][0] >= 0.09 and e["rel"][0] > 0.6]
                 break
         if len(icons) < 3:
-            raise ValueError("keine Vorlage-Zeile mit Symbolen")
+            raise ValueError("no template row with icons")
         diffs = sorted(b[0] - a[0] for a, b in zip(icons, icons[1:]))
         self.pitch = diffs[len(diffs) // 2]
         self.x0 = icons[0][0]
@@ -506,11 +506,11 @@ class SlotLayout:
         tops, bottoms = sorted(r[1] for r in icons), sorted(r[3] for r in icons)
         self.y = (tops[len(tops) // 2], bottoms[len(bottoms) // 2])
         end = min((r[0] for r in wide), default=0.78)
-        self.end = end                                    # linker Rand des TELEPORT!-Knopfs
+        self.end = end                                    # left edge of the TELEPORT! button
         self.count = int((end - self.x0) / self.pitch) + 1
 
     def slots(self, row_img: np.ndarray) -> list[tuple[int, list[float]]]:
-        """Belegte Plätze: (Platz, Lage in der Zeile)."""
+        """Occupied slots: (slot, position in the row)."""
         h, w = row_img.shape[:2]
         out = []
         for i in range(self.count):
@@ -519,10 +519,10 @@ class SlotLayout:
             crop = row_img[int(rel[1] * h):int(rel[3] * h), int(rel[0] * w):int(rel[2] * w)]
             if crop.size == 0:
                 continue
-            # letzter Platz ragt in den TELEPORT!-Knopf: dessen Kante ist auch scharf (~400–550) -> strenger
+            # the last slot reaches into the TELEPORT! button: its edge is sharp too (~400–550) -> stricter
             limit = self.SHARP_MIN * (3 if rel[2] > self.end else 1)
             if sharpness(crop) < limit:
-                break                                     # Ende der Symbole (dahinter nur Hintergrund/Knopf)
+                break                                     # end of the icons (only background/button behind)
             out.append((i, [round(v, 4) for v in rel]))
         return out
 
@@ -540,8 +540,8 @@ def sharpness(crop: np.ndarray) -> float:
 
 def find_multiscale(frame: np.ndarray, tpl: np.ndarray, region: list[float],
                     scales=(0.6, 0.75, 0.9, 1.0, 1.15, 1.3, 1.5, 1.75, 2.0)) -> tuple[float, Optional[list[float]]]:
-    """Bild in einem Bereich in mehreren Größen suchen (Vorlage aus einem Bildschirmfoto unbekannter Größe).
-    Rückgabe (Ähnlichkeit, Lage im Roblox-Fenster)."""
+    """Search an image in an area at several sizes (template from a screenshot of unknown size).
+        Returns (similarity, position in the Roblox window)."""
     fh, fw = frame.shape[:2]
     x0, y0 = int(region[0] * fw), int(region[1] * fh)
     area = cv2.cvtColor(frame[y0:int(region[3] * fh), x0:int(region[2] * fw)], cv2.COLOR_BGR2GRAY)
@@ -559,13 +559,13 @@ def find_multiscale(frame: np.ndarray, tpl: np.ndarray, region: list[float],
 
 
 def toggle_state(frame: np.ndarray, label: list[float]) -> Optional[bool]:
-    """Schalter rechts neben einer Beschriftung (Raid-Zahnrad: „Auto Retry“, „Auto Leave“): grün = an, rosa/rot =
-    aus, None = nicht erkennbar (verdeckt)."""
+    """Switch to the right of a label (raid gear: “Auto Retry”, “Auto Leave”): green = on, pink/red = off,
+        None = not recognizable (covered)."""
     fh, fw = frame.shape[:2]
     h = label[3] - label[1]
     cy = (label[1] + label[3]) / 2
-    # nur der Streifen, in dem der Schalter sitzt (gemessen: 0,035–0,06 rechts der Beschriftung bei 2560 px) –
-    # Meldungen wie „Wave cleared!“ (grün) liegen oft darüber und dürfen nicht mitzählen
+    # only the strip where the switch sits (measured: 0.035–0.06 right of the label at 2560 px) –
+    # messages like “Wave cleared!” (green) often lie above it and must not count
     x0, x1 = label[2] + 0.02, min(1.0, label[2] + 0.08)
     y0, y1 = max(0.0, cy - 0.7 * h), min(1.0, cy + 0.7 * h)
     crop = frame[int(y0 * fh):int(y1 * fh), int(x0 * fw):int(x1 * fw)].astype(np.int16)
@@ -574,8 +574,8 @@ def toggle_state(frame: np.ndarray, label: list[float]) -> Optional[bool]:
     g, r = crop[..., 1], crop[..., 2]
 
     def blob(mask: np.ndarray) -> int:
-        """Größter zusammenhängender Fleck: der runde Knopf des Schalters – nicht die dünne grüne Linie einer
-        „Wave cleared!“-Meldung, die quer durch die Zeile laufen kann."""
+        """Largest connected blob: the round knob of the switch – not the thin green line of a “Wave cleared!”
+                message that can run across the row."""
         n, _lab, st, _c = cv2.connectedComponentsWithStats(mask.astype(np.uint8), 8)
         return max((int(st[i, cv2.CC_STAT_AREA]) for i in range(1, n)
                     if st[i, cv2.CC_STAT_HEIGHT] >= 0.35 * mask.shape[0]), default=0)
@@ -583,13 +583,13 @@ def toggle_state(frame: np.ndarray, label: list[float]) -> Optional[bool]:
     green = blob((g > 150) & (r < 140) & (g - r > 60))
     pink = blob((r > 150) & (g < 110) & (r - g > 80))
     if max(green, pink) < 15 or min(green, pink) > 0.5 * max(green, pink):
-        return None                                   # nichts oder beides deutlich (verdeckt): später nochmal
+        return None                                   # nothing or both clearly (covered): try again later
     return green > pink
 
 
 def same_icon(a: np.ndarray, b: np.ndarray) -> float:
-    """Ähnlichkeit zweier Symbol-Bilder: Kern (ohne Rand und ohne die rechte obere Ecke mit dem spielerabhängigen
-    Häkchen) des einen im anderen gesucht, beide Richtungen. Gleiche Symbole ~0,99, ähnliche andere bis ~0,9."""
+    """Similarity of two icon images: the core (without border and without the top right corner with the
+        player-dependent check mark) of one searched in the other, both directions. Same icons ~0.99, similar others up to ~0.9."""
     if a is None or b is None or a.size == 0 or b.size == 0:
         return -1.0
     if abs(a.shape[0] - b.shape[0]) > 0.25 * max(a.shape[0], b.shape[0]):
@@ -605,7 +605,7 @@ def same_icon(a: np.ndarray, b: np.ndarray) -> float:
 
 
 def read_text(frame: np.ndarray, roi: list[float], ocr) -> str:
-    """Text in einem Bereich lesen (z. B. „Kosten (Yen)“ im Pets-Roll-Menü)."""
+    """Read text in an area (e.g. “cost (yen)” in the pets roll menu)."""
     fh, fw = frame.shape[:2]
     crop = frame[int(roi[1] * fh):int(roi[3] * fh), int(roi[0] * fw):int(roi[2] * fw)]
     if crop.size == 0 or ocr is None:

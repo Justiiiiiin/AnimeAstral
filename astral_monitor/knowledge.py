@@ -1,26 +1,25 @@
-"""Eingebautes Spielwissen für das Erkunden (ohne Qt): Fenster anhand von Titel und gelesenen Wörtern einordnen
-und Knöpfe benennen. Abgeleitet aus echten Aufnahmen des Eigentümers (07.10.2026):
+"""Built-in game knowledge for exploring (without Qt): classify windows by their title and the words read,
+and name buttons. Derived from the owner's real screenshots (07.10.2026):
 
-- Gacha (z. B. Doujutsu, Races, Hakis, Family): „Roll“, „Auto Roll“, „Current:“, „Buffs:“, „Cost:“, Pity-Leiste.
-  Höchstens 2 Gachas gleichzeitig aktiv (für das Programm egal).
-- Titans: wie Gacha (Roll/Auto Roll/Pity), aber eigenes System – Seltenheiten statt Buffs.
-- Pets: Roll-Menü mit „Open!“, „Auto!“, „Mythical Pity“ (Vorlage „Pets-Roll“).
-- Crafting: „Craft“, „You will lose the selected Pets …“, „Shiny“.
-- Upgrade Tree: ganzer Bildschirm, „Total Stats:“, „Leveling Token“, roter „Close“-Knopf.
-- Artefakt (z. B. Elixir of Life): ganzer Bildschirm, „fragments“, „artifact“, „Boosts“, „Progress Level“, „Exit“.
-- Auto-Roll läuft im Hintergrund weiter: Fenster nach „Auto“ sofort schließen.
+- Gacha (e.g. Doujutsu, Races, Hakis, Family): “Roll”, “Auto Roll”, “Current:”, “Buffs:”, “Cost:”, pity bar.
+  At most 2 gachas active at the same time (doesn't matter for the program).
+- Titans: like a gacha (Roll/Auto Roll/pity), but its own system – rarities instead of buffs.
+- Pets: roll menu with “Open!”, “Auto!”, “Mythical Pity” (template “Pets-Roll”).
+- Crafting: “Craft”, “You will lose the selected Pets …”, “Shiny”.
+- Upgrade tree: full screen, “Total Stats:”, “Leveling Token”, red “Close” button.
+- Artifact (e.g. Elixir of Life): full screen, “fragments”, “artifact”, “Boosts”, “Progress Level”, “Exit”.
+- Auto roll keeps running in the background: close the window right after “Auto”.
 
-Nachgetragen nach dem zweiten Erkunden (Eigentümer, 08.10.2026):
-- Raids/Defense/Boss Rush: der eigentliche Name steht groß in Rot/Orange unter dem Banner („Holy Grail War“).
-  Manche haben Schwierigkeiten oben rechts im Fenster: W17-Raid 3 Stufen; Cursed Rush → „King of Curses Rush“ erst
-  wählbar, wenn man darunter 10 Finger (aus der ersten Stufe) gesammelt hat.
-- Shrines (Goddess, Otsutsuki, Demon King): Währung „opfern“ (10–100 %) für Boosts.
-- Passives (Pet/Titan/Shadow Passives, Acc. Curses): je ein eigenes System, Index/Roll/Auto.
-- Fixer Gigs (W21): Aufträge 20 Min./1 Std./3 Std., „Claim“ → „Send Pets“ (Pets-Fenster, letzte Pets wählen).
-- Nur Anzeige, für das Makro ohne Nutzen: Spirit Contract, Chakra Training, Karma, Vessel, Celestial Keys,
-  Dragon Slayer, Commandments; Renaming bleibt dem Spieler überlassen.
-- Später (1.5.0): Ninja Exam, Cyberdeck/Quickhacks, Sins Upgrade Tree.
-"""
+Added after the second explore run (owner, 08.10.2026):
+- Raids/defense/boss rush: the actual name is in large red/orange letters below the banner (“Holy Grail War”).
+  Some have difficulties at the top right of the window: W17 raid 3 levels; Cursed Rush → “King of Curses Rush” only
+  selectable once you have collected 10 fingers (from the first level) below it.
+- Shrines (Goddess, Otsutsuki, Demon King): “offer” currency (10–100 %) for boosts.
+- Passives (pet/titan/shadow passives, Acc. Curses): each its own system, index/roll/auto.
+- Fixer Gigs (W21): jobs of 20 min/1 h/3 h, “Claim” → “Send Pets” (pets window, choose the last pets).
+- Display only, no use for the macro: Spirit Contract, Chakra Training, Karma, Vessel, Celestial Keys,
+  Dragon Slayer, Commandments; renaming is left to the player.
+- Later (1.5.0): Ninja Exam, Cyberdeck/Quickhacks, Sins Upgrade Tree."""
 from __future__ import annotations
 
 import difflib
@@ -29,7 +28,7 @@ from dataclasses import dataclass, field
 
 from .i18n import N_, tr
 
-# Kategorie -> (Anzeige, Titel-Wörter, Text-Wörter, Gewicht je Treffer); Wörter klein, ohne Satzzeichen
+# category -> (display, title words, text words, weight per hit); words lower case, without punctuation
 CATEGORIES: dict[str, tuple[str, tuple[str, ...], tuple[str, ...]]] = {
     "pets": (N_("Pets (roll menu)"), ("pets",), ("pity", "open", "auto", "mythical")),
     "titans": (N_("Titans"), ("titan", "titans"), ("titan", "rare", "epic", "legendary", "secret")),
@@ -54,7 +53,7 @@ CATEGORIES: dict[str, tuple[str, tuple[str, ...], tuple[str, ...]]] = {
     "later": (N_("Later (1.5.0)"), ("exam", "cyberdeck", "quickhacks"), ()),
     "equip_best": (N_("Equip Best"), ("equip",), ("equip", "best", "power", "damage", "yen", "luck", "drop")),
     "guild": (N_("Guild"), ("guild",), ("guild", "members", "claim", "rewards", "quests", "donate")),
-    # aus dem ersten echten Erkunden (07.10.2026): Knöpfe am Bildschirmrand und weitere Welt-Symbole
+    # from the first real explore run (07.10.2026): buttons at the screen edge and more world icons
     "quests": (N_("Quests"), ("quests", "quest"), ("claim", "complete", "times", "quests")),
     "promotion": (N_("Promotion"), ("promotion", "promotions"), ("promote", "promotion", "missions", "boost")),
     "inventory": (N_("Inventory"), ("inventory",), ("rarity", "key", "inventory", "items")),
@@ -65,15 +64,15 @@ CATEGORIES: dict[str, tuple[str, tuple[str, ...], tuple[str, ...]]] = {
     "event": (N_("Game event"), ("event", "medal"), ("event", "medal")),
 }
 
-# Knöpfe, die beim Erkunden nur gemerkt, nie geklickt werden (kosten etwas oder ändern den Spielstand)
+# Buttons that exploring only notes and never clicks (they cost something or change the game state)
 ACTION_WORDS = ("roll", "auto", "craft", "buy", "claim", "equip", "upgrade", "open", "sell", "delete", "confirm",
                 "yes", "use", "donate", "start", "create", "join", "enter", "trade", "exchange", "reroll", "max")
 CLOSE_WORDS = ("close", "exit")
-# Reiter, die beim Durchklicken NIE gedrückt werden (Gilde verlassen, Mitglieder rauswerfen …)
+# Tabs that are NEVER pressed while clicking through (leave guild, kick members …)
 NEVER_TABS = ("leave", "kick", "disband", "delete", "reset", "logout", "quit", "sell", "rebirth", "remove", "ban",
               "play", "pause", "stop", "unequip", "lock", "unlock", "activate", "invite", "accept", "decline",
               "promote", "rename", "filters", "filter", "search")
-DROP_IGNORE = ("yen", "xp", "coins", "coin", "gems", "gem")       # in fast jedem Raid – sagt nichts über den Raid
+DROP_IGNORE = ("yen", "xp", "coins", "coin", "gems", "gem")       # in almost every raid – says nothing about the raid
 
 
 @dataclass
@@ -82,12 +81,12 @@ class Analysis:
     label: str = ""
     score: float = 0.0
     matched: list[str] = field(default_factory=list)
-    buttons: list[tuple[str, list[float]]] = field(default_factory=list)   # (Wort, Lage im Roblox-Fenster)
+    buttons: list[tuple[str, list[float]]] = field(default_factory=list)   # (word, position in the Roblox window)
     title: str = ""
-    mode: str = ""                                    # Banner-Titel, wenn darunter ein eigener Name steht („Raid“)
-    words: list = field(default_factory=list, repr=False)   # gelesene Wörter (nicht im Bericht)
-    drops: list = field(default_factory=list)                # Raid-Fenster: „Enemy Drops“
-    tabs: list = field(default_factory=list)                 # Reiter links (durchgeklickt): Name, Einordnung
+    mode: str = ""                                    # banner title if there is a name of its own below (“Raid”)
+    words: list = field(default_factory=list, repr=False)   # words read (not in the report)
+    drops: list = field(default_factory=list)                # raid window: “Enemy Drops”
+    tabs: list = field(default_factory=list)                 # tabs on the left (clicked through): name, classification
 
     def as_dict(self) -> dict:
         return {"category": self.category, "label": self.label, "score": round(self.score, 2),
@@ -102,7 +101,7 @@ def _norm(text: str) -> str:
 
 
 def classify(title: str, words: list[tuple[str, list[float]]], template: str = "") -> Analysis:
-    """Fenster einordnen. words = (Wort, Lage) aus der Texterkennung; template = Name einer erkannten Vorlage."""
+    """Classify a window. words = (word, position) from text recognition; template = name of a recognized template."""
     tokens = [_norm(w) for w, _r in words if _norm(w)]
     joined = " ".join(tokens)
     if "auto" in tokens and "roll" in tokens:
@@ -113,18 +112,18 @@ def classify(title: str, words: list[tuple[str, list[float]]], template: str = "
         best = Analysis("pets", tr(CATEGORIES["pets"][0]), 10.0, ["template"], title=title)
     else:
         for key, (label, title_words, text_words) in CATEGORIES.items():
-            # Titel-Wörter nur am Wortanfang („Magecraft“ ist kein Crafting, „Street“ kein Tree)
+            # title words only at the start of a word (“Magecraft” isn't crafting, “Street” isn't a tree)
             hit_title = [w for w in title_words if any(t.startswith(w) for t in title_tokens)]
             hit_text = sorted({w for w in text_words if w in tokens or (len(w) > 4 and w in joined)})
-            score = 6.0 * len(hit_title) + len(hit_text)       # der Titel zählt viel mehr als Wörter im Fenster
+            score = 6.0 * len(hit_title) + len(hit_text)       # the title counts much more than words in the window
             if key in ("equip_best", "guild") and not hit_title:
-                continue                                  # nur mit passendem Titel (Shops zeigen auch Power, Yen …)
+                continue                                  # only with a matching title (shops show power, yen … too)
             if key == "titans" and "buffs" in tokens:
-                score -= 2                                 # Gachas haben Buffs, Titans nicht
+                score -= 2                                 # gachas have buffs, titans don't
             if key in ("titans", "pets") and {"passive", "passives"} & title_tokens:
-                score -= 6                                 # „Titan Passives“ ist ein Passiv-Fenster
+                score -= 6                                 # “Titan Passives” is a passive window
             if key == "progression" and hit_title:
-                score += 1                                 # „… Progression“ im Titel geht vor Wörtern im Fenster
+                score += 1                                 # “… Progression” in the title beats words in the window
             if key == "gacha" and ("titan" in joined or "pets" in title_tokens):
                 score -= 3
             if score > best.score:
@@ -136,18 +135,18 @@ def classify(title: str, words: list[tuple[str, list[float]]], template: str = "
 
 
 def claimables(words: list[tuple[str, list[float]]]) -> list[list[float]]:
-    """Lagen aller „Claim“-Knöpfe (Quests, Achievements, Gilde) – nur gemerkt, nie geklickt."""
+    """Positions of all “Claim” buttons (quests, achievements, guild) – only noted, never clicked."""
     return [r for w, r in words if _norm(w) == "claim"]
 
 
 def close_word(words: list[tuple[str, list[float]]]) -> list[float] | None:
-    """Lage eines „Close“/„Exit“-Knopfs (ganze Bildschirme ohne rosa X), sonst None."""
+    """Position of a “Close”/“Exit” button (full screens without the pink X), otherwise None."""
     hits = [r for w, r in words if _norm(w) in CLOSE_WORDS]
-    return max(hits, key=lambda r: r[1]) if hits else None     # der unterste (Knöpfe sitzen unten)
+    return max(hits, key=lambda r: r[1]) if hits else None     # the lowest one (buttons sit at the bottom)
 
 
 def _rows(cands: list[tuple[str, list[float]]], axis: int) -> list[tuple[str, list[float]]]:
-    """Wörter derselben Zeile (axis=1) bzw. Spalte (axis=0) zu einem Eintrag zusammenfassen („Guild Weekly“)."""
+    """Merge words of the same row (axis=1) or column (axis=0) into one entry (“Guild Weekly”)."""
     out: list[list] = []
     for w, b in sorted(cands, key=lambda c: (c[1][1], c[1][0]) if axis == 1 else (c[1][0], c[1][1])):
         if out and axis == 1 and abs(out[-1][1][1] - b[1]) < 0.6 * (b[3] - b[1]) and -0.005 <= b[0] - out[-1][1][2] < 0.03:
@@ -159,7 +158,7 @@ def _rows(cands: list[tuple[str, list[float]]], axis: int) -> list[tuple[str, li
 
 
 def _dedupe(items: list[tuple[str, list[float]]]) -> list[tuple[str, list[float]]]:
-    """Zwei Lesedurchgänge finden dasselbe Wort oft zweimal (leicht versetzt) – nur einmal behalten."""
+    """Two reading passes often find the same word twice (slightly offset) – keep it only once."""
     out: list[tuple[str, list[float]]] = []
     for t, b in items:
         if any(min(b[2], o[2]) - max(b[0], o[0]) > 0.5 * (b[2] - b[0]) and min(b[3], o[3]) - max(b[1], o[1]) > 0
@@ -170,7 +169,7 @@ def _dedupe(items: list[tuple[str, list[float]]]) -> list[tuple[str, list[float]
 
 
 def _longest_regular(col: list) -> list:
-    """Längste Folge mit gleichmäßigem Abstand (ein abgesetzter Knopf wie „Leave“ ganz unten gehört nicht dazu)."""
+    """Longest sequence with even spacing (a separate button like “Leave” at the very bottom doesn't belong to it)."""
     best: list = []
     for i in range(len(col)):
         for j in range(len(col), i + 3, -1):
@@ -182,7 +181,7 @@ def _longest_regular(col: list) -> list:
 
 
 def is_forbidden(word: str) -> bool:
-    """Gefährlicher Knopf (Leave, Kick, Delete …) – auch bei Lesefehlern („Leaves“, „Leav“)."""
+    """Dangerous button (Leave, Kick, Delete …) – also with misreads (“Leaves”, “Leav”)."""
     import difflib
     n = _norm(word)
     if len(n) < 3:
@@ -197,17 +196,17 @@ def _regular(values: list[float]) -> bool:
 
 
 def side_tabs(words: list[tuple[str, list[float]]], roi: list[float]) -> list[tuple[str, list[float]]]:
-    """Reiter eines Fensters (streng, damit nie Spielknöpfe wie „Play“/„Pause“ oder Pets geklickt werden):
-    - links: mindestens 4 Einträge untereinander, linksbündig, gleiche Schrifthöhe, gleichmäßiger Abstand
-      (Gilde: Home, Upgrades, Members, Missions, Servers, Rankings);
-    - unten: mindestens 4 Einträge nebeneinander in einer Zeile ganz unten (Achievements: Normal, Gamemode …).
-    Nie Aktions- und Gefahren-Wörter (Leave, Kick, Play, Pause, Claim, Buy …)."""
+    """Tabs of a window (strict, so game buttons like “Play”/“Pause” or pets are never clicked):
+        - left: at least 4 entries one below the other, left-aligned, same text height, even spacing
+          (guild: Home, Upgrades, Members, Missions, Servers, Rankings);
+        - bottom: at least 4 entries side by side in a row at the very bottom (achievements: Normal, Gamemode …).
+        Never action or danger words (Leave, Kick, Play, Pause, Claim, Buy …)."""
     x0, y0, x1, y1 = roi
     w, h = x1 - x0, y1 - y0
     ok = _dedupe([(t, b) for t, b in words if len(re.sub(r"[^A-Za-z]", "", t)) >= 3 and is_safe_to_click(t)
                   and not is_forbidden(t)])
-    # links
-    left = _rows([(t, b) for t, b in ok if b[2] <= x0 + 0.42 * w], axis=1)    # große Fenster: Lage geschätzt
+    # left
+    left = _rows([(t, b) for t, b in ok if b[2] <= x0 + 0.42 * w], axis=1)    # large windows: position estimated
     best: list[tuple[str, list[float]]] = []
     for anchor in left:
         ax = (anchor[1][0] + anchor[1][2]) / 2
@@ -218,7 +217,7 @@ def side_tabs(words: list[tuple[str, list[float]]], roi: list[float]) -> list[tu
             best = col
     if best:
         return best
-    # unten: Zeilen ganz unten nach Höhe gruppieren; die unterste mit ≥ 4 gleichmäßig verteilten Einträgen
+    # bottom: group the rows at the very bottom by height; the lowest with ≥ 4 evenly spaced entries
     bottom = sorted([(t, b) for t, b in ok if b[1] >= y0 + 0.88 * h], key=lambda c: (c[1][1] + c[1][3]) / 2)
     groups: list[list] = []
     for t, b in bottom:
@@ -231,7 +230,7 @@ def side_tabs(words: list[tuple[str, list[float]]], roi: list[float]) -> list[tu
         row = []
         for t, b in sorted(items, key=lambda c: c[1][0]):
             if row and b[0] < row[-1][1][2] - 0.005:
-                continue                                  # überlappt: zweite Lesung desselben Reiters
+                continue                                  # overlaps: second reading of the same tab
             row.append((t, b))
         if len(row) >= 4 and _regular([(b[0] + b[2]) / 2 for _t, b in row]):
             return row
@@ -239,7 +238,7 @@ def side_tabs(words: list[tuple[str, list[float]]], roi: list[float]) -> list[tu
 
 
 def _list_rows(col: list, words: list, right_of: float) -> bool:
-    """Sind die „Reiter“ in Wahrheit Listenzeilen? (Upgrades: Yen … +5.00x … MAX in derselben Zeile)"""
+    """Are the “tabs” actually list rows? (upgrades: Yen … +5.00x … MAX in the same row)"""
     hits = 0
     for _t, b in col:
         cy, hh = (b[1] + b[3]) / 2, b[3] - b[1]
@@ -248,16 +247,16 @@ def _list_rows(col: list, words: list, right_of: float) -> bool:
     return hits >= 0.75 * len(col)
 
 
-FORBID_MARGIN = 0.03      # so viel Abstand (Anteil des Fensters) bleibt um gesperrte Knöpfe frei – auch kein Hover
-# Knöpfe, die das Erkunden zum Testen drücken darf: reine Ansichts-/Seitenwechsel (Liste bewusst klein)
+FORBID_MARGIN = 0.03      # this much margin (share of the window) stays free around blocked buttons – no hover either
+# Buttons exploring may press for testing: pure view/page switches (list kept small on purpose)
 NAV_WORDS = ("info", "index", "help", "details", "stats", "members", "personal", "weekly", "daily", "global",
              "online", "all", "rewards", "missions", "upgrades", "rankings", "servers", "home", "quests", "normal",
              "gamemode", "raid", "collection", "guild", "page", "next", "prev", "back", "overview", "list")
 
 
 def forbidden_zones(words: list[tuple[str, list[float]]], roi: list[float], title: str = "") -> list[list[float]]:
-    """Bereiche, die das Makro nie ansteuern darf (Klick, Mausrad, Hover): gefährliche Knöpfe (Leave, Kick …) mit
-    Rand – und in der Gilde immer die Ecke unten links, wo „Leave“ sitzt (auch wenn die Texterkennung es übersieht)."""
+    """Areas the macro must never go to (click, mouse wheel, hover): dangerous buttons (Leave, Kick …) with a
+        margin – and in the guild always the bottom left corner where “Leave” sits (even if text recognition misses it)."""
     x0, y0, x1, y1 = roi
     w, h = x1 - x0, y1 - y0
     zones = []
@@ -265,7 +264,7 @@ def forbidden_zones(words: list[tuple[str, list[float]]], roi: list[float], titl
         if is_forbidden(t):
             zones.append([b[0] - FORBID_MARGIN, b[1] - FORBID_MARGIN, b[2] + FORBID_MARGIN, b[3] + FORBID_MARGIN])
     if "guild" in _norm(title) or any(_norm(t).startswith("leave") for t, _b in words):
-        zones.append([x0 - 0.01, y0 + 0.78 * h, x0 + 0.36 * w, y1 + 0.01])     # Gilde: „Leave“ unten links
+        zones.append([x0 - 0.01, y0 + 0.78 * h, x0 + 0.36 * w, y1 + 0.01])     # guild: “Leave” at the bottom left
     return zones
 
 
@@ -274,8 +273,8 @@ def inside(pos: tuple[float, float], zones: list[list[float]]) -> bool:
 
 
 def nav_buttons(words: list[tuple[str, list[float]]], skip: list[tuple[str, list[float]]]) -> list:
-    """Knöpfe, die das Erkunden testweise drücken darf: nur Wörter aus NAV_WORDS, nichts Gesperrtes, keine Reiter
-    (die werden extra durchgeklickt)."""
+    """Buttons exploring may press for testing: only words from NAV_WORDS, nothing blocked, no tabs
+        (they are clicked through separately)."""
     taken = [b for _t, b in skip]
     out = []
     for t, b in _dedupe(words):
@@ -287,8 +286,8 @@ def nav_buttons(words: list[tuple[str, list[float]]], skip: list[tuple[str, list
 
 
 def lines_of(words: list[tuple[str, list[float]]]) -> list[str]:
-    """Gelesene Wörter zu Textzeilen zusammensetzen (Bericht lesbar statt einzelner Wörter); weit auseinander
-    stehende Teile einer Höhe (Spalten) werden mit „ · “ getrennt."""
+    """Put read words together into text lines (readable report instead of single words); parts of one height far
+        apart (columns) are separated with “ · ”."""
     rows: list[list] = []
     for t, b in sorted(_dedupe(words), key=lambda c: ((c[1][1] + c[1][3]) / 2, c[1][0])):
         cy, hgt = (b[1] + b[3]) / 2, b[3] - b[1]
@@ -304,7 +303,7 @@ def lines_of(words: list[tuple[str, list[float]]]) -> list[str]:
             if last is not None:
                 gap, hh = b[0] - last, max(1e-6, b[3] - b[1])
                 if prev.endswith("/") or t.startswith("/"):
-                    text += " "                            # „514δU / MAX“ gehört zusammen
+                    text += " "                            # “514δU / MAX” belongs together
                 else:
                     text += " · " if gap > max(0.04, 2.5 * hh) else " "
             text += t
@@ -314,21 +313,21 @@ def lines_of(words: list[tuple[str, list[float]]]) -> list[str]:
 
 
 def raid_drops(words: list[tuple[str, list[float]]]) -> list[str]:
-    """„Enemy Drops“ eines Raid-Fensters: Beschriftungen unter den Symbolen zwischen „Enemy Drops:“ und den Knöpfen
-    Create/Join/Start. Wörter einer Kachel werden zusammengefasst („Grail Shard“). Yen/XP fallen weg."""
+    """“Enemy Drops” of a raid window: labels below the icons between “Enemy Drops:” and the buttons
+        Create/Join/Start. Words of one tile are merged (“Grail Shard”). Yen/XP are dropped."""
     head = next((b for w, b in words if _norm(w) in ("drops", "enemydrops")), None)
     foot = min((b[1] for w, b in words if _norm(w) in ("create", "join", "start")), default=None)
     if head is None or foot is None or foot <= head[3]:
         return []
     band = [(w, b) for w, b in words if head[3] < b[1] < foot and "%" not in w and len(_norm(w)) >= 3]
-    # je Kachel eine Spalte: Wörter nach ihrer Mitte gruppieren (Beschriftung kann zwei Zeilen haben)
+    # one column per tile: group words by their center (a label can have two lines)
     band.sort(key=lambda c: (c[1][0] + c[1][2]) / 2)
     cols: list[list] = []
     for w, b in band:
         cx = (b[0] + b[2]) / 2
         if cols and cx - cols[-1][0] < 0.05:
             cols[-1][1].append((w, b))
-            cols[-1][0] = cx                                # Kette: nächstes Wort derselben Beschriftung
+            cols[-1][0] = cx                                # chain: next word of the same label
         else:
             cols.append([cx, [(w, b)]])
     names = [[" ".join(w for w, _b in sorted(ws, key=lambda c: (int(c[1][1] / 0.015), c[1][0]))), None]
@@ -342,12 +341,12 @@ def raid_drops(words: list[tuple[str, list[float]]]) -> list[str]:
 
 
 def is_safe_to_click(word: str) -> bool:
-    """Beim Erkunden nie auf Aktions-Knöpfe klicken (Roll, Craft, Buy, Claim …)."""
+    """Never click action buttons while exploring (Roll, Craft, Buy, Claim …)."""
     return _norm(word) not in ACTION_WORDS
 
 
-# ------------------------------------------------------------------ Fenstertitel berichtigen
-# Wörter, die in Fenstertiteln des Spiels vorkommen – Lesefehler werden auf sie gezogen („Cratt“ -> „Craft“).
+# ------------------------------------------------------------------ Correct window titles
+# Words that occur in the game's window titles – misreads are pulled to them (“Cratt” -> “Craft”).
 GAME_WORDS = ("Craft", "Crafting", "Shrine", "Upgrade", "Upgrades", "Tree", "Raid", "Progression", "Defense", "Mode",
               "Shop", "Merchant", "Passive", "Passives", "Index", "Battlepass", "Pets", "Roll", "Exchange",
               "Achievements", "Promotions", "Boosts", "Quests", "Global", "Inventory", "Guild", "Equip", "Best",
@@ -366,8 +365,8 @@ def _title_words(names) -> list[str]:
 
 
 def _clean_name(name: str) -> str:
-    """Bekannter Name ohne Welt, „Fenster“, „(2)“ – und mit berichtigten Spiel-Wörtern (frühere Lesefehler wie
-    „Kagune Upgraid“ sollen nicht als Vorbild dienen)."""
+    """Known name without world, “Fenster”, “(2)” – and with corrected game words (earlier misreads like
+        “Kagune Upgraid” shouldn't serve as a model)."""
     name = re.sub(r"^W\d+\s+|\s*·.*$|\s*\(\d+\)$|\s+Fenster$", "", name or "").strip()
     if name.lower() in _NOT_TITLE:
         return ""
@@ -379,23 +378,23 @@ def _clean_name(name: str) -> str:
 
 
 def _fix_word(word: str, vocab: list[str], last: bool) -> tuple[str, bool]:
-    """Ein Wort berichtigen. Rückgabe: (Wort, bekannt). Nur echte Lesefehler: ähnlich (≥ 0,8) und fast gleich lang –
-    „Cratt“ -> „Craft“, „Worsutsuki“ -> „Otsutsuki“; am Zeilenende auch abgeschnittene Wörter („Shrin“ -> „Shrine“).
-    Richtige Wörter bleiben, auch Einzahl/Mehrzahl („Pet“, „Fruit“) und Großschreibung („NINJA EXAM“)."""
+    """Correct one word. Returns (word, known). Only real misreads: similar (≥ 0.8) and almost the same length –
+        “Cratt” -> “Craft”, “Worsutsuki” -> “Otsutsuki”; at the end of a line also cut-off words (“Shrin” -> “Shrine”).
+        Correct words stay, also singular/plural (“Pet”, “Fruit”) and case (“NINJA EXAM”)."""
     core = re.sub(r"[^A-Za-z']", "", word)
     low = core.lower()
     lows = {v.lower() for v in vocab}
     if len(core) < 3 or low in lows:
         return word, low in lows
     best, score = "", 0.0
-    for v in vocab:                                       # Spiel-Wörter zuerst: bei Gleichstand gewinnen sie
+    for v in vocab:                                       # game words first: they win a tie
         vl = v.lower()
         if vl in (low + "s", low + "es") or low in (vl + "s", vl + "es"):
-            continue                                      # Mehrzahl ist kein Lesefehler
+            continue                                      # a plural is not a misread
         r = difflib.SequenceMatcher(None, low, vl).ratio()
         ok = r >= 0.8 and abs(len(vl) - len(low)) <= max(1, len(low) // 5)
         if last and len(low) >= 4 and vl.startswith(low) and len(vl) - len(low) <= 3:
-            ok, r = True, r + 0.15                         # abgeschnitten: das vollständige Wort bevorzugen
+            ok, r = True, r + 0.15                         # cut off: prefer the complete word
         if ok and r > score:
             best, score = v, r
     if not best:
@@ -404,10 +403,10 @@ def _fix_word(word: str, vocab: list[str], last: bool) -> tuple[str, bool]:
 
 
 def fix_title(text: str, names) -> str:
-    """Gelesenen Titel berichtigen, damit Fenster so heißen wie im Spiel (Eigentümer 08.10.2026): Wort für Wort auf
-    bekannte Wörter ziehen („Worsutsuki Shrin“ -> „Otsutsuki Shrine“, „Cratt Genos“ -> „Craft Genos“), kurze Reste
-    am Rand weglassen („AK Kagune Upgra“ -> „Kagune Upgrade“). Ganze Namen werden nicht ersetzt (sonst würde aus
-    „Fire Progression“ „Ki Progression“). names: bekannte Fensternamen (Karte, Berichte, Funde prüfen)."""
+    """Correct a read title so windows are named as in the game (owner 08.10.2026): pull it word by word to known
+        words (“Worsutsuki Shrin” -> “Otsutsuki Shrine”, “Cratt Genos” -> “Craft Genos”), drop short leftovers at the
+        edge (“AK Kagune Upgra” -> “Kagune Upgrade”). Whole names are not replaced (otherwise “Fire Progression”
+        would become “Ki Progression”). names: known window names (map, reports, check findings)."""
     text = (text or "").strip()
     if not text:
         return ""
@@ -416,7 +415,7 @@ def fix_title(text: str, names) -> str:
     lows = {v.lower() for v in vocab}
     words = text.split()
     while len(words) > 1 and re.fullmatch(r"[A-Za-z]{1,2}", words[0]) and words[0].lower() not in lows:
-        words.pop(0)                                      # Rest vom Banner-Rand („AK“)
+        words.pop(0)                                      # leftover from the banner edge (“AK”)
     while len(words) > 1 and re.fullmatch(r"[A-Za-z]{1,2}", words[-1]) and words[-1].lower() not in lows:
         words.pop()
     fixed = [_fix_word(word, vocab, i == len(words) - 1)[0] for i, word in enumerate(words)]
