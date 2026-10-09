@@ -5,7 +5,8 @@ import _env  # noqa: F401
 import numpy as np
 
 from astral_monitor.automation import fmt_wait, gig_cards, gig_next_due, gig_refresh_box, gig_refresh_read, \
-    gig_timer_box, guild_next_time, hud_locate, leave_before, next_task, parse_timer, pet_tiles, user_moved
+    gig_pill, gig_slot_states, gig_timer_box, guild_next_time, hud_locate, leave_before, next_task, parse_timer, \
+    pet_tiles, user_moved
 
 
 class QueueTest(unittest.TestCase):
@@ -65,8 +66,24 @@ class QueueTest(unittest.TestCase):
         self.assertEqual(gig_next_due(cards, {0: 3300, 1: 900}), 0)              # done: right away
         cards[2]["state"] = "empty"
         self.assertEqual(gig_next_due(cards, {0: 3300, 1: 900}, 300), 300)       # new gigs come first
-        self.assertEqual(gig_next_due(cards, {0: 3300, 1: 900}, None), 900)
-        self.assertEqual(gig_next_due(cards, {0: 3300, 1: 9000}, 99999), 1200)   # implausible “NEW GIGS IN”
+        self.assertEqual(gig_next_due(cards, {0: 3300, 1: 900}, None), 300)     # empty, no countdown: 5 min
+        self.assertEqual(gig_next_due(cards, {0: 3300, 1: 9000}, 99999), 300)    # implausible “NEW GIGS IN”
+
+    def test_gig_pills(self):
+        words = [("STANDARD", [0.321, 0.373, 0.401, 0.392]), ("WORKING", [0.352, 0.426, 0.408, 0.44]),
+                 ("READY", [0.579, 0.426, 0.618, 0.44]), ("CLAIM", [0.569, 0.84, 0.628, 0.861])]
+        cards = gig_cards(words, [0.0, 0.0, 1.0, 1.0])
+        slots = gig_slot_states(cards, {0: 2040}, 600, 1000.0)
+        self.assertEqual([x["state"] for x in slots], ["working", "ready", "empty"])
+        self.assertEqual(slots[0]["until"], 3040.0)
+        self.assertEqual(slots[2]["until"], 1600.0)                # new gigs in 10 min
+        self.assertEqual(gig_pill(slots[0], 1000.0), ("run", "34 min"))
+        self.assertEqual(gig_pill(slots[0], 4000.0)[0], "done")    # time is up: done without a new reading
+        self.assertEqual(gig_pill(slots[1], 1000.0)[0], "done")
+        self.assertEqual(gig_pill(slots[2], 1000.0), ("empty", "new in 10 min"))
+        self.assertEqual(gig_pill(slots[2], 2000.0), ("empty", "empty"))
+        self.assertEqual(gig_pill({"state": "open", "until": None}, 0)[0], "pet")
+        self.assertEqual(gig_pill(None, 0), ("none", "–"))
 
     def test_guild_next_time(self):
         import time

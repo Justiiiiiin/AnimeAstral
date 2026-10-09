@@ -46,8 +46,11 @@ TASK_KINDS = ("raid", "autoroll", "progression", "gigs", "guild_claim", "wait",
               "raid_farm", "raid_leave", "raid_create", "raid_join", "navigate", "pets", "close")   # from raid_farm on: older
 RAID_KINDS = ("raid", "raid_farm", "raid_create", "raid_join")     # tasks that lead into a raid/mode
 CLAIM_LIMIT = 8           # at most this many “Claim” per page (protection against endless loops)
+CLAIM_GAP = 0.35          # between two “Claim” clicks of one reading
+CLAIM_SETTLE = 0.5        # after the clicks of one reading, before reading again
 GIGS_PETS = 3             # “Send Pets”: 1 pet per gig, in turn one of the last 3 (owner 08.10.2026)
 GUILD_RETRY = 3 * 3600    # guild missions: nothing to claim yet today -> try again this much later (owner 09.10.2026)
+GUILD_TAB_WAIT = 0.6      # after switching a guild tab, before reading (was 1 s – owner: too slow)
 EXTRA_RETRY = 15 * 60     # after a failure try again this much later at the earliest
 RAID_GEAR = Path(__file__).with_name("uimap_static") / "raid_gear.png"   # gear at the top right in a raid (fixed, not from the map)
 GEAR_REGION = [0.4, 0.0, 0.9, 0.16]
@@ -273,6 +276,7 @@ GIG_UNKNOWN = 3 * 3600        # card without a readable header: duration unknown
 # the three card frames in the Fixer Gigs window (fractions of the window roi, measured on the real window)
 GIG_SLOT_BOXES = ((0.276, 0.347, 0.481, 0.897), (0.496, 0.347, 0.700, 0.897), (0.714, 0.347, 0.919, 0.897))
 GIG_REFRESH_MAX = 4 * 3600    # longer “NEW GIGS IN” readings are misreads
+GIG_EMPTY_CHECK = 5 * 60      # empty slot without a readable countdown: open the window again this soon
 
 
 def _gig_kind(word: str) -> Optional[int]:
@@ -357,14 +361,47 @@ def gig_refresh_read(words: list[tuple[str, list[float]]]) -> Optional[int]:
     return None
 
 
+def gig_slot_states(cards: list[dict], timers: dict[int, Optional[int]], refresh: Optional[int],
+                    now: float) -> list[dict]:
+    """What the card shows per slot (pills on the start page), saved in extras_state.json: state as read, “until”
+    = end of the running gig or arrival of new gigs (time.time, None = unknown), duration (None = header unread)."""
+    out = []
+    for i, c in enumerate(cards):
+        until = None
+        if c["state"] == "working" and timers.get(i):
+            until = now + timers[i]
+        elif c["state"] == "empty" and refresh is not None and 0 < refresh <= GIG_REFRESH_MAX:
+            until = now + refresh
+        out.append({"state": c["state"], "until": until, "duration": None if c["unknown"] else c["duration"]})
+    return out
+
+
+def gig_pill(slot: Optional[dict], now: float) -> tuple[str, str]:
+    """(kind for the style, text) of one pill: run / done / pet / empty / none."""
+    if not slot:
+        return "none", "–"
+    state, until = slot.get("state"), slot.get("until")
+    if state == "working":
+        if until is None:
+            return "run", tr("running")
+        return ("done", tr("done")) if until <= now else ("run", fmt_wait(until - now))
+    if state == "ready":
+        return "done", tr("done")
+    if state == "open":
+        return "pet", tr("needs pet")
+    if until is not None and until > now:
+        return "empty", tr("new in {time}", time=fmt_wait(until - now))
+    return "empty", tr("empty")
+
+
 def gig_next_due(cards: list[dict], timers: dict[int, Optional[int]], refresh: Optional[int] = None) -> int:
     """Seconds until the next visit: smallest valid time left (at most as long as the gig); running gigs without a
     readable time count as 20 min, done ones and ones that need pets right away, empty slots when new gigs come
-    (“NEW GIGS IN …”, refresh in seconds; unreadable = 20 min)."""
+    (“NEW GIGS IN …”, refresh in seconds; unreadable = GIG_EMPTY_CHECK)."""
     due = []
     for i, card in enumerate(cards):
         if card["state"] == "empty":
-            due.append(refresh if refresh is not None and 0 < refresh <= GIG_REFRESH_MAX else 20 * 60)
+            due.append(refresh if refresh is not None and 0 < refresh <= GIG_REFRESH_MAX else GIG_EMPTY_CHECK)
         elif card["state"] != "working":
             due.append(0)
         else:
@@ -408,6 +445,7 @@ class Navigator:
         self.wave_visible: Optional[Callable[[], bool]] = None       # is the monitoring reading a wave right now?
         self._in_raid: Optional[str] = None               # target of the raid the macro is farming right now
         self.gigs_next = 0.0                              # Fixer Gigs: check again at this time at the earliest (time.time)
+        self.gig_slots: list[dict] = []                  # last reading per slot (gig_slot_states) – pills on the start page
         self.guild_day = ""                              # guild missions: PC date (YYYY-MM-DD) of the last claim
         self.guild_retry = 0.0                            # … and not before this time today (time.time)
         self.state_path: Optional[Path] = None            # times of the collections (survive restarts)
@@ -810,7 +848,8 @@ class Navigator:
         routine but switches of their own; they run between the tasks and while a raid is farming."""
         now = time.time()
         due = []
-        if self.auto_gigs() and now >= self.gigs_next and self._gigs_window() is not None:
+        if self.auto_gigs() and (now >= self.gigs_next or len(self.gig_slots) < len(GIG_SLOT_BOXES)) \
+                and self._gigs_window() is not None:
             due.append("gigs")
         if self.auto_guild() and now >= self.guild_next:
             due.append("guild")
@@ -958,18 +997,25 @@ class Navigator:
         want = {w.lower() for w in wanted}
         return next((b for w, b in words if re.sub(r"[^a-z]", "", w.lower()) in want), None)
 
-    def _claim_all(self, where: str) -> int:
-        """Press all visible “Claim” buttons (read again after every click – the list can shift)."""
+    def _claim_all(self, where: str, words: Optional[list] = None) -> int:
+        """Press all visible “Claim” buttons: all of one reading in one go, from the bottom up (a claimed entry that
+        moves or disappears only shifts the ones below it – those are done already), then read once more for
+        newly visible ones. words: a reading of this page that is still fresh (saves one text recognition)."""
         count = 0
-        for _ in range(CLAIM_LIMIT):
-            words, _roi = self._words()
-            box = self._find(words, "claim")
-            if box is None:
+        while count < CLAIM_LIMIT:
+            if words is None:
+                words, _roi = self._words()
+            norm = [(re.sub(r"[^a-z]", "", w.lower()), b) for w, b in words]
+            boxes = sorted((b for w, b in norm if w == "claim"), key=lambda b: (-b[1], -b[0]))
+            if not boxes:
                 break
-            self.log(tr("Clicking “{button}”.", button="Claim"))
-            self._click_roi(box)
-            count += 1
-            time.sleep(1.0)
+            for box in boxes[:CLAIM_LIMIT - count]:
+                self.log(tr("Clicking “{button}”.", button="Claim"))
+                self._click_roi(box)
+                count += 1
+                time.sleep(CLAIM_GAP)
+            time.sleep(CLAIM_SETTLE)
+            words = None
         self.log(tr("{where}: claimed {count}×.", where=where, count=count))
         return count
 
@@ -1017,16 +1063,19 @@ class Navigator:
         self._close_any()
         return total
 
-    def _guild_forbidden(self) -> None:
+    def _guild_forbidden(self) -> list:
         """Recompute the no-go zones for the guild page visible right now. Otherwise the zones of the home page (Kick,
-        Leave …) lay over “Personal” after switching to “Missions” – the tab counted as blocked."""
+        Leave …) lay over “Personal” after switching to “Missions” – the tab counted as blocked. Returns the words
+        read (reused for the “Claim” search – one text recognition per page instead of two)."""
         from .knowledge import forbidden_zones
         roi, frame = self._window_area({"name": "Guild"})
-        self.forbidden = forbidden_zones(vision.words_in(frame, roi, self._ocr), roi, "Guild")
+        words = vision.words_in(frame, roi, self._ocr)
+        self.forbidden = forbidden_zones(words, roi, "Guild")
+        return words
 
     def _guild_pages(self, guild: dict) -> int:
         self._press(guild, ("missions",))
-        time.sleep(1.0)
+        time.sleep(GUILD_TAB_WAIT)
         self._guild_forbidden()
         total = 0
         for tab, label in ((("personal",), "Personal"), (("guild", "weekly"), "Guild Weekly")):
@@ -1037,9 +1086,8 @@ class Navigator:
             except Stop as exc:
                 self.log(tr("Tab “{tab}”: {reason}", tab=label, reason=exc))
                 continue
-            time.sleep(1.0)
-            self._guild_forbidden()
-            total += self._claim_all(label)
+            time.sleep(GUILD_TAB_WAIT)
+            total += self._claim_all(label, self._guild_forbidden())
         if not total:
             self._snap("gilde")
         return total
@@ -1049,7 +1097,7 @@ class Navigator:
         """Open Fixer Gigs, claim finished gigs (“Claim”), send new ones with “Send Pets” (the last pets in the pets
         window), remember the durations – the task is skipped before they run out."""
         wait = self.gigs_next - time.time()
-        if wait > 0:
+        if wait > 0 and len(self.gig_slots) == len(GIG_SLOT_BOXES):
             self.log(tr("Fixer Gigs: nothing finished yet – checking again in {time}.", time=fmt_wait(wait)))
             return
         window = self._gigs_window()
@@ -1098,6 +1146,7 @@ class Navigator:
             self._snap("gigs")
         wait = max(60, gig_next_due(cards, timers, refresh) + 20)
         self.gigs_next = time.time() + wait
+        self.gig_slots = gig_slot_states(cards, timers, refresh, time.time())
         self._save_state()
         self.log(tr("Fixer Gigs: next visit in {time}.", time=fmt_wait(wait)))
         self._close_any()
@@ -1134,6 +1183,8 @@ class Navigator:
         except (OSError, ValueError):
             return
         self.gigs_next = float(data.get("gigs_next", 0) or 0)
+        slots = data.get("gig_slots")
+        self.gig_slots = [x for x in slots if isinstance(x, dict)] if isinstance(slots, list) else []
         self.guild_day = str(data.get("guild_day", "") or "")          # older files (“guild_next”): due right away
         self.guild_retry = float(data.get("guild_retry", 0) or 0)
 
@@ -1141,7 +1192,8 @@ class Navigator:
         if self.state_path is None:
             return
         try:
-            self.state_path.write_text(json.dumps({"gigs_next": self.gigs_next, "guild_day": self.guild_day,
+            self.state_path.write_text(json.dumps({"gigs_next": self.gigs_next, "gig_slots": self.gig_slots,
+                                                   "guild_day": self.guild_day,
                                                    "guild_retry": self.guild_retry}),
                                        encoding="utf-8")
         except OSError:

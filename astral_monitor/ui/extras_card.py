@@ -8,11 +8,12 @@ from __future__ import annotations
 import time
 
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtWidgets import QGridLayout, QLabel, QMessageBox, QPushButton
+from PySide6.QtWidgets import QGridLayout, QHBoxLayout, QLabel, QMessageBox, QPushButton
 
 from .. import winapi
-from ..automation import fmt_wait
+from ..automation import GIG_NAMES, GIG_SLOT_BOXES, fmt_wait, gig_pill
 from ..i18n import tr
+from . import theme
 from .widgets import Card, ToggleSwitch, label
 
 
@@ -57,18 +58,29 @@ class ExtrasCard(Card):
         self.guild.setChecked(bool(s.auto_guild))
         self.gigs_state = label("", "small")
         self.guild_state = label("", "small")
+        # one pill per gig slot: time left / done / needs pet / empty (owner 09.10.2026)
+        self.pills = []
+        pills = QHBoxLayout()
+        theme.track_spacing(pills, 4)
+        for _ in GIG_SLOT_BOXES:
+            pill = QLabel("–")
+            pill.setObjectName("gigpill")
+            pill.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.pills.append(pill)
+            pills.addWidget(pill)
         grid.addWidget(self.gigs, 0, 0)
         grid.addWidget(_ClickLabel(tr("Fixer Gigs (W21)"), self.gigs), 0, 1)   # text clickable like next to a checkbox
-        grid.addWidget(self.gigs_state, 0, 2)
+        grid.addLayout(pills, 0, 2)
+        grid.addWidget(self.gigs_state, 0, 3)
         grid.addWidget(self.guild, 1, 0)
         grid.addWidget(_ClickLabel(tr("Guild missions"), self.guild), 1, 1)
-        grid.addWidget(self.guild_state, 1, 2)
+        grid.addWidget(self.guild_state, 1, 3)
         self.prog = QPushButton(tr("Progressions: Auto All"))
         self.prog.setToolTip(tr("Run once: opens the first progression, presses “Auto All” and closes it again"))
         self.prog.clicked.connect(self._progression)
         self.prog_state = label("", "small")
-        grid.addWidget(self.prog, 2, 0, 1, 2)
-        grid.addWidget(self.prog_state, 2, 2)
+        grid.addWidget(self.prog, 2, 0, 1, 3)
+        grid.addWidget(self.prog_state, 2, 3)
         self.body.addLayout(grid)
         for box in (self.gigs, self.guild):
             box.toggled.connect(self._save)
@@ -118,6 +130,23 @@ class ExtrasCard(Card):
             if state.text() != text:
                 state.setText(text)
         self.prog.setEnabled(on and not self.macro.busy)
+        self._update_pills(nav, now, on and self.gigs.isChecked())
+
+    def _update_pills(self, nav, now: float, active: bool) -> None:
+        slots = nav.gig_slots if nav else []
+        for i, pill in enumerate(self.pills):
+            slot = slots[i] if i < len(slots) else None
+            kind, text = gig_pill(slot, now) if active else ("none", "–")
+            if pill.text() != text:
+                pill.setText(text)
+            if pill.property("state") != kind:
+                pill.setProperty("state", kind)
+                pill.style().unpolish(pill)
+                pill.style().polish(pill)
+            duration = (slot or {}).get("duration")
+            tip = tr("Slot {n}", n=i + 1) + (" · " + tr(GIG_NAMES[duration]) if duration in GIG_NAMES else "")
+            if pill.toolTip() != tip:
+                pill.setToolTip(tip)
 
     def _tick(self) -> None:
         """If the macro isn't doing anything: start what is due (only with “Allow macro” and Roblox open)."""

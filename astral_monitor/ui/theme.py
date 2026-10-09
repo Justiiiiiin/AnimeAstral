@@ -80,6 +80,11 @@ QLabel#warn { color: @warn; }
 QLabel#chip { background: @control; border: 1px solid @controlBorder; border-radius: 12px; padding: 5px 14px; color: @muted; }
 QLabel#chip[state="ok"] { background: @okBg; border: 1px solid @okBorder; color: @accent; }
 QLabel#chip[state="bad"] { background: @dangerBg; border: 1px solid @dangerBorder; color: @danger; }
+QLabel#gigpill { background: @control; border: 1px solid @controlBorder; border-radius: 10px; padding: 2px 8px; color: @muted; }
+QLabel#gigpill[state="run"] { color: @text; border: 1px solid @accent2; }
+QLabel#gigpill[state="done"] { background: @okBg; border: 1px solid @okBorder; color: @accent; }
+QLabel#gigpill[state="pet"] { border: 1px solid @warn; color: @warn; }
+QLabel#gigpill[state="empty"] { background: @dangerBg; border: 1px solid @dangerBorder; color: @danger; }
 QLabel#stepdot { background: @stepdot; border-radius: 5px; min-width: 10px; max-width: 10px; min-height: 10px; max-height: 10px; }
 QLabel#stepdot[state="active"] { background: @accent; min-width: 28px; max-width: 28px; border-radius: 5px; }
 QLabel#stepdot[state="done"] { background: @stepDone; }
@@ -204,6 +209,11 @@ QLabel#warn { color: @warn; }
 QLabel#chip { background: @control; border: 1px solid @controlBorder; border-radius: 13px; padding: 5px 14px; color: @muted; }
 QLabel#chip[state="ok"] { background: @okBg; border: 1px solid @okBorder; color: @accent; }
 QLabel#chip[state="bad"] { background: @dangerBg; border: 1px solid @dangerBorder; color: @danger; }
+QLabel#gigpill { background: @control; border: 1px solid @controlBorder; border-radius: 10px; padding: 2px 8px; color: @muted; }
+QLabel#gigpill[state="run"] { color: @text; border: 1px solid @accent2; }
+QLabel#gigpill[state="done"] { background: @okBg; border: 1px solid @okBorder; color: @accent; }
+QLabel#gigpill[state="pet"] { border: 1px solid @warn; color: @warn; }
+QLabel#gigpill[state="empty"] { background: @dangerBg; border: 1px solid @dangerBorder; color: @danger; }
 QLabel#stepdot { background: @stepdot; border-radius: 5px; min-width: 10px; max-width: 10px; min-height: 10px; max-height: 10px; }
 QLabel#stepdot[state="active"] { background: @accent; min-width: 28px; max-width: 28px; border-radius: 5px; }
 QLabel#stepdot[state="done"] { background: @stepDone; }
