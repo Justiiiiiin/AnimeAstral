@@ -56,6 +56,10 @@ RAID_GEAR = Path(__file__).with_name("uimap_static") / "raid_gear.png"   # gear 
 GEAR_REGION = [0.4, 0.0, 0.9, 0.16]
 LEAVE_REGION = [0.35, 0.0, 0.75, 0.2]
 GEAR_HIT = 0.75
+# raid settings layout (measured 09.10.2026), in widths of the “Auto Leave” label: Auto Retry this far above, the
+# field “Wave N” centered this far right/below, half width/height of the field
+RAID_LAYOUT = {"dy": 0.464, "field_dx": 1.058, "field_dy": 0.363, "field_hw": 0.45, "field_hh": 0.09}
+TOGGLE_TRIES = 24          # looks at the switch color (cheap) – messages pass within a few seconds
 GEAR_TRIES = 6            # click the gear again if the menu doesn't open (loading screen swallows clicks)
 GEAR_WAIT = 2.0           # wait this long for the menu after each click
 
@@ -442,6 +446,32 @@ def guild_next_time(done_day: str, retry: float, now: float) -> float:
     return retry
 
 
+def complete_raid_labels(out: dict, aspect: float) -> dict:
+    """The raid settings always have the same layout: “Auto Retry” above “Auto Leave”, the field “Wave N” below.
+    “Wave cleared!” messages often cover part of it (owner 09.10.2026: 4–6 at once) – from one readable label the
+    others follow (RAID_LAYOUT, in widths of the “Auto Leave” label; aspect = image width / height). The grey
+    field text “Wave 12” is often not read at all: its position is calculated."""
+    out = dict(out)
+    ref = out.get("leave") or out.get("retry")
+    if ref is None:
+        return out
+    w = ref[2] - ref[0]
+    dy = RAID_LAYOUT["dy"] * w * aspect                  # x and y fractions have different scales
+    if "leave" not in out:
+        r = out["retry"]
+        out["leave"] = [r[0], r[1] + dy, r[2], r[3] + dy]
+    if "retry" not in out:
+        lv = out["leave"]
+        out["retry"] = [lv[0], lv[1] - dy, lv[2], lv[3] - dy]
+    if "wave" not in out:
+        lv = out["leave"]
+        cx = lv[0] + RAID_LAYOUT["field_dx"] * w
+        cy = (lv[1] + lv[3]) / 2 + RAID_LAYOUT["field_dy"] * w * aspect
+        hw, hh = RAID_LAYOUT["field_hw"] * w, RAID_LAYOUT["field_hh"] * w * aspect
+        out["wave"] = [cx - hw, cy - hh, cx + hw, cy + hh]
+    return out
+
+
 class Navigator:
     def __init__(self, source_factory: Callable, window_title: str, ocr_factory: Callable,
                  log: Callable[[str], None], uimap: Optional[UiMap] = None) -> None:
@@ -726,12 +756,16 @@ class Navigator:
                           and abs(b[0] - lv[0]) < 0.12), None)
             if field is not None:
                 out["wave"] = field
-        return out
+        return complete_raid_labels(out, frame.shape[1] / frame.shape[0])
 
     def _open_raid_settings(self) -> dict:
+        """Open the gear menu and remember where its parts are (self._raid_labels) – the menu doesn't move, so the
+        following steps don't need to read it again (fast, and messages covering it don't matter)."""
+        self._raid_labels = {}
         frame = self._frame()
         labels = self._labels(frame)
         if "retry" in labels or "leave" in labels:
+            self._raid_labels = labels
             return labels
         gear = self._stable_gear()
         if gear is None:
@@ -746,34 +780,39 @@ class Navigator:
             while time.monotonic() < end:
                 time.sleep(0.3)
                 labels = self._labels(self._frame())
-                if "retry" in labels and "leave" in labels:
+                if "retry" in labels or "leave" in labels:   # one readable label is enough (complete_raid_labels)
+                    self._raid_labels = labels
                     return labels
         raise Stop(tr("The raid settings did not open."))
 
     def _set_toggle(self, key: str, on: bool) -> None:
-        """Set the switch “Auto Retry”/“Auto Leave” and verify it (messages often cover it – read several times)."""
+        """Set the switch “Auto Retry”/“Auto Leave” and verify it. Uses the remembered position of the open menu
+        and only looks at the switch color – while a message covers it, wait briefly and look again."""
         name = "Auto Retry" if key == "retry" else "Auto Leave"
-        for _ in range(8):
+        clicks = 0
+        for _ in range(TOGGLE_TRIES):
             frame = self._frame()
-            label = self._labels(frame).get(key)
+            label = (getattr(self, "_raid_labels", {}) or {}).get(key) or self._labels(frame).get(key)
             if label is None:
-                time.sleep(0.4)
+                time.sleep(0.3)
                 continue
             state = vision.toggle_state(frame, label)
-            if state is None:                             # covered: wait briefly, read again
-                time.sleep(0.5)
+            if state is None:                             # covered by “Wave cleared!”: look again shortly
+                time.sleep(0.25)
                 continue
             if state == on:
                 self.log(tr("{name}: {state}", name=name, state=tr("on") if on else tr("off")))
                 return
+            if clicks >= 3:
+                break
             cy = (label[1] + label[3]) / 2
             self._click((label[2] + 0.05, cy))           # switch to the right of the label
-            time.sleep(0.7)
+            clicks += 1
+            time.sleep(0.5)
         raise Stop(tr("Couldn't switch “{name}” reliably.", name=name))
 
     def _set_leave_wave(self, wave: int) -> None:
-        labels = self._labels(self._frame())
-        field = labels.get("wave")
+        field = (getattr(self, "_raid_labels", {}) or {}).get("wave") or self._labels(self._frame()).get("wave")
         if field is None:
             raise Stop(tr("Wave field (auto leave) not found."))
         from .antiafk import _key
@@ -796,7 +835,8 @@ class Navigator:
 
     def _close_raid_settings(self) -> None:
         frame = self._frame()
-        labels = self._labels(frame)
+        labels = self._labels(frame) or (getattr(self, "_raid_labels", {}) or {})   # covered: remembered position
+        self._raid_labels = {}
         if not labels:
             return
         anchor = labels.get("retry") or labels.get("leave")

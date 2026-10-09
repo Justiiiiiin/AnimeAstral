@@ -4,7 +4,7 @@ import unittest
 import _env  # noqa: F401
 import numpy as np
 
-from astral_monitor.automation import fmt_wait, gig_cards, gig_next_due, gig_refresh_box, gig_refresh_read, \
+from astral_monitor.automation import complete_raid_labels, fmt_wait, gig_cards, gig_next_due, gig_refresh_box, gig_refresh_read, \
     gig_pill, gig_slot_states, gig_timer_box, gig_timer_vote, guild_next_time, hud_locate, leave_before, next_task, \
     parse_timer, pet_tiles, user_moved
 
@@ -68,6 +68,20 @@ class QueueTest(unittest.TestCase):
         self.assertEqual(gig_next_due(cards, {0: 3300, 1: 900}, 300), 300)       # new gigs come first
         self.assertEqual(gig_next_due(cards, {0: 3300, 1: 900}, None), 300)     # empty, no countdown: 5 min
         self.assertEqual(gig_next_due(cards, {0: 3300, 1: 9000}, 99999), 300)    # implausible “NEW GIGS IN”
+
+    def test_complete_raid_labels(self):
+        # owner 09.10.2026: “Wave cleared!” covered “Auto Retry”, the grey “Wave 12” field is never read – positions
+        # measured in a 2560 × 1440 frame: Auto Leave (1098,562)-(1237,579), Auto Retry centered at y 504,
+        # field “Wave 12” centered at (1245,621)
+        W, H = 2560, 1440
+        leave = [1098 / W, 562 / H, 1237 / W, 579 / H]
+        lab = complete_raid_labels({"leave": leave}, W / H)
+        self.assertAlmostEqual((lab["retry"][1] + lab["retry"][3]) / 2 * H, 506, delta=6)
+        self.assertAlmostEqual((lab["wave"][0] + lab["wave"][2]) / 2 * W, 1245, delta=8)
+        self.assertAlmostEqual((lab["wave"][1] + lab["wave"][3]) / 2 * H, 621, delta=6)
+        back = complete_raid_labels({"retry": lab["retry"]}, W / H)     # only “Auto Retry” readable
+        self.assertAlmostEqual(back["leave"][1], leave[1], delta=0.002)
+        self.assertEqual(complete_raid_labels({}, W / H), {})            # nothing readable: nothing guessed
 
     def test_capture_rect(self):
         # owner 09.10.2026: maximized Roblox window – the capture has the title bar (0–1440), the client area starts
