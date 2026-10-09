@@ -837,9 +837,9 @@ class Navigator:
             time.sleep(1.0)
         self._open_raid_settings()
         self._set_toggle("retry", True)
+        if leave_wave > 0:                                # wave first, then the switch: the game's default is 5 –
+            self._set_leave_wave(leave_wave)              # switched on first it could leave too early (owner 09.10.2026)
         self._set_toggle("leave", leave_wave > 0)
-        if leave_wave > 0:
-            self._set_leave_wave(leave_wave)
         self._close_raid_settings()
         start = self.raid_count()
         self.log(tr("Farming {runs} raids …", runs=runs))
@@ -977,9 +977,9 @@ class Navigator:
             self._in_raid = target
         self._open_raid_settings()
         self._set_toggle("retry", True)
+        if leave_wave > 0:                                # wave first, then the switch: the game's default is 5 –
+            self._set_leave_wave(leave_wave)              # switched on first it could leave too early (owner 09.10.2026)
         self._set_toggle("leave", leave_wave > 0)
-        if leave_wave > 0:
-            self._set_leave_wave(leave_wave)
         self._close_raid_settings()
         until = task.get("until", "runs")
         runs, minutes = int(task.get("runs", 1)), float(task.get("minutes", 30))
