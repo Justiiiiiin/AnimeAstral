@@ -4,8 +4,8 @@ import unittest
 import _env  # noqa: F401
 import numpy as np
 
-from astral_monitor.automation import complete_raid_labels, fmt_wait, gig_cards, gig_next_due, gig_refresh_box, gig_refresh_read, \
-    gig_pill, gig_slot_states, gig_timer_box, gig_timer_vote, guild_next_time, hud_locate, leave_before, next_task, \
+from astral_monitor.automation import complete_raid_labels, fmt_wait, migrate_tasks, gig_cards, gig_next_due, gig_refresh_box, gig_refresh_read, \
+    gig_pill, gig_slot_states, gig_timer_vote, guild_next_time, hud_locate, leave_before, next_task, \
     parse_timer, pet_tiles, raid_side_steps, user_moved
 
 
@@ -17,7 +17,17 @@ class QueueTest(unittest.TestCase):
         self.assertFalse(leave_before(tasks[2], next_task(tasks, 2, False)))   # same raid follows
         self.assertFalse(leave_before(tasks[3], next_task(tasks, 3, False)))   # end of the queue
         self.assertTrue(leave_before(tasks[3], next_task(tasks, 3, True)))     # loop: Alvarez War follows
-        self.assertTrue(leave_before({"kind": "raid", "target": "A"}, {"kind": "raid_join", "target": "B"}))
+        self.assertTrue(leave_before({"kind": "raid", "target": "A"}, {"kind": "raid", "target": "B", "join": True}))
+
+    def test_migrate_tasks(self):
+        old = [{"kind": "raid_farm", "target": "W7 Raid", "join": True, "runs": 5, "leave_wave": 40},
+               {"kind": "raid_create", "target": "W4 Defense"}, {"kind": "gigs"}, {"kind": "navigate", "target": "X"},
+               {"kind": "autoroll", "target": "W21 Cyberware"}, {"kind": "pets", "world": "W1"}, "broken"]
+        self.assertEqual(migrate_tasks(old), [
+            {"kind": "raid", "target": "W7 Raid", "join": True, "until": "runs", "runs": 5, "leave_wave": 40},
+            {"kind": "raid", "target": "W4 Defense", "join": False, "until": "runs", "runs": 1, "leave_wave": 0},
+            {"kind": "autoroll", "target": "W21 Cyberware"}])
+        self.assertEqual(migrate_tasks(None), [])
 
     def test_parse_timer(self):
         self.assertEqual(parse_timer("1:20:40"), 4840)
@@ -42,9 +52,6 @@ class QueueTest(unittest.TestCase):
         self.assertEqual([c["unknown"] for c in cards], [False, True, False])
         self.assertIsNone(cards[0]["claim"])                 # “FINISH NOW” costs currency – never a button
         self.assertIsNotNone(cards[2]["send"])
-        box = gig_timer_box(cards[0])
-        self.assertLess(box[0], 0.33)                         # time to the left of “left” is inside the area
-        self.assertLess(box[2], 0.375)
         # the same window smaller and shifted (other GUI size): the slots move along with the roi
         roi = [0.2, 0.1, 0.7, 0.6]
         moved = [(w, [roi[0] + b[0] * 0.5, roi[1] + b[1] * 0.5, roi[0] + b[2] * 0.5, roi[1] + b[3] * 0.5])

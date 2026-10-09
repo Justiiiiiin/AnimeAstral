@@ -33,12 +33,7 @@ class StatsTests(unittest.TestCase):
         self.assertEqual(snap.total_attempts, 12)
         self.assertFalse(hasattr(s, "failed"))
 
-    def test_histogram_trend_and_best(self):
-        hist = dict(self.st.wave_histogram(None, "Militech Convoy"))
-        self.assertEqual(sum(hist.values()), 11)          # all attempts, also the one to the end
-        self.assertLessEqual(len(hist), 10)               # readable: at most 10 bars in round steps
-        self.assertEqual(hist["20–29"], 10)
-        self.assertEqual(hist["90–99"], 1)
+    def test_trend_and_best(self):
         self.assertEqual(self.st.best_wave("Militech Convoy"), 99)
         self.assertEqual(self.st.best_wave("Defense"), 40)
         self.assertTrue(self.st.trend(None, "Defense"))
@@ -110,7 +105,6 @@ class CombinedStatsTests(unittest.TestCase):
         self.assertAlmostEqual(s.avg_wave_all, s.waves_total / 20)
         self.assertAlmostEqual(s.sec_per_wave, 3.7, delta=0.05)
         self.assertGreater(s.waves_per_hour, 0)
-        self.assertEqual(sum(c for _l, c in st.wave_histogram(None, "Militech Convoy")), 20)   # all attempts
         entry = st.per_raid()[0]
         self.assertEqual((entry["attempts"], entry["waves_total"]), (20, s.waves_total))
         self.assertTrue(any(w > 0 for _h, w in st.hourly_waves(4, "Militech Convoy")))

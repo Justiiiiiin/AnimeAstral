@@ -618,7 +618,6 @@ DE: dict[str, str] = {
     'Raids and settings': 'Raids und Einstellungen',
     'Raids are running again': 'Raids laufen wieder',
     'Raids need monitoring to run (it counts the raids).': 'Für Raids muss die Überwachung laufen (sie zählt die Raids).',
-    'Raids per day': 'Raids je Tag',
     'Raids · {date}': 'Raids · {date}',
     'Ranks': 'Ranks',
     'Read the release notes of every version or install an older one': 'Versionshinweise aller Versionen lesen oder eine ältere Version installieren',

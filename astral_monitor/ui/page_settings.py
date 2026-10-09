@@ -1042,4 +1042,5 @@ class SettingsPage(QWidget):
 
     def refresh(self) -> None:
         presence = self.main.engine.presence
-        self.rpc_state.setText(("✅ " if presence.status_ok else "ℹ️ ") + presence.status_text)
+        self.rpc_state.setText("● " + presence.status_text)          # colored dot instead of an emoji
+        self.rpc_state.setStyleSheet(f"color: {theme.color('accent' if presence.status_ok else 'muted')};")

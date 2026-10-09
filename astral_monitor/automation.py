@@ -42,9 +42,8 @@ def macro_running() -> bool:
     return _ACTIVE.is_set()
 
 
-TASK_KINDS = ("raid", "autoroll", "progression", "gigs", "guild_claim", "wait",
-              "raid_farm", "raid_leave", "raid_create", "raid_join", "navigate", "pets", "close")   # from raid_farm on: older
-RAID_KINDS = ("raid", "raid_farm", "raid_create", "raid_join")     # tasks that lead into a raid/mode
+TASK_KINDS = ("raid", "autoroll", "progression", "wait")   # older kinds are converted on load (migrate_tasks)
+RAID_KINDS = ("raid",)                                    # tasks that lead into a raid/mode
 IN_RAID_KINDS = ("autoroll", "progression")      # quick menu tasks that also work inside a raid (owner 09.10.2026)
 CLAIM_LIMIT = 8           # at most this many “Claim” per page (protection against endless loops)
 CLAIM_GAP = 0.35          # between two “Claim” clicks of one reading
@@ -84,27 +83,6 @@ def task_label(task: dict) -> str:
         return text + (" · " + tr("join") if task.get("join") else "")
     if kind == "progression":
         return tr("Progressions: Auto All")
-    if kind == "gigs":
-        return tr("Collect Fixer Gigs")
-    if kind == "guild_claim":
-        return tr("Guild: claim missions")
-    if kind == "raid_farm":
-        text = tr("Farm raid: {target} × {runs}", target=task.get("target", "?"), runs=int(task.get("runs", 1)))
-        if int(task.get("leave_wave", 0)):
-            text += " · " + tr("leave from wave {wave}", wave=int(task["leave_wave"]))
-        return text + (" · " + tr("join") if task.get("join") else "")
-    if kind == "raid_leave":
-        return tr("Leave raid")
-    if kind == "raid_create":
-        return tr("Start raid: {target}", target=task.get("target", "?"))
-    if kind == "raid_join":
-        return tr("Join raid: {target}", target=task.get("target", "?"))
-    if kind == "navigate":
-        return tr("Open: {target}", target=task.get("target", "?"))
-    if kind == "pets":
-        return tr("Roll pets (Auto!): {world}", world=task.get("world", "?"))
-    if kind == "close":
-        return tr("Close menu")
     if kind == "wait":
         seconds = int(task.get("seconds", 60))
         return tr("Pause · {minutes} min", minutes=seconds // 60) if seconds % 60 == 0 and seconds >= 60 else \
@@ -118,6 +96,26 @@ class Stop(Exception):
 
 class UserStop(Stop):
     """Stopped by the user (stop, Esc, mouse, Roblox not in front) – the routine ends right away."""
+
+
+def migrate_tasks(tasks: list) -> list[dict]:
+    """Saved routines from older versions: “Farm raid” (raid_farm) becomes the raid step, start/join a raid becomes
+    a raid step that ends after one raid; steps that are switches now (gigs, guild) or were only for testing
+    (navigate, pets, close, leave) are dropped. Current steps stay as they are."""
+    out = []
+    for t in tasks if isinstance(tasks, list) else []:
+        if not isinstance(t, dict):
+            continue
+        kind = t.get("kind")
+        if kind in TASK_KINDS:
+            out.append(dict(t))
+        elif kind == "raid_farm":
+            out.append({"kind": "raid", "target": t.get("target", ""), "join": bool(t.get("join")), "until": "runs",
+                        "runs": int(t.get("runs", 1) or 1), "leave_wave": int(t.get("leave_wave", 0) or 0)})
+        elif kind in ("raid_create", "raid_join"):
+            out.append({"kind": "raid", "target": t.get("target", ""), "join": kind == "raid_join", "until": "runs",
+                        "runs": 1, "leave_wave": 0})
+    return out
 
 
 def next_task(tasks: list[dict], index: int, loop: bool) -> Optional[dict]:
@@ -358,16 +356,6 @@ def gig_timer_vote(texts: list[str], duration: int) -> Optional[int]:
     return min(votes, key=lambda t: (-votes[t], t))
 
 
-def gig_timer_box(card: dict) -> Optional[list[float]]:
-    """Area of the time left (“1:36:38 left”) to the left of “left” – for the exact digit reading."""
-    left = card.get("left")
-    if left is None:
-        return None
-    h = left[3] - left[1]
-    return [max(card["x"] - 0.4 * card["pitch"], left[0] - 9 * h), left[1] - 0.4 * h, left[0] - 0.1 * h,
-            left[3] + 0.4 * h]
-
-
 def gig_refresh_box(words: list[tuple[str, list[float]]]) -> Optional[list[float]]:
     """Area of the countdown “NEW GIGS IN 52:37” above the cards (time until empty slots get new gigs) – for the
     exact digit reading. None = the line wasn't read."""
@@ -544,12 +532,6 @@ class Navigator:
         self._thread.start()
         return True
 
-    def navigate(self, target: str) -> bool:
-        return self.start(tr("Navigate to: {target}", target=target), lambda: self._open(self._window(target)))
-
-    def pets_auto(self, world: str, close_after: bool = True) -> bool:
-        return self.start(tr("Roll pets: {world}", world=world), lambda: self._pets_auto(world, close_after))
-
     def close_menu(self) -> bool:
         return self.start(tr("Close menu"), self._close_any)
 
@@ -639,30 +621,10 @@ class Navigator:
             self._raid_task(task, following)
         elif kind == "progression":
             self._progression()
-        elif kind == "gigs":
-            self._gigs()
-        elif kind == "guild_claim":
-            self._guild_claim()
         elif kind == "autoroll":
             self._autoroll(self._window(task.get("target", "")))
-        elif kind == "raid_farm":
-            self._raid_farm(self._window(task.get("target", "")), bool(task.get("join")), int(task.get("runs", 1)),
-                            int(task.get("leave_wave", 0)))
-        elif kind == "raid_leave":
-            self._leave_raid()
-        elif kind in ("raid_create", "raid_join"):
-            self._raid(self._window(task.get("target", "")), join=kind == "raid_join")
-        elif kind == "navigate":
-            self._open(self._window(task.get("target", "")))
-        elif kind == "pets":
-            self._pets_auto(task.get("world", ""), bool(task.get("close", True)))
-        elif kind == "close":
-            self._close_any()
 
     # ------------------------------------------------------------------ Tasks in the window
-    def autoroll(self, target: str) -> bool:
-        return self.start(tr("Auto roll: {target}", target=target), lambda: self._autoroll(self._window(target)))
-
     def _window_area(self, window: dict) -> tuple[list[float], np.ndarray]:
         """Position of the open window (standard frame, template or full screen) and the current image."""
         frame = self._frame()
@@ -888,44 +850,6 @@ class Navigator:
         # a window is open while exploring – none is active here (guild “Leave” at the bottom left of the guild window).
         self._click_roi(box)
         time.sleep(3.0)
-
-    def _raid_farm(self, window: dict, join: bool, runs: int, leave_wave: int) -> None:
-        """Start/join a raid, Auto Retry on (+ Auto Leave from wave N), wait until the monitoring counted N raid ends,
-        then Auto Retry off and leave."""
-        if self.monitoring is None or self.raid_count is None or not self.monitoring():
-            raise Stop(tr("“Farm raid” needs monitoring to be running (it counts the raids)."))
-        self._raid(window, join)
-        end = time.monotonic() + 120                      # until you are in the raid (teleport, lobby)
-        while self._gear(self._frame()) is None:
-            if time.monotonic() > end:
-                raise Stop(tr("Did not arrive in the raid."))
-            time.sleep(1.0)
-        self._open_raid_settings()
-        self._set_toggle("retry", True)
-        if leave_wave > 0:                                # wave first, then the switch: the game's default is 5 –
-            self._set_leave_wave(leave_wave)              # switched on first it could leave too early (owner 09.10.2026)
-        self._set_toggle("leave", leave_wave > 0)
-        self._close_raid_settings()
-        start = self.raid_count()
-        self.log(tr("Farming {runs} raids …", runs=runs))
-        _ACTIVE.clear()                                   # Anti-AFK may run while waiting
-        try:
-            last = 0
-            while True:
-                done = self.raid_count() - start
-                if done >= runs:
-                    break
-                if done != last:
-                    last = done
-                    self.log(tr("{done}/{runs} raids", done=done, runs=runs))
-                if self._halt.wait(2.0):
-                    raise UserStop(tr("Stopped."))
-                if ctypes.windll.user32.GetAsyncKeyState(0x1B) & 0x8000:
-                    raise UserStop(tr("Cancelled (Esc)."))
-        finally:
-            _ACTIVE.set()
-        self._focus()
-        self._leave_raid()
 
     # ------------------------------------------------------------------ Auto collect (own switches)
     @property
@@ -1747,21 +1671,6 @@ class Navigator:
                 self._click(st[2])
             time.sleep(0.6)
         raise Stop(tr("The menu won't close."))
-
-    def _pets_auto(self, world: str, close_after: bool = True) -> None:
-        window = self._window(f"{world} Pets-Roll")
-        self._open(window)
-        auto = self.map.element(window, "Auto!")
-        cost = self.map.element(window, "Kosten (Yen)")
-        if cost is not None:
-            text = vision.read_text(self._frame(), cost["roi"], self._ocr)
-            self.log(tr("Cost per pet: {cost}", cost=text or "?"))
-        if auto is None:
-            raise Stop(tr("“Auto!” is missing from the map."))
-        self.log(tr("Clicking “Auto!”."))
-        self._click_roi(auto["roi"])
-        if close_after:
-            self._close_after_auto(window)
 
     def _close_after_auto(self, window: dict) -> None:
         """Close right after “Auto!”: the game keeps rolling in the background (until the yen run out). Waiting would

@@ -427,6 +427,20 @@ class StatsPage(QWidget):
                 table.setItem(r, c, cell)
         table.setSortingEnabled(True)
         table.sortByColumn(column if column >= 0 else 0, order)
+        self._empty_hint(table, not rows)
+
+    @staticmethod
+    def _empty_hint(table, empty: bool) -> None:
+        """Short hint in an empty table (e.g. “This session” before the first raid) instead of a blank area."""
+        hint = getattr(table, "_hint", None)
+        if hint is None:
+            from PySide6.QtWidgets import QVBoxLayout
+            hint = label(tr("No raids in this period yet."), "small")
+            hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            box = QVBoxLayout(table.viewport())
+            box.addWidget(hint)
+            table._hint = hint
+        hint.setVisible(empty)
 
     def refresh(self) -> None:
         """Evaluate in the background, show in the GUI thread – the page stays usable right away even with a long

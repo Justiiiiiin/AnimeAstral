@@ -330,25 +330,6 @@ class StatsStore:
             return statistics.median(values) if len(values) >= 3 else None
 
     @_cached
-    def wave_histogram(self, since: Optional[float] = None, raid: Optional[str] = None,
-                       max_bars: int = 10) -> list[tuple[str, int]]:
-        """Distribution of the final waves: [(label, count)] in round steps (1, 2, 5, 10, 20 …), at most
-        ~10 bars – formerly up to 20 bars in odd steps whose labels were unreadable."""
-        with self._lock:
-            waves = [r.max_wave for r in self._in_range(since, raid)]
-        if not waves:
-            return []
-        lo, hi = min(waves), max(waves)
-        size = next((n for n in (1, 2, 5, 10, 20, 25, 50, 100) if hi // n - lo // n + 1 <= max_bars), 100)
-        counts: dict = {}
-        for w in waves:
-            counts[w // size] = counts.get(w // size, 0) + 1
-        out = []
-        for base in range((lo // size) * size, hi + 1, size):
-            out.append((str(base) if size == 1 else f"{base}–{base + size - 1}", counts.get(base // size, 0)))
-        return out
-
-    @_cached
     def trend(self, since: Optional[float] = None, raid: Optional[str] = None,
               by_day: bool = False, limit: int = 24) -> list[tuple[str, float, int]]:
         """Per hour (or day): [(label, avg. wave, number of attempts)] – the chart “Trend” shows the attempts."""

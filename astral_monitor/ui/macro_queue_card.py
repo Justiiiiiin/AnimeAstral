@@ -14,7 +14,7 @@ from PySide6.QtGui import QFont
 from PySide6.QtWidgets import QCheckBox, QComboBox, QGridLayout, QHBoxLayout, QListWidget, QListWidgetItem, \
     QMessageBox, QPushButton, QSizePolicy, QSpinBox, QStackedWidget, QWidget
 
-from ..automation import task_label
+from ..automation import migrate_tasks, task_label
 from ..i18n import N_, tr
 from . import theme
 from .widgets import Card, label, smooth
@@ -179,7 +179,7 @@ class MacroQueueCard(Card):
         self.body.addWidget(self.state)
         self._controls = [self.kind, self.target, self.options, add, up, down, remove, self.run, self.loop]
 
-        for task in s.macro_queue or []:
+        for task in migrate_tasks(s.macro_queue or []):    # routines of older versions: current steps
             self._append(task)
         self._kind_changed()
         self.macro.enabled_listeners.append(lambda _on: self._update())
