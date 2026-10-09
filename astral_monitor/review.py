@@ -42,7 +42,7 @@ def _alias(name: str) -> str:
 
 def add_finding(data_dir: Path, window: str, finding: dict) -> None:
     """New finding after a scan: waits for confirmation (a confirmed kind and marks/description are kept).
-        Duplicate entries of the same window under another name are merged."""
+    Duplicate entries of the same window under another name are merged."""
     data = load(data_dir)
     old = data.get(window) or {}
     for name in [n for n in data if n != window and _alias(n) == _alias(window)]:
@@ -59,7 +59,7 @@ def add_finding(data_dir: Path, window: str, finding: dict) -> None:
 
 def dedupe(data_dir: Path) -> int:
     """Merge duplicate findings (same window, with/without “Fenster” in the name): checked ones win, the user's
-        input moves along. Returns the number of removed entries."""
+    input moves along. Returns the number of removed entries."""
     data = load(data_dir)
     groups: dict[str, list[str]] = {}
     for name in data:

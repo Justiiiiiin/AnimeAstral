@@ -41,8 +41,8 @@ PAGE_COUNT = 4
 
 class PageList:
     """Build pages only when first opened: fewer controls = faster start and design switch (Qt restyles every element
-        on a switch, ~0.35 ms each). Index access builds the page; loops only see built pages (e.g. applying the
-        settings – pages never opened changed nothing)."""
+    on a switch, ~0.35 ms each). Index access builds the page; loops only see built pages (e.g. applying the
+    settings – pages never opened changed nothing)."""
 
     def __init__(self, build) -> None:
         self._build = build
@@ -842,7 +842,7 @@ class MainWindow(QMainWindow):
 
     def restart_app(self, safe: bool = False) -> None:
         """Restart the program (e.g. after a language change); the new instance waits until this one has ended.
-                safe=True: safe mode (default settings), otherwise normal."""
+        safe=True: safe mode (default settings), otherwise normal."""
         args = sys.argv[1:] if getattr(sys, "frozen", False) else sys.argv
         args = [a for a in args if a not in ("--restart", "--safe")] + ["--restart"] + (["--safe"] if safe else [])
         QProcess.startDetached(sys.executable, args)
@@ -987,7 +987,7 @@ class MainWindow(QMainWindow):
 
     def _mount_controls(self) -> None:
         """Start/stop, pause and “Resend status” as buttons at the top left of the header (owner's wish
-                07.10.2026). The buttons belong to the start page, which keeps their state in refresh()."""
+        07.10.2026). The buttons belong to the start page, which keeps their state in refresh()."""
         page = self.pages[PAGE_MONITOR]
         for i, btn in enumerate((page.btn_start, page.btn_pause, page.btn_status), start=1):
             self._top.insertWidget(i, btn)

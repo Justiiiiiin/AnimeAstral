@@ -49,7 +49,7 @@ def parse_progress(text: str) -> Optional[tuple[int, int]]:
 
 def clean_title(text: str, names: tuple = ()) -> str:
     """Clean up a title: remove leftovers at the window edge and “time(s)”, words after the number stay (“Clear 8000
-        waves in MaxTac Ca”). Known raid names are repaired when recognition splits them (“Conv oy” -> “Convoy”)."""
+    waves in MaxTac Ca”). Known raid names are repaired when recognition splits them (“Conv oy” -> “Convoy”)."""
     text = re.sub(r"\s+", " ", text).strip()
     text = re.sub(r"[^\w)]+$", "", text)
     text = _TIMES_RE.sub("", text)
@@ -112,7 +112,7 @@ class QuestReader:
     def _read_strip(self, crop: np.ndarray, y_center: float,
                     expected_total: Optional[int]) -> Optional[tuple[int, int]]:
         """Reads a single progress line with several thresholds.
-                The total from the title serves as a plausibility check (e.g. “0/90”, not “0/390”)."""
+        The total from the title serves as a plausibility check (e.g. “0/90”, not “0/390”)."""
         height = crop.shape[0]
         half = 0.04 * height
         y0, y1 = max(0, int(y_center - half)), min(height, int(y_center + half))

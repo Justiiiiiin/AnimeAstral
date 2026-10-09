@@ -605,7 +605,7 @@ def set_accent(value: str) -> None:
 
 def with_accent(palette: dict, accent: str) -> dict:
     """Palette with an own accent color: second gradient color shifted by 40° on the color wheel, text on the accent
-        automatically light/dark, tinted backgrounds matching the brightness of the design."""
+    automatically light/dark, tinted backgrounds matching the brightness of the design."""
     base = QColor(accent)
     h, s, v, _a = base.getHsv()
     second = QColor.fromHsv((h + 40) % 360 if h >= 0 else 0, s, v)

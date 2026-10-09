@@ -124,7 +124,7 @@ class MenuFrame:
 
     def _state_wide(self, frame: np.ndarray, ocr, tpl: np.ndarray):
         """Smaller window (Acc. Curses, Titan Passives, Equip Best …): X elsewhere and a bit smaller. Position of the
-                window estimated: top right at the X, horizontally centered like all menus, size in proportion."""
+        window estimated: top right at the X, horizontally centered like all menus, size in proportion."""
         fh, fw = frame.shape[:2]
         ax0, ay0 = int(X_WIDE[0] * fw), int(X_WIDE[1] * fh)
         area = frame[ay0:int(X_WIDE[3] * fh), ax0:int(X_WIDE[2] * fw)]
@@ -162,8 +162,8 @@ TITLE_CONF = 55          # below this a banner reading counts as uncertain (junk
 
 def read_title(window_img: np.ndarray, ocr) -> str:
     """Title in the slanted banner at the top left (“Teleport”, “Trial Shop”). First the white text in the banner
-        (_read_banner); if that reading is uncertain or empty (grey banners like “Otsutsuki Shrine”, full-screen windows),
-        the largest text line in the banner area via the normal word search. Better no title than a wrong one."""
+    (_read_banner); if that reading is uncertain or empty (grey banners like “Otsutsuki Shrine”, full-screen windows),
+    the largest text line in the banner area via the normal word search. Better no title than a wrong one."""
     if ocr is None:
         return ""
     text, conf = _read_banner(window_img, ocr)
@@ -232,7 +232,7 @@ def _read_band_words(window_img: np.ndarray, ocr) -> tuple[str, float]:
 
 def _read_banner(window_img: np.ndarray, ocr) -> tuple[str, float]:
     """White text in the banner: stripes sorted out by letter size, letters chained left to right into the
-        (slanted) line, straightened. Returns (text, confidence 0–100)."""
+    (slanted) line, straightened. Returns (text, confidence 0–100)."""
     h, w = window_img.shape[:2]
     band = window_img[0:int(BAND[2] * h), int(BAND[0] * w):int(BAND[1] * w)]
     if band.size == 0:
@@ -295,7 +295,7 @@ def _read_banner(window_img: np.ndarray, ocr) -> tuple[str, float]:
 
 def _join_words(best: list[int], chains: list[list[int]], st, mid: dict, hmax: float) -> list[int]:
     """Append more words of the same (slanted) title line: “AINCRAD” + “SPOILS”, “RELICS OF THE” + “OTHERWORLD”.
-        Condition: similar letter height, gap < 3.5 letter heights, line center matches at the nearest letter."""
+    Condition: similar letter height, gap < 3.5 letter heights, line center matches at the nearest letter."""
     def height(c):
         return float(np.median([st[i, cv2.CC_STAT_HEIGHT] for i in c]))
 
@@ -333,7 +333,7 @@ def _join_words(best: list[int], chains: list[list[int]], st, mid: dict, hmax: f
 
 def read_title_loose(window_img: np.ndarray, ocr) -> str:
     """Fallback if read_title finds nothing (grey instead of white title, bright banner): read the banner slightly
-        rotated with two thresholds, take the longest result (measured: Commandments, Kagune Upgrade, Goddess Shrine …)."""
+    rotated with two thresholds, take the longest result (measured: Commandments, Kagune Upgrade, Goddess Shrine …)."""
     if ocr is None:
         return ""
     h, w = window_img.shape[:2]
@@ -361,7 +361,7 @@ def read_title_loose(window_img: np.ndarray, ocr) -> str:
 
 def read_name_below_banner(window_img: np.ndarray, ocr) -> str:
     """Large red/orange name below the banner (raids: “Holy Grail War”, boss rush: “Zaban Rush!”) – otherwise empty.
-        The colored text line is found via row sums, cut out and read as one line."""
+    The colored text line is found via row sums, cut out and read as one line."""
     if ocr is None:
         return ""
     h, w = window_img.shape[:2]
@@ -440,7 +440,7 @@ def template_menus(m: UiMap) -> list[TemplateMenu]:
 
 def words_in(frame: np.ndarray, roi: list[float], ocr) -> list[tuple[str, list[float]]]:
     """All words in an area with their position in the Roblox window (fractions). Two passes: bright text with an
-        outline (buttons, titles) and general (Otsu) – duplicate hits are merged."""
+    outline (buttons, titles) and general (Otsu) – duplicate hits are merged."""
     if ocr is None:
         return []
     fh, fw = frame.shape[:2]
@@ -483,8 +483,8 @@ def find_word(frame: np.ndarray, roi: list[float], ocr, *wanted: str) -> list[fl
 
 class SlotLayout:
     """Icon slots of a world row (from the map's template row): spacing, width, height. Occupied = sharp outlines
-        (Laplace variance on 40 × 40, measured 08.10.2026: icons ≥ 319, background behind the last icon ≤ 295, mostly
-        < 120). Icons are contiguous from slot 1 – the first empty slot ends the row."""
+    (Laplace variance on 40 × 40, measured 08.10.2026: icons ≥ 319, background behind the last icon ≤ 295, mostly
+    < 120). Icons are contiguous from slot 1 – the first empty slot ends the row."""
     SHARP_MIN = 250.0
 
     def __init__(self, uimap: UiMap, list_window: dict) -> None:
@@ -541,7 +541,7 @@ def sharpness(crop: np.ndarray) -> float:
 def find_multiscale(frame: np.ndarray, tpl: np.ndarray, region: list[float],
                     scales=(0.6, 0.75, 0.9, 1.0, 1.15, 1.3, 1.5, 1.75, 2.0)) -> tuple[float, Optional[list[float]]]:
     """Search an image in an area at several sizes (template from a screenshot of unknown size).
-        Returns (similarity, position in the Roblox window)."""
+    Returns (similarity, position in the Roblox window)."""
     fh, fw = frame.shape[:2]
     x0, y0 = int(region[0] * fw), int(region[1] * fh)
     area = cv2.cvtColor(frame[y0:int(region[3] * fh), x0:int(region[2] * fw)], cv2.COLOR_BGR2GRAY)
@@ -560,7 +560,7 @@ def find_multiscale(frame: np.ndarray, tpl: np.ndarray, region: list[float],
 
 def toggle_state(frame: np.ndarray, label: list[float]) -> Optional[bool]:
     """Switch to the right of a label (raid gear: “Auto Retry”, “Auto Leave”): green = on, pink/red = off,
-        None = not recognizable (covered)."""
+    None = not recognizable (covered)."""
     fh, fw = frame.shape[:2]
     h = label[3] - label[1]
     cy = (label[1] + label[3]) / 2
@@ -575,7 +575,7 @@ def toggle_state(frame: np.ndarray, label: list[float]) -> Optional[bool]:
 
     def blob(mask: np.ndarray) -> int:
         """Largest connected blob: the round knob of the switch – not the thin green line of a “Wave cleared!”
-                message that can run across the row."""
+        message that can run across the row."""
         n, _lab, st, _c = cv2.connectedComponentsWithStats(mask.astype(np.uint8), 8)
         return max((int(st[i, cv2.CC_STAT_AREA]) for i in range(1, n)
                     if st[i, cv2.CC_STAT_HEIGHT] >= 0.35 * mask.shape[0]), default=0)
@@ -589,7 +589,7 @@ def toggle_state(frame: np.ndarray, label: list[float]) -> Optional[bool]:
 
 def same_icon(a: np.ndarray, b: np.ndarray) -> float:
     """Similarity of two icon images: the core (without border and without the top right corner with the
-        player-dependent check mark) of one searched in the other, both directions. Same icons ~0.99, similar others up to ~0.9."""
+    player-dependent check mark) of one searched in the other, both directions. Same icons ~0.99, similar others up to ~0.9."""
     if a is None or b is None or a.size == 0 or b.size == 0:
         return -1.0
     if abs(a.shape[0] - b.shape[0]) > 0.25 * max(a.shape[0], b.shape[0]):

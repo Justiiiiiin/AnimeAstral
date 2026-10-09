@@ -671,7 +671,7 @@ class SettingsPage(QWidget):
 
     def _filter(self, text: str) -> None:
         """Only show cards containing all search words (title, labels, ⓘ explanations) – tolerant of umlauts,
-                hyphens and small typos (search.py)."""
+        hyphens and small typos (search.py)."""
         from PySide6.QtWidgets import QLabel
 
         from ..search import matches

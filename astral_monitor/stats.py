@@ -26,8 +26,8 @@ def _key_part(value):
 
 def _cached(fn):
     """Remember the result until the history changes (new raid, delete, rename, archive). The statistics page asks for
-        many metrics every 10 s – with a year of history (>100 000 raids) that would otherwise be ~0.3 s of computing
-        in the UI thread."""
+    many metrics every 10 s – with a year of history (>100 000 raids) that would otherwise be ~0.3 s of computing
+    in the UI thread."""
     name = fn.__name__
 
     @functools.wraps(fn)
@@ -115,7 +115,7 @@ FARM_GAP = 15 * 60       # longer gaps between two raid ends count as a break, n
 
 def farm_seconds(recs: list) -> float:
     """Farming time: gaps between consecutive raid ends (up to FARM_GAP); the first raid of a block counts with its
-        measured duration (otherwise with the typical duration)."""
+    measured duration (otherwise with the typical duration)."""
     if not recs:
         return 0.0
     ends = sorted(recs, key=lambda r: r.ts_end)
@@ -257,7 +257,7 @@ class StatsStore:
 
     def _hour_key(self, ts: float) -> tuple[float, float]:
         """(start of the local hour, start of the local day) – computed only once per full hour
-                (datetime.fromtimestamp for every single raid was the most expensive part of the evaluations)."""
+        (datetime.fromtimestamp for every single raid was the most expensive part of the evaluations)."""
         bucket = int(ts // 3600)
         hit = self._hours.get(bucket)
         if hit is None:
@@ -324,7 +324,7 @@ class StatsStore:
     def wave_histogram(self, since: Optional[float] = None, raid: Optional[str] = None,
                        max_bars: int = 10) -> list[tuple[str, int]]:
         """Distribution of the final waves: [(label, count)] in round steps (1, 2, 5, 10, 20 …), at most
-                ~10 bars – formerly up to 20 bars in odd steps whose labels were unreadable."""
+        ~10 bars – formerly up to 20 bars in odd steps whose labels were unreadable."""
         with self._lock:
             waves = [r.max_wave for r in self._in_range(since, raid)]
         if not waves:
@@ -478,7 +478,7 @@ class StatsStore:
     @_cached
     def personal_records(self) -> dict:
         """Best values over the whole history: best wave, strongest day (raids/waves), best hour (waves),
-                longest session (continuous farming time, breaks above FARM_GAP separate)."""
+        longest session (continuous farming time, breaks above FARM_GAP separate)."""
         with self._lock:
             recs = sorted(self.records, key=lambda r: r.ts_end)
         out: dict = {"best_wave": None, "best_day": None, "best_hour": None, "longest": None}

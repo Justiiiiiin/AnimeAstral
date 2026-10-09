@@ -45,7 +45,7 @@ def find_window(title: str) -> Optional[int]:
 
 def trim_memory() -> bool:
     """Returns unneeded memory pages to Windows (start-up leftovers, driver and font pages).
-        Measured: 178 MB -> permanently ~50 MB, the pages actually in use come back from the cache right away."""
+    Measured: 178 MB -> permanently ~50 MB, the pages actually in use come back from the cache right away."""
     if not IS_WIN:
         return False
     k32 = ctypes.windll.kernel32
@@ -56,7 +56,7 @@ def trim_memory() -> bool:
 
 def refresh_shell_icons() -> None:
     """Refresh the Windows icon cache so shortcuts (start, desktop, taskbar) show the new logo after an update –
-        a package update swaps the EXE, otherwise Windows keeps the old image for a long time."""
+    a package update swaps the EXE, otherwise Windows keeps the old image for a long time."""
     if not IS_WIN:
         return
     try:

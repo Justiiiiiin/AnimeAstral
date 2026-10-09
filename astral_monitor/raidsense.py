@@ -83,7 +83,7 @@ class RaidSense:
 
     def take(self, now: float) -> Optional[str]:
         """When a new run starts: raid name, if a raid window was open shortly before and you have teleported since –
-                otherwise None (e.g. only looked, Auto Retry in the same raid)."""
+        otherwise None (e.g. only looked, Auto Retry in the same raid)."""
         if not self.pending or now - self.pending_ts > VALID_FOR:
             return None
         if not (self._teleported or self._absent_since is not None):
@@ -134,8 +134,8 @@ def _word_hit(key: str, read: list[str]) -> bool:
 
 class DropIndex:
     """Which drops exist in exactly one raid? (from the “Enemy Drops” lists read by exploring).
-        The keywords of a drop are compared one by one (“Primordial”, “Street”+“Cred”) – the order of the words read
-        in the drop area isn't reliable."""
+    The keywords of a drop are compared one by one (“Primordial”, “Street”+“Cred”) – the order of the words read
+    in the drop area isn't reliable."""
 
     def __init__(self, drops_by_raid: dict[str, list[str]]) -> None:
         owners: dict[str, set[str]] = {}
@@ -195,7 +195,7 @@ class DropWatcher:
 
 def drop_scale(frame_h: int, wave_text_h: Optional[float]) -> float:
     """Scale for the drop area from the game's GUI size: the labels are about a third as tall as the wave counter
-        (measured at GUI 50 % and 100 %); Tesseract needs ~20 px. Without a counter: from the image height."""
+    (measured at GUI 50 % and 100 %); Tesseract needs ~20 px. Without a counter: from the image height."""
     if wave_text_h and wave_text_h > 4:
         return max(1.0, min(3.5, 20.0 / (0.4 * wave_text_h)))
     return max(1.5, min(DROP_SCALE, DROP_SCALE * 720 / max(1, frame_h)))
@@ -203,7 +203,7 @@ def drop_scale(frame_h: int, wave_text_h: Optional[float]) -> float:
 
 def read_drop_words(frame: np.ndarray, ocr, wave_text_h: Optional[float] = None) -> list[str]:
     """Words in the drop area. The position depends on the game's GUI size, hence a generous area (at the bottom,
-        without the side bars); the scale follows the size of the wave counter. ~0.3–0.7 s – rarely!"""
+    without the side bars); the scale follows the size of the wave counter. ~0.3–0.7 s – rarely!"""
     import cv2
     fh, fw = frame.shape[:2]
     x0, y0, x1, y1 = DROP_REGION

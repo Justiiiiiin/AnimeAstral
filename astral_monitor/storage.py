@@ -48,7 +48,7 @@ def usage(base: Optional[Path] = None) -> list[Usage]:
 
 def clean(base: Optional[Path] = None) -> int:
     """Deletes older logs, debug images and update leftovers. Returns the freed bytes.
-        Files in use (e.g. a running update) are left alone."""
+    Files in use (e.g. a running update) are left alone."""
     base = base or app_paths.data_dir()
     freed = 0
     for _name, paths, removable in _groups(base):

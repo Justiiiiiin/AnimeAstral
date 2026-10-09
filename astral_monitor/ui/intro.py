@@ -14,7 +14,7 @@ DURATION_MS = 1400                  # with a short hold before it ~1.5 s visible
 
 class IntroOverlay(QWidget):
     """Lies over the whole window: the logo grows gently and lights up (first half), then the layer fades out.
-        A click skips it. Deletes itself at the end."""
+    A click skips it. Deletes itself at the end."""
 
     def __init__(self, parent: QWidget) -> None:
         super().__init__(parent)
@@ -34,7 +34,7 @@ class IntroOverlay(QWidget):
 
     def start(self) -> None:
         """Show – the motion only starts after the first real paint (the installed version needs longer for that at
-                start-up; otherwise the animation would be over before you see it)."""
+        start-up; otherwise the animation would be over before you see it)."""
         self.raise_()
         self.show()
         QTimer.singleShot(8000, lambda: None if self._started else self.deleteLater())   # never drawn (tray)

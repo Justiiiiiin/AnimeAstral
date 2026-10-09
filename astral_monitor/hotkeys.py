@@ -42,7 +42,7 @@ def parse_hotkey(text: str) -> tuple[int, int]:
 
 class HotkeyListener(threading.Thread):
     """Registers hotkeys and calls the functions in the listener thread
-        (the functions should only hand an action over to the UI)."""
+    (the functions should only hand an action over to the UI)."""
 
     def __init__(self, bindings: dict[str, tuple[str, Callable[[], None]]]) -> None:
         super().__init__(name="hotkeys", daemon=True)

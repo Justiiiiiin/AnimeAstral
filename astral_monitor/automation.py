@@ -119,7 +119,7 @@ def next_task(tasks: list[dict], index: int, loop: bool) -> Optional[dict]:
 
 def leave_before(task: dict, following: Optional[dict]) -> bool:
     """Leave the raid before continuing? Only if a DIFFERENT raid/mode comes next (owner 08.10.2026) –
-        for Auto Roll, gigs, guild … you stay in (Auto Retry keeps farming)."""
+    for Auto Roll, gigs, guild … you stay in (Auto Retry keeps farming)."""
     if following is None or following.get("kind") not in RAID_KINDS:
         return False
     return following.get("target") != task.get("target")
@@ -194,7 +194,7 @@ def _label_like(word: str, key: str) -> bool:
 
 def hud_locate(words: list[tuple[str, list[float]]]) -> dict[str, list[float]]:
     """Position of the edge buttons from read labels: the icon sits right above its name.
-        Returns name -> area of the icon (fractions of the window)."""
+    Returns name -> area of the icon (fractions of the window)."""
     norm = [(re.sub(r"[^a-z]", "", w.lower()), b) for w, b in words]
     out: dict[str, list[float]] = {}
     for name, parts in HUD_LABELS.items():
@@ -244,8 +244,8 @@ def fmt_wait(seconds: float) -> str:
 def user_moved(cursor: tuple[int, int], pt: tuple[int, int], rect: Optional[tuple[int, int, int, int]]
                ) -> Optional[bool]:
     """Did the user move the mouse? False = the cursor is still where the macro put it; None = Roblox put it in the
-        middle of the window by itself (happens when opening/closing some windows, e.g. after raid windows and the pets
-        inventory – exploring aborted there without anyone touching anything, owner 08.10.2026); True = real movement."""
+    middle of the window by itself (happens when opening/closing some windows, e.g. after raid windows and the pets
+    inventory – exploring aborted there without anyone touching anything, owner 08.10.2026); True = real movement."""
     if abs(pt[0] - cursor[0]) <= USER_MOVE_PX and abs(pt[1] - cursor[1]) <= USER_MOVE_PX:
         return False
     if rect is not None:
@@ -273,8 +273,8 @@ GIG_NAMES = {20 * 60: N_("Quick 20 min"), 3600: N_("Standard 1 h"), 3 * 3600: N_
 
 def gig_cards(words: list[tuple[str, list[float]]]) -> list[dict]:
     """Cards in the Fixer Gigs window from the words read (position in fractions of the Roblox window), left to
-        right. Per card: x (center), duration (s), state (“ready”/“working”/“open”), left (position of “left” below the
-        time left or None), claim/send (button position or None). “FINISH NOW” costs currency – never returned."""
+    right. Per card: x (center), duration (s), state (“ready”/“working”/“open”), left (position of “left” below the
+    time left or None), claim/send (button position or None). “FINISH NOW” costs currency – never returned."""
     norm = [(re.sub(r"[^a-z0-9]", "", w.lower()), b) for w, b in words]
     heads = [(GIG_KINDS[w], b) for w, b in norm if w in GIG_KINDS]
     if not heads:
@@ -320,7 +320,7 @@ def gig_timer_box(card: dict) -> Optional[list[float]]:
 
 def gig_next_due(cards: list[dict], timers: dict[int, Optional[int]]) -> int:
     """Seconds until the next visit: smallest valid time left (at most as long as the gig); running gigs without a
-        readable time count as 20 min (then it checks), finished/free ones right away."""
+    readable time count as 20 min (then it checks), finished/free ones right away."""
     due = []
     for i, card in enumerate(cards):
         if card["state"] != "working":
@@ -507,7 +507,7 @@ class Navigator:
 
     def _press(self, window: dict, *labels: tuple[str, ...]) -> str:
         """Find a button in the open window by its label and press it (e.g. (“auto", “roll”), (“join",)).
-                Multi-part labels: words side by side in one row. Returns the label pressed."""
+        Multi-part labels: words side by side in one row. Returns the label pressed."""
         roi, frame = self._window_area(window)
         words = vision.words_in(frame, roi, self._ocr)
         from .knowledge import is_forbidden
@@ -538,7 +538,7 @@ class Navigator:
 
     def _autoroll(self, window: dict) -> None:
         """Open the window, press “Auto Roll” (gacha, titans) or “Auto!” (pets), close right away – the game keeps
-                rolling in the background."""
+        rolling in the background."""
         self._open(window)
         auto = self.map.element(window, "Auto!")
         if auto is not None:
@@ -552,7 +552,7 @@ class Navigator:
 
     def _raid(self, window: dict, join: bool) -> None:
         """Open the raid window and press “Create”/“Start” (own raid, costs a key) or “Join”.
-                What comes afterwards (lobby, teleport) is logged and saved as an image for troubleshooting."""
+        What comes afterwards (lobby, teleport) is logged and saved as an image for troubleshooting."""
         self._open(window)
         if join:
             self._press(window, ("join",))
@@ -580,7 +580,7 @@ class Navigator:
 
     def _stable_gear(self, timeout: float = 12.0) -> Optional[list[float]]:
         """Only click the gear once the raid is really running: “Starting defense …” darkens the image and swallows
-                clicks. It waits until the monitoring reads a wave (if connected) and the gear is at the same spot twice."""
+        clicks. It waits until the monitoring reads a wave (if connected) and the gear is at the same spot twice."""
         end = time.monotonic() + timeout
         last = None
         while time.monotonic() < end:
@@ -710,7 +710,7 @@ class Navigator:
 
     def _raid_farm(self, window: dict, join: bool, runs: int, leave_wave: int) -> None:
         """Start/join a raid, Auto Retry on (+ Auto Leave from wave N), wait until the monitoring counted N raid ends,
-                then Auto Retry off and leave."""
+        then Auto Retry off and leave."""
         if self.monitoring is None or self.raid_count is None or not self.monitoring():
             raise Stop(tr("“Farm raid” needs monitoring to be running (it counts the raids)."))
         self._raid(window, join)
@@ -749,7 +749,7 @@ class Navigator:
     # ------------------------------------------------------------------ Auto collect (own switches)
     def due_extras(self) -> list[str]:
         """Due extra tasks: Fixer Gigs (by their times) and guild missions (every GUILD_EVERY) – not tasks of the
-                routine but switches of their own; they run between the tasks and while a raid is farming."""
+        routine but switches of their own; they run between the tasks and while a raid is farming."""
         now = time.time()
         due = []
         if self.auto_gigs() and now >= self.gigs_next and self._gigs_window() is not None:
@@ -764,7 +764,7 @@ class Navigator:
 
     def hud_roi(self, button: dict) -> list[float]:
         """Where is this edge button right now? Searched once per window size via the labels (two areas, ~0.2 s),
-                remembered afterwards; not found = position from the map."""
+        remembered afterwards; not found = position from the map."""
         frame = self._frame()
         if self._hud_shape != frame.shape or button["name"] not in self._hud:
             words = [w for area in HUD_AREAS for w in _words_sharp(frame, area, self._ocr)]
@@ -955,7 +955,7 @@ class Navigator:
 
     def _guild_forbidden(self) -> None:
         """Recompute the no-go zones for the guild page visible right now. Otherwise the zones of the home page (Kick,
-                Leave …) lay over “Personal” after switching to “Missions” – the tab counted as blocked."""
+        Leave …) lay over “Personal” after switching to “Missions” – the tab counted as blocked."""
         from .knowledge import forbidden_zones
         roi, frame = self._window_area({"name": "Guild"})
         self.forbidden = forbidden_zones(vision.words_in(frame, roi, self._ocr), roi, "Guild")
@@ -982,7 +982,7 @@ class Navigator:
     # ------------------------------------------------------------------ Fixer Gigs (W21)
     def _gigs(self) -> None:
         """Open Fixer Gigs, claim finished gigs (“Claim”), send new ones with “Send Pets” (the last pets in the pets
-                window), remember the durations – the task is skipped before they run out."""
+        window), remember the durations – the task is skipped before they run out."""
         wait = self.gigs_next - time.time()
         if wait > 0:
             self.log(tr("Fixer Gigs: nothing finished yet – checking again in {time}.", time=fmt_wait(wait)))
@@ -1087,8 +1087,8 @@ class Navigator:
 
     def _send_pets(self, nth: int = 1) -> None:
         """Pets window after “Send Pets”: scroll to the very bottom, click ONE pet – for the n-th gig the n-th from the
-                end (so in turn one of the last GIGS_PETS, whichever); the click sends it off. One gig at a time.
-                Unknown steps are logged and saved as an image (debug/makro_gigs_*.jpg)."""
+        end (so in turn one of the last GIGS_PETS, whichever); the click sends it off. One gig at a time.
+        Unknown steps are logged and saved as an image (debug/makro_gigs_*.jpg)."""
         roi, frame = self._window_area({"name": "Pets"})
         x0, y0, x1, y1 = roi
         grid = [x0 + 0.06 * (x1 - x0), y0 + 0.30 * (y1 - y0), x0 + 0.94 * (x1 - x0), y0 + 0.86 * (y1 - y0)]
@@ -1142,8 +1142,8 @@ class Navigator:
 
     def _pet_tiles(self, frame: np.ndarray, grid: list[float]) -> list[list[float]]:
         """Pet tiles in the grid (reading order). The grid follows from the name tags at the bottom of the tiles
-                (“Maine”, “Rias” …): rows = same height, columns = same spacing. A tile counts if a name is in it or its
-                content is sharp (empty slots are smooth)."""
+        (“Maine”, “Rias” …): rows = same height, columns = same spacing. A tile counts if a name is in it or its
+        content is sharp (empty slots are smooth)."""
         return pet_tiles(frame, grid, vision.words_in(frame, grid, self._ocr))
 
     def _idle_wait(self, seconds: float) -> None:
@@ -1248,7 +1248,7 @@ class Navigator:
 
     def _open(self, window: dict) -> None:
         """Open a window: via its button – if it is in a world row, open the teleporter and scroll to the world first;
-                if it is in another window, open that one first."""
+        if it is in another window, open that one first."""
         if self._is_open(window, self._frame()):
             self.log(tr("“{name}” is already open.", name=window["name"]))
             return
@@ -1308,7 +1308,7 @@ class Navigator:
 
     def _scroll_to(self, row_list: dict, target: dict) -> list[float]:
         """Scroll to the world row and return its current position. First the mouse wheel over the list (move the mouse
-                before, otherwise Roblox ignores the wheel); if the list doesn't move with it, drag the scroll bar."""
+        before, otherwise Roblox ignores the wheel); if the list doesn't move with it, drag the scroll bar."""
         want = world_number(target["name"])
         x0, y0, x1, y1 = row_list["roi"]
         over = ((x0 + x1) / 2, (y0 + y1) / 2)
@@ -1431,7 +1431,7 @@ class Navigator:
 
     def _unlock_camera(self) -> None:
         """Leave first person: if Roblox holds the cursor in the middle (camera fully zoomed in), windows can't be
-                clicked anymore. Mouse wheel back = zoom the camera out."""
+        clicked anymore. Mouse wheel back = zoom the camera out."""
         self.log(tr("The camera is stuck in first person – zooming out."))
         for _ in range(4):
             self._wheel((0.5, 0.5), -5)
@@ -1475,7 +1475,7 @@ class Navigator:
 
     def _close_after_auto(self, window: dict) -> None:
         """Close right after “Auto!”: the game keeps rolling in the background (until the yen run out). Waiting would
-                take unnecessarily long (owner's wish 07.10.2026)."""
+        take unnecessarily long (owner's wish 07.10.2026)."""
         close = self.map.close_element(window)
         if close is None:
             return                                        # map incomplete: leave it open
@@ -1520,7 +1520,7 @@ class Navigator:
 
     def _guard(self, pos: tuple[float, float]) -> None:
         """Hard block: targets in blocked areas (guild “Leave”, Kick, Delete …) are never approached –
-                the mouse jumps straight to the target, so it never passes over other buttons."""
+        the mouse jumps straight to the target, so it never passes over other buttons."""
         from .knowledge import inside
         if inside(pos, self.forbidden):
             raise Stop(tr("Blocked area (e.g. “Leave”) – not clicked."))

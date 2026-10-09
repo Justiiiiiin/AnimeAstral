@@ -112,7 +112,7 @@ class MacroController(QObject):
 
     def _set_raid(self, target: str) -> None:
         """Set the routine's raid as the current raid of the statistics – only if there is a matching raid name
-                (“Alvarez War” for “W20 Alvarez War”); otherwise the selection stays as it is."""
+        (“Alvarez War” for “W20 Alvarez War”); otherwise the selection stays as it is."""
         engine = self.main.engine
         key = re.sub(r"[^a-z0-9]", "", re.sub(r"^W\d+\s+", "", target).lower())
         for name in engine.profile_store.names():

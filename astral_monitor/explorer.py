@@ -437,7 +437,7 @@ class Explorer:
 
     def _needs_visit(self, button: dict, hud: bool = False) -> bool:
         """Open the window (again)? Every window is scanned thoroughly only ONCE; afterwards the user decides in the
-                confirmation (review.py). Again only if they set “check again”."""
+        confirmation (review.py). Again only if they set “check again”."""
         if not self.full:
             return False
         windows = self.nav.map.windows_for(button)       # bundled + explored: any one checked is enough
@@ -463,13 +463,13 @@ class Explorer:
 
     def _scan_tabs(self, window: str, roi: list[float], analysis: knowledge.Analysis) -> None:
         """Look thoroughly (safe unattended):
-                1. Set no-go zones (Leave, Kick, Delete …; guild: bottom left corner) – nothing is ever clicked, scrolled
-                   or hovered there (Navigator._guard).
-                2. Read the main page and find scrollable areas (mouse wheel at several spots, only where something moves).
-                3. Open, read and scroll tabs (left one below the other / bottom side by side) one by one.
-                4. Press pure view buttons (knowledge.NAV_WORDS: Info, Members, Personal, Weekly …) as a test and record
-                   what happens; if a sub-window opens, it is closed again.
-                Never action buttons (Claim, Buy, Roll, Max …). Full screens (upgrade tree …): read/scroll only."""
+        1. Set no-go zones (Leave, Kick, Delete …; guild: bottom left corner) – nothing is ever clicked, scrolled
+           or hovered there (Navigator._guard).
+        2. Read the main page and find scrollable areas (mouse wheel at several spots, only where something moves).
+        3. Open, read and scroll tabs (left one below the other / bottom side by side) one by one.
+        4. Press pure view buttons (knowledge.NAV_WORDS: Info, Members, Personal, Weekly …) as a test and record
+           what happens; if a sub-window opens, it is closed again.
+        Never action buttons (Claim, Buy, Roll, Max …). Full screens (upgrade tree …): read/scroll only."""
         nav = self.nav
         self._current = window
         title = analysis.title or window
@@ -511,7 +511,7 @@ class Explorer:
 
     def _test_buttons(self, window: str, roi: list[float], title: str, tabs: list, analysis) -> None:
         """Press view buttons as a test; if a sub-window opens: read, close, check that the original window is back –
-                otherwise stop (force nothing)."""
+        otherwise stop (force nothing)."""
         nav = self.nav
         if analysis.category in ("raid", "defense"):
             return                                        # raid window: never touch Create/Join & co.
@@ -550,12 +550,12 @@ class Explorer:
 
     def _scroll_read(self, roi: list[float], words: list, category: str = "") -> tuple[list[str], list[list[float]]]:
         """Read the content and find scrollable areas. It only scrolled if the content under the mouse really SHIFTED
-                (phase correlation) – timers/animations don't count.
-                Faster and safer than the old 3×3 grid (owner 08.10.2026: “takes too long, brings little”):
-                - checked windows: only the marked lists (none = don't scroll), raids/artifacts/infos never;
-                - probe spots only where there is content (words/edges), not in the title banner, at most PROBE_MAX;
-                - PROBE_NOTCHES notches per probe; if nothing moves, turn back right away (undo the camera zoom).
-                Returns (text lines without duplicates, spots where scrolling works)."""
+        (phase correlation) – timers/animations don't count.
+        Faster and safer than the old 3×3 grid (owner 08.10.2026: “takes too long, brings little”):
+        - checked windows: only the marked lists (none = don't scroll), raids/artifacts/infos never;
+        - probe spots only where there is content (words/edges), not in the title banner, at most PROBE_MAX;
+        - PROBE_NOTCHES notches per probe; if nothing moves, turn back right away (undo the camera zoom).
+        Returns (text lines without duplicates, spots where scrolling works)."""
         nav = self.nav
         lines = knowledge.lines_of(words)
         areas: list[list[float]] = []
@@ -617,7 +617,7 @@ class Explorer:
 
     def _known_name(self, button: dict) -> str:
         """Name of the window this button already opens – otherwise duplicates like “Sword 1” and “Sword 1 Fenster”
-                appear (checked ones first, then explored, then bundled)."""
+        appear (checked ones first, then explored, then bundled)."""
         windows = self.nav.map.windows_for(button)
         if not windows:
             return ""
@@ -708,10 +708,10 @@ class Explorer:
 
 def scrolled_box(before: np.ndarray, after: np.ndarray) -> Optional[list[float]]:
     """Has part of the window shifted vertically or horizontally (list scrolled)? Grid of 8 × 6 cells: in every cell
-        with enough content the shift is measured (phase correlation). Scrolled = at least two cells with the same shift
-        ≥ 3 px along one axis and hardly any along the other – also small lists (Promotions at the bottom left).
-        Animations/timers don't shift uniformly and don't count. Returns the area of the shifted cells (fractions of the
-        window) or None."""
+    with enough content the shift is measured (phase correlation). Scrolled = at least two cells with the same shift
+    ≥ 3 px along one axis and hardly any along the other – also small lists (Promotions at the bottom left).
+    Animations/timers don't shift uniformly and don't count. Returns the area of the shifted cells (fractions of the
+    window) or None."""
     h, w = before.shape[:2]
     cols, rows = 8, 6
     hits = []
@@ -761,8 +761,8 @@ def _is_teleporter(words: list) -> bool:
 
 def probe_points(content: np.ndarray, words: list, roi: list[float]) -> list[tuple[float, float]]:
     """Where is a scroll probe worth it? From the 3×3 grid only spots with content: edge density around them (tiles,
-        rows) or words nearby – empty areas and the title banner are dropped; the densest first, at most PROBE_MAX.
-        content: window image grey 480×270 (Explorer._content)."""
+    rows) or words nearby – empty areas and the title banner are dropped; the densest first, at most PROBE_MAX.
+    content: window image grey 480×270 (Explorer._content)."""
     x0, y0, x1, y1 = roi
     h, w = content.shape[:2]
     edges = cv2.Canny(content, 60, 160)
@@ -791,7 +791,7 @@ def latest_report(data_dir: Path) -> Optional[dict]:
 
 def forget_local(data_dir: Path) -> None:
     """Forget explored entries (delete the local additions to the map). Older reports are not restored afterwards
-        (restore_from_reports)."""
+    (restore_from_reports)."""
     (data_dir / LOCAL_FILE).unlink(missing_ok=True)
     folder = data_dir / "explore"
     folder.mkdir(parents=True, exist_ok=True)
@@ -827,8 +827,8 @@ def _restored_name(world: str, rec: dict, taken: set[str]) -> str:
 
 def restore_from_reports(data_dir: Path, uimap) -> int:
     """Bring learned world windows from the reports of earlier explore runs back into the local map (e.g. after
-        “Forget what was learned” or an aborted run) – only slots the map doesn't know yet. Reports before the last
-        “Forget” (explore/forgot_at) don't count. Returns the number of new windows."""
+    “Forget what was learned” or an aborted run) – only slots the map doesn't know yet. Reports before the last
+    “Forget” (explore/forgot_at) don't count. Returns the number of new windows."""
     folder = data_dir / "explore"
     try:
         forgot = (folder / "forgot_at").read_text(encoding="utf-8").strip()

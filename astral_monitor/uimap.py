@@ -156,8 +156,8 @@ class UiMap:
 
     def sorted_targets(self) -> list[tuple[str, str]]:
         """Targets for macro and routine, sorted by world (“Lobby · …”, “W1 · …” …, then the buttons at the edge).
-                Progressions only once (the first): it has “Auto All” for all (owner 08.10.2026).
-                Returns (display, window name)."""
+        Progressions only once (the first): it has “Auto All” for all (owner 08.10.2026).
+        Returns (display, window name)."""
         rows = []
         progression_seen = False
         for w in self.targets():

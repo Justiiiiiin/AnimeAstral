@@ -41,7 +41,7 @@ class AntiAfkTests(unittest.TestCase):
 
     def test_runs_right_away_even_while_user_is_active(self):
         """No waiting while the user is typing/playing (owner's wish: otherwise Roblox stays in front for too
-                long) – right at the due time."""
+        long) – right at the due time."""
         h = Harness(idle=0.1)
         h.s.anti_afk_enabled = True
         h.afk.tick(0)

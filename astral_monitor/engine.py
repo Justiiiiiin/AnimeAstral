@@ -255,7 +255,7 @@ class Engine:
 
     def grab_for_ui(self, with_quests: bool = False, full: bool = False) -> Optional[GrabResult]:
         """One-off image for tests/area selection (uses the running source or a short one of its own).
-                crops: [wave counter, (quests)]"""
+        crops: [wave counter, (quests)]"""
         s = self.settings
         rois = [s.wave_roi] + ([s.quest_roi] if with_quests else [])
         if self._source is not None and self.running:
@@ -315,7 +315,7 @@ class Engine:
 
     def send_report(self, since: Optional[float], raid: Optional[str], title: str, stats=None) -> bool:
         """Create the statistics card and send it to Discord. Drawing happens in the background (~0.2 s) so neither the
-                UI nor the recognition waits. Returns: being sent (webhook and event switched on)."""
+        UI nor the recognition waits. Returns: being sent (webhook and event switched on)."""
         if not self.settings.webhook_url or not self.settings.events.get("report", {"send": True}).get("send"):
             return False
 
@@ -682,7 +682,7 @@ class Engine:
     # --------------------------------------------------------------- Raid selection
     def set_current_raid(self, name: str) -> None:
         """Raid from the selection on the start page (no image recognition anymore – the camera can be moved freely).
-                Applies right away, also for the attempt that is running."""
+        Applies right away, also for the attempt that is running."""
         self.settings.current_raid = name
         if name:
             self.settings.recent_raids = ([name] + [n for n in self.settings.recent_raids if n != name])[:20]
@@ -707,7 +707,7 @@ class Engine:
 
     def _finish_run(self, info: dict, now: float) -> None:
         """Every raid end: record, report, check record/wall. There is no “failed attempt” – in Anime Astral you
-                just get differently far, every wave gives rewards."""
+        just get differently far, every wave gives rewards."""
         cycle = None if self._last_ok is None else now - self._last_ok
         self._last_ok = now
         raid = self._raid_label(info.get("profile"))

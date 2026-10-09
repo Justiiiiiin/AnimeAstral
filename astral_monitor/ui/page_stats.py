@@ -430,7 +430,7 @@ class StatsPage(QWidget):
 
     def refresh(self) -> None:
         """Evaluate in the background, show in the GUI thread – the page stays usable right away even with a long
-                history (one year ≈ 100 000 raids: ~0.1–0.2 s of computing after each new raid)."""
+        history (one year ≈ 100 000 raids: ~0.1–0.2 s of computing after each new raid)."""
         now = time.monotonic()
         if not self._dirty and now - self._last < 10:
             return

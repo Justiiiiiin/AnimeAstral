@@ -67,7 +67,7 @@ def log_dir() -> Path:
 
 class LogTail:
     """Reads only newly written lines of all client logs. Several files at once because a launcher log and the
-        log of the actual client briefly grow in parallel when joining."""
+    log of the actual client briefly grow in parallel when joining."""
 
     def __init__(self, folder: Path) -> None:
         self.folder = folder
@@ -282,7 +282,7 @@ class AutoRejoin(threading.Thread):
 
     def _alert(self, s) -> None:
         """Guard alarm “disconnect” (once per disconnect, only after the waiting time – teleports don't trigger it).
-                Crashes are reported by the monitoring's guard itself via the process."""
+        Crashes are reported by the monitoring's guard itself via the process."""
         if self._alerted or not s.guard_enabled or self._reason == -1:
             return
         self._alerted = True

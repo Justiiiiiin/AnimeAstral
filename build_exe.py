@@ -35,7 +35,7 @@ def read_version() -> str:
 
 def verify_package() -> None:
     """Compares all files with the package's checklist and reports differences
-        (e.g. if an old folder was only partly overwritten)."""
+    (e.g. if an old folder was only partly overwritten)."""
     manifest = ROOT / "manifest.json"
     if not manifest.is_file():
         return
@@ -77,8 +77,8 @@ def pe_imports(path: Path) -> list[str]:
 
 def tesseract_dlls(folder: Path) -> set[str] | None:
     """All DLLs in the folder that tesseract.exe and libtesseract need (recursively). The UB Mannheim installation
-        also contains Pango/Cairo/ICU/GLib for training tools (~45 MB) that the program never loads.
-        None = analysis not possible (then copy everything)."""
+    also contains Pango/Cairo/ICU/GLib for training tools (~45 MB) that the program never loads.
+    None = analysis not possible (then copy everything)."""
     try:
         local = {p.name.lower(): p for p in folder.glob("*.dll")}
         todo = ["tesseract.exe"] + [n for n in local if n.startswith("libtesseract")]
@@ -186,7 +186,7 @@ def bundle_tesseract(out_dir: Path) -> bool:
 
 def write_manifest(out_dir: Path, version: str) -> None:
     """files.json: checksum of every file. With it the updater sees which files changed and loads only those
-        (tools/make_patch.py creates the update package from it)."""
+    (tools/make_patch.py creates the update package from it)."""
     files = {}
     for path in sorted(out_dir.rglob("*")):
         rel = path.relative_to(out_dir).as_posix()

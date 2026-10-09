@@ -103,7 +103,7 @@ ESC_PRESSES = 4              # even number: Roblox menu opens and closes again (
 
 def roblox_windows(title: str = "Roblox") -> list[int]:
     """All main windows of the Roblox clients (process RobloxPlayerBeta.exe) – minimized ones too, several too.
-        Fallback: window with the title."""
+    Fallback: window with the title."""
     import ctypes
     from ctypes import wintypes
 
@@ -137,8 +137,8 @@ def roblox_windows(title: str = "Roblox") -> list[int]:
 
 def wake_roblox(title: str) -> tuple[bool, str]:
     """Like the owner's proven AutoHotkey script: bring each Roblox window to the front briefly (minimized ones are
-        restored and stay open), Esc 4× via SendInput, plus Esc 1× directly to the window; then clear Roblox's working
-        memory and bring back the previous window. Returns (worked?, description)."""
+    restored and stay open), Esc 4× via SendInput, plus Esc 1× directly to the window; then clear Roblox's working
+    memory and bring back the previous window. Returns (worked?, description)."""
     import ctypes
     from ctypes import wintypes
 
@@ -202,8 +202,8 @@ jump_in_roblox = wake_roblox                       # old name (tests, older call
 
 def _restore(roblox, previous) -> None:
     """Bring the previous window visibly back to the front. Activating alone isn't enough: some programs (e.g.
-        Electron apps) become active but aren't raised – Roblox would stay visible in front (reported 06.10.2026).
-        So push Roblox to the very back and explicitly raise the previous window."""
+    Electron apps) become active but aren't raised – Roblox would stay visible in front (reported 06.10.2026).
+    So push Roblox to the very back and explicitly raise the previous window."""
     import ctypes
     from ctypes import wintypes
 

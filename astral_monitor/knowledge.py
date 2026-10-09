@@ -197,10 +197,10 @@ def _regular(values: list[float]) -> bool:
 
 def side_tabs(words: list[tuple[str, list[float]]], roi: list[float]) -> list[tuple[str, list[float]]]:
     """Tabs of a window (strict, so game buttons like “Play”/“Pause” or pets are never clicked):
-        - left: at least 4 entries one below the other, left-aligned, same text height, even spacing
-          (guild: Home, Upgrades, Members, Missions, Servers, Rankings);
-        - bottom: at least 4 entries side by side in a row at the very bottom (achievements: Normal, Gamemode …).
-        Never action or danger words (Leave, Kick, Play, Pause, Claim, Buy …)."""
+    - left: at least 4 entries one below the other, left-aligned, same text height, even spacing
+      (guild: Home, Upgrades, Members, Missions, Servers, Rankings);
+    - bottom: at least 4 entries side by side in a row at the very bottom (achievements: Normal, Gamemode …).
+    Never action or danger words (Leave, Kick, Play, Pause, Claim, Buy …)."""
     x0, y0, x1, y1 = roi
     w, h = x1 - x0, y1 - y0
     ok = _dedupe([(t, b) for t, b in words if len(re.sub(r"[^A-Za-z]", "", t)) >= 3 and is_safe_to_click(t)
@@ -256,7 +256,7 @@ NAV_WORDS = ("info", "index", "help", "details", "stats", "members", "personal",
 
 def forbidden_zones(words: list[tuple[str, list[float]]], roi: list[float], title: str = "") -> list[list[float]]:
     """Areas the macro must never go to (click, mouse wheel, hover): dangerous buttons (Leave, Kick …) with a
-        margin – and in the guild always the bottom left corner where “Leave” sits (even if text recognition misses it)."""
+    margin – and in the guild always the bottom left corner where “Leave” sits (even if text recognition misses it)."""
     x0, y0, x1, y1 = roi
     w, h = x1 - x0, y1 - y0
     zones = []
@@ -274,7 +274,7 @@ def inside(pos: tuple[float, float], zones: list[list[float]]) -> bool:
 
 def nav_buttons(words: list[tuple[str, list[float]]], skip: list[tuple[str, list[float]]]) -> list:
     """Buttons exploring may press for testing: only words from NAV_WORDS, nothing blocked, no tabs
-        (they are clicked through separately)."""
+    (they are clicked through separately)."""
     taken = [b for _t, b in skip]
     out = []
     for t, b in _dedupe(words):
@@ -287,7 +287,7 @@ def nav_buttons(words: list[tuple[str, list[float]]], skip: list[tuple[str, list
 
 def lines_of(words: list[tuple[str, list[float]]]) -> list[str]:
     """Put read words together into text lines (readable report instead of single words); parts of one height far
-        apart (columns) are separated with “ · ”."""
+    apart (columns) are separated with “ · ”."""
     rows: list[list] = []
     for t, b in sorted(_dedupe(words), key=lambda c: ((c[1][1] + c[1][3]) / 2, c[1][0])):
         cy, hgt = (b[1] + b[3]) / 2, b[3] - b[1]
@@ -314,7 +314,7 @@ def lines_of(words: list[tuple[str, list[float]]]) -> list[str]:
 
 def raid_drops(words: list[tuple[str, list[float]]]) -> list[str]:
     """“Enemy Drops” of a raid window: labels below the icons between “Enemy Drops:” and the buttons
-        Create/Join/Start. Words of one tile are merged (“Grail Shard”). Yen/XP are dropped."""
+    Create/Join/Start. Words of one tile are merged (“Grail Shard”). Yen/XP are dropped."""
     head = next((b for w, b in words if _norm(w) in ("drops", "enemydrops")), None)
     foot = min((b[1] for w, b in words if _norm(w) in ("create", "join", "start")), default=None)
     if head is None or foot is None or foot <= head[3]:
@@ -366,7 +366,7 @@ def _title_words(names) -> list[str]:
 
 def _clean_name(name: str) -> str:
     """Known name without world, “Fenster”, “(2)” – and with corrected game words (earlier misreads like
-        “Kagune Upgraid” shouldn't serve as a model)."""
+    “Kagune Upgraid” shouldn't serve as a model)."""
     name = re.sub(r"^W\d+\s+|\s*·.*$|\s*\(\d+\)$|\s+Fenster$", "", name or "").strip()
     if name.lower() in _NOT_TITLE:
         return ""
@@ -379,8 +379,8 @@ def _clean_name(name: str) -> str:
 
 def _fix_word(word: str, vocab: list[str], last: bool) -> tuple[str, bool]:
     """Correct one word. Returns (word, known). Only real misreads: similar (≥ 0.8) and almost the same length –
-        “Cratt” -> “Craft”, “Worsutsuki” -> “Otsutsuki”; at the end of a line also cut-off words (“Shrin” -> “Shrine”).
-        Correct words stay, also singular/plural (“Pet”, “Fruit”) and case (“NINJA EXAM”)."""
+    “Cratt” -> “Craft”, “Worsutsuki” -> “Otsutsuki”; at the end of a line also cut-off words (“Shrin” -> “Shrine”).
+    Correct words stay, also singular/plural (“Pet”, “Fruit”) and case (“NINJA EXAM”)."""
     core = re.sub(r"[^A-Za-z']", "", word)
     low = core.lower()
     lows = {v.lower() for v in vocab}
@@ -404,9 +404,9 @@ def _fix_word(word: str, vocab: list[str], last: bool) -> tuple[str, bool]:
 
 def fix_title(text: str, names) -> str:
     """Correct a read title so windows are named as in the game (owner 08.10.2026): pull it word by word to known
-        words (“Worsutsuki Shrin” -> “Otsutsuki Shrine”, “Cratt Genos” -> “Craft Genos”), drop short leftovers at the
-        edge (“AK Kagune Upgra” -> “Kagune Upgrade”). Whole names are not replaced (otherwise “Fire Progression”
-        would become “Ki Progression”). names: known window names (map, reports, check findings)."""
+    words (“Worsutsuki Shrin” -> “Otsutsuki Shrine”, “Cratt Genos” -> “Craft Genos”), drop short leftovers at the
+    edge (“AK Kagune Upgra” -> “Kagune Upgrade”). Whole names are not replaced (otherwise “Fire Progression”
+    would become “Ki Progression”). names: known window names (map, reports, check findings)."""
     text = (text or "").strip()
     if not text:
         return ""

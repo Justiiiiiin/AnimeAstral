@@ -157,7 +157,7 @@ def release_info(data: dict, repo: str) -> Optional[ReleaseInfo]:
 def check_latest(repo: str, timeout: float = 12.0, getter: Callable = requests.get,
                  beta: bool = False) -> Optional[ReleaseInfo]:
     """Newest release (with beta=True betas too). None = no matching release (no installer yet).
-        Errors -> UpdateError."""
+    Errors -> UpdateError."""
     _check_repo(repo)
     if beta:
         found = list_releases(repo, timeout, getter, beta=True)
@@ -169,7 +169,7 @@ def check_latest(repo: str, timeout: float = 12.0, getter: Callable = requests.g
 def list_releases(repo: str, timeout: float = 12.0, getter: Callable = requests.get,
                   beta: bool = False) -> list[ReleaseInfo]:
     """All installable releases, newest first (for release notes and downgrades).
-        Betas only with beta=True."""
+    Betas only with beta=True."""
     _check_repo(repo)
     data = _get_json(API_LIST.format(repo=repo), timeout, getter) or []
     out = [info for info in (release_info(d, repo) for d in data if isinstance(d, dict)) if info]
@@ -294,7 +294,7 @@ def download(info: ReleaseInfo, progress: Callable[[int, int], None] = lambda do
              cancelled: Callable[[], bool] = lambda: False, getter: Callable = requests.get,
              dest_dir: Optional[Path] = None, patch: bool = False) -> Path:
     """Downloads the installer (or with patch=True the update package), verifies the checksum and returns the path.
-        Without a published checksum an update package is refused (it is unpacked without an installer)."""
+    Without a published checksum an update package is refused (it is unpacked without an installer)."""
     folder = dest_dir or (app_paths.data_dir() / "updates")
     folder.mkdir(parents=True, exist_ok=True)
     for pattern in ("*.exe*", "*.zip*"):                 # clean up leftovers of earlier updates
@@ -435,7 +435,7 @@ def launch_patch(zip_path: Path, plan: PatchPlan, relaunch: bool = True, folder:
 
 def cleanup_downloads(folder: Optional[Path] = None) -> int:
     """At start-up: delete downloaded installers/packages of earlier updates (otherwise ~60 MB stay behind).
-        Files still in use stay until the next start. The swap log is kept."""
+    Files still in use stay until the next start. The swap log is kept."""
     folder = folder or (app_paths.data_dir() / "updates")
     removed = 0
     for pattern in ("*.exe", "*.zip", "*.part", "apply/plan.json", "apply/apply.ps1"):

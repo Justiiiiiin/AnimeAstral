@@ -82,7 +82,7 @@ class SortItem(QTableWidgetItem):
 
 def make_table(headers: list[str], rights: tuple = (), widths: tuple = (), selectable: bool = False) -> QTableWidget:
     """Tidy table: header and cells aligned the same, every column resizable on its own, columns movable,
-        sortable by clicking the header."""
+    sortable by clicking the header."""
     table = QTableWidget(0, len(headers))
     for i, text in enumerate(headers):
         item = QTableWidgetItem(text)
@@ -239,7 +239,7 @@ class Card(QFrame):
 
 def page_header(title: str, info: str = "") -> QHBoxLayout:
     """Page title with ⓘ in one row; append controls to the right with addWidget (after addStretch).
-        Saves the subtitle row – all pages should fit without scrolling."""
+    Saves the subtitle row – all pages should fit without scrolling."""
     row = QHBoxLayout()
     theme.track_spacing(row, 8)
     row.addWidget(label(title, "h1"))

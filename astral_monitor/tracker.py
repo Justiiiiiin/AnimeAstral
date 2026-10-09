@@ -23,7 +23,7 @@ CUT_CONFIRM = 2.0        # “4” instead of “54” (front digit hidden): res
 
 def _cut_digits(value: int, last: int) -> bool:
     """Does value look like last (or the next waves) with a missing front digit? Real case 07.10.:
-        at wave 54 “4” was read twice – without this check a false restart."""
+    at wave 54 “4” was read twice – without this check a false restart."""
     s = str(value)
     return any(len(str(n)) > len(s) and str(n).endswith(s) for n in (last, last + 1, last + 2))
 
@@ -41,8 +41,8 @@ class _Run:
 
 class WaveTracker:
     """Tracks the wave counter. Returns events:
-        ("candidate", None)  – counter >= trigger, please confirm
-        ("run_end", dict)    – raid finished without a confirmed trigger (aborted/detected late)"""
+    ("candidate", None)  – counter >= trigger, please confirm
+    ("run_end", dict)    – raid finished without a confirmed trigger (aborted/detected late)"""
 
     def __init__(self, offset: int = 1, cooldown: float = 60.0) -> None:
         self.offset = offset
@@ -134,7 +134,7 @@ class WaveTracker:
 
     def hold(self) -> None:
         """The macro is clicking menus: the counter is often hidden or other numbers are in the image – decide
-                nothing. A drop or absence that began doesn't count on; afterwards it continues normally."""
+        nothing. A drop or absence that began doesn't count on; afterwards it continues normally."""
         self._absent_since = None
         self._drop_value = None
 
@@ -196,7 +196,7 @@ def _norm(text: str) -> str:
 
 class QuestTracker:
     """Matches read quest lines with known quests (tolerant of OCR errors)
-        and reports progress only once the same new value was read twice."""
+    and reports progress only once the same new value was read twice."""
 
     def __init__(self) -> None:
         self.items: list[Quest] = []

@@ -64,7 +64,7 @@ _BARE_RE = re.compile(r"([a-zA-Z]{3,6})\W{0,3}([0-9tlIO|oSB]{1,4})\b")
 
 def parse_bare_wave(text: str) -> Optional[int]:
     """“Wave 542” (modes with more than 100 waves show no total) -> 542. Only with the word “Wave” right before it
-        and without “/” in the text – otherwise a misread “54/100” could pass as “54”."""
+    and without “/” in the text – otherwise a misread “54/100” could pass as “54”."""
     if "/" in text:
         return None
     for match in _BARE_RE.finditer(text):

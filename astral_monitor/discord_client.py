@@ -74,7 +74,7 @@ class DiscordSender(threading.Thread):
 
     def send_daily(self, payload: dict, files: Optional[list] = None) -> tuple[bool, str]:
         """The first message of the day opens a forum post “Raids · DD.MM.YYYY”, all others go into it.
-                If the post was deleted, a new one is created."""
+        If the post was deleted, a new one is created."""
         url = self._get().forum_webhook_url.rstrip("/")
         thread = self._today_thread(url)
         if thread:
