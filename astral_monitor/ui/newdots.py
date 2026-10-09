@@ -29,6 +29,7 @@ NEW_FEATURES: dict[str, tuple[str, ...]] = {
     "0.9.9-beta.11": ("nav:0",),                     # auto-collect fixed, routine without Progressions
     "0.9.9-beta.13": ("nav:1", "nav:3", "tab:Appearance"),   # raids per day; English as the default language
     "0.9.9-beta.14": ("nav:0",),                     # Fixer Gigs per slot, guild once per PC day
+    "0.9.9-beta.15": ("nav:0",),                     # gig pills, faster guild claim
 }
 
 

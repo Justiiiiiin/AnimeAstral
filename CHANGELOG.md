@@ -4,7 +4,7 @@ Newest version at the top. Short bullet points, no explanations (those are in th
 A version's section becomes its release notes automatically when it is published
 (`tools/release_notes.py`) and can be read in the program under Settings → Program → “All versions”.
 
-## Unreleased
+## 0.9.9-beta.15
 
 ### ✨ New
 - Fixer Gigs: three pills show each gig (time left, done, pet, empty)
