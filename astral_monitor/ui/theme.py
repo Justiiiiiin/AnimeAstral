@@ -1,8 +1,8 @@
-"""Designs (QSS) mit Farbschemata, Skalierung und Symbolen.
+"""Designs (QSS) with color schemes, scaling and icons.
 
-Designs sind wählbar (Einstellungen → Darstellung) und tragen die Version, mit der sie eingeführt wurden. Alte Designs
-bleiben erhalten; ein neues Design = neuer Eintrag in DESIGNS + Vorlage + Paletten. Farben stehen als @token in den
-Vorlagen und kommen aus der Palette – Code, der selbst zeichnet, holt sie über color("token")."""
+Designs can be chosen (Settings → Appearance) and carry the version they were introduced in. Old designs stay;
+a new design = a new entry in DESIGNS + template + palettes. Colors are @tokens in the templates and come from the
+palette – code that draws itself gets them via color("token")."""
 from __future__ import annotations
 
 import re
@@ -15,7 +15,7 @@ from PySide6.QtWidgets import QApplication
 
 from ..i18n import N_
 
-# ------------------------------------------------------------------ Paletten
+# ------------------------------------------------------------------ Palettes
 _CLASSIC_DARK = {
     "bg": "#0F1419", "sidebar": "#0B0F14", "topbar": "#0B0F14", "card": "#151B23", "border": "#222B36",
     "text": "#E6EAF0", "muted": "#8B97A8", "accent": "#3DD6B5", "accent2": "#3DD6B5", "accentHover": "#52E0C1",
@@ -50,7 +50,7 @@ _ASTRAL_LIGHT = {
     "trackOff": "#CDD3DD", "knobOff": "#FFFFFF", "knobOn": "#FFFFFF", "info": "#151A23",
 }
 
-# ------------------------------------------------------------------ Vorlagen
+# ------------------------------------------------------------------ Templates
 _CLASSIC = """
 QWidget { background: @bg; color: @text; font-family: @font; font-size: 10pt; }
 QMainWindow, QStackedWidget { background: @bg; }
@@ -169,8 +169,8 @@ QToolTip { background: @card; color: @text; border: 1px solid @controlBorder; }
 QDialog { background: @bg; }
 """
 
-# Astral (0.6.5): weichere Flächen, größere Rundungen, Verlauf auf Hauptknöpfen, Symbole in der Navigation,
-# Einstellungen als Zahnrad unten links, schmale Bildlaufleisten. Hell und Dunkel aus derselben Vorlage.
+# Astral (0.6.5): softer surfaces, larger radii, gradient on primary buttons, icons in the navigation,
+# settings as a gear at the bottom left, slim scroll bars. Light and dark from the same template.
 _ASTRAL = """
 QWidget { background: @bg; color: @text; font-family: @font; font-size: 10pt; }
 QMainWindow, QStackedWidget { background: @bg; }
@@ -303,9 +303,9 @@ QToolTip { background: @card; color: @text; border: 1px solid @controlBorder; pa
 QDialog { background: @bg; }
 """
 
-# Nebula (0.7.0): aus dem Logo abgeleitet – tiefes Nachtblau, Verlauf Türkis → Violett, weiße Akzente. Eigenes Layout:
-# schmale Symbolleiste (Logo oben, Zahnrad unten, Namen als Tooltip), Status als Pille in der Kopfzeile,
-# Karten mit Verlaufsrand. Baut auf der Astral-Vorlage auf; die Regeln unten überschreiben sie.
+# Nebula (0.7.0): derived from the logo – deep night blue, gradient teal → violet, white accents. Own layout:
+# slim icon bar (logo at the top, gear at the bottom, names as tooltips), status as a pill in the header,
+# cards with a gradient border. Builds on the Astral template; the rules below override it.
 _NEBULA_DARK = dict(_ASTRAL_DARK, **{
     "bg": "#080A11", "sidebar": "#0B0E17", "topbar": "#080A11", "card": "#10141F", "cardTop": "#141A29",
     "border": "#1D2436", "borderA": "#2C3A5C", "borderB": "#1A2031", "line": "#151A27", "field": "#0C1019",
@@ -340,7 +340,7 @@ QFrame#card[kpi="true"] { border-top: 2px solid qlineargradient(x1:0, y1:0, x2:1
 QFrame#statusbox { border-radius: 14px; }
 """
 
-# Saison-Designs (0.7.2): Nebula-Aufbau mit eigenen Farben
+# Seasonal designs (0.7.2): Nebula layout with their own colors
 _HALLOWEEN_DARK = dict(_NEBULA_DARK, **{
     "bg": "#120A1A", "sidebar": "#170C21", "topbar": "#120A1A", "card": "#1F1029", "cardTop": "#2A1538",
     "border": "#3A1F4D", "borderA": "#7A3FA8", "borderB": "#3A1F4D", "line": "#26152F", "field": "#140A1C",
@@ -349,7 +349,7 @@ _HALLOWEEN_DARK = dict(_NEBULA_DARK, **{
     "accent": "#FF7A1A", "accent2": "#B04DFF", "accentHover": "#FF9442", "accent2Hover": "#C470FF",
     "onAccent": "#1A0A00", "knobOn": "#1A0A00", "okBg": "#2A1408", "okBorder": "#7A3A12", "bar": "#C0561C",
     "stepDone": "#C0561C", "section": "#C89BF0", "muted": "#B8A5C9", "scroll": "#3E2550", "warn": "#FFD25A",
-    "cardGlass": "#D81F1029", "cardTopGlass": "#D82A1538",          # leicht durchscheinend (Deko dahinter)
+    "cardGlass": "#D81F1029", "cardTopGlass": "#D82A1538",          # slightly translucent (decoration behind)
 })
 _WINTER_DARK = dict(_NEBULA_DARK, **{
     "bg": "#06111F", "sidebar": "#081628", "topbar": "#06111F", "card": "#0C1D33", "cardTop": "#122A48",
@@ -369,7 +369,7 @@ _WINTER_LIGHT = dict(_NEBULA_LIGHT, **{
     "cardGlass": "#E6FFFFFF", "cardTopGlass": "#E6F7FBFF",
 })
 
-# OLED (0.7.6): echtes Schwarz, Nebula-Aufbau
+# OLED (0.7.6): true black, Nebula layout
 _OLED_DARK = dict(_NEBULA_DARK, **{
     "bg": "#000000", "sidebar": "#000000", "topbar": "#000000", "card": "#08090C", "cardTop": "#0C0E13",
     "border": "#16181F", "borderA": "#232838", "borderB": "#111319", "line": "#0E1015", "field": "#030405",
@@ -378,8 +378,8 @@ _OLED_DARK = dict(_NEBULA_DARK, **{
     "headerLine": "#101219", "barEmpty": "#0E1015", "scroll": "#1A1D26", "trackOff": "#1A1D26",
 })
 
-# Night City (0.9.9): passend zum Spiel (W21 Night City, Fixer Gigs) – violett-schwarzer Grund, Neon-Gelb und Magenta,
-# Kartenränder Magenta → Cyan, etwas kantiger als Nebula. Nur dunkel (wie das Spiel).
+# Night City (0.9.9): matching the game (W21 Night City, Fixer Gigs) – violet-black background, neon yellow and magenta,
+# card borders magenta → cyan, a bit more angular than Nebula. Dark only (like the game).
 _NIGHTCITY_DARK = dict(_NEBULA_DARK, **{
     "bg": "#07050D", "sidebar": "#0A0712", "topbar": "#07050D", "card": "#110C1C", "cardTop": "#1A1029",
     "border": "#2A1A3D", "borderA": "#7A2A6E", "borderB": "#1C4D5C", "line": "#1A1226", "field": "#0B0814",
@@ -402,7 +402,7 @@ QPushButton#nav { border-radius: 10px; }
 QPushButton#nav:checked { border: 1px solid @edge; }
 """
 
-# Bubble (0.7.6): Nebula mit runden „Blasen“-Formen – Knöpfe und Felder als Pillen, große Kartenradien
+# Bubble (0.7.6): Nebula with round “bubble” shapes – buttons and fields as pills, large card radii
 _BUBBLE = _NEBULA + """
 QFrame#card { border-radius: 26px; }
 QFrame#statusbox { border-radius: 22px; }
@@ -466,13 +466,13 @@ _SUMMER_LIGHT = dict(_NEBULA_LIGHT, **{
     "cardGlass": "#E6FFFFFF", "cardTopGlass": "#E6FFFDF7",
 })
 
-# Saison-Designs: Karten leicht durchscheinend, damit die Deko (seasonal.py) dahinter sichtbar ist
+# Seasonal designs: cards slightly translucent so the decoration (seasonal.py) shows behind them
 _SEASON = _NEBULA + """
 QFrame#card { background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 @cardTopGlass, stop:1 @cardGlass); }
 """
 
 DESIGNS: dict[str, dict] = {
-    # Schlüssel: Anzeigename, eingeführt in Version, Vorlage, Paletten je Farbschema (fehlt eines: Dunkel)
+    # key: display name, introduced in version, template, palettes per color scheme (if one is missing: dark)
     "nightcity": {"name": N_("Night City"), "since": "0.9.9", "template": _NIGHTCITY, "icons": True, "gear": True,
                   "animate": True, "rail": True, "font": ["Segoe UI Variable Text", "Segoe UI"],
                   "palettes": {"dark": _NIGHTCITY_DARK}},
@@ -509,11 +509,11 @@ DESIGNS: dict[str, dict] = {
     "classic": {"name": N_("Classic"), "since": "0.5.0", "template": _CLASSIC, "icons": False, "gear": False,
                 "animate": False, "font": ["Segoe UI"], "palettes": {"dark": _CLASSIC_DARK}},
 }
-DEFAULT_DESIGN = "nightcity"   # seit 0.9.9-beta.7 (vorher Nebula)
+DEFAULT_DESIGN = "nightcity"   # since 0.9.9-beta.7 (before: Nebula)
 
 
 def season_design(today=None) -> str:
-    """Saison-Design für ein Datum („“ = keine Saison): Kürbisnacht 15.10.–2.11., Frost 1.12.–6.1."""
+    """Seasonal design for a date (“” = no season): pumpkin night 15.10.–2.11., frost 1.12.–6.1."""
     from datetime import date
     today = today or date.today()
     md = (today.month, today.day)
@@ -527,14 +527,14 @@ def season_design(today=None) -> str:
 
 
 def effective_design(chosen: str, seasonal: bool, today=None) -> str:
-    """Gewähltes Design – oder während einer Saison das Saison-Design, wenn „automatisch“ an ist."""
+    """The chosen design – or during a season the seasonal design, if “automatic” is on."""
     return (season_design(today) or chosen) if seasonal else chosen
 MODES = ("dark", "light", "system")
 
 _design = DEFAULT_DESIGN
 _mode = "dark"
 _palette = _NEBULA_DARK
-_listeners: list = []                          # Rückrufe bei Design-/Farbwechsel (schwache Referenzen)
+_listeners: list = []                          # callbacks on design/color change (weak references)
 
 
 
@@ -542,7 +542,7 @@ def design() -> str:
     return _design
 
 
-_motion = True                                     # False = „Animationen reduzieren“
+_motion = True                                     # False = “Reduce animations”
 
 
 def set_motion(on: bool) -> None:
@@ -551,7 +551,7 @@ def set_motion(on: bool) -> None:
 
 
 def animations() -> bool:
-    """Animationen zeigen? (Design sieht sie vor und der Nutzer hat sie nicht abgeschaltet)"""
+    """Show animations? (the design provides them and the user hasn't switched them off)"""
     return _motion and bool(design_info()["animate"])
 
 
@@ -572,7 +572,7 @@ def is_dark() -> bool:
 
 
 def on_change(callback: Callable[[], None]) -> None:
-    """callback() nach jedem Design-/Farbwechsel (z. B. Symbole neu einfärben)."""
+    """callback() after every design/color change (e.g. recolor icons)."""
     ref = weakref.WeakMethod(callback) if hasattr(callback, "__self__") else (lambda cb=callback: cb)
     _listeners.append(ref)
 
@@ -593,7 +593,7 @@ def _resolve(design_key: str, mode: str) -> tuple[str, dict]:
     return effective, with_accent(palette, _accent) if _accent else palette
 
 
-# Eigene Akzentfarbe (leer = Farbe des Designs). Vorschläge für die Auswahl in den Einstellungen.
+# Own accent color (empty = the design's color). Suggestions for the picker in the settings.
 ACCENTS = ["#45E0BF", "#7B8CFF", "#FF6FB5", "#FFB547", "#4FB3FF", "#7BE07B", "#FF7A6B"]
 _accent = ""
 
@@ -604,8 +604,8 @@ def set_accent(value: str) -> None:
 
 
 def with_accent(palette: dict, accent: str) -> dict:
-    """Palette mit eigener Akzentfarbe: zweite Verlaufsfarbe um 40° im Farbkreis versetzt, Schrift auf dem Akzent
-    automatisch hell/dunkel, getönte Hintergründe passend zur Helligkeit des Designs."""
+    """Palette with an own accent color: second gradient color shifted by 40° on the color wheel, text on the accent
+        automatically light/dark, tinted backgrounds matching the brightness of the design."""
     base = QColor(accent)
     h, s, v, _a = base.getHsv()
     second = QColor.fromHsv((h + 40) % 360 if h >= 0 else 0, s, v)
@@ -629,15 +629,15 @@ def with_accent(palette: dict, accent: str) -> dict:
     return out
 
 
-# ------------------------------------------------------------------ Skalierung
-# Entworfen für 1180 × 800 (Faktor 1). Faktor = Zoom (50–200 %, Einstellungen) × optional Anpassung an die
-# Fenstergröße (0,7–1,3). Schrift, Abstände und Knopfhöhen im Stylesheet sowie per track() angemeldete feste Größen im
-# Code werden umgerechnet.
+# ------------------------------------------------------------------ Scaling
+# Designed for 1180 × 800 (factor 1). Factor = zoom (50–200 %, settings) × optionally fitting to the
+# window size (0.7–1.3). Fonts, spacing and button heights in the stylesheet as well as fixed sizes registered via
+# track() in the code are converted.
 DESIGN_SIZE = (1180, 800)
-SCALE_MIN, SCALE_MAX = 0.7, 1.3                # nur der Anteil „an Fenstergröße anpassen“
+SCALE_MIN, SCALE_MAX = 0.7, 1.3                # only the “fit to window size” part
 ZOOM_MIN, ZOOM_MAX = 50, 200
 _scale = 1.0
-_tracked: list = []                            # (schwache Referenz, Funktion(objekt, faktor))
+_tracked: list = []                            # (weak reference, function(object, factor))
 _SIZE_RE = re.compile(r"(\d+(?:\.\d+)?)(px|pt)")
 _TOKEN_RE = re.compile(r"@([A-Za-z][A-Za-z0-9]*)")
 
@@ -647,12 +647,12 @@ def scale() -> float:
 
 
 def px(value: float) -> int:
-    """Pixelwert im aktuellen Maßstab (mindestens 1)."""
+    """Pixel value at the current scale (at least 1)."""
     return max(1, round(value * _scale))
 
 
 def track(obj, apply_fn) -> None:
-    """Feste Größe im Code skalierbar machen: apply_fn(obj, faktor) läuft sofort und bei jeder Änderung."""
+    """Make a fixed size in the code scalable: apply_fn(obj, factor) runs right away and on every change."""
     _tracked.append((weakref.ref(obj), apply_fn))
     apply_fn(obj, _scale)
 
@@ -686,18 +686,18 @@ def track_fixed_height(widget, value: int) -> None:
 
 
 def factor_for(width: int, height: int, zoom: int = 100, fit: bool = True) -> float:
-    """Gesamtfaktor: Zoom in Prozent × (Fensteranpassung 0,7–1,3, falls an); gerundet auf 0,05."""
+    """Total factor: zoom in percent × (window fit 0.7–1.3, if on); rounded to 0.05."""
     fitted = min(SCALE_MAX, max(SCALE_MIN, min(width / DESIGN_SIZE[0], height / DESIGN_SIZE[1]))) if fit else 1.0
     zoom = min(ZOOM_MAX, max(ZOOM_MIN, int(zoom)))
     return max(0.35, round(fitted * zoom / 100 * 20) / 20)
 
 
-# ------------------------------------------------------------------ Bilder für das Stylesheet
+# ------------------------------------------------------------------ Images for the stylesheet
 _images: dict[str, str] = {}
 
 
 def _image(kind: str, rgb: str) -> str:
-    """Kleine Hilfsbilder (Pfeil, Haken) in der Palettenfarbe – Qt-Stylesheets brauchen dafür Dateien."""
+    """Small helper images (arrow, check mark) in the palette color – Qt stylesheets need files for them."""
     key = f"{kind}_{rgb.lstrip('#')}"
     if key in _images:
         return _images[key]
@@ -740,7 +740,7 @@ def style(factor: float) -> str:
             return f"{value * factor:.1f}pt"
         return f"{max(1, round(value * factor)) if value else 0}px"
     text = _SIZE_RE.sub(repl, text)
-    if _backdrop:                                   # Hintergrundbild: Flächen zwischen den Karten durchsichtig
+    if _backdrop:                                   # background image: areas between the cards transparent
         text += '\n*[glass="true"] { background: transparent; }\n'
     return text
 
@@ -749,7 +749,7 @@ _backdrop = False
 
 
 def set_backdrop(on: bool) -> None:
-    """Hintergrundbild an/aus – Stylesheet neu setzen, wenn sich etwas ändert."""
+    """Background image on/off – set the stylesheet again if something changes."""
     global _backdrop
     if bool(on) == _backdrop:
         return
@@ -794,14 +794,14 @@ def set_scale(app: QApplication, factor: float) -> bool:
         try:
             fn(obj, factor)
             alive.append((ref, fn))
-        except RuntimeError:                        # Qt-Objekt bereits gelöscht
+        except RuntimeError:                        # Qt object already deleted
             pass
     _tracked[:] = alive
     return True
 
 
 def set_appearance(app: QApplication, design_key: str, mode: str) -> bool:
-    """Design und Farbschema wechseln (sofort, ohne Neustart). Rückgabe: geändert?"""
+    """Switch design and color scheme (right away, without a restart). Returns: changed?"""
     global _design, _mode, _palette
     design_key = design_key if design_key in DESIGNS else DEFAULT_DESIGN
     mode = mode if mode in MODES else "dark"
@@ -836,14 +836,14 @@ def apply(app: QApplication, design_key: str = DEFAULT_DESIGN, mode: str = "dark
     app.setStyleSheet(style(_scale))
 
 
-# ------------------------------------------------------------------ Symbole (Windows-Symbolschrift)
+# ------------------------------------------------------------------ Icons (Windows icon font)
 ICON_FONTS = ("Segoe Fluent Icons", "Segoe MDL2 Assets")
 GLYPHS = {"monitor": "", "stats": "", "alerts": "", "raids": "", "detect": "",
           "settings": "", "notes": chr(0xE70B)}
 
 
 def glyph_icon(name: str, size: int = 18) -> QIcon:
-    """Symbol aus der Windows-Symbolschrift, normal in „muted“, aktiv/ausgewählt in „text“ bzw. „accent“."""
+    """Icon from the Windows icon font, normally in “muted”, active/selected in “text” or “accent”."""
     glyph = GLYPHS.get(name, "")
     icon = QIcon()
     if not glyph:
@@ -856,7 +856,7 @@ def glyph_icon(name: str, size: int = 18) -> QIcon:
 
 
 def _glyph_pixmap(glyph: str, rgb: str, size: int) -> QPixmap:
-    ratio = 2.0                                     # scharf auch bei 150–200 % Windows-Skalierung
+    ratio = 2.0                                     # sharp even at 150–200 % Windows scaling
     pix = QPixmap(int(size * ratio), int(size * ratio))
     pix.setDevicePixelRatio(ratio)
     pix.fill(Qt.GlobalColor.transparent)
