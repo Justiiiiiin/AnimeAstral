@@ -66,17 +66,35 @@ class SettingsPage(QWidget):
         self.no_match.setVisible(False)
         root.addWidget(self.no_match)
 
-        def stack(*cards) -> QWidget:
-            """Several cards one below the other as one column (for columns)."""
-            col = QWidget()
-            lay = QVBoxLayout(col)
-            lay.setContentsMargins(0, 0, 0, 0)
-            theme.track_spacing(lay, 14)
-            for card in cards:
-                lay.addWidget(card)
-            return col
+        self._build_roblox(root)
+        self._build_monitoring(root)
+        self._build_appearance(root)
+        self._build_program(root)
+        self._build_macro(root)
+        self._build_discord_bot(root)
+        self._build_debug(root)
+        root.addStretch(1)
+        root.addLayout(self._about_row())
+        self._assign_groups(root)
+        self.tab_group.buttons()[0].setChecked(True)
+        self._show_group("Roblox")
+        self._search_index: list = []               # (card, searchable text) – filled at the first search
 
-        # ------------------------------------------------------------------ Roblox
+    # ------------------------------------------------------------------ Roblox profile
+    @staticmethod
+    def _stack(*cards) -> QWidget:
+        """Several cards one below the other as one column (for columns)."""
+        col = QWidget()
+        lay = QVBoxLayout(col)
+        lay.setContentsMargins(0, 0, 0, 0)
+        theme.track_spacing(lay, 14)
+        for card in cards:
+            lay.addWidget(card)
+        return col
+
+    def _build_roblox(self, root) -> None:
+        """Tab “Roblox”."""
+        main = self.main
         root.addWidget(section(tr("Roblox")))
         ps = Card(tr("Private server and auto-rejoin"),
                   tr("The marked server is used for “Join server” (header, tray) and for auto-rejoin. Roblox starts "
@@ -172,7 +190,11 @@ class SettingsPage(QWidget):
         self.hk_status = label("", "small", wrap=True)
         keys.body.addWidget(self.hk_status)
         keys.body.addStretch(1)
-        # ------------------------------------------------------------------ Monitoring
+        self._hotkeys_card = keys                         # placed in the tab “Monitoring”
+
+    def _build_monitoring(self, root) -> None:
+        """Tab “Monitoring”."""
+        stack = self._stack
         root.addWidget(section(tr("Monitoring")))
         perf = Card(tr("Performance"),
                     tr("How often the wave counter is read. “Balanced” (every 0.5 s) reliably detects the end of a "
@@ -217,7 +239,7 @@ class SettingsPage(QWidget):
         gg.addWidget(self.ram, 2, 1)
         guard.body.addLayout(gg)
         guard.body.addStretch(1)
-        root.addLayout(columns(stack(perf, keys), guard))
+        root.addLayout(columns(stack(perf, self._hotkeys_card), guard))
 
         # ------------------------------------------------------------------ Program
         ui = Card(tr("Interface"),
@@ -233,8 +255,12 @@ class SettingsPage(QWidget):
         ui.body.addLayout(ug)
         self.close_to_tray = QCheckBox(tr("Keep running in the tray when closed"))
         ui.body.addWidget(self.close_to_tray)
+        self._interface_card = ui                         # placed in the tab “Appearance”
         ui.body.addStretch(1)
 
+    def _build_appearance(self, root) -> None:
+        """Tab “Appearance”."""
+        stack = self._stack
         root.addWidget(section(tr("Appearance")))
         look = Card(tr("Look"),
                     tr("Changes apply immediately. Older designs stay selectable here, with the version that "
@@ -373,8 +399,11 @@ class SettingsPage(QWidget):
         self.intro.toggled.connect(lambda on: self.main.set_appearance(intro=on))
         fx.body.addWidget(self.intro)
         fx.body.addStretch(1)
-        root.addLayout(columns(look, stack(fx, ui)))
+        root.addLayout(columns(look, stack(fx, self._interface_card)))
 
+    def _build_program(self, root) -> None:
+        """Tab “Program”."""
+        stack = self._stack
         root.addWidget(section(tr("Program")))
 
         rpc = Card(tr("Discord profile status"),
@@ -473,6 +502,10 @@ class SettingsPage(QWidget):
         data.body.addLayout(xrow)
         data.body.addStretch(1)
         root.addLayout(columns(stack(upd, rpc), data))
+
+    def _build_macro(self, root) -> None:
+        """Tab “Macro”."""
+        main, stack = self.main, self._stack
         root.addWidget(section(tr("Macro")))
         macro = Card(tr("Macro (beta)"),
                      tr("The macro clicks in Roblox by itself: farm routine (start page), auto collect and "
@@ -531,6 +564,9 @@ class SettingsPage(QWidget):
         self.macro_log = MacroLogCard(main.macro)
         root.addLayout(columns(stack(macro, explore), self.macro_log), 10)
 
+    def _build_discord_bot(self, root) -> None:
+        """Tab “Discord bot”."""
+        main = self.main
         root.addWidget(section(tr("Discord bot")))
         bot = Card(tr("Discord bot"),
                    tr("Control the program from Discord – with your own bot. A shared bot isn't possible because "
@@ -570,18 +606,14 @@ class SettingsPage(QWidget):
         root.addLayout(columns(bot, QWidget()))
         main.bot.listeners.append(self._bot_state_changed) if hasattr(main, "bot") else None
 
+    def _build_debug(self, root) -> None:
+        """Tab “Debug”."""
+        main = self.main
         root.addWidget(section(tr("Debug")))
         from .events_card import EventsCard
         self.events = EventsCard(main)                    # debug: live log (on/off)
         root.addWidget(self.events, 10)
-        root.addStretch(1)
-        root.addLayout(self._about_row())
-        self._assign_groups(root)
-        self.tab_group.buttons()[0].setChecked(True)
-        self._show_group("Roblox")
-        self._search_index: list = []               # (card, searchable text) – filled at the first search
 
-    # ------------------------------------------------------------------ Roblox profile
     def _apply_profile(self) -> None:
         from .. import roblox_profile
         name = self.roblox_name.text().strip()
