@@ -45,10 +45,10 @@ class MacroController(QObject):
         s = self.main.engine.settings
         if on and not s.automation_enabled:
             answer = QMessageBox.warning(
-                parent or self.main, tr("Makro erlauben"),
-                tr("Das Makro klickt selbst in Roblox (Mausklicks und Mausrad per SendInput, wie AutoHotkey "
-                   "oder ein Autoclicker).\n\nMakros sind laut Roblox-Regeln nicht erlaubt. Wer sie nutzt, "
-                   "riskiert eine Sperre – auf eigene Verantwortung.\n\nTrotzdem einschalten?"),
+                parent or self.main, tr("Allow macro"),
+                tr("The macro clicks in Roblox by itself (mouse clicks and wheel via SendInput, like AutoHotkey or "
+                   "an autoclicker).\n\nMacros are not allowed by the Roblox rules. Using them risks a ban – at "
+                   "your own risk.\n\nTurn it on anyway?"),
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No)
             if answer != QMessageBox.StandardButton.Yes:
                 return False
@@ -56,7 +56,7 @@ class MacroController(QObject):
         try:
             s.save()                                      # sofort (wie Server-Favoriten), ohne Speichern-Leiste
         except OSError as exc:
-            QMessageBox.critical(parent or self.main, tr("Speichern"), tr("Konnte nicht speichern: {error}",
+            QMessageBox.critical(parent or self.main, tr("Save"), tr("Could not save: {error}",
                                                                           error=exc))
         if not on:
             self.stop()
@@ -124,10 +124,10 @@ class MacroController(QObject):
 
     def _ready(self) -> bool:
         if not self.enabled:
-            self.add_log(tr("Das Makro ist aus – Einstellungen → Makro → „Makro erlauben“."))
+            self.add_log(tr("The macro is off – Settings → Macro → “Allow macro”."))
             return False
         if self.busy:
-            self.add_log(tr("Das Makro läuft schon – erst „Stopp“."))
+            self.add_log(tr("The macro is already running – press “Stop” first."))
             return False
         return True
 
@@ -135,7 +135,7 @@ class MacroController(QObject):
         if not self._ready():
             return False
         if not tasks:
-            self.add_log(tr("Die Farm-Routine ist leer."))
+            self.add_log(tr("The farm routine is empty."))
             return False
         return self.ensure_navigator().run_queue(tasks, loop)
 
@@ -153,28 +153,27 @@ class MacroController(QObject):
     # ------------------------------------------------------------------ Erkunden
     def start_explore(self, parent=None) -> None:
         if not self.enabled:
-            QMessageBox.information(parent or self.main, tr("Erkunden"),
-                                    tr("Erst „Makro erlauben“ einschalten (Einstellungen → Makro)."))
+            QMessageBox.information(parent or self.main, tr("Explore"),
+                                    tr("Turn on “Allow macro” first (Settings → Macro)."))
             return
         s = self.main.engine.settings
         minutes = int(s.explore_minutes)
         answer = QMessageBox.question(
-            parent or self.main, tr("Erkunden"),
-            tr("Das Makro übernimmt Roblox für bis zu {minutes} Minuten und öffnet dabei Menüs im Spiel (nur öffnen "
-               "und schließen, nichts kaufen oder rollen).\n\nNicht die Maus bewegen – das bricht ab (Esc ebenso). "
-               "Starten?", minutes=minutes))
+            parent or self.main, tr("Explore"),
+            tr("The macro takes over Roblox for up to {minutes} minutes and opens menus in the game (only opening "
+               "and closing, no buying or rolling).\n\nDo not move the mouse – that cancels it (Esc too). Start?", minutes=minutes))
         if answer != QMessageBox.StandardButton.Yes:
             return
         nav = self.ensure_navigator()
         if nav.busy:
-            self.add_log(tr("Das Makro läuft schon – erst „Stopp“."))
+            self.add_log(tr("The macro is already running – press “Stop” first."))
             return
         from ..app_paths import data_dir
         # Anti-AFK während des Erkundens aus (das Makro klickt ohnehin), danach wieder an (Wunsch des Eigentümers)
         self._afk_restore = s.anti_afk_enabled
         if self._afk_restore:
             self.main.set_anti_afk(False)
-            self.add_log(tr("Anti-AFK pausiert, solange das Erkunden läuft."))
+            self.add_log(tr("Anti-AFK paused while exploring."))
         nav.explore(minutes, data_dir(), revisit=bool(s.explore_revisit))
         self._watch_explore()
 
@@ -186,7 +185,7 @@ class MacroController(QObject):
         if self._afk_restore:
             self._afk_restore = False
             self.main.set_anti_afk(True)                   # Zähler beginnt neu mit einem vollen Intervall
-            self.add_log(tr("Anti-AFK wieder an."))
+            self.add_log(tr("Anti-AFK back on."))
         self.reload_map()
         self.open_review()
 
@@ -226,5 +225,5 @@ class MacroController(QObject):
         except Exception:  # noqa: BLE001 – nur eine Ergänzung, nie den Start stören
             return
         if count:
-            self.add_log(tr("{count} gelernte Fenster aus früheren Erkundungen übernommen.", count=count))
+            self.add_log(tr("{count} learned windows restored from earlier explore runs.", count=count))
             self.reload_map()

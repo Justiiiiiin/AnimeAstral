@@ -14,18 +14,18 @@ class WhatsNewDialog(QDialog):
     def __init__(self, main, items: list[str]) -> None:
         super().__init__(main)
         self.main = main
-        self.setWindowTitle(tr("Was ist neu"))
+        self.setWindowTitle(tr("What's new"))
         theme.track_min_width(self, 440)
         root = QVBoxLayout(self)
         theme.track_margins(root, 22, 20, 22, 18)
         theme.track_spacing(root, 10)
-        root.addWidget(label(tr("Neu in Version {version}", version=__version__), "h2"))
+        root.addWidget(label(tr("New in version {version}", version=__version__), "h2"))
         for item in items:
             root.addWidget(label("•  " + item, "", wrap=True))
         row = QHBoxLayout()
-        more = QPushButton(tr("Alle Änderungen …"))
+        more = QPushButton(tr("All changes …"))
         more.clicked.connect(self._all)
-        ok = QPushButton(tr("Los geht's"))
+        ok = QPushButton(tr("Let's go"))
         ok.setObjectName("primary")
         ok.setDefault(True)
         ok.clicked.connect(self.accept)

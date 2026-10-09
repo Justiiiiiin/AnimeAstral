@@ -202,9 +202,9 @@ class AutoRejoin(threading.Thread):
         if self.status == "lost":
             return tr("Rejoin in {time}", time=messages.fmt_duration(max(0.0, self.next_try - now)))
         if self.status == "rejoining":
-            return tr("trete bei … ({n}/{max})", n=self.attempt, max=MAX_ATTEMPTS)
+            return tr("joining … ({n}/{max})", n=self.attempt, max=MAX_ATTEMPTS)
         if self.status == "gave_up":
-            return tr("Rejoin aufgegeben")
+            return tr("Rejoin gave up")
         return ""
 
     # ------------------------------------------------------------------ Ablauf
@@ -234,7 +234,7 @@ class AutoRejoin(threading.Thread):
             self._alert(s)
             self._rejoin(now, s)
         elif self.status == "rejoining" and now - self.launched_at >= JOIN_TIMEOUT:
-            self._failed(now, tr("kein Beitritt innerhalb von {seconds} s", seconds=int(JOIN_TIMEOUT)))
+            self._failed(now, tr("no join within {seconds} s", seconds=int(JOIN_TIMEOUT)))
 
     def _on_line(self, line: str, now: float) -> None:
         kind = classify(line)
@@ -244,9 +244,9 @@ class AutoRejoin(threading.Thread):
         if what == "join":
             if self.status == "rejoining":
                 log.info("Auto-Rejoin: wieder im Spiel (Versuch %d)", self.attempt)
-                self._event(tr("Auto-Rejoin: wieder im Spiel"), "ok")
-                self._notify("rejoin", tr("Wieder im Spiel"), messages.COLOR_OK,
-                             description=tr("Auto-Rejoin hat geklappt (Versuch {n}).", n=self.attempt))
+                self._event(tr("Auto-rejoin: back in the game"), "ok")
+                self._notify("rejoin", tr("Back in the game"), messages.COLOR_OK,
+                             description=tr("Auto-rejoin worked (attempt {n}).", n=self.attempt))
             self.status, self.place, self.attempt, self._gone_since = "in_game", value, 0, None
         elif what == "left" and self.status in ("in_game", "lost"):
             self.status = "left"                    # selbst verlassen: nicht zurück (auch wenn kurz davor „lost“)
@@ -269,8 +269,8 @@ class AutoRejoin(threading.Thread):
 
     def _reason_text(self) -> str:
         reason = self._reason
-        return (tr("Roblox ist abgestürzt") if reason == -1 else
-                tr("Verbindung verloren (Fehler {code})", code=reason) if reason else tr("Verbindung verloren"))
+        return (tr("Roblox crashed") if reason == -1 else
+                tr("Connection lost (error {code})", code=reason) if reason else tr("Connection lost"))
 
     def _lost(self, now: float, reason: int, grace: float) -> None:
         self.status, self._reason, self._alerted = "lost", reason, False
@@ -278,7 +278,7 @@ class AutoRejoin(threading.Thread):
         text = self._reason_text()
         log.info("Verbindung: %s", text)
         if self._get().auto_rejoin_enabled:
-            self._event(tr("Auto-Rejoin: {reason} – trete gleich neu bei", reason=text), "warn")
+            self._event(tr("Auto-rejoin: {reason} – rejoining shortly", reason=text), "warn")
 
     def _alert(self, s) -> None:
         """Wächter-Alarm „Disconnect“ (einmal je Abbruch, erst nach der Wartezeit – Teleports lösen keinen aus).
@@ -287,31 +287,31 @@ class AutoRejoin(threading.Thread):
             return
         self._alerted = True
         text = self._reason_text()
-        self._event(tr("Disconnect erkannt: {reason}", reason=text), "error")
-        self._notify("roblox_down", tr("Disconnect erkannt"), messages.COLOR_ERROR,
-                     description=text + (" – " + tr("Auto-Rejoin tritt neu bei.") if s.auto_rejoin_enabled else ""))
+        self._event(tr("Disconnect detected: {reason}", reason=text), "error")
+        self._notify("roblox_down", tr("Disconnect detected"), messages.COLOR_ERROR,
+                     description=text + (" – " + tr("Auto-rejoin is rejoining.") if s.auto_rejoin_enabled else ""))
 
     def target(self, s) -> tuple[Optional[str], str]:
         """(roblox://-Link, Beschreibung) für den Beitritt."""
         uri = roblox_join.deep_link(s.private_server_link)
         if uri:
-            return uri, tr("privater Server")
+            return uri, tr("private server")
         if self.place:
-            return PUBLIC_DEEP_LINK.format(place=self.place), tr("öffentlicher Server")
+            return PUBLIC_DEEP_LINK.format(place=self.place), tr("public server")
         return None, ""
 
     def _rejoin(self, now: float, s) -> None:
         uri, where = self.target(s)
         if uri is None:
-            self._give_up(tr("Kein Private-Server-Link eingetragen und Spiel unbekannt."))
+            self._give_up(tr("No private server link set and the game is unknown."))
             return
         self.attempt += 1
         self.status, self.launched_at = "rejoining", now
         log.info("Auto-Rejoin: Versuch %d/%d (%s)", self.attempt, MAX_ATTEMPTS, where)
-        self._event(tr("Auto-Rejoin: Versuch {n}/{max} ({where})", n=self.attempt, max=MAX_ATTEMPTS, where=where), "info")
+        self._event(tr("Auto-rejoin: attempt {n}/{max} ({where})", n=self.attempt, max=MAX_ATTEMPTS, where=where), "info")
         if self.attempt == 1:
-            self._notify("rejoin", tr("Verbindung verloren – Auto-Rejoin"), messages.COLOR_WARN,
-                         description=tr("Trete erneut bei ({where}).", where=where))
+            self._notify("rejoin", tr("Connection lost – auto-rejoin"), messages.COLOR_WARN,
+                         description=tr("Rejoining ({where}).", where=where))
         try:
             if self._kill():
                 self._sleep(2.0)                    # Roblox die Fenster/Dateien freigeben lassen
@@ -329,14 +329,14 @@ class AutoRejoin(threading.Thread):
             return
         self.status = "lost"
         self.next_try = now + BACKOFF[min(self.attempt, len(BACKOFF) - 1)]
-        self._event(tr("Auto-Rejoin: Versuch {n} ohne Erfolg ({why})", n=self.attempt, why=why), "warn")
+        self._event(tr("Auto-rejoin: attempt {n} failed ({why})", n=self.attempt, why=why), "warn")
 
     def _give_up(self, why: str) -> None:
         self.status = "gave_up"
-        text = tr("Auto-Rejoin aufgegeben: {why}", why=why)
+        text = tr("Auto-rejoin gave up: {why}", why=why)
         log.warning(text)
         self._event(text, "error")
-        self._notify("rejoin", tr("Auto-Rejoin aufgegeben"), messages.COLOR_ERROR, description=why)
+        self._notify("rejoin", tr("Auto-rejoin gave up"), messages.COLOR_ERROR, description=why)
 
 
 def _default_alive_cached(obj: AutoRejoin) -> Callable[[], bool]:

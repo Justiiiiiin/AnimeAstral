@@ -77,7 +77,7 @@ class Explorer:
             for name in HUD_ORDER:
                 self._hud(name)
         except TimeUp:
-            nav.log(tr("Zeit abgelaufen – Erkunden beendet."))
+            nav.log(tr("Time is up – exploring finished."))
         finally:
             self._save()
 
@@ -95,7 +95,7 @@ class Explorer:
         (self.data_dir / "explore" / "deep_done.json").write_text(json.dumps(sorted(self.deep_done)),
                                                                    encoding="utf-8")
         worlds = sum(1 for w in self.report["worlds"] if w.get("new"))
-        self.nav.log(tr("Erkundet: {count} Fenster, {worlds} neue Welten – Bericht: {path}", count=self.count,
+        self.nav.log(tr("Explored: {count} windows, {worlds} new worlds – report: {path}", count=self.count,
                         worlds=worlds, path=str(self.out)))
 
     # ------------------------------------------------------------------ Teleporter
@@ -108,7 +108,7 @@ class Explorer:
         try:
             slots = vision.SlotLayout(nav.map, lw)
         except ValueError:
-            nav.log(tr("Der Karte fehlen Erkennungsbilder."))
+            nav.log(tr("The map is missing recognition images."))
             return
         nav._open_list(lw)
         over = ((lw["roi"][0] + lw["roi"][2]) / 2, (lw["roi"][1] + lw["roi"][3]) / 2)
@@ -136,7 +136,7 @@ class Explorer:
                 entry = {"name": world, "read": name, "new": known is None, "windows": []}
                 self.report["worlds"].append(entry)
                 if known is None:
-                    nav.log(tr("Neue Welt: {world}", world=world))
+                    nav.log(tr("New world: {world}", world=world))
                     self._add_row(world, lw, roi)
                 for index, rel in todo:
                     self._left()
@@ -276,7 +276,7 @@ class Explorer:
                 return
         button = self._button_for(world, index, rel, box)
         name = self._known_name(button) or self._window_name(world, analysis, index, button)
-        nav.log(tr("{world} · Platz {n}: {title} ({kind})", world=world, n=index + 1,
+        nav.log(tr("{world} · slot {n}: {title} ({kind})", world=world, n=index + 1,
                    title=analysis.title or "?", kind=analysis.label))
         self._scan_tabs(name, roi, analysis)
         frame = nav._frame()
@@ -335,14 +335,14 @@ class Explorer:
         if name == "Equip Best":
             analysis.category, analysis.label = "equip_best", tr("Equip Best")
         elif name == "Guild":
-            analysis.category, analysis.label = "guild", tr("Gilde")
+            analysis.category, analysis.label = "guild", tr("Guild")
         window = self._known_name(button) or (analysis.title if analysis.title and analysis.title != name
                                               else f"{name} Fenster")
         nav.log(tr("{button}: {title} ({kind})", button=name, title=analysis.title or "?", kind=analysis.label))
         found = analysis.words
         claims = knowledge.claimables(found)
         if claims:
-            nav.log(tr("{button}: {count}× „Claim“ gefunden (nicht geklickt)", button=name, count=len(claims)))
+            nav.log(tr("{button}: found {count}× “Claim” (not clicked)", button=name, count=len(claims)))
         self._scan_tabs(window, roi, analysis)
         frame = nav._frame()                              # nach den Reitern: aktuelles Bild zum Schließen
         self.report["hud"].append({"button": name, "window": window, "lines": knowledge.lines_of(found)[:80],
@@ -480,7 +480,7 @@ class Explorer:
             analysis.tabs.append({"tab": "", "lines": lines, "scroll": areas})
             for label, box in tabs[:9]:
                 self._left()
-                nav.log(tr("{window}: Reiter „{tab}“", window=window, tab=label))
+                nav.log(tr("{window}: tab “{tab}”", window=window, tab=label))
                 try:
                     nav._click_roi(box)
                 except Stop as exc:                        # gesperrt: überspringen, nie erzwingen
@@ -521,7 +521,7 @@ class Explorer:
                  if not knowledge.inside(((b[0] + b[2]) / 2, (b[1] + b[3]) / 2), [banner])]   # Titel ist kein Knopf
         for label, box in knowledge.nav_buttons(words, tabs):
             self._left()
-            nav.log(tr("{window}: teste „{button}“", window=window, button=label))
+            nav.log(tr("{window}: testing “{button}”", window=window, button=label))
             try:
                 nav._click_roi(box)
             except Stop as exc:
@@ -595,7 +595,7 @@ class Explorer:
                     break                                  # ab hier nur Erledigtes (Global Quests: „Completed“)
             if moved:
                 areas.append([round(point[0], 4), round(point[1], 4)])
-                nav.log(tr("Gescrollt: {n}×", n=moved))
+                nav.log(tr("Scrolled: {n}×", n=moved))
                 # zurück nach oben, Schritt für Schritt nur solange sich die Liste bewegt: zu viele Rasten am oberen
                 # Ende gehen an die Kamera (Zoom bis zur Ich-Perspektive, Zeiger festgehalten)
                 last = self._content(roi)

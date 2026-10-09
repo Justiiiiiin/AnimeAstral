@@ -22,11 +22,11 @@ def parse_hotkey(text: str) -> tuple[int, int]:
     """'Ctrl+Alt+S' -> (Modifier-Maske, virtueller Tastencode). Wirft ValueError bei ungültiger Eingabe."""
     parts = [p.strip().lower() for p in text.replace(" ", "").split("+") if p.strip()]
     if len(parts) < 2:
-        raise ValueError(tr("bitte Modifier und Taste angeben, z. B. Ctrl+Alt+S"))
+        raise ValueError(tr("please give modifiers and a key, e.g. Ctrl+Alt+S"))
     mods = 0
     for part in parts[:-1]:
         if part not in _MODS:
-            raise ValueError(tr("unbekannter Modifier „{key}“ (erlaubt: Ctrl, Alt, Shift, Win)", key=part))
+            raise ValueError(tr("unknown modifier “{key}” (allowed: Ctrl, Alt, Shift, Win)", key=part))
         mods |= _MODS[part]
     key = parts[-1]
     if len(key) == 1 and key.isalnum():
@@ -36,7 +36,7 @@ def parse_hotkey(text: str) -> tuple[int, int]:
     elif key in _SPECIAL:
         vk = _SPECIAL[key]
     else:
-        raise ValueError(tr("unbekannte Taste „{key}“", key=key))
+        raise ValueError(tr("unknown key “{key}”", key=key))
     return mods, vk
 
 
@@ -73,7 +73,7 @@ class HotkeyListener(threading.Thread):
             if user32.RegisterHotKey(None, i, mods | MOD_NOREPEAT, vk):
                 actions[i] = func
             else:
-                self.failed.append(tr("{name} ({key}) – evtl. von einem anderen Programm belegt", name=name, key=text))
+                self.failed.append(tr("{name} ({key}) – possibly used by another program", name=name, key=text))
         self.ready.set()
 
         while True:

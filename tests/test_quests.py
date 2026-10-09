@@ -25,10 +25,13 @@ class QuestTextTests(unittest.TestCase):
     def test_number_format(self):
         from astral_monitor import i18n, messages
         i18n.set_language("de")
-        self.assertEqual([messages.fmt_k(v) for v in (950, 2255, 18109, 843231, 1250000)],
-                         ["950", "2,3k", "18,1k", "843k", "1,25M"])
-        line = messages.quest_text([{"title": "Clear", "cur": 843231, "total": 900000, "percent": 93}])
-        self.assertIn("843.231/900k", line)                          # Zählstand genau, Ziel kurz
+        try:
+            self.assertEqual([messages.fmt_k(v) for v in (950, 2255, 18109, 843231, 1250000)],
+                             ["950", "2,3k", "18,1k", "843k", "1,25M"])
+            line = messages.quest_text([{"title": "Clear", "cur": 843231, "total": 900000, "percent": 93}])
+            self.assertIn("843.231/900k", line)                      # exact count, short target
+        finally:
+            i18n.set_language("en")
 
     def test_game_order(self):
         tracker = QuestTracker()

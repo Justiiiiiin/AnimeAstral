@@ -37,14 +37,13 @@ class _ClickLabel(QLabel):
 
 class ExtrasCard(Card):
     def __init__(self, main) -> None:
-        super().__init__(tr("Automatisch abholen"),
-                         tr("Fixer Gigs (W21): Das Makro holt fertige Gigs ab („Claim“) und schickt neue mit je "
-                            "einem Pet los – eins der letzten drei. Jeder Gig dauert 20 Min., 1 Std. oder 3 Std.; "
-                            "das Makro liest die Restzeit und kommt erst wieder, wenn einer fertig ist. „Finish "
-                            "Now“ drückt es nie.\n\nGilden-Missionen: einmal am Tag „Personal“ und „Guild Weekly“ "
-                            "abholen.\n\nProgressions: drückt einmal „Auto All“ – das gilt für alle "
-                            "Welten.\n\nFunktioniert nur mit „Makro erlauben“ – zwischen den Schritten der "
-                            "Farm-Routine, während ein Raid farmt oder ganz für sich."))
+        super().__init__(tr("Auto collect"),
+                         tr("Fixer Gigs (W21): the macro claims finished gigs and sends new ones with one pet each "
+                            "– one of the last three. Each gig takes 20 min, 1 h or 3 h; the macro reads the time "
+                            "left and only comes back when one is done. It never presses “Finish Now”.\n\nGuild "
+                            "missions: claim “Personal” and “Guild Weekly” once a day.\n\nProgressions: presses "
+                            "“Auto All” once – it applies to all worlds.\n\nOnly works with “Allow macro” – between "
+                            "the steps of the farm routine, while a raid is farming or on its own."))
         self.main = main
         self.macro = main.macro
         s = main.engine.settings
@@ -60,11 +59,10 @@ class ExtrasCard(Card):
         grid.addWidget(_ClickLabel(tr("Fixer Gigs (W21)"), self.gigs), 0, 1)   # Text klickbar wie bei Häkchen
         grid.addWidget(self.gigs_state, 0, 2)
         grid.addWidget(self.guild, 1, 0)
-        grid.addWidget(_ClickLabel(tr("Gilden-Missionen"), self.guild), 1, 1)
+        grid.addWidget(_ClickLabel(tr("Guild missions"), self.guild), 1, 1)
         grid.addWidget(self.guild_state, 1, 2)
         self.prog = QPushButton(tr("Progressions: Auto All"))
-        self.prog.setToolTip(tr("Einmal ausführen: öffnet die erste Progression, drückt „Auto All“ und schließt "
-                                "wieder"))
+        self.prog.setToolTip(tr("Run once: opens the first progression, presses “Auto All” and closes it again"))
         self.prog.clicked.connect(self._progression)
         self.prog_state = label("", "small")
         grid.addWidget(self.prog, 2, 0, 1, 2)
@@ -89,14 +87,14 @@ class ExtrasCard(Card):
         try:
             s.save()                                      # sofort, ohne Speichern-Leiste
         except OSError as exc:
-            QMessageBox.critical(self, tr("Speichern"), tr("Konnte nicht speichern: {error}", error=exc))
+            QMessageBox.critical(self, tr("Save"), tr("Could not save: {error}", error=exc))
         self._update_state()
         if self.gigs.isChecked() or self.guild.isChecked():
             QTimer.singleShot(500, self._tick)
 
     def _progression(self) -> None:
         if self.macro.run_progression():
-            self.prog_state.setText(tr("zuletzt {time}", time=time.strftime("%H:%M")))
+            self.prog_state.setText(tr("last {time}", time=time.strftime("%H:%M")))
 
     def _update_state(self) -> None:
         on = self.macro.enabled
@@ -108,13 +106,13 @@ class ExtrasCard(Card):
                                 (self.guild, self.guild_state, nav.guild_next if nav else 0.0)):
             box.setEnabled(on)
             if not on:
-                text = tr("Makro aus")
+                text = tr("Macro off")
             elif not box.isChecked():
-                text = tr("aus")
+                text = tr("off")
             elif nxt > now:
                 text = tr("in {time}", time=fmt_wait(nxt - now))
             else:
-                text = tr("fällig")
+                text = tr("due")
             if state.text() != text:
                 state.setText(text)
         self.prog.setEnabled(on and not self.macro.busy)

@@ -10,6 +10,16 @@ from astral_monitor.settings import RPC_GAME_LINK, Settings
 from astral_monitor.stats import RunRecord, StatsStore
 
 
+
+def setUpModule():                                     # these tests check the German texts
+    from astral_monitor import i18n
+    i18n.set_language("de")
+
+
+def tearDownModule():
+    from astral_monitor import i18n
+    i18n.set_language("en")
+
 class SettingsTests(unittest.TestCase):
     def test_roundtrip_and_defaults(self):
         s = Settings()
@@ -128,8 +138,8 @@ class StorageTests(unittest.TestCase):
         (base / "updates" / "apply" / "apply.log").write_text("ok")
         (base / "monitor.log.1").write_bytes(b"x" * 200)
         sizes = {u.label: u.size for u in storage.usage(base)}
-        self.assertEqual(sizes["Debug-Bilder"], 500)
-        self.assertEqual(sizes["Ältere Protokolle"], 200)
+        self.assertEqual(sizes["Debug images"], 500)
+        self.assertEqual(sizes["Older logs"], 200)
         self.assertEqual(storage.clean(base), 1700)
         self.assertTrue((base / "updates" / "apply" / "apply.log").exists())     # Update-Protokoll bleibt
         self.assertEqual(storage.fmt_size(1536), "2 KB")

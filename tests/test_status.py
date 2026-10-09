@@ -13,6 +13,16 @@ SNAP = {"status": "running", "wave": 14, "total_waves": 100, "profile": "Militec
         "best_wave": 29, "ram_mb": 2400, "quests": [], "last_event": "x"}
 
 
+
+def setUpModule():                                     # these tests check the German texts
+    from astral_monitor import i18n
+    i18n.set_language("de")
+
+
+def tearDownModule():
+    from astral_monitor import i18n
+    i18n.set_language("en")
+
 class Resp:
     def __init__(self, code, data=None):
         self.status_code, self._d = code, data or {}

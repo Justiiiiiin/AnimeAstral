@@ -110,7 +110,7 @@ class MainWindow(QMainWindow):
         pill_row = QHBoxLayout(self.pill)
         theme.track_margins(pill_row, 12, 4, 14, 4)
         theme.track_spacing(pill_row, 6)
-        self.pill_text = label(tr("Gestoppt"), "muted")
+        self.pill_text = label(tr("Stopped"), "muted")
         pill_row.addWidget(self.pill_text)
         top.addWidget(self.pill)
         self.top_toast = label("", "small")
@@ -118,9 +118,9 @@ class MainWindow(QMainWindow):
         top.addWidget(self.top_toast, 1)
         top.addStretch(1)
         afk_label = label(tr("Anti-AFK"), "muted")
-        afk_label.setToolTip(tr("Holt alle paar Minuten jedes Roblox-Fenster kurz nach vorne (minimierte bleiben danach offen), "
-                                "drückt 4× Esc und wechselt zurück – gegen die Trennung nach 20 Minuten. Abstand: "
-                                "Einstellungen → Anti-AFK."))
+        afk_label.setToolTip(tr("Every few minutes briefly brings each Roblox window to the front (minimized ones "
+                                "stay open afterwards), presses Esc 4 times and switches back – against the "
+                                "disconnect after 20 minutes. Interval: Settings → Anti-AFK."))
         self.afk_info = label("", "small")
         self.afk_switch = ToggleSwitch()
         self.afk_switch.setToolTip(afk_label.toolTip())
@@ -128,9 +128,9 @@ class MainWindow(QMainWindow):
         self.afk_switch.toggled.connect(self.set_anti_afk)
         self.join_btn = QToolButton()
         self.join_btn.setObjectName("slim")
-        self.join_btn.setText(tr("Server beitreten"))
-        self.join_btn.setToolTip(tr("Klick: dem markierten Server beitreten. Pfeil: anderen gespeicherten Server "
-                                    "wählen (verwalten unter Einstellungen → Privater Server)."))
+        self.join_btn.setText(tr("Join server"))
+        self.join_btn.setToolTip(tr("Click: join the marked server. Arrow: choose another saved server (manage "
+                                    "under Settings → Private server)."))
         self.join_btn.setPopupMode(QToolButton.ToolButtonPopupMode.MenuButtonPopup)
         join_menu = QMenu(self.join_btn)
         join_menu.aboutToShow.connect(lambda: self._fill_server_menu(join_menu))
@@ -141,10 +141,10 @@ class MainWindow(QMainWindow):
         top.addWidget(afk_label)
         top.addLayout(self._stacked(self.afk_info, self.afk_switch))   # Countdown klein über dem Schalter
         top.addSpacing(theme.px(12))
-        rejoin_label = label(tr("Auto-Rejoin"), "muted")
-        rejoin_label.setToolTip(tr("Tritt nach Verbindungsabbruch, Kick oder Absturz automatisch wieder deinem privaten "
-                                   "Server bei (Link unter Einstellungen → Privater Server). Wer Roblox selbst schließt "
-                                   "oder das Spiel verlässt, wird nicht zurückgeholt."))
+        rejoin_label = label(tr("Auto-rejoin"), "muted")
+        rejoin_label.setToolTip(tr("Automatically rejoins your private server after a disconnect, kick or crash "
+                                   "(link under Settings → Private server). If you close Roblox or leave the game "
+                                   "yourself, it does not bring you back."))
         self.rejoin_info = label("", "small")
         self.rejoin_switch = ToggleSwitch()
         self.rejoin_switch.setToolTip(rejoin_label.toolTip())
@@ -153,10 +153,10 @@ class MainWindow(QMainWindow):
         top.addWidget(rejoin_label)
         top.addLayout(self._stacked(self.rejoin_info, self.rejoin_switch))
         top.addSpacing(theme.px(12))
-        auto_label = label(tr("Auto-Start"), "muted")
-        auto_label.setToolTip(tr("Startet die Überwachung, sobald du Anime Astral betrittst, pausiert bei "
-                                 "Verbindungsabbruch und stoppt, wenn du das Spiel verlässt. Selbst Starten/Stoppen hat "
-                                 "immer Vorrang."))
+        auto_label = label(tr("Auto-start"), "muted")
+        auto_label.setToolTip(tr("Starts monitoring as soon as you enter Anime Astral, pauses on a disconnect and "
+                                 "stops when you leave the game. Starting/stopping it yourself always takes "
+                                 "priority."))
         self.auto_info = label("", "small")
         self.auto_switch = ToggleSwitch()
         self.auto_switch.setToolTip(auto_label.toolTip())
@@ -191,7 +191,7 @@ class MainWindow(QMainWindow):
         self._page_classes = [MonitorPage, StatsPage, AlertsPage, SettingsPage]
         self._hotkey_status: Optional[tuple] = None
         self.pages = PageList(self._build_page)
-        names = [tr("Überwachung"), tr("Statistik"), tr("Meldungen"), tr("Einstellungen")]
+        names = [tr("Monitoring"), tr("Statistics"), tr("Alerts"), tr("Settings")]
         self.nav = QButtonGroup(self)
         self.nav.setExclusive(True)
         self._nav_icons = ["monitor", "stats", "alerts", "settings"]
@@ -222,7 +222,7 @@ class MainWindow(QMainWindow):
         box = QVBoxLayout(self.status_box)
         theme.track_margins(box, 12, 10, 12, 10)
         theme.track_spacing(box, 2)
-        self.status_title = label(tr("Gestoppt"), "muted")
+        self.status_title = label(tr("Stopped"), "muted")
         self.status_sub = label("", "small")
         box.addWidget(self.status_title)
         box.addWidget(self.status_sub)
@@ -230,13 +230,13 @@ class MainWindow(QMainWindow):
         self.gear = QToolButton()                      # Design „Astral“: Einstellungen als Zahnrad unten links
         self.gear.setObjectName("gear")
         self.gear.setCheckable(True)
-        self.gear.setToolTip(tr("Einstellungen"))
+        self.gear.setToolTip(tr("Settings"))
         self.gear.setCursor(Qt.CursorShape.PointingHandCursor)
         theme.track(self.gear, lambda o, f: o.setIconSize(QSize(round(22 * f), round(22 * f))))
         self.gear.clicked.connect(lambda: self.nav.button(PAGE_SETTINGS).click())
         self.notes_btn = QToolButton()                 # Notizbuch (nur mit Beta-Updates)
         self.notes_btn.setObjectName("gear")
-        self.notes_btn.setToolTip(tr("Notizbuch (Beta)"))
+        self.notes_btn.setToolTip(tr("Notebook (beta)"))
         self.notes_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         theme.track(self.notes_btn, lambda o, f: o.setIconSize(QSize(round(22 * f), round(22 * f))))
         self.notes_btn.clicked.connect(self.open_notes)
@@ -343,9 +343,9 @@ class MainWindow(QMainWindow):
         bar.setObjectName("savebar")
         row = QHBoxLayout(bar)
         theme.track_margins(row, 28, 10, 28, 10)
-        row.addWidget(label(tr("Änderungen gelten erst nach dem Speichern."), "small"))
+        row.addWidget(label(tr("Changes apply after saving."), "small"))
         row.addStretch(1)
-        save = QPushButton(tr("Speichern"))
+        save = QPushButton(tr("Save"))
         save.setObjectName("primary")
         theme.track_min_width(save, 140)
         save.clicked.connect(lambda: self.save_settings())
@@ -362,23 +362,23 @@ class MainWindow(QMainWindow):
         tray = QSystemTrayIcon(self.windowIcon() if not self.windowIcon().isNull()
                                else QApplication.windowIcon(), self)
         menu = QMenu(self)
-        menu.addAction(tr("Öffnen"), self.show_from_tray)
-        self.tray_toggle = menu.addAction(tr("Überwachung starten"), self.toggle_monitoring)
+        menu.addAction(tr("Open"), self.show_from_tray)
+        self.tray_toggle = menu.addAction(tr("Start monitoring"), self.toggle_monitoring)
         self.tray_pause = menu.addAction(tr("Pause"), self.toggle_pause)
-        servers = menu.addMenu(tr("Server beitreten"))
+        servers = menu.addMenu(tr("Join server"))
         servers.aboutToShow.connect(lambda: self._fill_server_menu(servers))
         self.tray_afk = menu.addAction(tr("Anti-AFK"))
         self.tray_afk.setCheckable(True)
         self.tray_afk.toggled.connect(lambda on: self.afk_switch.setChecked(on))
-        self.tray_rejoin = menu.addAction(tr("Auto-Rejoin"))
+        self.tray_rejoin = menu.addAction(tr("Auto-rejoin"))
         self.tray_rejoin.setCheckable(True)
         self.tray_rejoin.toggled.connect(lambda on: self.rejoin_switch.setChecked(on))
-        self.tray_auto = menu.addAction(tr("Auto-Start"))
+        self.tray_auto = menu.addAction(tr("Auto-start"))
         self.tray_auto.setCheckable(True)
         self.tray_auto.toggled.connect(lambda on: self.auto_switch.setChecked(on))
-        self.tray_notes = menu.addAction(tr("Notizbuch"), self.open_notes)
+        self.tray_notes = menu.addAction(tr("Notebook"), self.open_notes)
         menu.addSeparator()
-        menu.addAction(tr("Beenden"), self.quit_app)
+        menu.addAction(tr("Quit"), self.quit_app)
         menu.aboutToShow.connect(self._update_tray_menu)
         tray.setContextMenu(menu)
         tray.activated.connect(lambda reason: self.show_from_tray()
@@ -478,9 +478,9 @@ class MainWindow(QMainWindow):
     def _update_tray_menu(self) -> None:
         self.tray_notes.setVisible(self.engine.settings.update_beta)
         running = self.engine.running
-        self.tray_toggle.setText(tr("Überwachung stoppen") if running else tr("Überwachung starten"))
+        self.tray_toggle.setText(tr("Stop the monitoring") if running else tr("Start monitoring"))
         self.tray_pause.setEnabled(running)
-        self.tray_pause.setText(tr("Fortsetzen") if self.engine.state.paused else tr("Pause"))
+        self.tray_pause.setText(tr("Resume") if self.engine.state.paused else tr("Pause"))
         self.tray_afk.blockSignals(True)
         self.tray_afk.setChecked(self.afk_switch.isChecked())
         self.tray_afk.blockSignals(False)
@@ -498,18 +498,18 @@ class MainWindow(QMainWindow):
         if not s.private_server_link:
             self.show_from_tray()
             self.nav.button(PAGE_SETTINGS).click()                  # Einstellungen öffnen
-            QMessageBox.information(self, tr("Privater Server"),
-                                    tr("Bitte zuerst unter Einstellungen → Privater Server einen Server anlegen."))
+            QMessageBox.information(self, tr("Private server"),
+                                    tr("Please add a server first under Settings → Private server."))
             return
         ok, info = roblox_join.join(s.private_server_link)
         name = self.active_server_name()
         if ok and name:
-            info = tr("Roblox wird gestartet und tritt „{name}“ bei …", name=name)
+            info = tr("Roblox is starting and joining “{name}” …", name=name)
         self.engine._event(info, "info" if ok else "warn")
         if ok:
             self.show_toast(info)
         else:
-            QMessageBox.warning(self, tr("Privater Server"), info)
+            QMessageBox.warning(self, tr("Private server"), info)
 
     def active_server_name(self) -> str:
         s = self.engine.settings
@@ -531,14 +531,14 @@ class MainWindow(QMainWindow):
         try:
             s.save()
         except OSError as exc:
-            QMessageBox.critical(self, tr("Speichern"), tr("Konnte nicht speichern: {error}", error=exc))
+            QMessageBox.critical(self, tr("Save"), tr("Could not save: {error}", error=exc))
         if self.pages.built(PAGE_SETTINGS) is not None:
             self.pages.built(PAGE_SETTINGS).load_servers(s)
         self._update_join_btn()
 
     def _update_join_btn(self) -> None:
         name = self.active_server_name()
-        self.join_btn.setText(tr("Beitreten: {name}", name=name) if name else tr("Server beitreten"))
+        self.join_btn.setText(tr("Join: {name}", name=name) if name else tr("Join server"))
 
     def _fill_server_menu(self, menu: QMenu) -> None:
         menu.clear()
@@ -548,9 +548,9 @@ class MainWindow(QMainWindow):
             act.setCheckable(True)
             act.setChecked(fav["link"] == s.private_server_link)
         if not s.server_favorites:
-            menu.addAction(tr("Noch keine Server gespeichert")).setEnabled(False)
+            menu.addAction(tr("No servers saved yet")).setEnabled(False)
         menu.addSeparator()
-        menu.addAction(tr("Server verwalten …"), self._manage_servers)
+        menu.addAction(tr("Manage servers …"), self._manage_servers)
 
     def _manage_servers(self) -> None:
         self.show_from_tray()
@@ -565,7 +565,7 @@ class MainWindow(QMainWindow):
         except OSError:
             pass
         self.pages[0].reload_raids()
-        self.show_toast(tr("Aktueller Raid: {name}", name=name) if name else tr("Kein Raid gewählt"))
+        self.show_toast(tr("Current raid: {name}", name=name) if name else tr("No raid selected"))
 
     def raids_changed(self) -> None:
         """Nach Anlegen/Umbenennen/Löschen: Auswahl und Statistik auffrischen."""
@@ -603,8 +603,8 @@ class MainWindow(QMainWindow):
             pass
         if self.afk_switch.isChecked() != on:
             self.afk_switch.setChecked(on)
-        self.show_toast(tr("Anti-AFK an – alle {minutes} Min. kurz zu Roblox, 4× Esc und zurück.",
-                           minutes=self.engine.settings.anti_afk_minutes) if on else tr("Anti-AFK aus"))
+        self.show_toast(tr("Anti-AFK on – every {minutes} min briefly to Roblox, Esc 4× and back.",
+                           minutes=self.engine.settings.anti_afk_minutes) if on else tr("Anti-AFK off"))
         self._update_afk_info()
 
     def _update_afk_info(self) -> None:
@@ -630,13 +630,13 @@ class MainWindow(QMainWindow):
         if self.rejoin_switch.isChecked() != on:
             self.rejoin_switch.setChecked(on)
         if not on:
-            self.show_toast(tr("Auto-Rejoin aus"))
+            self.show_toast(tr("Auto-rejoin off"))
         elif roblox_join.deep_link(s.private_server_link):
-            self.show_toast(tr("Auto-Rejoin an – nach Verbindungsabbruch, Kick oder Absturz geht es zurück in deinen "
-                               "privaten Server."))
+            self.show_toast(tr("Auto-rejoin on – after a disconnect, kick or crash you go back to your private "
+                               "server."))
         else:
-            self.show_toast(tr("Auto-Rejoin an – ohne Private-Server-Link geht es in einen öffentlichen Server "
-                               "(Link unter Einstellungen → Privater Server)."))
+            self.show_toast(tr("Auto-rejoin on – without a private server link you go to a public server (link "
+                               "under Settings → Private server)."))
 
     def show_from_tray(self) -> None:
         self.showNormal()
@@ -802,7 +802,7 @@ class MainWindow(QMainWindow):
             for page in self.pages:
                 page.apply(s)
         except ValueError as exc:
-            QMessageBox.warning(self, tr("Ungültige Eingabe"), str(exc))
+            QMessageBox.warning(self, tr("Invalid input"), str(exc))
             return None
         return s
 
@@ -819,23 +819,22 @@ class MainWindow(QMainWindow):
             return False
         error = s.validate_detection()
         if error:
-            QMessageBox.warning(self, tr("Einstellungen"), error)
+            QMessageBox.warning(self, tr("Settings"), error)
             return False
         self.engine.apply_settings(s)
         try:
             s.save()
         except OSError as exc:
-            QMessageBox.critical(self, tr("Speichern"), tr("Konnte nicht speichern: {error}", error=exc))
+            QMessageBox.critical(self, tr("Save"), tr("Could not save: {error}", error=exc))
             return False
         self._setup_hotkeys()
         self.bot.apply_settings()                         # Bot an/aus bzw. mit neuem Token neu verbinden
         self.notes_btn.setVisible(s.update_beta)
         if show_message:
-            self.show_toast(tr("Gespeichert ✓"))
+            self.show_toast(tr("Saved ✓"))
         if s.language != i18n.language() and show_message:
             answer = QMessageBox.question(self, tr("Sprache / Language"),
-                                          tr("Die Sprache wird nach einem Neustart des Programms umgestellt. "
-                                             "Jetzt neu starten?"))
+                                          tr("The language changes after restarting the program. Restart now?"))
             if answer == QMessageBox.StandardButton.Yes:
                 self.restart_app()
         return True
@@ -858,17 +857,17 @@ class MainWindow(QMainWindow):
         if self._hotkeys is not None:
             self._hotkeys.stop()
         listener = HotkeyListener({
-            tr("Start/Stopp"): (s.hotkey_toggle, lambda: self.post(self.toggle_monitoring)),
+            tr("Start/stop"): (s.hotkey_toggle, lambda: self.post(self.toggle_monitoring)),
             tr("Pause"): (s.hotkey_pause, lambda: self.post(self.toggle_pause)),
-            tr("Status neu senden"): (s.hotkey_status, lambda: self.post(self.resend_status)),
+            tr("Resend status"): (s.hotkey_status, lambda: self.post(self.resend_status)),
         })
         listener.start()
         listener.ready.wait(2.0)
         self._hotkeys = listener
         if listener.failed:
-            self._hotkey_status = (tr("Nicht registriert: {keys}", keys="; ".join(listener.failed)), False)
+            self._hotkey_status = (tr("Not registered: {keys}", keys="; ".join(listener.failed)), False)
         else:
-            self._hotkey_status = (tr("Aktiv: {toggle} (Start/Stopp), {pause} (Pause), {status} (Status neu senden)",
+            self._hotkey_status = (tr("Active: {toggle} (start/stop), {pause} (pause), {status} (resend status)",
                                       toggle=s.hotkey_toggle, pause=s.hotkey_pause, status=s.hotkey_status), True)
         if self.pages.built(PAGE_SETTINGS) is not None:                # sonst beim Bauen der Seite
             self.pages.built(PAGE_SETTINGS).set_hotkey_status(*self._hotkey_status)
@@ -887,20 +886,20 @@ class MainWindow(QMainWindow):
         dlg = PasswordDialog(self, export=True)
         if not dlg.exec():
             return
-        path, _ = QFileDialog.getSaveFileName(self, tr("Einstellungen exportieren"),
+        path, _ = QFileDialog.getSaveFileName(self, tr("Export settings"),
                                               str(Path.home() / f"Anime-Astral-Einstellungen{secure.EXPORT_SUFFIX}"),
-                                              tr("Einstellungs-Datei") + f" (*{secure.EXPORT_SUFFIX})")
+                                              tr("Settings file") + f" (*{secure.EXPORT_SUFFIX})")
         if not path:
             return
         self.setCursor(Qt.CursorShape.WaitCursor)
         try:
             target = secure.export_settings(self.engine.settings.to_dict(), dlg.value(), Path(path))
         except (secure.SecureError, OSError) as exc:
-            QMessageBox.warning(self, tr("Einstellungen exportieren"), str(exc))
+            QMessageBox.warning(self, tr("Export settings"), str(exc))
             return
         finally:
             self.unsetCursor()
-        self.show_toast(tr("Exportiert: {name} ✓", name=target.name))
+        self.show_toast(tr("Exported: {name} ✓", name=target.name))
 
     def import_settings(self) -> None:
         """Passwortgeschützte Datei einlesen, Einstellungen ersetzen und das Programm neu starten."""
@@ -910,8 +909,8 @@ class MainWindow(QMainWindow):
 
         from .. import secure
         from .transfer_dialog import PasswordDialog
-        path, _ = QFileDialog.getOpenFileName(self, tr("Einstellungen importieren"), str(Path.home()),
-                                              tr("Einstellungs-Datei") + f" (*{secure.EXPORT_SUFFIX})")
+        path, _ = QFileDialog.getOpenFileName(self, tr("Import settings"), str(Path.home()),
+                                              tr("Settings file") + f" (*{secure.EXPORT_SUFFIX})")
         if not path:
             return
         while True:
@@ -923,7 +922,7 @@ class MainWindow(QMainWindow):
                 data = secure.import_settings(Path(path), dlg.value())
                 break
             except secure.SecureError as exc:
-                QMessageBox.warning(self, tr("Einstellungen importieren"), str(exc))
+                QMessageBox.warning(self, tr("Import settings"), str(exc))
             finally:
                 self.unsetCursor()
         if self.engine.running:
@@ -932,10 +931,10 @@ class MainWindow(QMainWindow):
         try:
             settings.save()
         except OSError as exc:
-            QMessageBox.critical(self, tr("Speichern"), tr("Konnte nicht speichern: {error}", error=exc))
+            QMessageBox.critical(self, tr("Save"), tr("Could not save: {error}", error=exc))
             return
-        QMessageBox.information(self, tr("Einstellungen importieren"),
-                                tr("Einstellungen übernommen. Das Programm startet jetzt neu."))
+        QMessageBox.information(self, tr("Import settings"),
+                                tr("Settings applied. The program restarts now."))
         self.restart_app()
 
     def create_diagnostics(self) -> None:
@@ -950,22 +949,21 @@ class MainWindow(QMainWindow):
         try:
             path = build_report(self.engine, dest)
         except Exception as exc:
-            QMessageBox.critical(self, tr("Diagnose"), tr("Das Paket konnte nicht erstellt werden:\n{error}", error=exc))
+            QMessageBox.critical(self, tr("Diagnostics"), tr("The package could not be created:\n{error}", error=exc))
             return
         finally:
             self.unsetCursor()
-        QMessageBox.information(self, tr("Diagnose-Paket erstellt"),
-                                tr("Gespeichert:\n{path}\n\nDie Datei enthält Protokoll, Wertverlauf, Einstellungen "
-                                   "(ohne Webhook) und einen Screenshot des Roblox-Fensters.", path=path))
+        QMessageBox.information(self, tr("Diagnostics package created"),
+                                tr("Saved:\n{path}\n\nThe file contains the log, value history, settings (without "
+                                   "webhook) and a screenshot of the Roblox window.", path=path))
         QDesktopServices.openUrl(QUrl.fromLocalFile(str(path.parent)))
 
     def explain_safe_mode(self) -> None:
-        box = QMessageBox(QMessageBox.Icon.Information, tr("Abgesicherter Start"), tr(
-            "Das Programm läuft mit Standard-Einstellungen. Deine eigenen Einstellungen sind unverändert und kommen "
-            "beim nächsten normalen Start zurück – Änderungen in diesem Modus werden nicht gespeichert.\n\n"
-            "Statistik und Raids bleiben wie gewohnt erhalten."), parent=self)
-        normal = box.addButton(tr("Normal neu starten"), QMessageBox.ButtonRole.AcceptRole)
-        box.addButton(tr("Abgesichert bleiben"), QMessageBox.ButtonRole.RejectRole)
+        box = QMessageBox(QMessageBox.Icon.Information, tr("Safe mode"), tr(
+            "The program is running with default settings. Your own settings are unchanged and return on the next "
+            "normal start – changes made in this mode are not saved.\n\nStatistics and raids are kept as usual."), parent=self)
+        normal = box.addButton(tr("Restart normally"), QMessageBox.ButtonRole.AcceptRole)
+        box.addButton(tr("Stay in safe start"), QMessageBox.ButtonRole.RejectRole)
         box.exec()
         if box.clickedButton() is normal:
             self.restart_app()
@@ -1014,7 +1012,7 @@ class MainWindow(QMainWindow):
         try:
             self.engine.start()
         except EngineError as exc:
-            QMessageBox.critical(self, tr("Start nicht möglich"), str(exc))
+            QMessageBox.critical(self, tr("Cannot start"), str(exc))
         finally:
             self.unsetCursor()
 
@@ -1036,8 +1034,8 @@ class MainWindow(QMainWindow):
         if self.auto_switch.isChecked() != on:
             self.auto_switch.setChecked(on)
         self.auto.reset()
-        self.show_toast(tr("Auto-Start an – die Überwachung startet, sobald du Anime Astral betrittst.") if on
-                        else tr("Auto-Start aus"))
+        self.show_toast(tr("Auto-start on – monitoring starts as soon as you enter Anime Astral.") if on
+                        else tr("Auto-start off"))
 
     def _auto_tick(self) -> None:
         """Läuft auch im Hintergrund (Tray), führt die Entscheidungen von AutoMonitor aus."""
@@ -1055,22 +1053,22 @@ class MainWindow(QMainWindow):
                 try:
                     engine.start()
                     self._auto_error = ""
-                    engine._event(tr("Auto-Start: Anime Astral betreten – Überwachung gestartet"), "info")
+                    engine._event(tr("Auto-start: entered Anime Astral – monitoring started"), "info")
                 except EngineError as exc:
                     self.auto.start_failed(now)
                     if str(exc) != self._auto_error:      # gleichen Grund nur einmal melden
                         self._auto_error = str(exc)
-                        engine._event(tr("Auto-Start: noch nicht möglich ({error}) – neuer Versuch in 30 s",
+                        engine._event(tr("Auto-start: not possible yet ({error}) – retrying in 30 s",
                                          error=exc), "warn")
             elif act == "pause" and not engine.state.paused:
                 engine.toggle_pause()
-                engine._event(tr("Auto-Start: Verbindung weg – Überwachung pausiert"), "warn")
+                engine._event(tr("Auto-start: connection lost – monitoring paused"), "warn")
             elif act == "resume" and engine.state.paused:
                 engine.toggle_pause()
-                engine._event(tr("Auto-Start: wieder im Spiel – Überwachung läuft weiter"), "ok")
+                engine._event(tr("Auto-start: back in the game – monitoring continues"), "ok")
             elif act == "stop" and engine.running:
                 engine.stop()
-                engine._event(tr("Auto-Start: Spiel verlassen – Überwachung gestoppt"), "info")
+                engine._event(tr("Auto-start: left the game – monitoring stopped"), "info")
         text = self.auto.info(now, phase, engine.running)
         if self.auto_info.text() != text:
             self.auto_info.setText(text)
@@ -1079,18 +1077,18 @@ class MainWindow(QMainWindow):
     def resend_status(self) -> None:
         s = self.engine.settings
         if not s.status_enabled or not is_valid_webhook(s.webhook_url):
-            QMessageBox.information(self, tr("Live-Status"), tr("Die Live-Statusnachricht ist nicht aktiv. Webhook eintragen und "
-                                                         "unter „Meldungen“ aktivieren."))
+            QMessageBox.information(self, tr("Live status"), tr("The live status message is not active. Enter a "
+                                                                "webhook and enable it under “Alerts”."))
             return
         self.engine.resend_status()
-        self.show_toast(tr("Status wird neu gesendet …"))
+        self.show_toast(tr("Resending status …"))
 
     def test_webhook(self, url: str, done: Callable[[bool, str], None]) -> None:
         """Sendet eine Test-Nachricht im Hintergrund; `done(ok, info)` läuft danach im GUI-Thread."""
         tmp = copy.deepcopy(self.engine.settings)
         tmp.webhook_url = url
-        payload, _files = messages.build_message(tmp, "start_stop", tr("🔔 Test-Nachricht"), messages.COLOR_INFO,
-                                                 [(tr("Status"), tr("Verbindung zum Webhook funktioniert."), False)])
+        payload, _files = messages.build_message(tmp, "start_stop", tr("🔔 Test message"), messages.COLOR_INFO,
+                                                 [(tr("Status"), tr("Connection to the webhook works."), False)])
 
         def work() -> None:
             ok, info = DiscordSender(lambda: tmp).send_now(payload)
@@ -1108,9 +1106,9 @@ class MainWindow(QMainWindow):
         repo = updater.current_repo()
         if not repo:
             if manual:
-                QMessageBox.information(self, tr("Updates"), tr("Diese Version kennt keine Update-Quelle. "
-                                                                "Automatische Updates gibt es nur in der "
-                                                                "installierten Version (Download über GitHub)."))
+                QMessageBox.information(self, tr("Updates"), tr("This version has no update source. Automatic "
+                                                                "updates are only available in the installed "
+                                                                "version (download via GitHub)."))
             return
         if not manual and (not s.update_check or not updater.due(s.update_last_check)):
             return
@@ -1127,7 +1125,7 @@ class MainWindow(QMainWindow):
     def _update_result(self, info, error: Optional[str], manual: bool) -> None:
         if error:
             if manual:
-                QMessageBox.warning(self, tr("Updates"), tr("Die Suche nach Updates ist fehlgeschlagen:\n{error}",
+                QMessageBox.warning(self, tr("Updates"), tr("Checking for updates failed:\n{error}",
                                                             error=error))
             return
         self.engine.settings.update_last_check = time.time()
@@ -1137,15 +1135,15 @@ class MainWindow(QMainWindow):
             pass
         if info is None or not updater.is_newer(info.version):
             if manual:
-                QMessageBox.information(self, tr("Updates"), tr("Du hast die neueste Version ({version}).",
+                QMessageBox.information(self, tr("Updates"), tr("You have the latest version ({version}).",
                                                                 version=__version__))
             return
         if not manual and info.version == self.engine.settings.update_skip:
             return
         if not updater.is_installed_build():
             if manual:
-                QMessageBox.information(self, tr("Updates"), tr("Version {version} ist verfügbar:\n{url}\n\n"
-                                                                "Nur die installierte Version aktualisiert sich selbst.",
+                QMessageBox.information(self, tr("Updates"), tr("Version {version} is available:\n{url}\n\nOnly the "
+                                                                "installed version updates itself.",
                                                                 version=info.version, url=info.page_url))
             return
         from .update_dialog import UpdateDialog
@@ -1193,13 +1191,13 @@ class MainWindow(QMainWindow):
         if self.tray is not None:
             st = self.engine.state
             if not st.running:
-                state = tr("Gestoppt")
+                state = tr("Stopped")
             elif st.paused:
-                state = tr("Pausiert")
+                state = tr("Paused")
             elif st.wave_value is not None:
-                state = tr("Welle {wave}", wave=messages.fmt_wave(st.wave_value, st.wave_total))
+                state = tr("Wave {wave}", wave=messages.fmt_wave(st.wave_value, st.wave_total))
             else:
-                state = tr("Läuft")
+                state = tr("Running")
             text = f"Anime Astral Monitor – {state}" + (f" · {st.profile}" if st.profile else "")
             if text != self.tray.toolTip():
                 self.tray.setToolTip(text)
@@ -1230,10 +1228,10 @@ class MainWindow(QMainWindow):
         key = "paused" if (st.running and st.paused) else ("on" if st.running else "off")
         if st.running:
             elapsed = time.monotonic() - (st.started_at or time.monotonic())
-            self.status_sub.setText(tr("Laufzeit {time}", time=messages.fmt_duration(elapsed)))
+            self.status_sub.setText(tr("Running {time}", time=messages.fmt_duration(elapsed)))
         elif key != self._status_key:
             self.status_sub.setText("")
-        title = {"paused": tr("Pausiert"), "on": tr("Läuft"), "off": tr("Gestoppt")}[key]
+        title = {"paused": tr("Paused"), "on": tr("Running"), "off": tr("Stopped")}[key]
         if self.pill.isVisible():                  # Nebula: Status + Laufzeit in der Pille
             pill = "● " + title + (f"  ·  {messages.fmt_duration(elapsed)}" if st.running else "")
             if self.pill_text.text() != pill:
@@ -1261,12 +1259,12 @@ class MainWindow(QMainWindow):
             if not self._tray_hint_shown:
                 self._tray_hint_shown = True
                 self.tray.showMessage(tr("Anime Astral Monitor"),
-                                      tr("Läuft im Hintergrund weiter. Rechtsklick auf das Symbol neben der Uhr → "
-                                         "„Beenden“ schließt das Programm."),
+                                      tr("Keeps running in the background. Right-click the icon next to the clock → "
+                                         "“Quit” closes the program."),
                                       QSystemTrayIcon.MessageIcon.Information, 6000)
             return
         if self.engine.running and not self._force_close:
-            answer = QMessageBox.question(self, tr("Beenden"), tr("Die Überwachung läuft noch. Wirklich beenden?"))
+            answer = QMessageBox.question(self, tr("Quit"), tr("Monitoring is still running. Really quit?"))
             if answer != QMessageBox.StandardButton.Yes:
                 self._quitting = False
                 event.ignore()
@@ -1306,9 +1304,9 @@ def _install_crash_logging() -> None:
     def handle(exc_type, exc, tb) -> None:
         log.critical("Unbehandelte Ausnahme", exc_info=(exc_type, exc, tb))
         try:
-            QMessageBox.critical(None, tr("Unerwarteter Fehler"),
+            QMessageBox.critical(None, tr("Unexpected error"),
                                  f"{exc_type.__name__}: {exc}\n\n"
-                                 + tr("Details stehen in monitor.log ({path}).", path=app_paths.log_file()))
+                                 + tr("Details are in monitor.log ({path}).", path=app_paths.log_file()))
         except Exception:
             pass
 
@@ -1354,18 +1352,18 @@ def run() -> int:
         try:
             show_request_file().write_text("1", encoding="utf-8")
         except OSError:
-            QMessageBox.information(None, tr("Bereits geöffnet"), tr("Der Anime Astral Monitor läuft bereits."))
+            QMessageBox.information(None, tr("Already open"), tr("Anime Astral Monitor is already running."))
         return 0
     try:
         engine = Engine(settings)
     except Exception as exc:
-        QMessageBox.critical(None, tr("Start fehlgeschlagen"), f"{type(exc).__name__}: {exc}")
+        QMessageBox.critical(None, tr("Start failed"), f"{type(exc).__name__}: {exc}")
         return 1
     _install_crash_logging()
     window = MainWindow(engine)
     window.show()
     if safe:
-        window.setWindowTitle(window.windowTitle() + " – " + tr("Abgesicherter Start"))
+        window.setWindowTitle(window.windowTitle() + " – " + tr("Safe mode"))
         QTimer.singleShot(300, window.explain_safe_mode)
     code = app.exec()
     lock.unlock()

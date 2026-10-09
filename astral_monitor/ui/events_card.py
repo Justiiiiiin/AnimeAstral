@@ -26,14 +26,14 @@ def set_debug(enabled: bool) -> None:
 class EventsCard(Card):
     def __init__(self, main) -> None:
         super().__init__(tr("Debug"),
-                         tr("Zeigt live alles, was das Programm protokolliert – genau wie monitor.log im "
-                            "Diagnose-Paket: Überwachung, Makro- und Erkunden-Schritte, Anti-AFK, Rejoin, Warnungen "
-                            "und Fehler. Beim Einschalten werden die letzten Zeilen aus dem Protokoll geladen."
-                            "\n\nNur bei Bedarf einschalten: Aus = es wird nichts gesammelt und nichts gezeichnet."))
+                         tr("Shows everything the program logs, live – exactly like monitor.log in the diagnostics "
+                            "package: monitoring, macro and explore steps, anti-AFK, rejoin, warnings and errors. "
+                            "Switching it on loads the last lines from the log.\n\nOnly switch it on when needed: "
+                            "off = nothing is collected or drawn."))
         self.main = main
         self._seq = 0
         head = self.body.itemAt(0).layout()
-        self.enabled = QCheckBox(tr("Debug an"))
+        self.enabled = QCheckBox(tr("Debug on"))
         self.enabled.setChecked(bool(main.engine.settings.debug_view))
         self.enabled.toggled.connect(self._toggle)
         head.addWidget(self.enabled)
@@ -42,18 +42,18 @@ class EventsCard(Card):
         theme.track_spacing(row, 8)
         self.filter = short_field(QLineEdit(), 280)
         theme.track_min_width(self.filter, 260)
-        self.filter.setPlaceholderText(tr("Filtern (z. B. makro, tracker, WARNING) …"))
+        self.filter.setPlaceholderText(tr("Filter (e.g. makro, tracker, WARNING) …"))
         self.filter.setClearButtonEnabled(True)
         self.filter.textChanged.connect(lambda _t: self._rebuild())
         row.addWidget(self.filter)
         row.addStretch(1)
-        copy = QPushButton(tr("Kopieren"))
-        copy.setToolTip(tr("Alle angezeigten Zeilen in die Zwischenablage"))
+        copy = QPushButton(tr("Copy"))
+        copy.setToolTip(tr("Copy all shown lines to the clipboard"))
         copy.clicked.connect(self._copy)
-        clear = QPushButton(tr("Leeren"))
+        clear = QPushButton(tr("Clear"))
         clear.clicked.connect(self._clear)
-        diag = QPushButton(tr("Diagnose-Paket"))
-        diag.setToolTip(tr("Protokoll, Wertverlauf und Einstellungen ohne Webhook und Links – für die Fehlersuche"))
+        diag = QPushButton(tr("Diagnostics package"))
+        diag.setToolTip(tr("Log, value history and settings without webhook and links – for troubleshooting"))
         diag.clicked.connect(lambda: self.main.create_diagnostics())
         for btn in (copy, clear, diag):
             row.addWidget(btn)
@@ -79,7 +79,7 @@ class EventsCard(Card):
         try:
             s.save()                                     # sofort, ohne Speichern-Leiste
         except OSError as exc:
-            QMessageBox.critical(self, tr("Speichern"), tr("Konnte nicht speichern: {error}", error=exc))
+            QMessageBox.critical(self, tr("Save"), tr("Could not save: {error}", error=exc))
         set_debug(on)
         self._seq = 0
         self._show_state()
@@ -89,8 +89,8 @@ class EventsCard(Card):
         for w in self._buttons:
             w.setEnabled(on)
         self.view.clear()
-        self.view.setPlaceholderText("" if on else tr("Debug ist aus – oben rechts einschalten, wenn du etwas "
-                                                      "testen oder einen Fehler suchen willst."))
+        self.view.setPlaceholderText("" if on else tr("Debug is off – switch it on at the top right when you want "
+                                                      "to test something or track down a bug."))
         if on:
             self._rebuild()
             self.timer.start()

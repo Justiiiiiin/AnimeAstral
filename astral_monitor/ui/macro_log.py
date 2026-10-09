@@ -21,7 +21,7 @@ def _token(text: str) -> str:
         return "warn"
     if text.startswith(("▶", "✔")):
         return "accent"
-    if text.startswith(tr("Schritt")) or text.startswith(tr("Runde")):
+    if text.startswith(tr("Step")) or text.startswith(tr("Round")):
         return "accent2"
     return "text"
 
@@ -73,19 +73,19 @@ class MacroLogView(QPlainTextEdit):
 
 class MacroLogCard(Card):
     def __init__(self, controller, info: str = "") -> None:
-        super().__init__(tr("Makro-Protokoll"), info or tr(
-            "Was das Makro gerade tut – jeder Schritt mit Uhrzeit. Farbig: Start, Schritte und „fertig“; orange: "
-            "Warnung (wird wiederholt oder übersprungen); rot: abgebrochen. Ausführlich mit Bildern bei Problemen: "
-            "debug/makro_*.jpg im Datenordner."))
+        super().__init__(tr("Macro log"), info or tr(
+            "What the macro is doing right now – every step with its time. Colored: start, steps and “done”; "
+            "orange: warning (retried or skipped); red: stopped. Details with images on problems: debug/makro_*.jpg "
+            "in the data folder."))
         self.controller = controller
         self.view = MacroLogView(controller)
         self.body.addWidget(self.view, 1)
         row = QHBoxLayout()
-        copy = QPushButton(tr("Kopieren"))
-        copy.setToolTip(tr("Ganzes Protokoll in die Zwischenablage (z. B. für eine Fehlermeldung)"))
+        copy = QPushButton(tr("Copy"))
+        copy.setToolTip(tr("Copy the whole log to the clipboard (e.g. for a bug report)"))
         copy.clicked.connect(lambda: QGuiApplication.clipboard().setText(
             "\n".join(f"{s}  {t}" for s, t in controller.lines)))
-        clear = QPushButton(tr("Leeren"))
+        clear = QPushButton(tr("Clear"))
         clear.clicked.connect(self._clear)
         row.addStretch(1)
         row.addWidget(copy)

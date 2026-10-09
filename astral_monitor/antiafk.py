@@ -68,7 +68,7 @@ class AntiAfk(threading.Thread):
         if ok:
             self.next_at = now + interval
             log.info("Anti-AFK: ausgeführt (%s)", info)
-            self._event(tr("Anti-AFK: Roblox aktiv gehalten ({info})", info=info), "info")
+            self._event(tr("Anti-AFK: kept Roblox active ({info})", info=info), "info")
         else:
             self.next_at = now + RETRY_SECONDS
             log.info("Anti-AFK: nicht möglich – %s", info)
@@ -150,7 +150,7 @@ def wake_roblox(title: str) -> tuple[bool, str]:
     u32.PostMessageW.argtypes = [wintypes.HWND, wintypes.UINT, wintypes.WPARAM, wintypes.LPARAM]
     windows = roblox_windows(title)
     if not windows:
-        return False, tr("Roblox-Fenster nicht gefunden")
+        return False, tr("Roblox window not found")
     previous = u32.GetForegroundWindow()
     done = 0
     for hwnd in windows:
@@ -172,7 +172,7 @@ def wake_roblox(title: str) -> tuple[bool, str]:
     if previous and previous not in windows and u32.IsWindow(previous):
         _restore(windows[-1], previous)
     if not done:
-        return False, tr("Roblox ließ sich nicht nach vorne holen")
+        return False, tr("Roblox could not be brought to the front")
     return True, f"{done} Fenster"
 
 

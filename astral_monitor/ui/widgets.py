@@ -447,7 +447,7 @@ class BarChart(QWidget):
     def paintEvent(self, _event) -> None:
         if not self._data or not any(v for _n, v in self._data):
             p = QPainter(self)
-            paint_empty(p, QRectF(self.rect()), "chart", tr("Noch keine Daten im gewählten Zeitraum"))
+            paint_empty(p, QRectF(self.rect()), "chart", tr("No data in the selected period yet"))
             p.end()
             return
         p = QPainter(self)

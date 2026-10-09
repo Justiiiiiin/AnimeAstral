@@ -1,4 +1,4 @@
-"""Englische Oberfläche: Jeder Text in tr()/N_() hat eine Übersetzung mit denselben Platzhaltern."""
+"""German UI: every text in tr()/N_() has a translation with the same placeholders."""
 import ast
 import re
 import string
@@ -7,13 +7,13 @@ from pathlib import Path
 
 import _env  # noqa: F401
 from astral_monitor import i18n
-from astral_monitor.i18n_en import EN
+from astral_monitor.i18n_de import DE
 
 PACKAGE = Path(__file__).resolve().parent.parent / "astral_monitor"
 
 
 def keys_in_code() -> dict[str, str]:
-    """Alle Texte, die als erstes Argument von tr()/N_() im Paket stehen -> Fundstelle."""
+    """All texts that are the first argument of tr()/N_() in the package -> location."""
     found: dict[str, str] = {}
     for path in PACKAGE.rglob("*.py"):
         tree = ast.parse(path.read_text(encoding="utf-8"))
@@ -28,33 +28,38 @@ def placeholders(text: str) -> set[str]:
     return {name for _lit, name, _spec, _conv in string.Formatter().parse(text) if name}
 
 
+def needs_translation(key: str) -> bool:
+    """Texts without letters (symbols, numbers) or identical in both languages need no entry."""
+    return bool(re.search(r"[A-Za-z]", key))
+
+
 class I18nTests(unittest.TestCase):
-    def test_every_text_has_english(self):
-        missing = {k: where for k, where in keys_in_code().items() if k not in EN}
-        self.assertEqual(missing, {}, f"{len(missing)} Texte ohne englische Übersetzung")
+    def test_every_text_has_german(self):
+        missing = {k: where for k, where in keys_in_code().items() if k not in DE and needs_translation(k)}
+        self.assertEqual(missing, {}, f"{len(missing)} texts without a German translation")
 
     def test_placeholders_match(self):
-        wrong = {k: v for k, v in EN.items() if placeholders(k) != placeholders(v)}
+        wrong = {k: v for k, v in DE.items() if placeholders(k) != placeholders(v)}
         self.assertEqual(wrong, {})
 
     def test_no_stale_entries(self):
-        stale = sorted(set(EN) - set(keys_in_code()))
-        self.assertEqual(stale, [], "Übersetzungen ohne Verwendung im Code")
+        stale = sorted(set(DE) - set(keys_in_code()))
+        self.assertEqual(stale, [], "translations not used in the code")
 
     def test_tr_switches_language(self):
         try:
-            i18n.set_language("en")
-            self.assertEqual(i18n.tr("Welle {wave}", wave="3/100"), "Wave 3/100")
-            self.assertEqual(i18n.dec("1.5"), "1.5")
             i18n.set_language("de")
-            self.assertEqual(i18n.tr("Welle {wave}", wave="3/100"), "Welle 3/100")
+            self.assertEqual(i18n.tr("Wave {wave}", wave="3/100"), "Welle 3/100")
             self.assertEqual(i18n.dec("1.5"), "1,5")
-            self.assertEqual(i18n.tr("Gibt es nicht"), "Gibt es nicht")       # unbekannt: unverändert
+            i18n.set_language("en")
+            self.assertEqual(i18n.tr("Wave {wave}", wave="3/100"), "Wave 3/100")
+            self.assertEqual(i18n.dec("1.5"), "1.5")
+            self.assertEqual(i18n.tr("Does not exist"), "Does not exist")       # unknown: unchanged
         finally:
-            i18n.set_language("de")
+            i18n.set_language("en")
 
-    def test_english_has_no_umlauts(self):
-        german = {k: v for k, v in EN.items() if re.search(r"[äöüÄÖÜß]", v)}
+    def test_code_texts_are_english(self):
+        german = {k: v for k, v in keys_in_code().items() if re.search(r"[äöüÄÖÜß]", k)}
         self.assertEqual(german, {})
 
 

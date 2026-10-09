@@ -84,9 +84,9 @@ def _key(password: str, salt: bytes, params: dict) -> bytes:
 def check_password(password: str, repeat: str | None = None) -> str | None:
     """Fehlermeldung oder None."""
     if len(password) < MIN_PASSWORD:
-        return tr("Das Passwort braucht mindestens {n} Zeichen.", n=MIN_PASSWORD)
+        return tr("The password needs at least {n} characters.", n=MIN_PASSWORD)
     if repeat is not None and password != repeat:
-        return tr("Die Passwörter stimmen nicht überein.")
+        return tr("The passwords do not match.")
     return None
 
 
@@ -117,21 +117,21 @@ def import_settings(path: Path, password: str) -> dict:
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
         if payload.get("format") != EXPORT_FORMAT or payload.get("kdf") != "scrypt":
-            raise SecureError(tr("Das ist keine Einstellungs-Datei dieses Programms."))
+            raise SecureError(tr("This is not a settings file of this program."))
         params = {k: int(payload[k]) for k in ("n", "r", "p")}
         if not (2 ** 14 <= params["n"] <= 2 ** 20 and 1 <= params["r"] <= 32 and 1 <= params["p"] <= 16):
-            raise SecureError(tr("Die Datei ist beschädigt."))
+            raise SecureError(tr("The file is damaged."))
         header = {"format": EXPORT_FORMAT, "kdf": "scrypt", **params}
         aad = json.dumps(header, sort_keys=True).encode("ascii")
         salt, nonce = base64.b64decode(payload["salt"]), base64.b64decode(payload["nonce"])
         plain = AESGCM(_key(password, salt, params)).decrypt(nonce, base64.b64decode(payload["data"]), aad)
         data = json.loads(plain.decode("utf-8"))["settings"]
     except InvalidTag:
-        raise SecureError(tr("Falsches Passwort oder beschädigte Datei.")) from None
+        raise SecureError(tr("Wrong password or damaged file.")) from None
     except SecureError:
         raise
     except (OSError, ValueError, KeyError, TypeError) as exc:
-        raise SecureError(tr("Die Datei ist beschädigt.") + f" ({type(exc).__name__})") from None
+        raise SecureError(tr("The file is damaged.") + f" ({type(exc).__name__})") from None
     if not isinstance(data, dict):
-        raise SecureError(tr("Die Datei ist beschädigt."))
+        raise SecureError(tr("The file is damaged."))
     return data

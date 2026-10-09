@@ -17,6 +17,16 @@ OTHER = PRE + "[FLog::Network] Disconnection Notification. Reason: 276"
 LINK = "https://www.roblox.com/share?code=0123456789abcdef0123456789abcdef&type=Server"
 
 
+
+def setUpModule():                                     # these tests check the German texts
+    from astral_monitor import i18n
+    i18n.set_language("de")
+
+
+def tearDownModule():
+    from astral_monitor import i18n
+    i18n.set_language("en")
+
 class FakeTail:
     def __init__(self):
         self.lines = []

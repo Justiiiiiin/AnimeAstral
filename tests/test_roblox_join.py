@@ -5,6 +5,16 @@ import _env  # noqa: F401
 from astral_monitor.roblox_join import DEEP_LINK, deep_link, explain, parse_private_link, parse_share_link
 
 
+
+def setUpModule():                                     # these tests check the German texts
+    from astral_monitor import i18n
+    i18n.set_language("de")
+
+
+def tearDownModule():
+    from astral_monitor import i18n
+    i18n.set_language("en")
+
 class JoinTests(unittest.TestCase):
     def test_classic_links(self):
         link = "https://www.roblox.com/games/102072869879193/CYBER-Anime-Astral?privateServerLinkCode=12345678901234567"

@@ -50,14 +50,14 @@ def lookup(name: str, poster: Callable = requests.post, timeout: float = 10.0) -
     """Benutzername -> Profil. Fehler -> ProfileError (Text für die Anzeige)."""
     name = name.strip()
     if not valid_name(name):
-        raise ProfileError(tr("Kein gültiger Roblox-Name (3–20 Zeichen: Buchstaben, Ziffern, _)."))
+        raise ProfileError(tr("Not a valid Roblox name (3–20 characters: letters, digits, _)."))
     try:
         resp = poster(USERS_API, json={"usernames": [name], "excludeBannedUsers": True}, timeout=timeout)
         data = resp.json().get("data") if resp.status_code == 200 else None
     except (requests.RequestException, ValueError, AttributeError) as exc:
-        raise ProfileError(tr("Roblox ist gerade nicht erreichbar.")) from exc
+        raise ProfileError(tr("Roblox can't be reached right now.")) from exc
     if not data:
-        raise ProfileError(tr("Diesen Roblox-Namen gibt es nicht."))
+        raise ProfileError(tr("This Roblox name doesn't exist."))
     user = data[0]
     return Profile(int(user["id"]), str(user.get("name") or name), str(user.get("displayName") or name))
 

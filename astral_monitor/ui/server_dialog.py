@@ -26,7 +26,7 @@ class ServerDialog(QDialog):
         grid.setColumnStretch(2, 0)
         self.name = QLineEdit(name)
         self.name.setMaxLength(40)
-        self.name.setPlaceholderText(tr("z. B. Mein Server oder Server von Max"))
+        self.name.setPlaceholderText(tr("e.g. My server or Max’s server"))
         self.link = QLineEdit(link)
         self.link.setPlaceholderText("https://www.roblox.com/share?code=…&type=Server")
         grid.addWidget(label(tr("Name")), 0, 0)
@@ -36,14 +36,14 @@ class ServerDialog(QDialog):
         root.addLayout(grid)
         self.state = label("", "small", wrap=True)
         root.addWidget(self.state)
-        root.addWidget(label(tr("Teilen-Link aus Roblox („Teilen“ → Link kopieren), klassischer Link mit "
-                                "„privateServerLinkCode“ oder ein Server-Code von Freunden. Der Link bleibt nur auf "
-                                "diesem PC."), "small", wrap=True))
+        root.addWidget(label(tr("Share link from Roblox (“Share” → copy link), a classic link with "
+                                "“privateServerLinkCode” or a server code from friends. The link stays on this PC "
+                                "only."), "small", wrap=True))
         row = QHBoxLayout()
         row.addStretch(1)
-        cancel = QPushButton(tr("Abbrechen"))
+        cancel = QPushButton(tr("Cancel"))
         cancel.clicked.connect(self.reject)
-        self.ok = QPushButton(tr("Speichern"))
+        self.ok = QPushButton(tr("Save"))
         self.ok.setObjectName("primary")
         self.ok.setDefault(True)
         self.ok.clicked.connect(self.accept)
@@ -59,9 +59,9 @@ class ServerDialog(QDialog):
     def _problem(self) -> Optional[str]:
         name = self.result_name()
         if not name:
-            return tr("Bitte einen Namen eingeben.")
+            return tr("Please enter a name.")
         if name.lower() in self._taken:
-            return tr("Diesen Namen gibt es schon.")
+            return tr("This name already exists.")
         if not roblox_join.deep_link(self.link.text()):
             return roblox_join.explain(self.link.text())
         return None

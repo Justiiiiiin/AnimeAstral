@@ -18,12 +18,12 @@ from . import theme
 from .widgets import (PARAGRAPH, BarChart, Card, ComboBox, SortItem, StatCard, label, make_table, page_header,
                       restore_header, save_header)
 
-RANGES = [("session", N_("Diese Session"), N_("Session-Bericht")),
-          ("12h", N_("Letzte 12 Stunden"), N_("12-Stunden-Bericht")),
-          ("24h", N_("Letzte 24 Stunden"), N_("Tagesbericht")), ("7d", N_("Letzte 7 Tage"), N_("Wochenbericht")),
-          ("all", N_("Alles"), N_("Gesamtbericht"))]
-ALL_PROFILES = N_("Alle Raids (gesamt)")
-WEEKDAYS = (N_("Mo"), N_("Di"), N_("Mi"), N_("Do"), N_("Fr"), N_("Sa"), N_("So"))
+RANGES = [("session", N_("This session"), N_("Session report")),
+          ("12h", N_("Last 12 hours"), N_("12-hour report")),
+          ("24h", N_("Last 24 hours"), N_("Daily report")), ("7d", N_("Last 7 days"), N_("Weekly report")),
+          ("all", N_("Everything"), N_("Overall report"))]
+ALL_PROFILES = N_("All raids (total)")
+WEEKDAYS = (N_("Mon"), N_("Tue"), N_("Wed"), N_("Thu"), N_("Fri"), N_("Sat"), N_("Sun"))
 
 
 def fmt_hours(seconds: float) -> str:
@@ -71,7 +71,7 @@ class StatsPage(QWidget):
         theme.track_spacing(root, 14)
 
         # Titel, Auswahl und Aktionen in einer Zeile (Seite passt ohne Scrollen)
-        head = page_header(tr("Statistik"), tr("Jeder Versuch zählt – jede Welle gibt Belohnungen."))
+        head = page_header(tr("Statistics"), tr("Every attempt counts – every wave gives rewards."))
         theme.track_spacing(head, 8)
         self.profile = ComboBox()
         theme.track_min_width(self.profile, 170)
@@ -85,27 +85,27 @@ class StatsPage(QWidget):
         head.addWidget(self.profile)
         head.addWidget(self.range)
         head.addStretch(1)
-        save_card = QPushButton(tr("Karte speichern"))
-        save_card.setToolTip(tr("Statistik als Bild (PNG) speichern – zum Teilen mit Freunden"))
+        save_card = QPushButton(tr("Save card"))
+        save_card.setToolTip(tr("Save the stats as an image (PNG) – to share with friends"))
         save_card.clicked.connect(self._save_card)
-        send_card = QPushButton(tr("Karte an Discord"))
+        send_card = QPushButton(tr("Card to Discord"))
         send_card.clicked.connect(self._send_card)
         more = QToolButton()
         more.setText("⋯")
-        more.setToolTip(tr("Weitere Aktionen"))
+        more.setToolTip(tr("More actions"))
         more.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
         menu = QMenu(more)
-        menu.addAction(tr("Monatsrückblick speichern …"), self._save_month)
-        menu.addAction(tr("Monatsrückblick an Discord"), self._send_month)
+        menu.addAction(tr("Save monthly recap …"), self._save_month)
+        menu.addAction(tr("Monthly recap to Discord"), self._send_month)
         menu.addSeparator()
-        self.delete_action = menu.addAction(tr("Ausgewählten Eintrag löschen"), self._delete_selected)
+        self.delete_action = menu.addAction(tr("Delete selected entry"), self._delete_selected)
         menu.addSeparator()
-        self.archive_menu = menu.addMenu(tr("Archiv ansehen"))
+        self.archive_menu = menu.addMenu(tr("View archive"))
         self.archive_menu.aboutToShow.connect(self._fill_archive_menu)
-        self.archive_action = menu.addAction(tr("Archivieren und neu beginnen …"), self._archive_now)
+        self.archive_action = menu.addAction(tr("Archive and start over …"), self._archive_now)
         menu.addSeparator()
-        menu.addAction(tr("CSV öffnen"), self._open_csv)
-        menu.addAction(tr("Datenordner öffnen"),
+        menu.addAction(tr("Open CSV"), self._open_csv)
+        menu.addAction(tr("Open data folder"),
                        lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(str(app_paths.data_dir()))))
         more.setMenu(menu)
         for widget in (save_card, send_card, more):
@@ -113,7 +113,7 @@ class StatsPage(QWidget):
         root.addLayout(head)
         self.archive_bar = QHBoxLayout()                 # sichtbar, solange ein Archiv angezeigt wird
         self.archive_label = label("", "warn")
-        self.archive_back = QPushButton(tr("Zur aktuellen Statistik"))
+        self.archive_back = QPushButton(tr("Back to current statistics"))
         self.archive_back.setObjectName("slim")
         self.archive_back.clicked.connect(lambda: self._show_archive(None))
         self.archive_bar.addWidget(self.archive_label)
@@ -130,15 +130,15 @@ class StatsPage(QWidget):
                 row.addWidget(card, 1)
             return row
 
-        self.k_attempts = StatCard(tr("Versuche"))
-        self.k_waves = StatCard(tr("Wellen gesamt"))
-        self.k_wph = StatCard(tr("Wellen pro Stunde"))
-        self.k_avg_wave = StatCard(tr("Ø Endwelle"))
-        self.k_best_wave = StatCard(tr("Bestwelle (Rekord)"))
+        self.k_attempts = StatCard(tr("Attempts"))
+        self.k_waves = StatCard(tr("Waves total"))
+        self.k_wph = StatCard(tr("Waves per hour"))
+        self.k_avg_wave = StatCard(tr("Avg. final wave"))
+        self.k_best_wave = StatCard(tr("Best wave (record)"))
         root.addLayout(kpi_row(self.k_attempts, self.k_waves, self.k_wph, self.k_avg_wave, self.k_best_wave))
         # Nebenwerte als eine ruhige Zeile statt fünf weiterer Kacheln
         self.details = label("", "muted", wrap=True)
-        self.details.setToolTip(tr("Dauer-Werte nutzen nur gemessene Zeiten; geschätzte (mit ~) fließen nicht ein."))
+        self.details.setToolTip(tr("Durations only use measured times; estimates (marked ~) are not included."))
         root.addWidget(self.details)
         self.wall_label = label("", "warn", wrap=True)          # „Wand“ des gewählten Raids
         self.wall_label.setVisible(False)
@@ -150,7 +150,7 @@ class StatsPage(QWidget):
         list_tabs = QHBoxLayout()
         self.list_group = QButtonGroup(self)
         self.list_group.setExclusive(True)
-        for i, text in enumerate((tr("Letzte Versuche"), tr("Alle Raids im Vergleich"), tr("Persönliche Rekorde"))):
+        for i, text in enumerate((tr("Recent attempts"), tr("All raids compared"), tr("Personal records"))):
             btn = QPushButton(text)
             btn.setCheckable(True)
             btn.setObjectName("tab")
@@ -160,22 +160,22 @@ class StatsPage(QWidget):
         list_tabs.addStretch(1)
         runs.body.addLayout(list_tabs)
         self.lists = QStackedWidget()
-        self.table = make_table([tr("Beendet um"), tr("Raid"), tr("Endwelle"), tr("Dauer")],
+        self.table = make_table([tr("Ended at"), tr("Raid"), tr("Final wave"), tr("Duration")],
                                 rights=(2, 3), widths=(140, 150, 90, 80), selectable=True)
-        self.table.setToolTip(tr("Überschrift anklicken sortiert, Spaltenränder ziehen ändert die Breite. "
-                                 "~ = geschätzte Dauer."))
+        self.table.setToolTip(tr("Click a header to sort, drag column borders to change the width. ~ = estimated "
+                                 "duration."))
         theme.track_min_height(self.table, 200)
         restore_header(self.table, "stats_runs2")
         self.lists.addWidget(self.table)
         runs.body.addWidget(self.lists, 1)
         mid.addWidget(runs, 3)
 
-        chart_card = Card(tr("Auswertung"), " ")
+        chart_card = Card(tr("Analysis"), " ")
         self.chart_info = chart_card.info
         tabs = QHBoxLayout()
         self.chart_group = QButtonGroup(self)
         self.chart_group.setExclusive(True)
-        for i, text in enumerate((tr("Endwellen"), tr("Trend"), tr("Wellen pro Stunde"), tr("Woche"))):
+        for i, text in enumerate((tr("Final waves"), tr("Trend"), tr("Waves per hour"), tr("Week"))):
             btn = QPushButton(text)
             btn.setCheckable(True)
             btn.setObjectName("tab")
@@ -195,8 +195,8 @@ class StatsPage(QWidget):
         root.addLayout(mid, 1)
         self._chart_changed(0)
 
-        self.per_table = make_table([tr("Raid"), tr("Versuche"), tr("Wellen gesamt"), tr("Ø Endwelle"), tr("Bestwelle"),
-                                     tr("Ø Dauer"), tr("Wellen/Std")], rights=(1, 2, 3, 4, 5, 6),
+        self.per_table = make_table([tr("Raid"), tr("Attempts"), tr("Waves total"), tr("Avg. final wave"), tr("Best wave"),
+                                     tr("Avg. duration"), tr("Waves/h")], rights=(1, 2, 3, 4, 5, 6),
                                     widths=(170, 80, 110, 95, 85, 85, 95))
         restore_header(self.per_table, "stats_raids")
         self.lists.addWidget(self.per_table)
@@ -206,8 +206,8 @@ class StatsPage(QWidget):
         rec_grid.setContentsMargins(0, 0, 0, 0)
         theme.track_spacing(rec_grid, 12)
         self.records = {}
-        for i, (key, title) in enumerate((("best_wave", tr("Bestwelle")), ("best_day", tr("Stärkster Tag")),
-                                          ("best_hour", tr("Beste Stunde")), ("longest", tr("Längste Session")))):
+        for i, (key, title) in enumerate((("best_wave", tr("Best wave")), ("best_day", tr("Strongest day")),
+                                          ("best_hour", tr("Best hour")), ("longest", tr("Longest session")))):
             card = StatCard(title)
             card.sub = label("", "small")
             card.body.addWidget(card.sub)
@@ -229,20 +229,20 @@ class StatsPage(QWidget):
             show("best_wave", "–", "")
         if rec["best_day"]:
             day, n, waves = rec["best_day"]
-            show("best_day", tr("{count} Raids", count=messages.fmt_k(n)),
-                 day.strftime("%d.%m.%Y") + " · " + tr("{waves} Wellen", waves=messages.fmt_int(waves)))
+            show("best_day", tr("{count} raids", count=messages.fmt_k(n)),
+                 day.strftime("%d.%m.%Y") + " · " + tr("{waves} waves", waves=messages.fmt_int(waves)))
         else:
             show("best_day", "–", "")
         if rec["best_hour"]:
             hour, waves = rec["best_hour"]
-            show("best_hour", tr("{waves} Wellen", waves=messages.fmt_int(waves)),
+            show("best_hour", tr("{waves} waves", waves=messages.fmt_int(waves)),
                  hour.strftime("%d.%m.%Y · %H:00"))
         else:
             show("best_hour", "–", "")
         if rec["longest"]:
             seconds, start, n = rec["longest"]
             show("longest", fmt_hours(seconds),
-                 datetime.fromtimestamp(start).strftime("%d.%m.%Y") + " · " + tr("{count} Raids", count=n))
+                 datetime.fromtimestamp(start).strftime("%d.%m.%Y") + " · " + tr("{count} raids", count=n))
         else:
             show("longest", "–", "")
 
@@ -257,12 +257,12 @@ class StatsPage(QWidget):
         self.archive_menu.clear()
         files = StatsStore.archives(app_paths.archive_dir())
         if self._archive is not None:
-            self.archive_menu.addAction(tr("Aktuelle Statistik"), lambda: self._show_archive(None))
+            self.archive_menu.addAction(tr("Current statistics"), lambda: self._show_archive(None))
             self.archive_menu.addSeparator()
         for path in files:
             self.archive_menu.addAction(_archive_name(path), lambda p=path: self._show_archive(p))
         if not files:
-            act = self.archive_menu.addAction(tr("Noch kein Archiv"))
+            act = self.archive_menu.addAction(tr("No archive yet"))
             act.setEnabled(False)
 
     def _show_archive(self, path) -> None:
@@ -270,7 +270,7 @@ class StatsPage(QWidget):
         self._archive = StatsStore(path) if path else None
         self._archive_path = path
         viewing = self._archive is not None
-        self.archive_label.setText(tr("Archiv {name} – nur ansehen", name=_archive_name(path)) if viewing else "")
+        self.archive_label.setText(tr("Archive {name} – view only", name=_archive_name(path)) if viewing else "")
         self.archive_label.setVisible(viewing)
         self.archive_back.setVisible(viewing)
         self.delete_action.setEnabled(not viewing)
@@ -282,14 +282,14 @@ class StatsPage(QWidget):
         self.refresh()
 
     def _archive_now(self) -> None:
-        if QMessageBox.question(self, tr("Archivieren und neu beginnen"), tr(
-                "Die Statistik wird ins Archiv verschoben und beginnt bei null (auch die Raid-Nummer). Das Archiv "
-                "bleibt unter ⋯ → Archiv ansehen erhalten.")) != QMessageBox.StandardButton.Yes:
+        if QMessageBox.question(self, tr("Archive and start over"), tr(
+                "The statistics are moved to the archive and start from zero (including the raid number). The "
+                "archive stays available under ⋯ → View archive.")) != QMessageBox.StandardButton.Yes:
             return
         if self.engine.archive_stats() is None:
-            self.main.show_toast(tr("Noch nichts zu archivieren"))
+            self.main.show_toast(tr("Nothing to archive yet"))
             return
-        self.main.show_toast(tr("Archiviert ✓ – die Statistik beginnt neu"))
+        self.main.show_toast(tr("Archived ✓ – statistics start over"))
         self._profile_names = []
         self.mark_dirty()
         self.refresh()
@@ -314,21 +314,24 @@ class StatsPage(QWidget):
 
     def _report_title(self) -> str:
         key = self.range.currentData()
-        return tr(next((t for k, _n, t in RANGES if k == key), N_("Bericht")))
+        return tr(next((t for k, _n, t in RANGES if k == key), N_("Report")))
 
     def _chart_changed(self, index: int) -> None:
         self.charts.setCurrentIndex(index)
-        self.chart_info.set_info(tr((N_("Wo enden die Versuche? Anzahl je Endwelle (Gruppen, wenn die Spanne groß ist)."),
-                                    N_("Ø Endwelle je Stunde (bei langen Zeiträumen je Tag) – steigt sie, wirst du besser."),
-                                    N_("Geschaffte Wellen der letzten 10 Stunden."),
-                                    N_("Farmzeit je Tag der letzten 7 Tage – Pausen über 15 Minuten zählen nicht."))
+        self.chart_info.set_info(tr((N_("Where do attempts end? Count per final wave (grouped if the range is "
+                                        "large)."),
+                                    N_("Avg. final wave per hour (per day for long periods) – if it rises, you are "
+                                       "getting better."),
+                                    N_("Waves cleared in the last 10 hours."),
+                                    N_("Farming time per day over the last 7 days – breaks longer than 15 minutes "
+                                       "don't count."))
                                    [index]) + (self._week_text if index == 3 else ""))
 
     # ------------------------------------------------------------------ Aktionen
     def _save_card(self) -> None:
         from ..report_card import render_card
-        path, _ = QFileDialog.getSaveFileName(self, tr("Statistik-Karte speichern"),
-                                              str(Path.home() / "astral-statistik.png"), tr("Bild (*.png)"))
+        path, _ = QFileDialog.getSaveFileName(self, tr("Save stats card"),
+                                              str(Path.home() / "astral-statistik.png"), tr("Image (*.png)"))
         if not path:
             return
         store, since, raid, title = self.store, self._since(), self._raid(), self._report_title()
@@ -345,8 +348,8 @@ class StatsPage(QWidget):
     def _save_month(self) -> None:
         from ..report_card import render_month_card
         year, month = self._month()
-        path, _ = QFileDialog.getSaveFileName(self, tr("Monatsrückblick speichern"),
-                                              str(Path.home() / f"astral-{year}-{month:02d}.png"), tr("Bild (*.png)"))
+        path, _ = QFileDialog.getSaveFileName(self, tr("Save monthly recap"),
+                                              str(Path.home() / f"astral-{year}-{month:02d}.png"), tr("Image (*.png)"))
         if not path:
             return
         store = self.store
@@ -354,40 +357,40 @@ class StatsPage(QWidget):
 
     def _save_in_background(self, path: str, render) -> None:
         """Karte im Hintergrund zeichnen und speichern (~0,2 s) – die Oberfläche bleibt bedienbar."""
-        self.main.show_toast(tr("Karte wird erstellt …"))
+        self.main.show_toast(tr("Creating card …"))
 
         def work() -> None:
             try:
                 Path(path).write_bytes(render())
-                self.main.post(lambda: self.main.show_toast(tr("Karte gespeichert ✓")))
+                self.main.post(lambda: self.main.show_toast(tr("Card saved ✓")))
             except OSError as exc:
-                self.main.post(lambda e=exc: QMessageBox.critical(self, tr("Speichern"),
-                                                                  tr("Konnte nicht speichern: {error}", error=e)))
+                self.main.post(lambda e=exc: QMessageBox.critical(self, tr("Save"),
+                                                                  tr("Could not save: {error}", error=e)))
 
         threading.Thread(target=work, name="card", daemon=True).start()
 
     def _send_month(self) -> None:
         if not self.engine.send_month(*self._month(), stats=self.store):
-            QMessageBox.information(self, tr("Discord"), tr("Bitte zuerst einen Webhook eintragen und „Bericht / Statistik-Karte“ "
-                                                     "unter „Meldungen“ aktiviert lassen."))
+            QMessageBox.information(self, tr("Discord"), tr("Please enter a webhook first and keep “Report / stats "
+                                                            "card” enabled under “Alerts”."))
             return
-        self.main.show_toast(tr("Karte wird gesendet …"))
+        self.main.show_toast(tr("Sending card …"))
 
     def _send_card(self) -> None:
         if not self.engine.send_report(self._since(), self._raid(), self._report_title(), stats=self.store):
-            QMessageBox.information(self, tr("Discord"), tr("Bitte zuerst einen Webhook eintragen und „Bericht / Statistik-Karte“ "
-                                                     "unter „Meldungen“ aktiviert lassen."))
+            QMessageBox.information(self, tr("Discord"), tr("Please enter a webhook first and keep “Report / stats "
+                                                            "card” enabled under “Alerts”."))
             return
-        self.main.show_toast(tr("Karte wird gesendet …"))
+        self.main.show_toast(tr("Sending card …"))
 
     def _delete_selected(self) -> None:
         row = self.table.currentRow()
         item = self.table.item(row, 0) if row >= 0 else None
         index = item.data(Qt.ItemDataRole.UserRole) if item is not None else None
         if index is None or not (0 <= int(index) < len(self._rows)):
-            QMessageBox.information(self, tr("Eintrag löschen"), tr("Bitte zuerst einen Eintrag in der Tabelle auswählen."))
+            QMessageBox.information(self, tr("Delete entry"), tr("Please select an entry in the table first."))
             return
-        if QMessageBox.question(self, tr("Eintrag löschen"), tr("Diesen Eintrag dauerhaft löschen?")) \
+        if QMessageBox.question(self, tr("Delete entry"), tr("Delete this entry permanently?")) \
                 == QMessageBox.StandardButton.Yes:
             self.store.delete_record(self._rows[int(index)])
             self.mark_dirty()
@@ -469,8 +472,8 @@ class StatsPage(QWidget):
         self.k_wph.set_value(messages.fmt_int(round(s.waves_per_hour)) if s.waves_per_hour else "–")
         self.k_avg_wave.set_value(_num(s.avg_wave_all))
         self.k_best_wave.set_value(str(data["best"] or "–"))
-        self.details.setText(tr("Ø {dur} pro Versuch  ·  {spw} pro Welle  ·  {aph} Versuche/Std.  ·  {all} Versuche "
-                                "insgesamt",
+        self.details.setText(tr("Avg. {dur} per attempt  ·  {spw} per wave  ·  {aph} attempts/h  ·  {all} attempts "
+                                "in total",
                                 dur=_dur(s.avg_duration_all),
                                 spw="–" if s.sec_per_wave is None else dec(f"{s.sec_per_wave:.1f} s"),
                                 aph=_num(s.attempts_per_hour),
@@ -479,8 +482,8 @@ class StatsPage(QWidget):
         self.wall_label.setVisible(wall is not None)
         if wall:
             self.wall_label.setText(tr(
-                "Wand bei Welle {wave}: {streak} Versuche in Folge sind nicht weitergekommen ({share} % der letzten "
-                "Versuche enden genau dort). Vermutlich eine Boss-Welle – sobald du sie schaffst, kommt eine Meldung.",
+                "Wall at wave {wave}: {streak} attempts in a row did not get further ({share} % of the recent "
+                "attempts end exactly there). Probably a boss wave – you will get a message as soon as you beat it.",
                 wave=wall.wave, streak=wall.streak, share=f"{wall.share * 100:.0f}"))
 
         self._rows = data["rows"]
@@ -500,7 +503,7 @@ class StatsPage(QWidget):
         week = data["week"]
         self.chart_week.set_data([(tr(WEEKDAYS[d["day"].weekday()]), round(d["farm_s"] / 60)) for d in week],
                                  fmt=lambda minutes: fmt_hours(minutes * 60))
-        self._week_text = PARAGRAPH + tr("Diese Woche: {time} · {attempts} Versuche · {waves} Wellen",
+        self._week_text = PARAGRAPH + tr("This week: {time} · {attempts} attempts · {waves} waves",
                                          time=fmt_hours(sum(d["farm_s"] for d in week)),
                                          attempts=sum(d["attempts"] for d in week),
                                          waves=messages.fmt_int(sum(d["waves"] for d in week)))

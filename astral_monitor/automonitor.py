@@ -96,13 +96,13 @@ class AutoMonitor:
     def info(self, now: float, phase: str, running: bool) -> str:
         """Kurzer Hinweis für die Kopfzeile ("" = nichts Besonderes)."""
         if phase == IN_GAME and not running and self.override:
-            return tr("selbst gestoppt")
+            return tr("stopped manually")
         if phase == IN_GAME and not running and self.start_at is not None:
-            return tr("startet in {s} s", s=max(0, int(self.start_at - now + 0.99)))
+            return tr("starts in {s} s", s=max(0, int(self.start_at - now + 0.99)))
         if phase == TROUBLE and running and self.auto_paused:
-            return tr("pausiert (Verbindung)")
+            return tr("paused (connection)")
         if self.stop_at is not None and running:
-            return tr("stoppt in {s} s", s=max(0, int(self.stop_at - now + 0.99)))
+            return tr("stops in {s} s", s=max(0, int(self.stop_at - now + 0.99)))
         if phase in (GONE, ELSEWHERE) and not running:
-            return tr("wartet auf Anime Astral")
+            return tr("waiting for Anime Astral")
         return ""

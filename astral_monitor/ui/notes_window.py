@@ -19,7 +19,7 @@ def notes_file():
 class NotesWindow(QWidget):
     def __init__(self, parent=None) -> None:
         super().__init__(parent, Qt.WindowType.Window)
-        self.setWindowTitle(tr("Notizbuch"))
+        self.setWindowTitle(tr("Notebook"))
         theme.track_min_width(self, 420)
         theme.track_min_height(self, 360)
         self.resize(theme.px(520), theme.px(560))
@@ -27,7 +27,7 @@ class NotesWindow(QWidget):
         theme.track_margins(root, 18, 16, 18, 16)
         theme.track_spacing(root, 10)
         head = QHBoxLayout()
-        head.addWidget(label(tr("Notizbuch"), "h2"))
+        head.addWidget(label(tr("Notebook"), "h2"))
         beta = label(tr("Beta"), "small")
         head.addWidget(beta)
         head.addStretch(1)
@@ -35,7 +35,7 @@ class NotesWindow(QWidget):
         head.addWidget(self.state)
         root.addLayout(head)
         self.edit = QPlainTextEdit()
-        self.edit.setPlaceholderText(tr("Upgrades, Codes, Pläne … wird automatisch gespeichert."))
+        self.edit.setPlaceholderText(tr("Upgrades, codes, plans … saved automatically."))
         try:
             self.edit.setPlainText(notes_file().read_text(encoding="utf-8"))
         except OSError:
@@ -55,9 +55,9 @@ class NotesWindow(QWidget):
         self._timer.stop()
         try:
             notes_file().write_text(self.edit.toPlainText(), encoding="utf-8")
-            self.state.setText(tr("Gespeichert ✓"))
+            self.state.setText(tr("Saved ✓"))
         except OSError as exc:
-            self.state.setText(tr("Konnte nicht speichern: {error}", error=exc))
+            self.state.setText(tr("Could not save: {error}", error=exc))
 
     def closeEvent(self, event) -> None:
         if self._timer.isActive():

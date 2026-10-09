@@ -95,26 +95,26 @@ class ControlBot:
         if self._thread is not None:
             self._thread.join(timeout=5)
         self._thread = None
-        self.on_state(tr("aus"), self.app_id)
+        self.on_state(tr("off"), self.app_id)
 
     # ------------------------------------------------------------------ Thread
     def _run(self) -> None:
         try:
             import discord  # noqa: F401 – schwere Abhängigkeit erst hier laden
         except ImportError:
-            self.on_state(tr("Fehler: discord.py fehlt"), "")
+            self.on_state(tr("Error: discord.py missing"), "")
             return
         self._loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self._loop)
-        self.on_state(tr("verbinde …"), "")
+        self.on_state(tr("connecting …"), "")
         try:
             self._loop.run_until_complete(self._main())
         except Exception as exc:  # noqa: BLE001
             text = str(exc)
             if "Improper token" in text or "401" in text:
-                text = tr("Token ungültig")
+                text = tr("Invalid token")
             log.warning("Discord-Bot: %s", text)
-            self.on_state(tr("Fehler: {error}", error=text), self.app_id)
+            self.on_state(tr("Error: {error}", error=text), self.app_id)
         finally:
             try:
                 self._loop.close()
@@ -142,8 +142,8 @@ class ControlBot:
         async def on_ready() -> None:
             self.app_id = str(client.application_id or "")
             await sync_all()
-            names = ", ".join(g.name for g in client.guilds) or tr("in keinem Server – Einladungslink nutzen")
-            self.on_state(tr("verbunden als {name} ({servers})", name=str(client.user), servers=names), self.app_id)
+            names = ", ".join(g.name for g in client.guilds) or tr("in no server – use the invite link")
+            self.on_state(tr("connected as {name} ({servers})", name=str(client.user), servers=names), self.app_id)
             log.info("Discord-Bot verbunden als %s", client.user)
 
         @client.event
@@ -158,8 +158,8 @@ class ControlBot:
 
         async def run(interaction, name: str, args: dict) -> None:
             if interaction.user.id not in bot.allowed:
-                await interaction.response.send_message(tr("Kein Zugriff – deine Discord-ID ist im Programm nicht "
-                                                           "freigegeben."), ephemeral=True)
+                await interaction.response.send_message(tr("No access – your Discord ID is not allowed in the "
+                                                           "program."), ephemeral=True)
                 log.info("Discord-Bot: Befehl /%s von nicht erlaubter ID %s abgelehnt", name, interaction.user.id)
                 return
             await interaction.response.defer(thinking=True)
@@ -168,7 +168,7 @@ class ControlBot:
             try:
                 reply = await loop.run_in_executor(None, bot.handler, name, args)
             except Exception as exc:  # noqa: BLE001
-                reply = Reply(tr("Fehler: {error}", error=exc))
+                reply = Reply(tr("Error: {error}", error=exc))
             files = [discord.File(io.BytesIO(reply.png), filename="roblox.png")] if reply.png else []
             await interaction.followup.send(reply.text[:1900] or "✔", files=files)
 
@@ -176,28 +176,28 @@ class ControlBot:
             names = [n for n in bot.choices(kind) if current.lower() in n.lower()][:25]
             return [app_commands.Choice(name=n[:100], value=n[:100]) for n in names]
 
-        @tree.command(name="status", description=tr("Zustand: Überwachung, Welle, Raid, Makro"))
+        @tree.command(name="status", description=tr("State: monitoring, wave, raid, macro"))
         async def status(interaction):
             await run(interaction, "status", {})
 
-        @tree.command(name="start", description=tr("Überwachung starten"))
+        @tree.command(name="start", description=tr("Start monitoring"))
         async def start(interaction):
             await run(interaction, "start", {})
 
-        @tree.command(name="stop", description=tr("Überwachung stoppen"))
+        @tree.command(name="stop", description=tr("Stop the monitoring"))
         async def stop(interaction):
             await run(interaction, "stop", {})
 
-        @tree.command(name="pause", description=tr("Überwachung pausieren / fortsetzen"))
+        @tree.command(name="pause", description=tr("Pause / resume monitoring"))
         async def pause(interaction):
             await run(interaction, "pause", {})
 
-        @tree.command(name="screenshot", description=tr("Bild vom Roblox-Fenster"))
+        @tree.command(name="screenshot", description=tr("Image of the Roblox window"))
         async def screenshot(interaction):
             await run(interaction, "screenshot", {})
 
-        @tree.command(name="raid", description=tr("Raid wählen, zu dem gezählt wird"))
-        @app_commands.describe(name=tr("Name des Raids"))
+        @tree.command(name="raid", description=tr("Choose the raid attempts count for"))
+        @app_commands.describe(name=tr("Raid name"))
         async def raid(interaction, name: str):
             await run(interaction, "raid", {"name": name})
 
@@ -205,25 +205,25 @@ class ControlBot:
         async def raid_names(interaction, current: str):
             return await complete("raid", current)
 
-        @tree.command(name="makro", description=tr("Makro: Farm-Routine starten, stoppen, Progressions …"))
-        @app_commands.describe(aktion=tr("Was soll das Makro tun?"))
-        @app_commands.choices(aktion=[app_commands.Choice(name=tr("Farm-Routine starten"), value="queue"),
-                                      app_commands.Choice(name=tr("Stopp"), value="stop"),
+        @tree.command(name="makro", description=tr("Macro: start the farm routine, stop, progressions …"))
+        @app_commands.describe(aktion=tr("What should the macro do?"))
+        @app_commands.choices(aktion=[app_commands.Choice(name=tr("Start farm routine"), value="queue"),
+                                      app_commands.Choice(name=tr("Stop"), value="stop"),
                                       app_commands.Choice(name=tr("Progressions: Auto All"), value="progression"),
-                                      app_commands.Choice(name=tr("Menü schließen"), value="close")])
+                                      app_commands.Choice(name=tr("Close menu"), value="close")])
         async def makro(interaction, aktion: app_commands.Choice[str]):
             await run(interaction, "makro", {"action": aktion.value})
 
-        @tree.command(name="antiafk", description=tr("Anti-AFK an/aus"))
+        @tree.command(name="antiafk", description=tr("Anti-AFK on/off"))
         async def antiafk(interaction, an: bool):
             await run(interaction, "antiafk", {"on": an})
 
-        @tree.command(name="autorejoin", description=tr("Auto-Rejoin an/aus"))
+        @tree.command(name="autorejoin", description=tr("Auto-rejoin on/off"))
         async def autorejoin(interaction, an: bool):
             await run(interaction, "autorejoin", {"on": an})
 
-        @tree.command(name="join", description=tr("Privatem Server beitreten (Favorit)"))
-        @app_commands.describe(server=tr("Favorit (leer = markierter)"))
+        @tree.command(name="join", description=tr("Join private server (favourite)"))
+        @app_commands.describe(server=tr("Favourite (empty = marked one)"))
         async def join(interaction, server: Optional[str] = None):
             await run(interaction, "join", {"server": server or ""})
 
@@ -231,14 +231,14 @@ class ControlBot:
         async def server_names(interaction, current: str):
             return await complete("server", current)
 
-        @tree.command(name="pc", description=tr("PC herunterfahren / neu starten (60 s Verzögerung) oder abbrechen"))
-        @app_commands.describe(aktion=tr("Was soll der PC tun?"))
-        @app_commands.choices(aktion=[app_commands.Choice(name=tr("Herunterfahren"), value="shutdown"),
-                                      app_commands.Choice(name=tr("Neu starten"), value="restart"),
-                                      app_commands.Choice(name=tr("Abbrechen"), value="abort")])
+        @tree.command(name="pc", description=tr("Shut down / restart the PC (60 s delay) or cancel"))
+        @app_commands.describe(aktion=tr("What should the PC do?"))
+        @app_commands.choices(aktion=[app_commands.Choice(name=tr("Shut down"), value="shutdown"),
+                                      app_commands.Choice(name=tr("Restart"), value="restart"),
+                                      app_commands.Choice(name=tr("Cancel"), value="abort")])
         async def pc(interaction, aktion: app_commands.Choice[str]):
             await run(interaction, "pc", {"action": aktion.value})
 
-        @tree.command(name="hilfe", description=tr("Alle Befehle"))
+        @tree.command(name="hilfe", description=tr("All commands"))
         async def hilfe(interaction):
             await run(interaction, "hilfe", {})

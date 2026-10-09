@@ -118,20 +118,20 @@ def _get_json(url: str, timeout: float, getter: Callable):
         resp = getter(url, timeout=timeout,
                       headers={"Accept": "application/vnd.github+json", "User-Agent": f"AnimeAstralMonitor/{__version__}"})
     except requests.RequestException as exc:
-        raise UpdateError(tr("Keine Verbindung zu GitHub ({error}).", error=exc.__class__.__name__)) from exc
+        raise UpdateError(tr("No connection to GitHub ({error}).", error=exc.__class__.__name__)) from exc
     if resp.status_code == 404:
         return None                                    # noch keine Veröffentlichung
     if resp.status_code != 200:
-        raise UpdateError(tr("GitHub antwortete mit HTTP {code}.", code=resp.status_code))
+        raise UpdateError(tr("GitHub answered with HTTP {code}.", code=resp.status_code))
     try:
         return resp.json()
     except ValueError as exc:
-        raise UpdateError(tr("Ungültige Antwort von GitHub.")) from exc
+        raise UpdateError(tr("Invalid response from GitHub.")) from exc
 
 
 def _check_repo(repo: str) -> None:
     if not re.fullmatch(r"[\w.-]+/[\w.-]+", repo):
-        raise UpdateError(tr("Kein gültiges GitHub-Repository eingetragen."))
+        raise UpdateError(tr("No valid GitHub repository set."))
 
 
 def release_info(data: dict, repo: str) -> Optional[ReleaseInfo]:
@@ -310,32 +310,32 @@ def download(info: ReleaseInfo, progress: Callable[[int, int], None] = lambda do
             if resp.status_code == 200:
                 expected = expected_sha(resp.text, name)
         if patch and not expected:
-            raise UpdateError(tr("Für das Update-Paket ist keine Prüfsumme veröffentlicht."))
+            raise UpdateError(tr("No checksum is published for the update package."))
         with getter(url, stream=True, timeout=30,
                     headers={"User-Agent": f"AnimeAstralMonitor/{__version__}"}) as resp:
             if resp.status_code != 200:
-                raise UpdateError(tr("Download fehlgeschlagen (HTTP {code}).", code=resp.status_code))
+                raise UpdateError(tr("Download failed (HTTP {code}).", code=resp.status_code))
             total = int(resp.headers.get("Content-Length") or size or 0)
             done = 0
             with part.open("wb") as fh:
                 for chunk in resp.iter_content(chunk_size=256 * 1024):
                     if cancelled():
-                        raise UpdateError(tr("Abgebrochen."))
+                        raise UpdateError(tr("Cancelled."))
                     fh.write(chunk)
                     done += len(chunk)
                     progress(done, total)
     except requests.RequestException as exc:
         part.unlink(missing_ok=True)
-        raise UpdateError(tr("Download unterbrochen ({error}).", error=exc.__class__.__name__)) from exc
+        raise UpdateError(tr("Download interrupted ({error}).", error=exc.__class__.__name__)) from exc
     except Exception:
         part.unlink(missing_ok=True)
         raise
     if expected and sha256_of(part) != expected:
         part.unlink(missing_ok=True)
-        raise UpdateError(tr("Die Prüfsumme der heruntergeladenen Datei stimmt nicht – Update abgebrochen."))
+        raise UpdateError(tr("The checksum of the downloaded file does not match – update cancelled."))
     if not patch and part.stat().st_size < 1024 * 100:   # offensichtlich unvollständig
         part.unlink(missing_ok=True)
-        raise UpdateError(tr("Die heruntergeladene Datei ist unvollständig."))
+        raise UpdateError(tr("The downloaded file is incomplete."))
     part.replace(target)
     return target
 
@@ -393,16 +393,16 @@ def stage_patch(zip_path: Path, plan: PatchPlan, work: Path) -> Path:
             for rel in plan.changed:
                 member = names.get(rel)
                 if member is None:
-                    raise UpdateError(tr("Im Update-Paket fehlt {file}.", file=rel))
+                    raise UpdateError(tr("{file} is missing in the update package.", file=rel))
                 data = zf.read(member)
                 if hashlib.sha256(data).hexdigest() != plan.manifest["files"][rel]:
-                    raise UpdateError(tr("Prüfsumme stimmt nicht: {file}.", file=rel))
+                    raise UpdateError(tr("Checksum does not match: {file}.", file=rel))
                 dst = staging / rel
                 dst.parent.mkdir(parents=True, exist_ok=True)
                 dst.write_bytes(data)
     except (zipfile.BadZipFile, OSError) as exc:
         shutil.rmtree(staging, ignore_errors=True)
-        raise UpdateError(tr("Update-Paket beschädigt ({error}).", error=exc.__class__.__name__)) from exc
+        raise UpdateError(tr("Update package damaged ({error}).", error=exc.__class__.__name__)) from exc
     except UpdateError:
         shutil.rmtree(staging, ignore_errors=True)
         raise

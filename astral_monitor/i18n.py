@@ -1,22 +1,22 @@
-"""Sprache der Oberfläche und der Meldungen (Deutsch/Englisch).
+"""Language of the UI and of the messages (English/German).
 
-Texte stehen im Code auf Deutsch und werden mit tr() übersetzt; die englischen Fassungen liegen in i18n_en.py
-(Schlüssel = deutscher Text). Platzhalter wie {wave} werden nach dem Übersetzen eingesetzt:
+Texts are written in English in the code and translated with tr(); the German versions live in i18n_de.py
+(key = English text). Placeholders like {wave} are filled in after translating:
 
-    tr("Raid beendet · Welle {wave}", wave=29)
+    tr("Raid finished · Wave {wave}", wave=29)
 
-tests/test_i18n.py prüft, dass jeder tr()-Text eine englische Übersetzung hat. Die Sprache wird beim Start gesetzt;
-ein Wechsel gilt nach einem Neustart. Protokoll (monitor.log) bleibt Deutsch.
+tests/test_i18n.py checks that every tr() text has a German translation. The language is set at start-up;
+switching takes effect after a restart. English is the default since 0.9.9-beta.13.
 """
 from __future__ import annotations
 
 LANGUAGES = {"de": "Deutsch", "en": "English"}
-_lang = "de"
+_lang = "en"
 
 
 def set_language(code: str) -> None:
     global _lang
-    _lang = code if code in LANGUAGES else "de"
+    _lang = code if code in LANGUAGES else "en"
 
 
 def language() -> str:
@@ -39,7 +39,7 @@ def N_(text: str) -> str:
 
 
 def tr(text: str, **values) -> str:
-    if _lang == "en":
-        from .i18n_en import EN
-        text = EN.get(text, text)
+    if _lang == "de":
+        from .i18n_de import DE
+        text = DE.get(text, text)
     return text.format(**values) if values else text

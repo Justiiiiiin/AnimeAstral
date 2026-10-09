@@ -7,6 +7,16 @@ import _env  # noqa: F401
 from astral_monitor.discord_bot import COMMANDS, ControlBot, Reply, allowed_ids, invite_url, power_command
 
 
+
+def setUpModule():                                     # these tests check the German texts
+    from astral_monitor import i18n
+    i18n.set_language("de")
+
+
+def tearDownModule():
+    from astral_monitor import i18n
+    i18n.set_language("en")
+
 class BotTest(unittest.TestCase):
     def test_allowed_ids(self):
         self.assertEqual(allowed_ids("123, 456;789", "999"), {123, 456, 789})

@@ -112,21 +112,21 @@ def render_card(stats: StatsStore, since: Optional[float], raid: Optional[str], 
         span = (last - first).total_seconds()
         c.text((right, 44), f"{first:%d.%m.%Y} · {first:%H:%M}–{last:%H:%M}", 17, MUTED, anchor="ra")
         mins = int(span // 60)
-        c.text((right, 70), tr("{h} Std. {m} Min.", h=mins // 60, m=mins % 60) if mins >= 60 else tr("{minutes} Min.", minutes=mins), 15, DIM, anchor="ra")
+        c.text((right, 70), tr("{h} h {m} min", h=mins // 60, m=mins % 60) if mins >= 60 else tr("{minutes} min.", minutes=mins), 15, DIM, anchor="ra")
 
     if not recs:
         c.box((48, 130, W - 48, 560))
-        c.text((W // 2, 345), tr("Noch keine Versuche im gewählten Zeitraum"), 26, MUTED, anchor="mm")
+        c.text((W // 2, 345), tr("No attempts in the selected period yet"), 26, MUTED, anchor="mm")
         return c.png()
 
     # ---- Kennzahlen-Kacheln (3 × 2)
     tiles = [
-        (tr("Versuche"), messages.fmt_k(summary.attempts), TEAL),
-        (tr("Wellen gesamt"), messages.fmt_int(summary.waves_total), TEAL),
-        (tr("Wellen pro Stunde"), messages.fmt_int(round(summary.waves_per_hour)) if summary.waves_per_hour else "–", TEXT),
-        (tr("Bestwelle"), str(summary.best_wave), AMBER),
-        (tr("Ø Endwelle"), dec(f"{summary.avg_wave_all:.1f}") if summary.avg_wave_all else "–", TEXT),
-        (tr("Ø Dauer pro Versuch"), messages.fmt_duration(summary.avg_duration_all), TEXT),
+        (tr("Attempts"), messages.fmt_k(summary.attempts), TEAL),
+        (tr("Waves total"), messages.fmt_int(summary.waves_total), TEAL),
+        (tr("Waves per hour"), messages.fmt_int(round(summary.waves_per_hour)) if summary.waves_per_hour else "–", TEXT),
+        (tr("Best wave"), str(summary.best_wave), AMBER),
+        (tr("Avg. final wave"), dec(f"{summary.avg_wave_all:.1f}") if summary.avg_wave_all else "–", TEXT),
+        (tr("Avg. duration per attempt"), messages.fmt_duration(summary.avg_duration_all), TEXT),
     ]
     tw, th, gap, x0, y0 = 184, 108, 14, 48, 120
     for i, (label, value, color) in enumerate(tiles):
@@ -140,13 +140,13 @@ def render_card(stats: StatsStore, since: Optional[float], raid: Optional[str], 
     c.box((px0, py0, px1, py1))
     hist = stats.wave_histogram(since, raid)
     if hist:
-        c.text((px0 + 20, py0 + 16), tr("Wo enden die Versuche?"), 17, TEXT, bold=True)
-        c.text((px0 + 20, py0 + 40), tr("Anzahl Versuche je Endwelle"), 13, MUTED)
+        c.text((px0 + 20, py0 + 16), tr("Where do attempts end?"), 17, TEXT, bold=True)
+        c.text((px0 + 20, py0 + 40), tr("Attempts per final wave"), 13, MUTED)
         data = [(a, b) for a, b in hist]
     else:
         data = [(f"{h:02d}", n) for h, n in stats.hourly_waves(10, raid)]
-        c.text((px0 + 20, py0 + 16), tr("Wellen pro Stunde"), 17, TEXT, bold=True)
-        c.text((px0 + 20, py0 + 40), tr("Geschaffte Wellen, letzte 10 Stunden"), 13, MUTED)
+        c.text((px0 + 20, py0 + 16), tr("Waves per hour"), 17, TEXT, bold=True)
+        c.text((px0 + 20, py0 + 40), tr("Waves cleared, last 10 hours"), 13, MUTED)
     cx0, cx1, cy0, cy1 = px0 + 24, px1 - 24, py0 + 78, py1 - 34
     n = max(1, len(data))
     slot = (cx1 - cx0) / n
@@ -166,26 +166,26 @@ def render_card(stats: StatsStore, since: Optional[float], raid: Optional[str], 
     per = stats.per_raid(since) if raid is None else [p for p in stats.per_raid(since) if p["raid"] == raid]
     rows = max(1, min(3, len(per)))
     c.box((48, 366, W - 48, 366 + 64 + rows * 52 + 4))
-    c.text((70, 382), tr("Profile") if raid is None else tr("Profil"), 17, TEXT, bold=True)
+    c.text((70, 382), tr("Profiles") if raid is None else tr("Profile"), 17, TEXT, bold=True)
     total = max((r.total_waves for r in recs), default=100) or 100
     for i, p in enumerate(per[:3]):
         y = 420 + i * 52
         c.text((70, y), p["raid"], 18, TEXT, bold=True)
-        sub = tr("{attempts} Versuche · {waves} Wellen · Ø Welle {avg}", attempts=p["attempts"],
+        sub = tr("{attempts} attempts · {waves} waves · avg. wave {avg}", attempts=p["attempts"],
                  waves=messages.fmt_int(p["waves_total"]), avg=dec(f"{p['avg_wave']:.1f}"))
         c.text((70, y + 24), sub, 13, MUTED)
         bx0, bx1 = 560, W - 230
         c.bar((bx0, y + 12, bx1, y + 24), (30, 40, 52), radius=6)
         c.bar((bx0, y + 12, bx0 + (bx1 - bx0) * min(1.0, p["best_wave"] / total), y + 24), TEAL, radius=6)
-        c.text((W - 70, y + 4), tr("Bestwelle {wave}", wave=p["best_wave"]), 15, TEAL, bold=True, anchor="ra")
+        c.text((W - 70, y + 4), tr("Best wave {wave}", wave=p["best_wave"]), 15, TEAL, bold=True, anchor="ra")
     if not per:
-        c.text((70, 430), tr("Noch keine Raids zugeordnet – wähle auf der Startseite den aktuellen Raid aus."), 15, MUTED)
-    c.text((W // 2, H - 22), tr("Erstellt mit Anime Astral Monitor"), 12, DIM, anchor="mm")
+        c.text((70, 430), tr("No raids assigned yet – choose the current raid on the start page."), 15, MUTED)
+    c.text((W // 2, H - 22), tr("Created with Anime Astral Monitor"), 12, DIM, anchor="mm")
     return c.png()
 
 
-MONTHS = (N_("Januar"), N_("Februar"), N_("März"), N_("April"), N_("Mai"), N_("Juni"), N_("Juli"), N_("August"),
-          N_("September"), N_("Oktober"), N_("November"), N_("Dezember"))
+MONTHS = (N_("January"), N_("February"), N_("March"), N_("April"), N_("May"), N_("June"), N_("July"), N_("August"),
+          N_("September"), N_("October"), N_("November"), N_("December"))
 VIOLET = (123, 140, 255)
 
 
@@ -201,25 +201,25 @@ def render_month_card(stats: StatsStore, year: int, month: int) -> bytes:
     if logo_path.is_file():
         logo = Image.open(logo_path).convert("RGBA").resize((56 * S, 56 * S), Image.LANCZOS)
         c.img.paste(logo, (48 * S, 36 * S), logo)
-    c.text((120, 38), tr("MONATSRÜCKBLICK"), 14, TEAL, bold=True, spacing=2.2)
+    c.text((120, 38), tr("MONTHLY RECAP"), 14, TEAL, bold=True, spacing=2.2)
     c.text((120, 58), month_title(year, month), 32, TEXT, bold=True)
     if not m["attempts"]:
         c.box((48, 130, W - 48, 560))
-        c.text((W // 2, 345), tr("In diesem Monat gibt es noch keine Raids"), 26, MUTED, anchor="mm")
+        c.text((W // 2, 345), tr("No raids this month yet"), 26, MUTED, anchor="mm")
         return c.png()
     right = _profile(c)
     if m["prev_attempts"]:
         change = round(100 * (m["attempts"] - m["prev_attempts"]) / m["prev_attempts"])
-        c.text((right, 48), tr("{change} % Raids zum Vormonat", change=f"{change:+d}"), 17,
+        c.text((right, 48), tr("{change} % raids vs. last month", change=f"{change:+d}"), 17,
                TEAL if change >= 0 else AMBER, bold=True, anchor="ra")
 
     tiles = [
         (tr("Raids"), messages.fmt_k(m["attempts"]), TEAL),
-        (tr("Wellen"), messages.fmt_int(m["waves"]), TEAL),
-        (tr("Farmzeit"), tr("{hours} Std.", hours=dec(f"{m['farm_s'] / 3600:.0f}")), VIOLET),
-        (tr("Bestwelle"), str(m["best_wave"]), AMBER),
-        (tr("Ø Endwelle"), dec(f"{m['avg_wave']:.1f}") if m["avg_wave"] else "–", TEXT),
-        (tr("Aktive Tage"), f"{m['active_days']}/{len(m['per_day'])}", TEXT),
+        (tr("Waves"), messages.fmt_int(m["waves"]), TEAL),
+        (tr("Farming time"), tr("{hours} hrs", hours=dec(f"{m['farm_s'] / 3600:.0f}")), VIOLET),
+        (tr("Best wave"), str(m["best_wave"]), AMBER),
+        (tr("Avg. final wave"), dec(f"{m['avg_wave']:.1f}") if m["avg_wave"] else "–", TEXT),
+        (tr("Active days"), f"{m['active_days']}/{len(m['per_day'])}", TEXT),
     ]
     tw, th, gap, x0, y0 = 184, 108, 14, 48, 120
     for i, (label, value, color) in enumerate(tiles):
@@ -230,7 +230,7 @@ def render_month_card(stats: StatsStore, year: int, month: int) -> bytes:
 
     px0, py0, px1, py1 = 640, 120, W - 48, 350               # Raids je Tag
     c.box((px0, py0, px1, py1))
-    c.text((px0 + 20, py0 + 16), tr("Raids je Tag"), 17, TEXT, bold=True)
+    c.text((px0 + 20, py0 + 16), tr("Raids per day"), 17, TEXT, bold=True)
     days = m["per_day"]
     cx0, cx1, cy0, cy1 = px0 + 20, px1 - 20, py0 + 56, py1 - 32
     slot = (cx1 - cx0) / len(days)
@@ -244,18 +244,18 @@ def render_month_card(stats: StatsStore, year: int, month: int) -> bytes:
             c.text((bx + bw / 2, cy1 + 8), str(i + 1), 12, MUTED, anchor="ma")
 
     c.box((48, 366, W - 48, 506))                             # Höhepunkte
-    c.text((70, 382), tr("Höhepunkte"), 17, TEXT, bold=True)
-    highlights = [(tr("Bester Tag"), tr("{day}. {month} · {count} Raids", day=m["best_day"],
+    c.text((70, 382), tr("Highlights"), 17, TEXT, bold=True)
+    highlights = [(tr("Best day"), tr("{month} {day} · {count} raids", day=m["best_day"],
                                          month=tr(MONTHS[month - 1]), count=m["best_day_attempts"]), TEAL)]
     if m["favorite_raid"] and m["favorite_raid"] != "Unbekannt":
-        highlights.append((tr("Lieblingsraid"), tr("{raid} · {count}×", raid=m["favorite_raid"],
+        highlights.append((tr("Favorite raid"), tr("{raid} · {count}×", raid=m["favorite_raid"],
                                                    count=m["favorite_count"]), VIOLET))
     if m["peak_hour"] is not None:
-        highlights.append((tr("Stärkste Uhrzeit"), tr("{hour} Uhr", hour=m["peak_hour"]), AMBER))
+        highlights.append((tr("Busiest hour"), tr("{hour}:00", hour=m["peak_hour"]), AMBER))
     col = (W - 96 - 40) / max(1, len(highlights))
     for i, (title, value, color) in enumerate(highlights):
         x = 70 + i * col
         c.text((x, 430), title, 14, MUTED)
         c.text((x, 454), value, 26, color, bold=True)
-    c.text((W // 2, H - 22), tr("Erstellt mit Anime Astral Monitor"), 12, DIM, anchor="mm")
+    c.text((W // 2, H - 22), tr("Created with Anime Astral Monitor"), 12, DIM, anchor="mm")
     return c.png()

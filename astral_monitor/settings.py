@@ -83,27 +83,27 @@ RPC_GAME_LINK = "https://www.roblox.com/games/102072869879193/CYBER-Anime-Astral
 
 # (Schlüssel, Anzeigename, Standard: senden, Standard: Ping)
 EVENT_DEFS: list[tuple[str, str, bool, bool]] = [
-    ("raid_done", N_("Raid beendet"), True, False),
-    ("quest_update", N_("Quest-Fortschritt nach Raid"), True, False),
-    ("quest_done", N_("Quest abgeschlossen"), True, False),
-    ("roblox_down", N_("Roblox beendet / Disconnect"), True, True),
-    ("rejoin", N_("Auto-Rejoin"), True, False),
-    ("stall", N_("Stillstand-Alarm"), True, True),
-    ("health", N_("Speicher-Warnung"), True, False),
-    ("record", N_("Neuer Rekord (Welle)"), True, False),
-    ("wall", N_("Wand durchbrochen"), True, False),
-    ("report", N_("Bericht / Statistik-Karte"), True, False),
-    ("uptime", N_("Uptime (nur ohne Live-Status)"), True, False),
-    ("start_stop", N_("Start und Stopp"), True, False),
-    ("error", N_("Programmfehler"), True, True),
+    ("raid_done", N_("Raid finished"), True, False),
+    ("quest_update", N_("Quest progress after raid"), True, False),
+    ("quest_done", N_("Quest completed"), True, False),
+    ("roblox_down", N_("Roblox closed / disconnect"), True, True),
+    ("rejoin", N_("Auto-rejoin"), True, False),
+    ("stall", N_("Stall alert"), True, True),
+    ("health", N_("Memory warning"), True, False),
+    ("record", N_("New record (wave)"), True, False),
+    ("wall", N_("Wall broken"), True, False),
+    ("report", N_("Report / stats card"), True, False),
+    ("uptime", N_("Uptime (only without live status)"), True, False),
+    ("start_stop", N_("Start and stop"), True, False),
+    ("error", N_("Program error"), True, True),
 ]
 
 # Prüfintervalle in Sekunden: ruhig, kurz vor Raid-Ende ("heiß"), Quest-Abstand
 # Seit 0.9.0 ein gleichmäßiger Takt (kein schnellerer Takt kurz vor Raid-Ende mehr): 100/100 steht bis zu ~1 s da
 PRESETS: dict[str, dict] = {
-    "eco": {"label": N_("Sparsam"), "interval": 0.8, "quest": 60.0},
-    "balanced": {"label": N_("Ausgewogen"), "interval": 0.5, "quest": 30.0},
-    "fast": {"label": N_("Schnell"), "interval": 0.3, "quest": 15.0},
+    "eco": {"label": N_("Economy"), "interval": 0.8, "quest": 60.0},
+    "balanced": {"label": N_("Balanced"), "interval": 0.5, "quest": 30.0},
+    "fast": {"label": N_("Fast"), "interval": 0.3, "quest": 15.0},
 }
 
 
@@ -206,7 +206,7 @@ class Settings:
     rpc_client_id: str = ""
     rpc_game_link: str = RPC_GAME_LINK
     # Oberfläche
-    language: str = "de"                # de | en (gilt nach Neustart)
+    language: str = "en"                # en | de (takes effect after a restart; English default since 0.9.9)
     close_to_tray: bool = True          # Fenster schließen = im Infobereich weiterlaufen
     ui_design: str = "nightcity"        # theme.DESIGNS (alte Designs bleiben wählbar)
     ui_mode: str = "dark"               # dark | light | system
@@ -263,35 +263,37 @@ class Settings:
 
     def validate(self) -> Optional[str]:
         if not is_valid_webhook(self.webhook_url):
-            return tr("Bitte eine gültige Discord-Webhook-URL eintragen (Seite „Meldungen“).")
+            return tr("Please enter a valid Discord webhook URL (page “Alerts”).")
         if self.forum_webhook_url and not is_valid_webhook(self.forum_webhook_url):
-            return tr("Der Forum-Webhook ist keine gültige Discord-Webhook-URL (Seite „Meldungen“).")
+            return tr("The forum webhook is not a valid Discord webhook URL (“Alerts” page).")
         return self.validate_detection()
 
     def validate_detection(self) -> Optional[str]:
         """Prüft die einstellbaren Werte (die Erkennung selbst ist seit 0.9.0 fest eingebaut)."""
         if not 1 <= self.uptime_minutes <= 1440:
-            return tr("Das Uptime-Intervall muss zwischen 1 und 1440 Minuten liegen.")
+            return tr("The uptime interval must be between 1 and 1440 minutes.")
         if not 1 <= self.stall_minutes <= 240:
-            return tr("Die Stillstand-Zeit muss zwischen 1 und 240 Minuten liegen.")
+            return tr("The stall time must be between 1 and 240 minutes.")
         if self.no_raid_minutes < 0 or self.ram_alert_gb < 0:
-            return tr("Wächter-Werte dürfen nicht negativ sein.")
+            return tr("Guard values must not be negative.")
         from .hotkeys import parse_hotkey
-        keys = ((N_("Start/Stopp"), self.hotkey_toggle), (N_("Pause"), self.hotkey_pause),
-                (N_("Status neu senden"), self.hotkey_status))
+        keys = ((N_("Start/stop"), self.hotkey_toggle), (N_("Pause"), self.hotkey_pause),
+                (N_("Resend status"), self.hotkey_status))
         for name, text in keys:
             try:
                 parse_hotkey(text)
             except ValueError as exc:
                 return tr("Hotkey {name}: {error}", name=tr(name), error=exc)
         if len({t.strip().lower() for _n, t in keys}) < len(keys):
-            return tr("Die Hotkeys müssen unterschiedlich sein.")
+            return tr("The hotkeys must be different.")
         if self.rpc_client_id.strip() and not self.rpc_client_id.strip().isdigit():
-            return tr("Die Discord-Anwendungs-ID besteht nur aus Ziffern (Entwicklerportal → Anwendung → Allgemein).")
+            return tr("The Discord application ID consists of digits only (developer portal → application → "
+                      "general).")
         if not 1 <= self.anti_afk_minutes <= 19:
-            return tr("Der Anti-AFK-Abstand muss zwischen 1 und 19 Minuten liegen (Roblox trennt nach 20 Minuten).")
+            return tr("The anti-AFK interval must be between 1 and 19 minutes (Roblox disconnects after 20 "
+                      "minutes).")
         if not 20 <= self.status_interval <= 3600:
-            return tr("Das Intervall der Live-Status-Nachricht muss zwischen 20 und 3600 Sekunden liegen.")
+            return tr("The live status interval must be between 20 and 3600 seconds.")
         return None
 
     # ------------------------------------------------------------ Speichern/Laden

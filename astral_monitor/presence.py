@@ -86,13 +86,13 @@ def build_activity(settings: Settings, snap: dict, icon_url: Optional[str] = Non
     profile = snap.get("profile") or ""
     if snap.get("wave") is not None:
         from .messages import fmt_wave
-        details = tr("Welle {wave}", wave=fmt_wave(snap["wave"], snap.get("total_waves"))) + (f" · {profile}" if profile else "")
+        details = tr("Wave {wave}", wave=fmt_wave(snap["wave"], snap.get("total_waves"))) + (f" · {profile}" if profile else "")
     else:
-        details = tr("Wartet auf den nächsten Raid") + (tr(" (pausiert)") if snap.get("status") == "paused" else "")
-    state = tr("Versuche {attempts} · Wellen {waves}", attempts=snap.get("session_attempts", 0),
+        details = tr("Waiting for the next raid") + (tr(" (paused)") if snap.get("status") == "paused" else "")
+    state = tr("Attempts {attempts} · Waves {waves}", attempts=snap.get("session_attempts", 0),
                    waves=snap.get("session_waves", 0))
     if snap.get("best_wave"):
-        state += " · " + tr("Bestwelle {wave}", wave=snap["best_wave"])
+        state += " · " + tr("Best wave {wave}", wave=snap["best_wave"])
     activity = {"details": details[:128], "state": state[:128]}
     if icon_url:
         activity["large_image"] = icon_url
@@ -105,12 +105,12 @@ def build_activity(settings: Settings, snap: dict, icon_url: Optional[str] = Non
 def explain_error(exc: BaseException) -> str:
     name = exc.__class__.__name__
     if isinstance(exc, ImportError):
-        return tr("Das Paket „pypresence“ fehlt in dieser Programmversion.")
+        return tr("The package “pypresence” is missing in this version.")
     if name == "DiscordNotFound":
-        return tr("Die Discord-Desktop-App wurde nicht gefunden – bitte Discord am PC starten (nicht im Browser).")
+        return tr("The Discord desktop app was not found – please start Discord on this PC (not in the browser).")
     if name in ("InvalidID", "InvalidPipe"):
-        return tr("Discord akzeptiert die Anwendungs-ID nicht.")
-    return tr("Verbindung zu Discord nicht möglich ({error}).", error=name)
+        return tr("Discord does not accept the application ID.")
+    return tr("Cannot connect to Discord ({error}).", error=name)
 
 
 class PresenceUpdater(threading.Thread):
@@ -126,7 +126,7 @@ class PresenceUpdater(threading.Thread):
         self._last_update_at = -1e9
         self._next_try = 0.0
         self._icon: tuple[Optional[int], Optional[str], float] = (None, None, -1e9)
-        self.status_text = tr("Aus")
+        self.status_text = tr("Off")
         self.status_ok = False
 
     def stop(self) -> None:
@@ -187,17 +187,17 @@ class PresenceUpdater(threading.Thread):
         cid = client_id(s)
         if not s.rpc_enabled:
             self._drop()
-            self.status_text, self.status_ok = tr("Aus"), False
+            self.status_text, self.status_ok = tr("Off"), False
             return
         if not cid:
             self._drop()
-            self.status_text, self.status_ok = tr("Bitte unten deine eigene Discord-Anwendungs-ID eintragen."), False
+            self.status_text, self.status_ok = tr("Please enter your own Discord application ID below."), False
             return
         snap = self._snapshot()
         activity = build_activity(s, snap, self._icon_url(s, now) if snap.get("status") != "stopped" else None)
         if activity is None:
             self._drop()
-            self.status_text, self.status_ok = tr("Bereit – wird angezeigt, sobald die Überwachung läuft."), True
+            self.status_text, self.status_ok = tr("Ready – shown as soon as monitoring is running."), True
             return
         if self._rpc is None:
             if now < self._next_try:
@@ -219,4 +219,4 @@ class PresenceUpdater(threading.Thread):
                 log.info("Discord-Profilstatus getrennt: %s", exc.__class__.__name__)
                 self._drop()
                 return
-        self.status_text, self.status_ok = tr("Verbunden ✓ – wird in deinem Discord-Profil angezeigt."), True
+        self.status_text, self.status_ok = tr("Connected ✓ – shown in your Discord profile."), True

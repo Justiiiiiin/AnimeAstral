@@ -45,14 +45,14 @@ class MonitorPage(QWidget):
         self.btn_status = QPushButton()                     # nur Symbol (Kopfzeile ist schmal)
         self.btn_status.setIcon(discord_icon())
         theme.track(self.btn_status, lambda o, f: o.setIconSize(QSize(round(20 * f), round(20 * f))))
-        self.btn_status.setToolTip(tr("Status neu senden: Die Statusnachricht in Discord wird gelöscht und ganz "
-                                      "unten neu gesendet."))
+        self.btn_status.setToolTip(tr("Resend status: the status message in Discord is deleted and sent again at "
+                                      "the bottom."))
         self.btn_status.clicked.connect(self.main.resend_status)
         self.btn_pause = QPushButton()
         self.btn_pause.setToolTip(tr("Pause"))
         self.btn_pause.clicked.connect(self.main.toggle_pause)
         self.btn_start = QPushButton()
-        self.btn_start.setToolTip(tr("Starten"))
+        self.btn_start.setToolTip(tr("Start"))
         for btn in (self.btn_start, self.btn_pause, self.btn_status):
             theme.track_fixed_width(btn, 40)                # nur Symbole: ▶/■, ❚❚, Discord
             theme.track(btn, lambda o, f: o.setIconSize(QSize(round(18 * f), round(18 * f))))
@@ -61,11 +61,11 @@ class MonitorPage(QWidget):
         # Kennzahlen
         kpis = QHBoxLayout()
         theme.track_spacing(kpis, 12)
-        self.k_total = StatCard(tr("Versuche gesamt"))
-        self.k_session = StatCard(tr("Versuche (Session)"))
-        self.k_waves = StatCard(tr("Wellen (Session)"))
-        self.k_avg = StatCard(tr("Ø Endwelle"))
-        self.k_rate = StatCard(tr("Wellen pro Stunde"))
+        self.k_total = StatCard(tr("Attempts total"))
+        self.k_session = StatCard(tr("Attempts (session)"))
+        self.k_waves = StatCard(tr("Waves (session)"))
+        self.k_avg = StatCard(tr("Avg. final wave"))
+        self.k_rate = StatCard(tr("Waves per hour"))
         for card in (self.k_total, self.k_session, self.k_waves, self.k_avg, self.k_rate):
             kpis.addWidget(card, 1)
         root.addLayout(kpis)
@@ -90,7 +90,7 @@ class MonitorPage(QWidget):
         self.log_card.setVisible(bool(main.engine.settings.macro_log_home))
         self.extras = ExtrasCard(main)
 
-        live = Card(tr("Live-Erkennung"))                 # ohne Vorschaubild: Zahl, Balken, Kurzinfos
+        live = Card(tr("Live detection"))                 # ohne Vorschaubild: Zahl, Balken, Kurzinfos
         self.wave = label("–", "wave")
         self.wave.setAlignment(Qt.AlignmentFlag.AlignCenter)
         live.body.addWidget(self.wave)
@@ -111,8 +111,8 @@ class MonitorPage(QWidget):
         self.raid_pick = ComboBox()
         self.raid_pick.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
         self.raid_pick.setMinimumContentsLength(8)
-        self.raid_pick.setToolTip(tr("Zu diesem Raid zählen die Versuche. Startet das Makro einen Raid, stellt es "
-                                     "ihn selbst ein – spielst du selbst, wählst du ihn hier."))
+        self.raid_pick.setToolTip(tr("Attempts count towards this raid. If the macro starts a raid, it sets it "
+                                     "itself – if you play yourself, pick it here."))
         self.raid_pick.activated.connect(lambda _i: self.main.select_raid(self.raid_pick.currentData() or ""))
         raid_row.addWidget(self.raid_pick, 1)
         self.i_raid = label("", "small", wrap=True)       # Wand des gewählten Raids
@@ -139,7 +139,7 @@ class MonitorPage(QWidget):
         quests = Card(tr("Quests"))
         self.quest_box = QVBoxLayout()
         theme.track_spacing(self.quest_box, 6)
-        self.quest_empty = EmptyState("quests", tr("Noch keine Quests gelesen."))
+        self.quest_empty = EmptyState("quests", tr("No quests read yet."))
         self.quest_box.addWidget(self.quest_empty)
         quests.body.addLayout(self.quest_box)
         right.addWidget(quests)
@@ -185,13 +185,13 @@ class MonitorPage(QWidget):
             self._was_running = running
             # normaler Knopf-Rahmen (der Stil „primary“ greift in der Kopfzeile nicht), Symbol gezeichnet + gefärbt
             self.btn_start.setIcon(media_icon("stop", "danger") if running else media_icon("play", "accent"))
-            self.btn_start.setToolTip(tr("Stoppen") if running else tr("Starten"))
+            self.btn_start.setToolTip(tr("Stop monitoring") if running else tr("Start"))
             self._paused = None
             self.btn_pause.setVisible(running)
         if st.paused != getattr(self, "_paused", None):
             self._paused = st.paused
             self.btn_pause.setIcon(media_icon("play" if st.paused else "pause", "accent" if st.paused else "text"))
-            self.btn_pause.setToolTip(tr("Fortsetzen") if st.paused else tr("Pause"))
+            self.btn_pause.setToolTip(tr("Resume") if st.paused else tr("Pause"))
 
     def refresh(self) -> None:
         st = self.engine.state
@@ -221,9 +221,9 @@ class MonitorPage(QWidget):
         if color != self._wave_color:                   # nur bei Wechsel neu setzen (Stylesheet ist teuer)
             self._wave_color = color
             self.wave.setStyleSheet(f"color: {color};" if color else "")
-            self.wave.setToolTip(tr("Bestwelle: {wave}", wave=self._best) if self._best else "")
-        self.i_read.setText(tr("Lesezeit: {ms} ms", ms=f"{st.read_ms:.0f}"))
-        self.i_mode.setText(tr("Prüft alle {interval} s", interval=dec(f"{s.preset()['interval']:g}")))
+            self.wave.setToolTip(tr("Best wave: {wave}", wave=self._best) if self._best else "")
+        self.i_read.setText(tr("Read time: {ms} ms", ms=f"{st.read_ms:.0f}"))
+        self.i_mode.setText(tr("Checks every {interval} s", interval=dec(f"{s.preset()['interval']:g}")))
         self.status_line.setText(tr(st.info))
         raid_text = ""
         if self.raid_pick.currentData() != (st.profile or None) and not self.raid_pick.view().isVisible():
@@ -235,23 +235,23 @@ class MonitorPage(QWidget):
             self._next_best = now + 5.0
             self._best = self.engine.stats.best_wave(st.profile or None)
         if st.profile and self._wall:
-            raid_text = tr("Wand: Welle {wave} ({streak}× in Folge)", wave=self._wall.wave, streak=self._wall.streak)
+            raid_text = tr("Wall: wave {wave} ({streak}× in a row)", wave=self._wall.wave, streak=self._wall.streak)
         self.i_raid.setText(raid_text)
         self.i_raid.setVisible(bool(raid_text))
         if st.roblox_alive is None:
-            self.i_proc.setText(tr("Roblox: nicht gestartet"))
+            self.i_proc.setText(tr("Roblox: not running"))
         elif st.roblox_alive is False:
-            self.i_proc.setText(tr("Roblox: beendet"))
+            self.i_proc.setText(tr("Roblox: closed"))
         else:
             ram = dec(f"{st.roblox_ram_mb / 1024:.1f} GB RAM") if st.roblox_ram_mb else "–"
             cpu = f"{st.roblox_cpu:.0f} % CPU" if st.roblox_cpu is not None else "–"
-            self.i_proc.setText(tr("Roblox: läuft · {ram} · {cpu}", ram=ram, cpu=cpu))
+            self.i_proc.setText(tr("Roblox: running · {ram} · {cpu}", ram=ram, cpu=cpu))
         if self._self_proc is not None and now >= self._next_self:
             self._next_self = now + 3.0                 # eigene Auslastung (gleich gemessen wie bei Roblox)
             try:
                 ram_mb = self._self_proc.memory_info().rss / 1048576
                 cpu = self._self_proc.cpu_percent(None) / self._cpu_count
-                self.i_self.setText(tr("Dieses Programm: {ram} MB RAM · {cpu} % CPU", ram=f"{ram_mb:.0f}",
+                self.i_self.setText(tr("This program: {ram} MB RAM · {cpu} % CPU", ram=f"{ram_mb:.0f}",
                                        cpu=dec(f"{cpu:.1f}")))
             except Exception:
                 self.i_self.setText("")

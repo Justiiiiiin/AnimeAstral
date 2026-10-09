@@ -84,7 +84,7 @@ class Guard:
     # ------------------------------------------------------------ Eingaben der Engine
     def on_frame(self) -> None:
         if self._missing_alerted:
-            self._event(tr("Bilder vom Roblox-Fenster kommen wieder an"), "ok")
+            self._event(tr("Images from the Roblox window are arriving again"), "ok")
         self._missing_since, self._missing_alerted = None, False
 
     def on_missing(self, now: float) -> None:
@@ -95,9 +95,9 @@ class Guard:
         if (now - self._missing_since >= NO_FRAMES_AFTER and not self._missing_alerted
                 and not self._down_alerted):
             self._missing_alerted = True
-            self._event(tr("Keine Bilder vom Roblox-Fenster"), "error")
-            self._notify("roblox_down", tr("Keine Bilder vom Roblox-Fenster"), messages.COLOR_ERROR,
-                         description=tr("Das Fenster ist minimiert, geschlossen oder eingefroren."))
+            self._event(tr("No images from the Roblox window"), "error")
+            self._notify("roblox_down", tr("No images from the Roblox window"), messages.COLOR_ERROR,
+                         description=tr("The window is minimized, closed or frozen."))
 
     def on_wave(self, value: Optional[int], now: float) -> None:
         if value is None:
@@ -108,15 +108,15 @@ class Guard:
             self._last_change = now
             if self._stall_alerted:
                 self._stall_alerted = False
-                self._event(tr("Zähler läuft wieder"), "ok")
-                self._notify("stall", tr("Zähler läuft wieder"), messages.COLOR_OK,
-                             description=tr("Aktuell Welle {wave}.", wave=value))
+                self._event(tr("Counter is moving again"), "ok")
+                self._notify("stall", tr("Counter is moving again"), messages.COLOR_OK,
+                             description=tr("Currently wave {wave}.", wave=value))
 
     def on_raid_end(self, now: float) -> None:
         self._ref_raid = now
         if self._noraid_alerted:
             self._noraid_alerted = False
-            self._event(tr("Raids laufen wieder"), "ok")
+            self._event(tr("Raids are running again"), "ok")
 
     # ------------------------------------------------------------------ Prozess
     def poll_process(self, now: float) -> None:
@@ -137,9 +137,9 @@ class Guard:
                     self._down_since = now
                 elif now - self._down_since >= PROCESS_DOWN_AFTER and not self._down_alerted:
                     self._down_alerted = True
-                    self._event(tr("Roblox wurde beendet oder ist abgestürzt"), "error")
-                    self._notify("roblox_down", tr("Roblox wurde beendet"), messages.COLOR_ERROR,
-                                 description=tr("Der Roblox-Prozess läuft nicht mehr (Absturz oder geschlossen)."))
+                    self._event(tr("Roblox was closed or crashed"), "error")
+                    self._notify("roblox_down", tr("Roblox was closed"), messages.COLOR_ERROR,
+                                 description=tr("The Roblox process is no longer running (crashed or closed)."))
             return
 
         self._seen_proc = True
@@ -150,8 +150,8 @@ class Guard:
         except Exception:
             st.roblox_ram_mb = st.roblox_cpu = None
         if self._down_alerted:
-            self._event(tr("Roblox läuft wieder"), "ok")
-            self._notify("roblox_down", tr("Roblox läuft wieder"), messages.COLOR_OK)
+            self._event(tr("Roblox is running again"), "ok")
+            self._notify("roblox_down", tr("Roblox is running again"), messages.COLOR_OK)
         self._down_since, self._down_alerted = None, False
 
         limit = s.ram_alert_gb * 1024
@@ -159,10 +159,10 @@ class Guard:
                 and now >= self._next_ram):
             self._next_ram = now + RAM_REPEAT_SECONDS
             gb = st.roblox_ram_mb / 1024
-            self._event(tr("Roblox belegt {gb} GB Arbeitsspeicher", gb=f"{gb:.1f}"), "warn")
-            self._notify("health", tr("Hoher Speicherverbrauch"), messages.COLOR_WARN,
-                         [(tr("Roblox RAM"), f"{gb:.1f} GB", True), (tr("Grenze"), f"{s.ram_alert_gb:g} GB", True)],
-                         tr("Bei sehr langen Sitzungen hilft ein Neustart von Roblox."))
+            self._event(tr("Roblox is using {gb} GB of memory", gb=f"{gb:.1f}"), "warn")
+            self._notify("health", tr("High memory usage"), messages.COLOR_WARN,
+                         [(tr("Roblox RAM"), f"{gb:.1f} GB", True), (tr("Limit"), f"{s.ram_alert_gb:g} GB", True)],
+                         tr("For very long sessions, restarting Roblox helps."))
 
     # ---------------------------------------------------------------- Stillstand
     def check_stall(self, now: float, in_raid: bool) -> None:
@@ -173,17 +173,17 @@ class Guard:
                 and now - self._last_change >= s.stall_minutes * 60:
             self._stall_alerted = True
             minutes = (now - self._last_change) / 60
-            text = tr("Der Zähler steht seit {minutes} Min. bei Welle {wave}.", minutes=f"{minutes:.0f}", wave=self._wave_value)
+            text = tr("The counter has been stuck at wave {wave} for {minutes} min.", minutes=f"{minutes:.0f}", wave=self._wave_value)
             self._event(text, "error")
-            self._notify("stall", tr("Stillstand erkannt"), messages.COLOR_WARN,
-                         [(tr("Welle"), str(self._wave_value), True), (tr("Dauer"), tr("{minutes} Min.", minutes=f"{minutes:.0f}"), True)],
+            self._notify("stall", tr("Stall detected"), messages.COLOR_WARN,
+                         [(tr("Wave"), str(self._wave_value), True), (tr("Duration"), tr("{minutes} min.", minutes=f"{minutes:.0f}"), True)],
                          text, self._screenshot())
         if s.no_raid_minutes > 0 and not self._noraid_alerted and self._state.roblox_alive is not False \
                 and now - self._ref_raid >= s.no_raid_minutes * 60:
             self._noraid_alerted = True
-            text = tr("Seit {minutes} Min. wurde kein Raid beendet.", minutes=s.no_raid_minutes)
+            text = tr("No raid has finished for {minutes} min.", minutes=s.no_raid_minutes)
             self._event(text, "warn")
-            self._notify("stall", tr("Kein Raid-Fortschritt"), messages.COLOR_WARN, description=text,
+            self._notify("stall", tr("No raid progress"), messages.COLOR_WARN, description=text,
                          image=self._screenshot())
 
     def _screenshot(self):

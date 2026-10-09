@@ -27,13 +27,13 @@ def _size(path: Path) -> int:
 def _groups(base: Path) -> list[tuple[str, list[Path], bool]]:
     log = app_paths.log_file()
     return [
-        (N_("Statistik"), [app_paths.history_file()], False),
-        (N_("Archiv"), [base / "archive"], False),
-        (N_("Raids und Einstellungen"), [base / "profiles", app_paths.settings_file()], False),
-        (N_("Protokoll"), [log], False),
-        (N_("Ältere Protokolle"), sorted(base.glob(log.name + ".*")), True),
-        (N_("Debug-Bilder"), [base / "debug"], True),
-        (N_("Update-Reste"), [base / "updates"], True),
+        (N_("Statistics"), [app_paths.history_file()], False),
+        (N_("Archive"), [base / "archive"], False),
+        (N_("Raids and settings"), [base / "profiles", app_paths.settings_file()], False),
+        (N_("Log"), [log], False),
+        (N_("Older logs"), sorted(base.glob(log.name + ".*")), True),
+        (N_("Debug images"), [base / "debug"], True),
+        (N_("Update leftovers"), [base / "updates"], True),
     ]
 
 
@@ -42,7 +42,7 @@ def usage(base: Optional[Path] = None) -> list[Usage]:
     out = [Usage(name, sum(_size(p) for p in paths), removable) for name, paths, removable in _groups(base)]
     known = {p.resolve() for _n, paths, _r in _groups(base) for p in paths}
     other = sum(_size(p) for p in base.iterdir() if p.resolve() not in known)
-    out.append(Usage(N_("Sonstiges"), other, False))
+    out.append(Usage(N_("Other"), other, False))
     return out
 
 

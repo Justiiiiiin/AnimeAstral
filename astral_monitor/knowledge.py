@@ -31,38 +31,38 @@ from .i18n import N_, tr
 
 # Kategorie -> (Anzeige, Titel-Wörter, Text-Wörter, Gewicht je Treffer); Wörter klein, ohne Satzzeichen
 CATEGORIES: dict[str, tuple[str, tuple[str, ...], tuple[str, ...]]] = {
-    "pets": (N_("Pets (Roll-Menü)"), ("pets",), ("pity", "open", "auto", "mythical")),
+    "pets": (N_("Pets (roll menu)"), ("pets",), ("pity", "open", "auto", "mythical")),
     "titans": (N_("Titans"), ("titan", "titans"), ("titan", "rare", "epic", "legendary", "secret")),
     "gacha": (N_("Gacha"), (), ("roll", "autoroll", "current", "buffs", "cost", "pity")),
     "crafting": (N_("Crafting"), ("crafting", "craft"), ("craft", "lose", "selected", "shiny")),
-    "upgrade_tree": (N_("Upgrade Tree"), ("tree",), ("total", "stats", "leveling", "token", "close")),
-    "artefact": (N_("Artefakt"), ("elixir", "artifact", "artefact"), ("artifact", "artefact", "fragments", "elixir",
+    "upgrade_tree": (N_("Upgrade tree"), ("tree",), ("total", "stats", "leveling", "token", "close")),
+    "artefact": (N_("Artifact"), ("elixir", "artifact", "artefact"), ("artifact", "artefact", "fragments", "elixir",
                                                                       "progress", "boosts", "exit")),
     "upgrades": (N_("Upgrades"), ("upgrade", "upgrades"), ("upgrade", "max", "level", "lv")),
     "progression": (N_("Progression"), ("progression",), ("progression", "rank", "next")),
-    "shop": (N_("Shop / Händler"), ("shop", "merchant"), ("buy", "stock", "restock", "shop", "merchant")),
-    "battlepass": (N_("Battlepass"), ("battlepass", "pass"), ("battlepass", "tier", "premium", "free")),
+    "shop": (N_("Shop / merchant"), ("shop", "merchant"), ("buy", "stock", "restock", "shop", "merchant")),
+    "battlepass": (N_("Battle pass"), ("battlepass", "pass"), ("battlepass", "tier", "premium", "free")),
     "raid": (N_("Raid"), ("raid",), ("raid", "start", "difficulty", "create", "join", "enter")),
     "defense": (N_("Defense"), ("defense",), ("defense", "mode", "wave", "start")),
-    "exchange": (N_("Tausch"), ("exchange",), ("exchange", "trade", "token")),
+    "exchange": (N_("Exchange"), ("exchange",), ("exchange", "trade", "token")),
     "boosts": (N_("Boosts"), ("boosts", "boost"), ("play", "pause", "sync", "food", "potion")),
-    "passive": (N_("Passiv"), ("passive", "passives", "curse", "curses"), ("passive", "reroll", "lock", "index")),
-    "shrine": (N_("Shrine (opfern)"), ("shrine",), ("offered", "offer", "quantity", "coins", "choose")),
+    "passive": (N_("Passive"), ("passive", "passives", "curse", "curses"), ("passive", "reroll", "lock", "index")),
+    "shrine": (N_("Shrine (offerings)"), ("shrine",), ("offered", "offer", "quantity", "coins", "choose")),
     "gigs": (N_("Fixer Gigs"), ("gigs", "fixer"), ("gigs", "claim", "finish", "slots", "ready", "send")),
-    "info": (N_("Nur Anzeige"), ("spirit", "contract", "chakra", "karma", "vessel", "celestial", "keys", "dragon",
+    "info": (N_("Display only"), ("spirit", "contract", "chakra", "karma", "vessel", "celestial", "keys", "dragon",
                                  "slayer", "commandments", "renaming"), ()),
-    "later": (N_("Später (1.5.0)"), ("exam", "cyberdeck", "quickhacks"), ()),
+    "later": (N_("Later (1.5.0)"), ("exam", "cyberdeck", "quickhacks"), ()),
     "equip_best": (N_("Equip Best"), ("equip",), ("equip", "best", "power", "damage", "yen", "luck", "drop")),
-    "guild": (N_("Gilde"), ("guild",), ("guild", "members", "claim", "rewards", "quests", "donate")),
+    "guild": (N_("Guild"), ("guild",), ("guild", "members", "claim", "rewards", "quests", "donate")),
     # aus dem ersten echten Erkunden (07.10.2026): Knöpfe am Bildschirmrand und weitere Welt-Symbole
     "quests": (N_("Quests"), ("quests", "quest"), ("claim", "complete", "times", "quests")),
     "promotion": (N_("Promotion"), ("promotion", "promotions"), ("promote", "promotion", "missions", "boost")),
-    "inventory": (N_("Inventar"), ("inventory",), ("rarity", "key", "inventory", "items")),
+    "inventory": (N_("Inventory"), ("inventory",), ("rarity", "key", "inventory", "items")),
     "achievements": (N_("Achievements"), ("achievements", "achievement"), ("claim", "achievements", "veteran")),
     "index": (N_("Index"), ("index",), ("worlds", "collections", "index", "complete")),
     "ranks": (N_("Ranks"), ("ranks", "rank"), ("rank", "max", "auto")),
-    "avatars": (N_("Avatare"), ("avatars", "avatar"), ("avatar", "equip")),
-    "event": (N_("Event"), ("event", "medal"), ("event", "medal")),
+    "avatars": (N_("Avatars"), ("avatars", "avatar"), ("avatar", "equip")),
+    "event": (N_("Game event"), ("event", "medal"), ("event", "medal")),
 }
 
 # Knöpfe, die beim Erkunden nur gemerkt, nie geklickt werden (kosten etwas oder ändern den Spielstand)
@@ -130,7 +130,7 @@ def classify(title: str, words: list[tuple[str, list[float]]], template: str = "
             if score > best.score:
                 best = Analysis(key, tr(label), score, hit_title + hit_text, title=title)
         if best.score < 2.0:
-            best = Analysis("unknown", tr("Unbekannt"), best.score, best.matched, title=title)
+            best = Analysis("unknown", tr("Unknown"), best.score, best.matched, title=title)
     best.buttons = [(w, r) for w, r in words if _norm(w) in ACTION_WORDS or _norm(w) in CLOSE_WORDS]
     return best
 

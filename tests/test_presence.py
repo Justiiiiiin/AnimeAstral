@@ -9,6 +9,16 @@ SNAP = {"status": "running", "wave": 14, "total_waves": 100, "profile": "Militec
 ICON = "https://tr.rbxcdn.com/abc/512/512/Image/Png"
 
 
+
+def setUpModule():                                     # these tests check the German texts
+    from astral_monitor import i18n
+    i18n.set_language("de")
+
+
+def tearDownModule():
+    from astral_monitor import i18n
+    i18n.set_language("en")
+
 class FakeRpc:
     created = []
 

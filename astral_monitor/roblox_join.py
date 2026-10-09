@@ -67,14 +67,14 @@ def deep_link(text: str) -> Optional[str]:
 def explain(text: str) -> str:
     """Kurze Rückmeldung zum eingetragenen Link (für die Einstellungen)."""
     if not (text or "").strip():
-        return tr("Kein Link eingetragen.")
+        return tr("No link entered.")
     parsed = parse_private_link(text)
     if parsed:
-        return tr("Spiel {place} · Code …{tail}", place=parsed[0], tail=parsed[1][-6:])
+        return tr("Game {place} · code …{tail}", place=parsed[0], tail=parsed[1][-6:])
     share = parse_share_link(text)
     if share:
-        return tr("Teilen-Link · Code …{tail}", tail=share[-6:])
-    return tr("Kein gültiger Private-Server-Link (erwartet: roblox.com/share?code=…&type=Server oder "
+        return tr("Share link · code …{tail}", tail=share[-6:])
+    return tr("Not a valid private server link (expected: roblox.com/share?code=…&type=Server or "
               "roblox.com/games/…?privateServerLinkCode=…).")
 
 
@@ -84,12 +84,12 @@ def join(text: str) -> tuple[bool, str]:
     if uri is None:
         return False, explain(text)
     if sys.platform != "win32":
-        return False, tr("Nur unter Windows möglich.")
+        return False, tr("Only possible on Windows.")
     try:
         os.startfile(uri)                              # öffnet den registrierten Roblox-Client
     except OSError as exc:
-        return False, tr("Roblox konnte nicht gestartet werden ({error}). Ist Roblox installiert?", error=exc)
-    return True, tr("Roblox wird gestartet und tritt dem privaten Server bei …")
+        return False, tr("Roblox could not be started ({error}). Is Roblox installed?", error=exc)
+    return True, tr("Starting Roblox and joining the private server …")
 
 
 # ------------------------------------------------------------------ Favoriten teilen

@@ -21,14 +21,14 @@ class ColorButton(QToolButton):
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
         menu = QMenu(self)
-        menu.addAction(tr("Farbe wählen …"), self._pick)
-        menu.addAction(tr("Standardfarbe"), lambda: self.set_value(""))
+        menu.addAction(tr("Choose color …"), self._pick)
+        menu.addAction(tr("Default color"), lambda: self.set_value(""))
         self.setMenu(menu)
         self.setFixedSize(theme.px(44), theme.px(22))
         self.set_value("")
 
     def _pick(self) -> None:
-        color = QColorDialog.getColor(QColor(self.value or theme.color("accent")), self, tr("Embed-Farbe"))
+        color = QColorDialog.getColor(QColor(self.value or theme.color("accent")), self, tr("Embed color"))
         if color.isValid():
             self.set_value(color.name().upper())
 
@@ -40,12 +40,12 @@ class ColorButton(QToolButton):
             self.setText("")
             self.setStyleSheet(f"QToolButton {{ background: {self.value}; {flat} }}"
                                "QToolButton::menu-indicator { image: none; width: 0; }")
-            self.setToolTip(tr("Eigene Farbe {color}", color=self.value))
+            self.setToolTip(tr("Custom color {color}", color=self.value))
         else:
             self.setText(tr("Auto"))
             self.setStyleSheet(f"QToolButton {{ font-size: 8pt; {flat} }}"
                                "QToolButton::menu-indicator { image: none; width: 0; }")
-            self.setToolTip(tr("Standardfarbe des Programms"))
+            self.setToolTip(tr("The program's default color"))
 
 
 class AlertsPage(QWidget):
@@ -59,7 +59,7 @@ class AlertsPage(QWidget):
         root = QVBoxLayout(self)
         theme.track_margins(root, 28, 24, 28, 24)
         theme.track_spacing(root, 14)
-        head = page_header(tr("Meldungen"), tr("Was wird an Discord gesendet, und wann gibt es einen Ping?"))
+        head = page_header(tr("Alerts"), tr("What is sent to Discord, and when is there a ping?"))
         head.addStretch(1)
         root.addLayout(head)
         cols = QHBoxLayout()                               # links Discord + Live-Status, rechts Ereignisse
@@ -75,29 +75,29 @@ class AlertsPage(QWidget):
         self.url = QLineEdit()
         self.url.setEchoMode(QLineEdit.EchoMode.Password)
         self.url.setPlaceholderText(tr("https://discord.com/api/webhooks/…"))
-        show = QCheckBox(tr("anzeigen"))
+        show = QCheckBox(tr("show"))
         show.toggled.connect(lambda on: [f.setEchoMode(QLineEdit.EchoMode.Normal if on else QLineEdit.EchoMode.Password)
                                          for f in (self.url, self.forum)])
         self.name = QLineEdit()
         self.ping = QLineEdit()
-        self.ping.setPlaceholderText(tr("Deine Discord-ID (nur Ziffern)"))
-        grid.addWidget(label(tr("Webhook-URL")), 0, 0)
+        self.ping.setPlaceholderText(tr("Your Discord ID (digits only)"))
+        grid.addWidget(label(tr("Webhook URL")), 0, 0)
         grid.addWidget(self.url, 0, 1)
         grid.addWidget(show, 0, 2)
-        grid.addWidget(label(tr("Anzeigename")), 1, 0)
+        grid.addWidget(label(tr("Display name")), 1, 0)
         grid.addWidget(self.name, 1, 1, 1, 2)
-        grid.addWidget(label(tr("Ping-Ziel")), 2, 0)
+        grid.addWidget(label(tr("Ping target")), 2, 0)
         grid.addWidget(self.ping, 2, 1, 1, 2)
         self.forum = QLineEdit()
         self.forum.setEchoMode(QLineEdit.EchoMode.Password)
-        self.forum.setPlaceholderText(tr("optional – Webhook eines Forum-Kanals"))
+        self.forum.setPlaceholderText(tr("optional – webhook of a forum channel"))
         forum_label = QHBoxLayout()
-        forum_label.addWidget(label(tr("Tages-Beiträge")))
+        forum_label.addWidget(label(tr("Daily posts")))
         forum_label.addWidget(InfoButton(tr(
-            "Raid-, Quest-, Rekord- und Wand-Meldungen landen in einem Forum-Kanal – jeden Tag in einem eigenen "
-            "Beitrag „Raids · Datum“. Der Hauptkanal bleibt für Live-Status und Alarme frei.\n\nSo geht's: "
-            "Forum-Kanal anlegen → Kanal bearbeiten → Integrationen → Webhooks → neuen Webhook, URL hier "
-            "einfügen. Leer lassen = alles in den Hauptkanal.")))
+            "Raid, quest, record and wall messages go to a forum channel – each day in its own post “Raids · date”. "
+            "The main channel stays free for the live status and alerts.\n\nHow to: create a forum channel → edit "
+            "channel → Integrations → Webhooks → new webhook, paste the URL here. Leave empty = everything goes to "
+            "the main channel.")))
         forum_label.addStretch(1)
         grid.addLayout(forum_label, 3, 0)
         grid.addWidget(self.forum, 3, 1, 1, 2)
@@ -105,7 +105,7 @@ class AlertsPage(QWidget):
         theme.track_spacing(style_row, 6)
         self.style_group = QButtonGroup(self)
         self.style_group.setExclusive(True)
-        for key, text in (("detailed", tr("Ausführlich")), ("compact", tr("Kompakt"))):
+        for key, text in (("detailed", tr("Detailed")), ("compact", tr("Compact"))):
             btn = QPushButton(text)
             btn.setObjectName("chipbtn")
             btn.setCheckable(True)
@@ -113,22 +113,22 @@ class AlertsPage(QWidget):
             self.style_group.addButton(btn)
             style_row.addWidget(btn)
         style_row.addWidget(InfoButton(tr(
-            "Ausführlich: Kennzahlen als einzelne Felder.\n\nKompakt: eine ruhige Zeile mit den wichtigsten "
-            "Werten – auch der Live-Status wird schlanker.")))
+            "Detailed: figures as separate fields.\n\nCompact: one calm line with the key values – the live status "
+            "gets slimmer too.")))
         style_row.addStretch(1)
-        test = QPushButton(tr("Test-Nachricht senden"))     # in derselben Zeile (Seite passt ohne Scrollen)
+        test = QPushButton(tr("Send test message"))     # in derselben Zeile (Seite passt ohne Scrollen)
         test.clicked.connect(self._send_test)
         style_row.addWidget(test)
-        grid.addWidget(label(tr("Nachrichtenstil")), 4, 0)
+        grid.addWidget(label(tr("Message style")), 4, 0)
         grid.addLayout(style_row, 4, 1, 1, 2)
         hook.body.addLayout(grid)
         left.addWidget(hook)
 
-        live = Card(tr("Live-Status"),
-                    tr("Eine Nachricht im Kanal, die sich laufend aktualisiert, statt vieler Uptime-Meldungen."
-                       "\n\nTipp: Rechtsklick auf die Statusnachricht → „Anheften“. Sie wird danach nur noch "
-                       "bearbeitet. „Neu senden“ erzeugt eine neue Nachricht, die du neu anheftest."))
-        self.status_enabled = QCheckBox(tr("Eine Statusnachricht verwenden, die sich selbst aktualisiert"))
+        live = Card(tr("Live status"),
+                    tr("One message in the channel that keeps updating, instead of many uptime messages.\n\nTip: "
+                       "right-click the status message → “Pin”. From then on it is only edited. “Resend” creates a "
+                       "new message that you pin again."))
+        self.status_enabled = QCheckBox(tr("Use one status message that updates itself"))
         self.status_enabled.toggled.connect(self._sync_uptime)
         live.body.addWidget(self.status_enabled)
         lg = form_grid()
@@ -137,17 +137,17 @@ class AlertsPage(QWidget):
         self.status_interval.setSuffix(" s")
         self.uptime = SpinBox()
         self.uptime.setRange(1, 1440)
-        self.uptime.setSuffix(tr(" Min"))
-        lg.addWidget(label(tr("Aktualisieren alle")), 0, 0)
+        self.uptime.setSuffix(tr(" min"))
+        lg.addWidget(label(tr("Update every")), 0, 0)
         lg.addWidget(self.status_interval, 0, 1)
-        self.uptime_label = label(tr("Sonst Uptime-Meldung alle"))
+        self.uptime_label = label(tr("Otherwise uptime message every"))
         lg.addWidget(self.uptime_label, 1, 0)
         lg.addWidget(self.uptime, 1, 1)
         live.body.addLayout(lg)
-        self.status_bottom = QCheckBox(tr("Nach jeder Meldung automatisch wieder ganz nach unten schieben"))
+        self.status_bottom = QCheckBox(tr("Automatically move it back to the bottom after every message"))
         live.body.addWidget(self.status_bottom)
         brow = QHBoxLayout()
-        resend = QPushButton(tr("Jetzt unten neu senden"))
+        resend = QPushButton(tr("Resend at the bottom now"))
         resend.clicked.connect(self.main.resend_status)
         brow.addWidget(resend)
         brow.addStretch(1)
@@ -155,15 +155,15 @@ class AlertsPage(QWidget):
         left.addWidget(live)
         left.addStretch(1)
 
-        events = Card(tr("Ereignisse"))
+        events = Card(tr("Events"))
         table = QGridLayout()
         table.setColumnStretch(0, 1)
         theme.track_spacing(table, 6)
         center = Qt.AlignmentFlag.AlignCenter
-        table.addWidget(label(tr("Ereignis"), "small"), 0, 0)
-        table.addWidget(label(tr("Senden"), "small"), 0, 1, center)
+        table.addWidget(label(tr("Event"), "small"), 0, 0)
+        table.addWidget(label(tr("Send"), "small"), 0, 1, center)
         table.addWidget(label(tr("Ping"), "small"), 0, 2, center)
-        table.addWidget(label(tr("Farbe"), "small"), 0, 3, center)
+        table.addWidget(label(tr("Color"), "small"), 0, 3, center)
         for col in (1, 2, 3):
             theme.track(table, lambda o, f, c=col: o.setColumnMinimumWidth(c, round(56 * f)))
         self.send_boxes: dict[str, QCheckBox] = {}
@@ -179,9 +179,9 @@ class AlertsPage(QWidget):
             self.color_buttons[key] = ColorButton()
             table.addWidget(self.color_buttons[key], i, 3, center)
         events.body.addLayout(table)
-        self.attach = QCheckBox(tr("Quest-Fortschritt an Raid- und Uptime-Meldungen anhängen"))
+        self.attach = QCheckBox(tr("Attach quest progress to raid and uptime messages"))
         events.body.addWidget(self.attach)
-        self.report_on_stop = QCheckBox(tr("Beim Stoppen eine Statistik-Karte senden"))
+        self.report_on_stop = QCheckBox(tr("Send a stats card when stopping"))
         events.body.addWidget(self.report_on_stop)
         events.body.addStretch(1)
         cols.addWidget(events, 1)
@@ -217,11 +217,11 @@ class AlertsPage(QWidget):
         s.username = self.name.text().strip() or "Anime Astral Monitor"
         ping = self.ping.text().strip()
         if ping and not ping.isdigit():
-            raise ValueError(tr("Die Discord-ID darf nur aus Ziffern bestehen."))
+            raise ValueError(tr("The Discord ID may only contain digits."))
         s.ping_user_id = ping
         forum = self.forum.text().strip()
         if forum and not is_valid_webhook(forum):
-            raise ValueError(tr("Der Forum-Webhook ist keine gültige Discord-Webhook-URL (Seite „Meldungen“)."))
+            raise ValueError(tr("The forum webhook is not a valid Discord webhook URL (“Alerts” page)."))
         s.forum_webhook_url = forum
         checked = self.style_group.checkedButton()
         s.message_style = checked.property("style_key") if checked else "detailed"
@@ -243,7 +243,7 @@ class AlertsPage(QWidget):
     def _send_test(self) -> None:
         url = self.url.text().strip()
         if not is_valid_webhook(url):
-            QMessageBox.warning(self, tr("Webhook"), tr("Bitte zuerst eine gültige Webhook-URL eintragen."))
+            QMessageBox.warning(self, tr("Webhook"), tr("Please enter a valid webhook URL first."))
             return
-        self.main.test_webhook(url, lambda ok, info: QMessageBox.information(self, tr("Discord"), tr("Test-Nachricht gesendet ✅"))
-                               if ok else QMessageBox.critical(self, tr("Discord"), tr("Senden fehlgeschlagen:\n{error}", error=info)))
+        self.main.test_webhook(url, lambda ok, info: QMessageBox.information(self, tr("Discord"), tr("Test message sent ✅"))
+                               if ok else QMessageBox.critical(self, tr("Discord"), tr("Sending failed:\n{error}", error=info)))

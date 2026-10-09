@@ -27,13 +27,13 @@ class VersionsDialog(QDialog):
         super().__init__(main)
         self.main = main
         self.releases: list[updater.ReleaseInfo] = []
-        self.setWindowTitle(tr("Versionen & Änderungen"))
+        self.setWindowTitle(tr("Versions & changes"))
         theme.track(self, lambda o, f: o.resize(round(820 * f), round(560 * f)))
         root = QVBoxLayout(self)
         theme.track_margins(root, 24, 20, 24, 18)
         theme.track_spacing(root, 12)
-        root.addWidget(label(tr("Versionen & Änderungen"), "h1"))
-        root.addWidget(label(tr("Installiert: {version}", version=__version__), "muted"))
+        root.addWidget(label(tr("Versions & changes"), "h1"))
+        root.addWidget(label(tr("Installed: {version}", version=__version__), "muted"))
         body = QHBoxLayout()
         theme.track_spacing(body, 14)
         self.list = QListWidget()
@@ -45,13 +45,13 @@ class VersionsDialog(QDialog):
         self.notes.setOpenExternalLinks(True)
         body.addWidget(self.notes, 1)
         root.addLayout(body, 1)
-        self.state = label(tr("Lade Versionen …"), "small", wrap=True)
+        self.state = label(tr("Loading versions …"), "small", wrap=True)
         root.addWidget(self.state)
         row = QHBoxLayout()
         row.addStretch(1)
-        close = QPushButton(tr("Schließen"))
+        close = QPushButton(tr("Close"))
         close.clicked.connect(self.reject)
-        self.install = QPushButton(tr("Diese Version installieren"))
+        self.install = QPushButton(tr("Install this version"))
         self.install.setObjectName("primary")
         self.install.setEnabled(False)
         self.install.clicked.connect(self._install)
@@ -66,7 +66,7 @@ class VersionsDialog(QDialog):
             try:
                 self._result["data"] = updater.list_releases(repo, beta=self.main.engine.settings.update_beta) if repo else []
                 if not repo:
-                    self._result["error"] = tr("In dieser Version ist keine Update-Quelle hinterlegt.")
+                    self._result["error"] = tr("This version has no update source.")
             except updater.UpdateError as exc:
                 self._result["error"] = str(exc)
             self._result["done"] = True
@@ -88,8 +88,8 @@ class VersionsDialog(QDialog):
             self.state.setText("")
         current = None
         for i, rel in enumerate(self.releases):
-            mark = ("  ● " + tr("installiert")) if rel.version == __version__ else \
-                ("  ★ " + tr("neu")) if updater.is_newer(rel.version) else ""
+            mark = ("  ● " + tr("installed")) if rel.version == __version__ else \
+                ("  ★ " + tr("new")) if updater.is_newer(rel.version) else ""
             beta = ("  β " + tr("Beta")) if rel.prerelease else ""
             item = QListWidgetItem(f"{rel.version}   {_date(rel.published)}{beta}{mark}")
             item.setData(Qt.ItemDataRole.UserRole, i)
@@ -103,17 +103,16 @@ class VersionsDialog(QDialog):
         if not 0 <= row < len(self.releases):
             return
         rel = self.releases[row]
-        self.notes.setMarkdown(f"## {rel.version}\n\n" + (rel.notes or tr("Keine Versionshinweise angegeben.")))
+        self.notes.setMarkdown(f"## {rel.version}\n\n" + (rel.notes or tr("No release notes provided.")))
         if rel.version == __version__:
-            self.install.setText(tr("Erneut installieren"))
+            self.install.setText(tr("Reinstall"))
         elif updater.is_newer(rel.version):
-            self.install.setText(tr("Auf {version} aktualisieren", version=rel.version))
+            self.install.setText(tr("Update to {version}", version=rel.version))
         else:
-            self.install.setText(tr("Zurück zu {version}", version=rel.version))
+            self.install.setText(tr("Back to {version}", version=rel.version))
         self.install.setEnabled(updater.is_installed_build())
         if not updater.is_installed_build():
-            self.state.setText(tr("Installieren geht nur in der installierten Version (nicht beim Start aus dem "
-                                  "Quellcode)."))
+            self.state.setText(tr("Installing only works in the installed version (not when started from source)."))
 
     def _install(self) -> None:
         row = self.list.currentRow()
@@ -122,10 +121,10 @@ class VersionsDialog(QDialog):
         rel = self.releases[row]
         older = updater.version_key(rel.version) < updater.version_key(__version__)
         if older:
-            text = tr("Version {version} installieren? Deine Einstellungen und Statistik bleiben erhalten.\n\nDamit "
-                      "nicht sofort wieder das neueste Update angeboten wird, wird es übersprungen – unter "
-                      "Einstellungen → Updates kannst du jederzeit wieder aktualisieren.", version=rel.version)
-            if QMessageBox.question(self, tr("Ältere Version"), text) != QMessageBox.StandardButton.Yes:
+            text = tr("Install version {version}? Your settings and statistics are kept.\n\nSo that the newest "
+                      "update is not offered again right away, it is skipped – you can update again any time under "
+                      "Settings → Updates.", version=rel.version)
+            if QMessageBox.question(self, tr("Older version"), text) != QMessageBox.StandardButton.Yes:
                 return
             if self.releases and updater.is_newer(self.releases[0].version, rel.version):
                 self.main.skip_version(self.releases[0].version)

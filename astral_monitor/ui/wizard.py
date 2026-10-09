@@ -29,13 +29,13 @@ def chip(text: str = "", state: str = "") -> QLabel:
 class SetupWizard(QDialog):
     """Fünf kurze Seiten. Gespeichert wird erst am Ende (oder beim Weiterklicken der Discord-Seite)."""
 
-    STEPS = [N_("Willkommen"), N_("Roblox"), N_("Zähler"), N_("Discord"), N_("Fertig")]
+    STEPS = [N_("Welcome"), N_("Roblox"), N_("Counter"), N_("Discord"), N_("Done")]
 
     def __init__(self, main) -> None:
         super().__init__(main)
         self.main = main
         self.engine = main.engine
-        self.setWindowTitle(tr("Einrichtung"))
+        self.setWindowTitle(tr("Setup"))
         self.setModal(True)
         self.resize(780, 600)
         self._frame_ok = False
@@ -65,11 +65,11 @@ class SetupWizard(QDialog):
         root.addWidget(self.stack, 1)
 
         nav = QHBoxLayout()
-        self.btn_skip = QPushButton(tr("Überspringen"))
+        self.btn_skip = QPushButton(tr("Skip"))
         self.btn_skip.clicked.connect(self._skip)
-        self.btn_back = QPushButton(tr("Zurück"))
+        self.btn_back = QPushButton(tr("Back"))
         self.btn_back.clicked.connect(lambda: self._go(self.stack.currentIndex() - 1))
-        self.btn_next = QPushButton(tr("Weiter"))
+        self.btn_next = QPushButton(tr("Next"))
         self.btn_next.setObjectName("primary")
         self.btn_next.clicked.connect(self._next)
         nav.addWidget(self.btn_skip)
@@ -90,10 +90,11 @@ class SetupWizard(QDialog):
         return page, lay
 
     def _page_welcome(self) -> QWidget:
-        page, lay = self._page(tr("Willkommen 👋"), tr("In vier kurzen Schritten ist alles startklar. Das dauert etwa eine Minute."))
+        page, lay = self._page(tr("Welcome 👋"), tr("Four short steps and you are ready. This takes about a "
+                                                      "minute."))
         lay.addSpacing(8)
-        for text in (tr("Roblox-Fenster verbinden"), tr("Wellenzähler automatisch finden"),
-                     tr("Discord-Webhook einrichten"), tr("Überwachung starten")):
+        for text in (tr("Connect the Roblox window"), tr("Find the wave counter automatically"),
+                     tr("Set up Discord webhook"), tr("Start monitoring")):
             row = QHBoxLayout()
             row.addWidget(chip("✓", "ok"))
             row.addWidget(label(text))
@@ -103,10 +104,11 @@ class SetupWizard(QDialog):
         return page
 
     def _page_roblox(self) -> QWidget:
-        page, lay = self._page(tr("Roblox verbinden"), tr("Starte Roblox und Anime Astral. Das Fenster darf auch verdeckt sein."))
+        page, lay = self._page(tr("Connect Roblox"), tr("Start Roblox and Anime Astral. The window may also be "
+                                                          "covered."))
         row = QHBoxLayout()
-        self.chip_window = chip(tr("Fenster: nicht geprüft"))
-        self.chip_frame = chip(tr("Bild: nicht geprüft"))
+        self.chip_window = chip(tr("Window: not checked"))
+        self.chip_frame = chip(tr("Image: not checked"))
         row.addWidget(self.chip_window)
         row.addWidget(self.chip_frame)
         row.addStretch(1)
@@ -115,16 +117,16 @@ class SetupWizard(QDialog):
         self.preview_roblox.setAlignment(Qt.AlignmentFlag.AlignCenter)
         theme.track_min_height(self.preview_roblox, 260)
         lay.addWidget(self.preview_roblox, 1)
-        btn = QPushButton(tr("Prüfen"))
+        btn = QPushButton(tr("Check"))
         btn.clicked.connect(self._check_roblox)
         lay.addWidget(btn, 0, Qt.AlignmentFlag.AlignLeft)
         return page
 
     def _page_wave(self) -> QWidget:
-        page, lay = self._page(tr("Wellenzähler finden"),
-                               tr("Starte einen Raid, bis oben „Wave x/100“ zu sehen ist, und klicke auf „Suchen“."))
+        page, lay = self._page(tr("Find the wave counter"),
+                               tr("Start a raid until “Wave x/100” is visible at the top, then click “Search”."))
         row = QHBoxLayout()
-        self.chip_wave = chip(tr("Zähler: nicht geprüft"))
+        self.chip_wave = chip(tr("Counter: not checked"))
         row.addWidget(self.chip_wave)
         row.addStretch(1)
         lay.addLayout(row)
@@ -132,22 +134,22 @@ class SetupWizard(QDialog):
         self.preview_wave.setAlignment(Qt.AlignmentFlag.AlignCenter)
         theme.track_min_height(self.preview_wave, 150)
         lay.addWidget(self.preview_wave, 1)
-        btn = QPushButton(tr("Suchen"))
+        btn = QPushButton(tr("Search"))
         btn.clicked.connect(self._check_wave)
         lay.addWidget(btn, 0, Qt.AlignmentFlag.AlignLeft)
         return page
 
     def _page_discord(self) -> QWidget:
-        page, lay = self._page(tr("Discord verbinden"),
-                               tr("Kanal-Einstellungen → Integrationen → Webhooks → Neuer Webhook → „Webhook-URL kopieren“."))
+        page, lay = self._page(tr("Connect Discord"),
+                               tr("Channel settings → Integrations → Webhooks → New webhook → “Copy webhook URL”."))
         self.url = QLineEdit()
         self.url.setPlaceholderText(tr("https://discord.com/api/webhooks/…"))
         self.url.setText(self.engine.settings.webhook_url)
         lay.addWidget(self.url)
         row = QHBoxLayout()
-        btn = QPushButton(tr("Test-Nachricht senden"))
+        btn = QPushButton(tr("Send test message"))
         btn.clicked.connect(self._check_webhook)
-        self.chip_webhook = chip(tr("Webhook: nicht geprüft"))
+        self.chip_webhook = chip(tr("Webhook: not checked"))
         row.addWidget(btn)
         row.addWidget(self.chip_webhook)
         row.addStretch(1)
@@ -156,7 +158,7 @@ class SetupWizard(QDialog):
         return page
 
     def _page_done(self) -> QWidget:
-        page, lay = self._page(tr("Alles bereit ✨"), tr("Du kannst die Einstellungen jederzeit ändern. Viel Erfolg!"))
+        page, lay = self._page(tr("All set ✨"), tr("You can change the settings at any time. Good luck!"))
         self.summary = QVBoxLayout()
         lay.addLayout(self.summary)
         lay.addStretch(1)
@@ -169,10 +171,10 @@ class SetupWizard(QDialog):
         self.main.apply_form()
         title = self.engine.settings.window_title
         found = find_window(title) is not None
-        set_chip(self.chip_window, (tr("Fenster „{title}“ gefunden", title=title) if found else tr("Fenster „{title}“ nicht gefunden", title=title)),
+        set_chip(self.chip_window, (tr("Window “{title}” found", title=title) if found else tr("Window “{title}” not found", title=title)),
                  "ok" if found else "bad")
         self._frame_ok = False
-        set_chip(self.chip_frame, tr("Bild: nicht geprüft"))
+        set_chip(self.chip_frame, tr("Image: not checked"))
         self.preview_roblox.clear()
         if found:
             try:
@@ -182,9 +184,9 @@ class SetupWizard(QDialog):
                 res = None
             else:
                 if res is None or res.full is None:
-                    set_chip(self.chip_frame, tr("Kein Bild empfangen (Fenster minimiert?)"), "bad")
+                    set_chip(self.chip_frame, tr("No image received (window minimized?)"), "bad")
                 else:
-                    set_chip(self.chip_frame, tr("Bild {w} × {h} ✓", w=res.size[0], h=res.size[1]), "ok")
+                    set_chip(self.chip_frame, tr("Image {w} × {h} ✓", w=res.size[0], h=res.size[1]), "ok")
                     self.preview_roblox.setPixmap(bgr_to_pixmap(res.full, 620))
                     self._frame_ok = True
         self._update_nav()
@@ -210,23 +212,23 @@ class SetupWizard(QDialog):
                 cv2.rectangle(preview, (x0, y0), (x1 - 1, y1 - 1), (80, 214, 61), 2)
             self.preview_wave.setPixmap(bgr_to_pixmap(preview, 640))
             if reading:
-                set_chip(self.chip_wave, tr("Zähler gefunden: {value}/{total} ✓", value=reading.value, total=reading.total), "ok")
+                set_chip(self.chip_wave, tr("Counter found: {value}/{total} ✓", value=reading.value, total=reading.total), "ok")
                 self._wave_ok = True
             else:
-                set_chip(self.chip_wave, tr("Kein Zähler erkannt – läuft gerade ein Raid?"), "bad")
+                set_chip(self.chip_wave, tr("No counter detected – is a raid running?"), "bad")
         self._update_nav()
 
     def _check_webhook(self) -> None:
         url = self.url.text().strip()
         if not is_valid_webhook(url):
-            set_chip(self.chip_webhook, tr("Das sieht nicht wie eine Webhook-URL aus"), "bad")
+            set_chip(self.chip_webhook, tr("This does not look like a webhook URL"), "bad")
             return
-        set_chip(self.chip_webhook, tr("Sende …"))
+        set_chip(self.chip_webhook, tr("Sending …"))
         self.main.test_webhook(url, self._webhook_done)
 
     def _webhook_done(self, ok: bool, info: str) -> None:
         self._webhook_ok = ok
-        set_chip(self.chip_webhook, tr("Test-Nachricht gesendet ✓") if ok else tr("Fehlgeschlagen: {error}", error=info[:60]),
+        set_chip(self.chip_webhook, tr("Test message sent ✓") if ok else tr("Failed: {error}", error=info[:60]),
                  "ok" if ok else "bad")
         if ok:
             self.main.set_webhook(self.url.text().strip())
@@ -246,11 +248,11 @@ class SetupWizard(QDialog):
             dot.style().unpolish(dot)
             dot.style().polish(dot)
         last = index == len(self.STEPS) - 1
-        self.step_label.setText(tr("Schritt {n} von {count} · {name}", n=index + 1, count=len(self.STEPS), name=tr(self.STEPS[index])))
+        self.step_label.setText(tr("Step {n} of {count} · {name}", n=index + 1, count=len(self.STEPS), name=tr(self.STEPS[index])))
         self.btn_back.setVisible(index > 0)
         self.btn_skip.setVisible(0 < index)
-        self.btn_skip.setText(tr("Nur speichern") if last else tr("Überspringen"))
-        self.btn_next.setText(tr("Los geht’s") if index == 0 else (tr("Überwachung starten") if last else tr("Weiter")))
+        self.btn_skip.setText(tr("Save only") if last else tr("Skip"))
+        self.btn_next.setText(tr("Let’s go") if index == 0 else (tr("Start monitoring") if last else tr("Next")))
         if last:
             self._fill_summary()
         self._update_nav()
@@ -260,13 +262,13 @@ class SetupWizard(QDialog):
             item = self.summary.takeAt(0)
             if item.widget():
                 item.widget().deleteLater()
-        for text, ok in ((tr("Roblox verbunden"), self._frame_ok), (tr("Wellenzähler gefunden"), self._wave_ok),
-                         (tr("Discord verbunden"), self._webhook_ok or is_valid_webhook(self.engine.settings.webhook_url))):
+        for text, ok in ((tr("Roblox connected"), self._frame_ok), (tr("Wave counter found"), self._wave_ok),
+                         (tr("Discord connected"), self._webhook_ok or is_valid_webhook(self.engine.settings.webhook_url))):
             row = QWidget()
             lay = QHBoxLayout(row)
             lay.setContentsMargins(0, 0, 0, 0)
             lay.addWidget(chip("✓" if ok else "–", "ok" if ok else ""))
-            lay.addWidget(label(text if ok else text + tr(" (später unter „Meldungen“)")))
+            lay.addWidget(label(text if ok else text + tr(" (later under “Alerts”)")))
             lay.addStretch(1)
             self.summary.addWidget(row)
 

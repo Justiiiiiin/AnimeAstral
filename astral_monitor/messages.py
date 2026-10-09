@@ -135,7 +135,7 @@ def fmt_duration_est(seconds: Optional[float], estimated: bool = False) -> str:
 
 
 STATUS_COLORS = {"running": COLOR_OK, "paused": COLOR_WARN, "stopped": COLOR_GRAY}
-STATUS_TEXT = {"running": ("🟢", N_("Läuft")), "paused": ("🟡", N_("Pausiert")), "stopped": ("⚫", N_("Gestoppt"))}
+STATUS_TEXT = {"running": ("🟢", N_("Running")), "paused": ("🟡", N_("Paused")), "stopped": ("⚫", N_("Stopped"))}
 
 
 def build_status(settings: Settings, snap: dict) -> dict:
@@ -148,36 +148,36 @@ def build_status(settings: Settings, snap: dict) -> dict:
 
     wave, total = snap.get("wave"), snap.get("total_waves")
     if wave is not None and not total:                  # Modus ohne Gesamtzahl: nur die Welle, kein Balken
-        lines = ["## 🌊 " + tr("Welle {wave}", wave=fmt_wave(wave, total))]
+        lines = ["## 🌊 " + tr("Wave {wave}", wave=fmt_wave(wave, total))]
     elif wave is not None and total:
         pct = round(100 * wave / total)
-        lines = ["## 🌊 " + tr("Welle {wave}", wave=fmt_wave(wave, total)),
+        lines = ["## 🌊 " + tr("Wave {wave}", wave=fmt_wave(wave, total)),
                  f"`{progress_bar(wave, total)}` **{pct} %**"]
     elif status == "stopped":
-        lines = ["## 💤 " + tr("Überwachung gestoppt")]
+        lines = ["## 💤 " + tr("Monitoring stopped")]
     else:
-        lines = ["## ⏳ " + tr("Wartet auf den nächsten Raid")]
+        lines = ["## ⏳ " + tr("Waiting for the next raid")]
     meta = []
     if snap.get("started_unix") and status != "stopped":
-        meta.append(tr("Gestartet {when}", when=f"<t:{int(snap['started_unix'])}:R>"))
+        meta.append(tr("Started {when}", when=f"<t:{int(snap['started_unix'])}:R>"))
     if snap.get("last_event"):
-        meta.append(tr("Zuletzt: {event}", event=snap["last_event"]))
+        meta.append(tr("Last: {event}", event=snap["last_event"]))
     if meta:
         lines.append("-# " + "  ·  ".join(meta))
 
     wph, avg_wave = snap.get("waves_per_hour"), snap.get("avg_wave")
     fields = [
-        ("🔁 " + tr("Versuche"), f"**{snap.get('session_attempts', 0)}**\n-# "
-         + tr("gesamt {count}", count=fmt_k(snap.get("total_attempts", 0))), True),
-        ("🌊 " + tr("Wellen"), f"**{fmt_int(snap.get('session_waves', 0))}**", True),
-        ("⚡ " + tr("Wellen/Std"), f"**{fmt_int(round(wph))}**" if wph else "–", True),
-        ("📈 " + tr("Ø Endwelle"), f"**{dec(f'{avg_wave:.1f}')}**" if avg_wave else "–", True),
-        ("🏆 " + tr("Bestwelle"), f"**{snap['best_wave']}**" if snap.get("best_wave") else "–", True),
-        ("⏱️ " + tr("Laufzeit"), f"**{fmt_duration(snap.get('uptime'))}**" if snap.get("uptime") else "–", True),
+        ("🔁 " + tr("Attempts"), f"**{snap.get('session_attempts', 0)}**\n-# "
+         + tr("total {count}", count=fmt_k(snap.get("total_attempts", 0))), True),
+        ("🌊 " + tr("Waves"), f"**{fmt_int(snap.get('session_waves', 0))}**", True),
+        ("⚡ " + tr("Waves/h"), f"**{fmt_int(round(wph))}**" if wph else "–", True),
+        ("📈 " + tr("Avg. final wave"), f"**{dec(f'{avg_wave:.1f}')}**" if avg_wave else "–", True),
+        ("🏆 " + tr("Best wave"), f"**{snap['best_wave']}**" if snap.get("best_wave") else "–", True),
+        ("⏱️ " + tr("Running time"), f"**{fmt_duration(snap.get('uptime'))}**" if snap.get("uptime") else "–", True),
     ]
     extra = []
     if snap.get("wall"):
-        extra.append(("🧱 " + tr("Wand"), tr("Welle {wave} · {streak}× in Folge", wave=snap["wall"].wave,
+        extra.append(("🧱 " + tr("Wall"), tr("Wave {wave} · {streak}× in a row", wave=snap["wall"].wave,
                                              streak=snap["wall"].streak), True))
     if snap.get("ram_mb"):
         extra.append(("🖥️ Roblox", dec(f"{snap['ram_mb'] / 1024:.1f} GB RAM"), True))
@@ -188,14 +188,14 @@ def build_status(settings: Settings, snap: dict) -> dict:
     if snap.get("quests") and settings.attach_quests:
         fields.append(("📜 " + tr("Quests"), quest_text(snap["quests"], limit=5), False))
     if settings.message_style == "compact":          # kompakt: Kennzahlen als eine Zeile, Quests bleiben
-        parts = [tr("{count} Raids", count=snap.get("session_attempts", 0)),
-                 tr("{waves} Wellen", waves=fmt_int(snap.get("session_waves", 0)))]
+        parts = [tr("{count} raids", count=snap.get("session_attempts", 0)),
+                 tr("{waves} waves", waves=fmt_int(snap.get("session_waves", 0)))]
         if wph:
-            parts.append(tr("{waves} Wellen/Std", waves=fmt_int(round(wph))))
+            parts.append(tr("{waves} waves/h", waves=fmt_int(round(wph))))
         if snap.get("best_wave"):
-            parts.append(tr("Bestwelle {wave}", wave=snap["best_wave"]))
+            parts.append(tr("Best wave {wave}", wave=snap["best_wave"]))
         if snap.get("uptime"):
-            parts.append(tr("Laufzeit {time}", time=fmt_duration(snap.get("uptime"))))
+            parts.append(tr("Running {time}", time=fmt_duration(snap.get("uptime"))))
         lines.insert(len(lines) - 1 if meta else len(lines), "-# " + "  ·  ".join(parts))   # vor „Gestartet …“
         fields = [f for f in fields if not f[2]]
 
@@ -206,7 +206,7 @@ def build_status(settings: Settings, snap: dict) -> dict:
         "color": STATUS_COLORS.get(status, COLOR_GRAY),
         "fields": [{"name": n[:256], "value": (v or "–")[:1024], "inline": bool(i)} for n, v, i in fields[:25]],
         "timestamp": datetime.now(timezone.utc).isoformat(),
-        "footer": {"text": tr("Live-Status · aktualisiert")},
+        "footer": {"text": tr("Live status · updated")},
     }
     if logo_url():
         embed["thumbnail"] = {"url": logo_url()}

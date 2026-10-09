@@ -161,12 +161,12 @@ class OcrEngine:
         try:
             import pytesseract
         except ImportError as exc:
-            raise OcrError(tr("Das Paket „pytesseract“ fehlt (pip install pytesseract).")) from exc
+            raise OcrError(tr("The package “pytesseract” is missing (pip install pytesseract).")) from exc
 
         cmd = find_tesseract(tesseract_path)
         if not cmd:
             raise OcrError(
-                tr("Die Texterkennung (Tesseract) fehlt. Bitte das Programm neu installieren.")
+                tr("Text recognition (Tesseract) is missing. Please reinstall the program.")
             )
         pytesseract.pytesseract.tesseract_cmd = cmd
         bundled = bundled_dir()
@@ -188,7 +188,7 @@ class OcrEngine:
         try:
             self.version = str(pytesseract.get_tesseract_version())
         except Exception as exc:
-            raise OcrError(tr("Tesseract lässt sich nicht starten ({path}): {error}", path=cmd, error=exc)) from exc
+            raise OcrError(tr("Tesseract cannot be started ({path}): {error}", path=cmd, error=exc)) from exc
 
     def line(self, image: np.ndarray, psm: int = 7, whitelist: str | None = None) -> str:
         if self._lib is not None:

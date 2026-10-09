@@ -118,15 +118,15 @@ def summary(entry: dict) -> str:
     """Kurztext eines Funds für die Rückfrage."""
     parts = []
     if entry.get("tabs"):
-        parts.append(tr("Reiter: {tabs}", tabs=", ".join(entry["tabs"])))
+        parts.append(tr("Tabs: {tabs}", tabs=", ".join(entry["tabs"])))
     if entry.get("scroll"):
-        parts.append(tr("Scrollbare Bereiche: {n}", n=len(entry["scroll"])))
+        parts.append(tr("Scrollable areas: {n}", n=len(entry["scroll"])))
     if entry.get("actions"):
-        parts.append(tr("Knöpfe: {buttons}", buttons=", ".join(entry["actions"][:12])))
+        parts.append(tr("Buttons: {buttons}", buttons=", ".join(entry["actions"][:12])))
     if entry.get("claims"):
-        parts.append(tr("Claim-Knöpfe: {n}", n=entry["claims"]))
+        parts.append(tr("Claim buttons: {n}", n=entry["claims"]))
     if entry.get("tested"):
-        parts.append(tr("Getestet: {buttons}", buttons=", ".join(entry["tested"])))
+        parts.append(tr("Tested: {buttons}", buttons=", ".join(entry["tested"])))
     return "\n".join(parts)
 
 
@@ -135,9 +135,9 @@ def summary(entry: dict) -> str:
 # „nie drücken“ wird Sperrzone, „Liste“ wird gezielt gescrollt, Knöpfe/Schalter landen in der Karte.
 from .i18n import N_  # noqa: E402
 
-ANNOTATION_KINDS = [("button", N_("Knopf")), ("never", N_("Knopf – nie drücken")), ("toggle", N_("Schalter")),
-                    ("value", N_("Wert / Anzeige")), ("progress", N_("Fortschritt")), ("list", N_("Liste (scrollbar)")),
-                    ("tab", N_("Reiter")), ("info", N_("Info / Text"))]
+ANNOTATION_KINDS = [("button", N_("Button")), ("never", N_("Button – never press")), ("toggle", N_("Toggle")),
+                    ("value", N_("Value / display")), ("progress", N_("Progress")), ("list", N_("List (scrollable)")),
+                    ("tab", N_("Tab")), ("info", N_("Info / text"))]
 CLICKABLE = ("button", "toggle", "tab")
 
 

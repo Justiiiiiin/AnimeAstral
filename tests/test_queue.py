@@ -56,9 +56,9 @@ class QueueTest(unittest.TestCase):
 
     def test_fmt_wait(self):
         self.assertEqual(fmt_wait(30), "30 s")
-        self.assertEqual(fmt_wait(18 * 60), "18 Min.")
-        self.assertEqual(fmt_wait(96 * 60), "1 Std. 36 Min.")
-        self.assertEqual(fmt_wait(24 * 3600), "24 Std.")
+        self.assertEqual(fmt_wait(18 * 60), "18 min")
+        self.assertEqual(fmt_wait(96 * 60), "1 h 36 min")
+        self.assertEqual(fmt_wait(24 * 3600), "24 h")
 
     def test_pet_grid_from_labels(self):
         # 3 Zeilen × 8 Spalten Namensschilder (Lage wie im echten Pets-Fenster), in der letzten Zeile 5 Pets

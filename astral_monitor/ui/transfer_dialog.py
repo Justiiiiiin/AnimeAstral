@@ -15,7 +15,7 @@ class PasswordDialog(QDialog):
     def __init__(self, parent, export: bool) -> None:
         super().__init__(parent)
         self._export = export
-        title = tr("Einstellungen exportieren") if export else tr("Einstellungen importieren")
+        title = tr("Export settings") if export else tr("Import settings")
         self.setWindowTitle(title)
         theme.track_min_width(self, 540)
         root = QVBoxLayout(self)
@@ -27,16 +27,16 @@ class PasswordDialog(QDialog):
             box.setObjectName("card")
             inner = QVBoxLayout(box)
             theme.track_margins(inner, 14, 12, 14, 12)
-            inner.addWidget(label(tr("⚠️ Die Datei enthält deine Discord-Webhook-URL, deine gespeicherten Server-Links "
-                                     "und IDs."), "warn", wrap=True))
-            inner.addWidget(label(tr("Wer die Webhook-URL kennt, kann Nachrichten in deinen Kanal senden. Die Datei "
-                                     "wird deshalb mit deinem Passwort verschlüsselt (AES-256) – ohne Passwort ist sie "
-                                     "unlesbar. Ein vergessenes Passwort kann niemand wiederherstellen."),
+            inner.addWidget(label(tr("⚠️ The file contains your Discord webhook URL, your saved server links and "
+                                     "IDs."), "warn", wrap=True))
+            inner.addWidget(label(tr("Anyone who knows the webhook URL can send messages to your channel. That is "
+                                     "why the file is encrypted with your password (AES-256) – without the password "
+                                     "it is unreadable. Nobody can recover a forgotten password."),
                                   "small", wrap=True))
             root.addWidget(box)
         else:
-            root.addWidget(label(tr("Gib das Passwort ein, das du beim Export vergeben hast. Deine aktuellen "
-                                    "Einstellungen werden danach ersetzt."), "small", wrap=True))
+            root.addWidget(label(tr("Enter the password you chose when exporting. Your current settings will then "
+                                    "be replaced."), "small", wrap=True))
         grid = form_grid()
         grid.setColumnStretch(1, 1)
         grid.setColumnStretch(2, 0)
@@ -44,24 +44,24 @@ class PasswordDialog(QDialog):
         self.password.setEchoMode(QLineEdit.EchoMode.Password)
         self.repeat = QLineEdit()
         self.repeat.setEchoMode(QLineEdit.EchoMode.Password)
-        grid.addWidget(label(tr("Passwort")), 0, 0)
+        grid.addWidget(label(tr("Password")), 0, 0)
         grid.addWidget(self.password, 0, 1)
         if export:
-            grid.addWidget(label(tr("Wiederholen")), 1, 0)
+            grid.addWidget(label(tr("Repeat")), 1, 0)
             grid.addWidget(self.repeat, 1, 1)
         else:
             self.repeat.hide()
         root.addLayout(grid)
-        show = QCheckBox(tr("Passwort anzeigen"))
+        show = QCheckBox(tr("Show password"))
         show.toggled.connect(self._show)
         root.addWidget(show)
         self.state = label("", "small", wrap=True)
         root.addWidget(self.state)
         row = QHBoxLayout()
         row.addStretch(1)
-        cancel = QPushButton(tr("Abbrechen"))
+        cancel = QPushButton(tr("Cancel"))
         cancel.clicked.connect(self.reject)
-        self.ok = QPushButton(tr("Weiter …") if export else tr("Importieren"))
+        self.ok = QPushButton(tr("Continue …") if export else tr("Import"))
         self.ok.setObjectName("primary")
         self.ok.setDefault(True)
         self.ok.clicked.connect(self.accept)
@@ -82,7 +82,7 @@ class PasswordDialog(QDialog):
         if self._export:
             problem = secure.check_password(self.password.text(), self.repeat.text())
         else:
-            problem = None if self.password.text() else tr("Bitte das Passwort eingeben.")
+            problem = None if self.password.text() else tr("Please enter the password.")
         self.state.setText(problem or "")
         self.ok.setEnabled(problem is None)
 

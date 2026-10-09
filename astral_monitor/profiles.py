@@ -20,7 +20,7 @@ def sanitize_name(name: str) -> str:
     cleaned = re.sub(r"[^\w \-]", "", name, flags=re.UNICODE).strip()
     cleaned = re.sub(r"\s+", " ", cleaned)[:40]
     if not cleaned:
-        raise ValueError(tr("Bitte einen Namen aus Buchstaben oder Ziffern eingeben."))
+        raise ValueError(tr("Please enter a name made of letters or digits."))
     return cleaned
 
 
@@ -36,7 +36,7 @@ class ProfileStore:
     def create(self, name: str) -> str:
         clean = sanitize_name(name)
         if any(n.lower() == clean.lower() for n in self.names()):
-            raise ValueError(tr("Ein Raid „{name}“ gibt es schon.", name=clean))
+            raise ValueError(tr("A raid “{name}” already exists.", name=clean))
         (self.root / clean).mkdir()
         return clean
 
@@ -44,11 +44,11 @@ class ProfileStore:
         """Raid umbenennen (Ordner samt Einstellungen). Rückgabe: neuer, bereinigter Name."""
         src, clean = self.root / sanitize_name(old), sanitize_name(new)
         if not src.is_dir():
-            raise ValueError(tr("Profil „{name}“ gibt es nicht.", name=old))
+            raise ValueError(tr("There is no profile “{name}”.", name=old))
         if clean == src.name:
             return clean
         if clean.lower() != src.name.lower() and any(n.lower() == clean.lower() for n in self.names()):
-            raise ValueError(tr("Ein Raid „{name}“ gibt es schon.", name=clean))
+            raise ValueError(tr("A raid “{name}” already exists.", name=clean))
         if clean.lower() == src.name.lower():        # nur Groß-/Kleinschreibung: Windows braucht einen Zwischenschritt
             tmp = self.root / (clean + ".tmp_rename")
             src.rename(tmp)
