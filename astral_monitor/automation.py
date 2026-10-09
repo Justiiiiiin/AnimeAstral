@@ -1,9 +1,9 @@
-"""Automatik (Beta, Standard aus, Wunsch des Eigentümers 07.10.2026): Wege im Spiel anhand der Oberflächen-Karte
-(uimap) gehen – Teleporter öffnen, zur Welt scrollen, Symbol anklicken, prüfen, ob das richtige Menü offen ist;
-Pets-Roll „Auto!“ drücken. Eingaben per SendInput (wie Anti-AFK, AutoHotkey und Autoclicker), nur mit Roblox im
-Vordergrund. Not-Aus: Maus bewegen oder Esc – jede Aktion prüft das vorher.
+"""Automation (beta, off by default, owner's wish 07.10.2026): walk paths in the game using the UI map (uimap) –
+open the teleporter, scroll to the world, click the icon, check that the right menu is open; press “Auto!” in the
+pets roll. Input via SendInput (like Anti-AFK, AutoHotkey and autoclickers), only with Roblox in the foreground.
+Emergency stop: move the mouse or Esc – every action checks that first.
 
-Ablauf in einem eigenen Thread; Meldungen über log(text). Ohne Qt."""
+Runs in its own thread; messages via log(text). Without Qt."""
 from __future__ import annotations
 
 import ctypes
@@ -26,16 +26,16 @@ from .uimap import ROW, UiMap, match_row, world_number
 
 _log = logging.getLogger("makro")
 
-STEP_WAIT = 0.15          # Abstand der Prüfungen nach einem Klick
-OPEN_TIMEOUT = 5.0        # so lange darf ein Menü zum Öffnen brauchen
-SCROLL_NOTCHES = 4        # Mausrad-Rasten je Schritt
-BAR_STEP = 0.15           # Scrollbalken je Schritt um diesen Anteil der Schiene ziehen
+STEP_WAIT = 0.15          # spacing of the checks after a click
+OPEN_TIMEOUT = 5.0        # a menu may take this long to open
+SCROLL_NOTCHES = 4        # mouse wheel notches per step
+BAR_STEP = 0.15           # drag the scroll bar by this share of the track per step
 MAX_SCROLLS = 60
-USER_MOVE_PX = 25         # Maus so weit von der gesetzten Stelle = der Nutzer greift ein -> Stopp
-AUTO_SETTLE = 0.8         # nach „Auto!“ kurz warten, dann schließen (Auto-Roll läuft im Hintergrund weiter)
+USER_MOVE_PX = 25         # mouse this far from the set spot = the user intervenes -> stop
+AUTO_SETTLE = 0.8         # after “Auto!” wait briefly, then close (auto roll keeps running in the background)
 
 
-_ACTIVE = threading.Event()    # ein Makro-Ablauf läuft gerade (Anti-AFK wartet dann)
+_ACTIVE = threading.Event()    # a macro run is going on right now (Anti-AFK waits then)
 
 
 def macro_running() -> bool:
@@ -43,20 +43,20 @@ def macro_running() -> bool:
 
 
 TASK_KINDS = ("raid", "autoroll", "progression", "gigs", "guild_claim", "wait",
-              "raid_farm", "raid_leave", "raid_create", "raid_join", "navigate", "pets", "close")   # ab raid_farm: ältere
-RAID_KINDS = ("raid", "raid_farm", "raid_create", "raid_join")     # Aufgaben, die in einen Raid/Modus führen
-CLAIM_LIMIT = 8           # höchstens so viele „Claim“ je Seite (Schutz gegen Endlosschleifen)
-GIGS_PETS = 3             # „Send Pets“: je Gig 1 Pet, reihum eins der letzten 3 (Eigentümer 08.10.2026)
-GUILD_EVERY = 24 * 3600   # Gilden-Missionen: einmal am Tag (Eigentümer 08.10.2026)
-EXTRA_RETRY = 15 * 60     # nach einem Fehlschlag frühestens so viel später erneut
-RAID_GEAR = Path(__file__).with_name("uimap_static") / "raid_gear.png"   # Zahnrad oben rechts im Raid (fest, nicht aus der Karte)
+              "raid_farm", "raid_leave", "raid_create", "raid_join", "navigate", "pets", "close")   # from raid_farm on: older
+RAID_KINDS = ("raid", "raid_farm", "raid_create", "raid_join")     # tasks that lead into a raid/mode
+CLAIM_LIMIT = 8           # at most this many “Claim” per page (protection against endless loops)
+GIGS_PETS = 3             # “Send Pets”: 1 pet per gig, in turn one of the last 3 (owner 08.10.2026)
+GUILD_EVERY = 24 * 3600   # guild missions: once a day (owner 08.10.2026)
+EXTRA_RETRY = 15 * 60     # after a failure try again this much later at the earliest
+RAID_GEAR = Path(__file__).with_name("uimap_static") / "raid_gear.png"   # gear at the top right in a raid (fixed, not from the map)
 GEAR_REGION = [0.4, 0.0, 0.9, 0.16]
 LEAVE_REGION = [0.35, 0.0, 0.75, 0.2]
 GEAR_HIT = 0.75
 
 
 def task_label(task: dict) -> str:
-    """Anzeige einer Aufgabe der Warteschlange."""
+    """Display of a routine task."""
     kind = task.get("kind")
     if kind == "autoroll":
         return tr("Auto Roll · {target}", target=task.get("target", "?"))
@@ -103,23 +103,23 @@ def task_label(task: dict) -> str:
 
 
 class Stop(Exception):
-    """Abbruch (Nutzer, Zeitüberschreitung, nicht gefunden) – Text = Grund für das Protokoll."""
+    """Stop (user, timeout, not found) – text = reason for the log."""
 
 
 class UserStop(Stop):
-    """Vom Nutzer abgebrochen (Stopp, Esc, Maus, Roblox nicht vorne) – die Warteschlange endet sofort."""
+    """Stopped by the user (stop, Esc, mouse, Roblox not in front) – the routine ends right away."""
 
 
 def next_task(tasks: list[dict], index: int, loop: bool) -> Optional[dict]:
-    """Aufgabe nach tasks[index] (mit Schleife wieder die erste), sonst None."""
+    """Task after tasks[index] (with loop the first one again), otherwise None."""
     if index + 1 < len(tasks):
         return tasks[index + 1]
     return tasks[0] if loop and len(tasks) > 1 else None
 
 
 def leave_before(task: dict, following: Optional[dict]) -> bool:
-    """Raid verlassen, bevor es weitergeht? Nur wenn danach ein ANDERER Raid/Modus kommt (Eigentümer 08.10.2026) –
-    für Auto Roll, Gigs, Gilde … bleibt man drin (Auto Retry farmt weiter)."""
+    """Leave the raid before continuing? Only if a DIFFERENT raid/mode comes next (owner 08.10.2026) –
+        for Auto Roll, gigs, guild … you stay in (Auto Retry keeps farming)."""
     if following is None or following.get("kind") not in RAID_KINDS:
         return False
     return following.get("target") != task.get("target")
@@ -136,16 +136,16 @@ def _clusters(values: list[float], tol: float) -> list[list[float]]:
 
 
 def pet_tiles(frame: np.ndarray, grid: list[float], words: list[tuple[str, list[float]]]) -> list[list[float]]:
-    """Kacheln eines Pet-Rasters aus den Namensschildern (siehe Navigator._pet_tiles); ohne Qt/OCR testbar."""
+    """Tiles of a pet grid from the name tags (see Navigator._pet_tiles); testable without Qt/OCR."""
     found = [(b, ((b[0] + b[2]) / 2, (b[1] + b[3]) / 2)) for w, b in words
              if len(re.sub(r"[^A-Za-z]", "", w)) >= 3 and b[3] - b[1] < 0.045]
-    # Namenszeilen: mindestens drei Wörter mit ≥ 4 Buchstaben auf gleicher Höhe (Bildrauschen fällt so heraus)
+    # name rows: at least three words with ≥ 4 letters at the same height (image noise drops out that way)
     long_y = [m[1] for (b, m), (w, _x) in zip(found, [x for x in words if len(re.sub(r"[^A-Za-z]", "", x[0])) >= 3
                                                        and x[1][3] - x[1][1] < 0.045]) if len(re.sub(r"[^A-Za-z]", "", w)) >= 4]
     row_y = [float(np.median(c)) for c in _clusters(long_y, 0.02) if len(c) >= 3]
     if not row_y:
         return []
-    labels = []                                           # Wörter eines Schilds („Kirito Armor“) zusammenfassen
+    labels = []                                           # merge the words of one tag (“Kirito Armor”)
     for y in row_y:
         boxes = sorted((b for b, m in found if abs(m[1] - y) <= 0.025), key=lambda b: b[0])
         for b in boxes:
@@ -160,8 +160,8 @@ def pet_tiles(frame: np.ndarray, grid: list[float], words: list[tuple[str, list[
     diffs = sorted(b - a for a, b in zip(cols, cols[1:]) if b - a > 0.04)
     if not diffs:
         return []
-    steps = max(1, round((cols[-1] - cols[0]) / diffs[0]))  # kleinster Abstand ≈ eine Spalte (Lücken = fehlende
-    pitch = (cols[-1] - cols[0]) / steps                     # Namen), genau über die ganze Breite gemittelt
+    steps = max(1, round((cols[-1] - cols[0]) / diffs[0]))  # smallest spacing ≈ one column (gaps = missing
+    pitch = (cols[-1] - cols[0]) / steps                     # names), averaged exactly over the whole width
     cols = [cols[0] + i * pitch for i in range(steps + 1)]
     row_pitch = min((b - a for a, b in zip(row_y, row_y[1:])), default=pitch * 1.75)
     fh, fw = frame.shape[:2]
@@ -176,16 +176,16 @@ def pet_tiles(frame: np.ndarray, grid: list[float], words: list[tuple[str, list[
     return tiles
 
 
-# Knöpfe am Rand über ihre Beschriftung finden – die Spiel-GUI-Größe (50 %, 100 % …) verschiebt und vergrößert sie,
-# feste Lagen aus der Karte passen nur bei der GUI-Größe der Aufnahme (Eigentümer 08.10.2026). Fenster bleiben gleich.
+# Find the buttons at the edge via their labels – the game's GUI size (50 %, 100 % …) moves and enlarges them;
+# fixed positions from the map only fit at the GUI size of the capture (owner 08.10.2026). Windows stay the same.
 HUD_LABELS = {"Teleporter": ("teleport",), "Shop": ("shop",), "Pets": ("pets",), "Items": ("items",),
               "Achiev": ("achiev",), "Index": ("index",), "Guild": ("guild",), "Boosts": ("boosts",),
               "G. Quests": ("quests",), "Promotion": ("promotion",), "Equip Best": ("equip", "best")}
-HUD_AREAS = ([0.0, 0.25, 0.3, 0.8], [0.0, 0.78, 0.3, 1.0], [0.3, 0.72, 0.7, 1.0])   # Leiste links, unten links, Mitte
+HUD_AREAS = ([0.0, 0.25, 0.3, 0.8], [0.0, 0.78, 0.3, 1.0], [0.3, 0.72, 0.7, 1.0])   # bar on the left, bottom left, middle
 
 
 def _label_like(word: str, key: str) -> bool:
-    """Beschriftung passt (Anfang, kleine Lesefehler wie „OUESTS“ für „QUESTS“ erlaubt)."""
+    """Label matches (start, small misreads like “OUESTS” for “QUESTS” allowed)."""
     if word.startswith(key):
         return True
     head = word[:len(key)]
@@ -193,8 +193,8 @@ def _label_like(word: str, key: str) -> bool:
 
 
 def hud_locate(words: list[tuple[str, list[float]]]) -> dict[str, list[float]]:
-    """Lage der Rand-Knöpfe aus gelesenen Beschriftungen: das Symbol sitzt direkt über seinem Namen.
-    Rückgabe: Name -> Bereich des Symbols (Anteile des Fensters)."""
+    """Position of the edge buttons from read labels: the icon sits right above its name.
+        Returns name -> area of the icon (fractions of the window)."""
     norm = [(re.sub(r"[^a-z]", "", w.lower()), b) for w, b in words]
     out: dict[str, list[float]] = {}
     for name, parts in HUD_LABELS.items():
@@ -202,7 +202,7 @@ def hud_locate(words: list[tuple[str, list[float]]]) -> dict[str, list[float]]:
             if not _label_like(w, parts[0]):
                 continue
             box = list(b)
-            if len(parts) > 1:                            # „Equip Best“: zweites Wort rechts daneben
+            if len(parts) > 1:                            # “Equip Best”: second word to the right
                 nxt = next((b2 for w2, b2 in norm if _label_like(w2, parts[1]) and 0 <= b2[0] - box[2] < 0.03
                             and abs(b2[1] - box[1]) < 0.015), None)
                 if nxt is None:
@@ -217,7 +217,7 @@ def hud_locate(words: list[tuple[str, list[float]]]) -> dict[str, list[float]]:
 
 
 def _words_sharp(frame: np.ndarray, area: list[float], ocr) -> list[tuple[str, list[float]]]:
-    """Wörter in einem Bereich, kleine Bereiche doppelt so groß gelesen (winzige Beschriftungen bei GUI 50 %)."""
+    """Words in an area, small areas read at twice the size (tiny labels at GUI 50 %)."""
     fh, fw = frame.shape[:2]
     x0, y0, x1, y1 = area
     crop = frame[int(y0 * fh):int(y1 * fh), int(x0 * fw):int(x1 * fw)]
@@ -230,7 +230,7 @@ def _words_sharp(frame: np.ndarray, area: list[float], ocr) -> list[tuple[str, l
 
 
 def fmt_wait(seconds: float) -> str:
-    """Wartezeit kurz: „45 s“, „18 Min.“, „1 Std. 36 Min.“, „23 Std.“."""
+    """Short waiting time: “45 s”, “18 min”, “1 h 36 min”, “23 h”."""
     seconds = max(0, int(seconds))
     if seconds < 60:
         return tr("{n} s", n=seconds)
@@ -243,9 +243,9 @@ def fmt_wait(seconds: float) -> str:
 
 def user_moved(cursor: tuple[int, int], pt: tuple[int, int], rect: Optional[tuple[int, int, int, int]]
                ) -> Optional[bool]:
-    """Hat der Nutzer die Maus bewegt? False = Zeiger steht noch, wo das Makro ihn hingesetzt hat; None = Roblox hat
-    ihn selbst in die Fenstermitte gesetzt (passiert beim Öffnen/Schließen mancher Fenster, z. B. nach Raid-Fenstern
-    und dem Pets-Inventar – Erkunden brach dort ohne Zutun ab, Eigentümer 08.10.2026); True = echte Bewegung."""
+    """Did the user move the mouse? False = the cursor is still where the macro put it; None = Roblox put it in the
+        middle of the window by itself (happens when opening/closing some windows, e.g. after raid windows and the pets
+        inventory – exploring aborted there without anyone touching anything, owner 08.10.2026); True = real movement."""
     if abs(pt[0] - cursor[0]) <= USER_MOVE_PX and abs(pt[1] - cursor[1]) <= USER_MOVE_PX:
         return False
     if rect is not None:
@@ -257,7 +257,7 @@ def user_moved(cursor: tuple[int, int], pt: tuple[int, int], rect: Optional[tupl
 
 
 def parse_timer(text: str) -> Optional[int]:
-    """„1:20:40“ / „33:57“ -> Sekunden (Fixer-Gigs-Zeiten), sonst None."""
+    """“1:20:40” / “33:57” -> seconds (Fixer Gigs times), otherwise None."""
     m = re.fullmatch(r"(?:(\d{1,2}):)?(\d{1,2}):(\d{2})", text.strip())
     if not m:
         return None
@@ -265,22 +265,22 @@ def parse_timer(text: str) -> Optional[int]:
     return h * 3600 + mnt * 60 + s if mnt < 60 and s < 60 else None
 
 
-# Fixer Gigs: Kopf jeder Karte („QUICK · 20 MIN“, „STANDARD · 1H“, „BIG JOB · 3H“) -> Laufzeit. Welche Art kommt, ist
-# zufällig (Eigentümer 08.10.2026) – deshalb je Karte lesen statt fester Zeiten.
+# Fixer Gigs: header of every card (“QUICK · 20 MIN”, “STANDARD · 1H”, “BIG JOB · 3H”) -> duration. Which kind comes is
+# random (owner 08.10.2026) – so read per card instead of fixed times.
 GIG_KINDS = {"quick": 20 * 60, "standard": 3600, "big": 3 * 3600, "bis": 3 * 3600}
 GIG_NAMES = {20 * 60: N_("Quick 20 min"), 3600: N_("Standard 1 h"), 3 * 3600: N_("Big Job 3 h")}
 
 
 def gig_cards(words: list[tuple[str, list[float]]]) -> list[dict]:
-    """Karten im Fixer-Gigs-Fenster aus den gelesenen Wörtern (Lage in Anteilen des Roblox-Fensters), links nach
-    rechts. Je Karte: x (Mitte), duration (s), state („ready“/„working“/„open“), left (Lage von „left“ unter der
-    Restzeit oder None), claim/send (Knopf-Lage oder None). „FINISH NOW“ kostet Währung – wird nie geliefert."""
+    """Cards in the Fixer Gigs window from the words read (position in fractions of the Roblox window), left to
+        right. Per card: x (center), duration (s), state (“ready”/“working”/“open”), left (position of “left” below the
+        time left or None), claim/send (button position or None). “FINISH NOW” costs currency – never returned."""
     norm = [(re.sub(r"[^a-z0-9]", "", w.lower()), b) for w, b in words]
     heads = [(GIG_KINDS[w], b) for w, b in norm if w in GIG_KINDS]
     if not heads:
         return []
     top = min(b[1] for _d, b in heads)
-    heads = [(d, b) for d, b in heads if abs(b[1] - top) < 0.03]          # nur die Kopfzeile der Karten
+    heads = [(d, b) for d, b in heads if abs(b[1] - top) < 0.03]          # only the header row of the cards
     heads.sort(key=lambda h: h[1][0])
     pitch = min((b2[0] - b1[0] for (_d1, b1), (_d2, b2) in zip(heads, heads[1:])), default=0.12)
     cards = [{"x": (b[0] + b[2]) / 2, "head": b, "duration": d, "state": "open", "left": None, "claim": None,
@@ -309,7 +309,7 @@ def gig_cards(words: list[tuple[str, list[float]]]) -> list[dict]:
 
 
 def gig_timer_box(card: dict) -> Optional[list[float]]:
-    """Bereich der Restzeit („1:36:38 left“) links neben „left“ – für die genaue Ziffern-Lesung."""
+    """Area of the time left (“1:36:38 left”) to the left of “left” – for the exact digit reading."""
     left = card.get("left")
     if left is None:
         return None
@@ -319,8 +319,8 @@ def gig_timer_box(card: dict) -> Optional[list[float]]:
 
 
 def gig_next_due(cards: list[dict], timers: dict[int, Optional[int]]) -> int:
-    """Sekunden bis zum nächsten Besuch: kleinste gültige Restzeit (höchstens so lang wie der Gig); laufende Gigs
-    ohne lesbare Zeit zählen mit 20 Min. (dann wird nachgesehen), fertige/freie sofort."""
+    """Seconds until the next visit: smallest valid time left (at most as long as the gig); running gigs without a
+        readable time count as 20 min (then it checks), finished/free ones right away."""
     due = []
     for i, card in enumerate(cards):
         if card["state"] != "working":
@@ -334,7 +334,7 @@ def gig_next_due(cards: list[dict], timers: dict[int, Optional[int]]) -> int:
 class Navigator:
     def __init__(self, source_factory: Callable, window_title: str, ocr_factory: Callable,
                  log: Callable[[str], None], uimap: Optional[UiMap] = None) -> None:
-        self.source_factory = source_factory              # () -> Bildquelle (grab(rois, full, timeout))
+        self.source_factory = source_factory              # () -> image source (grab(rois, full, timeout))
         self.window_title = window_title
         self.ocr_factory = ocr_factory
         self._ui_log = log
@@ -349,27 +349,27 @@ class Navigator:
         self._menu: Optional[vision.MenuFrame] = None
         self._rows: Optional[vision.RowFinder] = None
         self._templates: list = []
-        self.raid_count: Optional[Callable[[], int]] = None     # Anzahl gezählter Raid-Enden (Überwachung)
-        self.monitoring: Optional[Callable[[], bool]] = None    # läuft die Überwachung?
-        self.start_monitoring: Optional[Callable[[], None]] = None   # Überwachung starten (über die Oberfläche)
-        self.set_raid: Optional[Callable[[str], None]] = None        # Raid-Name für die Statistik setzen
-        self.wave_visible: Optional[Callable[[], bool]] = None       # liest die Überwachung gerade eine Welle?
-        self._in_raid: Optional[str] = None               # Ziel des Raids, in dem das Makro gerade farmt
-        self.gigs_next = 0.0                              # Fixer Gigs: frühestens dann wieder nachsehen (time.time)
-        self.guild_next = 0.0                             # Gilden-Missionen: frühestens dann wieder
-        self.state_path: Optional[Path] = None            # Zeiten der Abholungen (überdauern Neustarts)
-        self.queue_pos: Optional[int] = None              # Warteschlange: gerade laufende Aufgabe (für die Anzeige)
-        self.auto_gigs: Callable[[], bool] = lambda: False     # Schalter „Automatisch abholen“ (Einstellungen)
-        self._hud: dict[str, list[float]] = {}           # gefundene Rand-Knöpfe (je Bildgröße)
-        self.forbidden: list[list[float]] = []            # Sperrzonen (Leave, Kick …): nie klicken, nie hovern
+        self.raid_count: Optional[Callable[[], int]] = None     # number of counted raid ends (monitoring)
+        self.monitoring: Optional[Callable[[], bool]] = None    # is monitoring running?
+        self.start_monitoring: Optional[Callable[[], None]] = None   # start monitoring (via the UI)
+        self.set_raid: Optional[Callable[[str], None]] = None        # set the raid name for the statistics
+        self.wave_visible: Optional[Callable[[], bool]] = None       # is the monitoring reading a wave right now?
+        self._in_raid: Optional[str] = None               # target of the raid the macro is farming right now
+        self.gigs_next = 0.0                              # Fixer Gigs: check again at this time at the earliest (time.time)
+        self.guild_next = 0.0                             # guild missions: at this time at the earliest
+        self.state_path: Optional[Path] = None            # times of the collections (survive restarts)
+        self.queue_pos: Optional[int] = None              # routine: the task running right now (for the display)
+        self.auto_gigs: Callable[[], bool] = lambda: False     # switch “Auto collect” (settings)
+        self._hud: dict[str, list[float]] = {}           # found edge buttons (per image size)
+        self.forbidden: list[list[float]] = []            # no-go zones (Leave, Kick …): never click, never hover
         self._hud_shape: Optional[tuple] = None
         self.auto_guild: Callable[[], bool] = lambda: False
 
     def log(self, text: str) -> None:
-        _log.info("Makro: %s", text)
+        _log.info("Macro: %s", text)
         self._ui_log(text)
 
-    # ------------------------------------------------------------------ Steuerung
+    # ------------------------------------------------------------------ Control
     @property
     def busy(self) -> bool:
         return self._thread is not None and self._thread.is_alive()
@@ -395,7 +395,7 @@ class Navigator:
         return self.start(tr("Close menu"), self._close_any)
 
     def explore(self, minutes: float, data_dir, revisit: bool = True) -> bool:
-        """Erkunden: neue Welten/Fenster selbst öffnen, einordnen, schließen (explorer.py)."""
+        """Explore: open, classify and close new worlds/windows by itself (explorer.py)."""
         from .explorer import Explorer
         return self.start(tr("Explore ({minutes} min)", minutes=minutes),
                           lambda: Explorer(self, minutes, data_dir, full=revisit).run())
@@ -404,7 +404,7 @@ class Navigator:
         return self.start(tr("Progressions: Auto All"), self._progression)
 
     def _progression(self) -> None:
-        """Erstes Progression-Fenster öffnen, „Auto All“ drücken, schließen – gilt für alle Progressions."""
+        """Open the first progression window, press “Auto All”, close – applies to all progressions."""
         window = self.map.first_progression()
         if window is None:
             raise Stop(tr("No progression known yet – run “Explore” once."))
@@ -412,7 +412,7 @@ class Navigator:
         try:
             self._press(window, ("auto", "all"), ("autoall",))
         except Stop:
-            self._snap("progression")                     # Bild für die Fehlersuche (debug/makro_progression_*.jpg)
+            self._snap("progression")                     # image for troubleshooting (debug/makro_progression_*.jpg)
             raise
         time.sleep(AUTO_SETTLE)
         self._close_any()
@@ -421,7 +421,8 @@ class Navigator:
         return self.map.window_for(button) is not None
 
     def run_queue(self, tasks: list[dict], loop: bool = False) -> bool:
-        """Warteschlange: Aufgaben nacheinander; mit loop von vorn, bis „Stopp“/Esc/Maus. Aufgaben siehe task_label."""
+        """Routine: tasks one after another; with loop from the start again, until “Stop”/Esc/mouse. Tasks see
+        task_label."""
         tasks = [dict(t) for t in tasks if t.get("kind") in TASK_KINDS]
         if not tasks:
             return False
@@ -443,8 +444,8 @@ class Navigator:
                 self.queue_pos = i
                 self.log(tr("Step {n}/{count}: {task}", n=i + 1, count=len(tasks), task=task_label(task)))
                 following = next_task(tasks, i, loop)
-                self._run_extras()                        # fällige Gigs/Gilde zuerst
-                for attempt in (1, 2):                    # einmal wiederholen, dann überspringen
+                self._run_extras()                        # due gigs/guild first
+                for attempt in (1, 2):                    # retry once, then skip
                     try:
                         self._task(task, following)
                         break
@@ -456,7 +457,7 @@ class Navigator:
                         else:
                             self.log("⚠ " + tr("{reason} – trying once more.", reason=exc))
                             self._close_any_quiet()
-                time.sleep(0.6)                           # Spiel kurz Luft lassen
+                time.sleep(0.6)                           # give the game a moment
             if not loop:
                 return
 
@@ -465,7 +466,7 @@ class Navigator:
         if kind == "wait":
             self._idle_wait(float(task.get("seconds", 60)))
             return
-        self._focus()                                     # nach Warten/Anti-AFK wieder Roblox vorne
+        self._focus()                                     # after waiting/Anti-AFK bring Roblox to the front again
         if kind == "raid":
             self._raid_task(task, following)
         elif kind == "progression":
@@ -490,12 +491,12 @@ class Navigator:
         elif kind == "close":
             self._close_any()
 
-    # ------------------------------------------------------------------ Aufgaben im Fenster
+    # ------------------------------------------------------------------ Tasks in the window
     def autoroll(self, target: str) -> bool:
         return self.start(tr("Auto roll: {target}", target=target), lambda: self._autoroll(self._window(target)))
 
     def _window_area(self, window: dict) -> tuple[list[float], np.ndarray]:
-        """Lage des offenen Fensters (Standard-Rahmen, Vorlage oder ganzer Bildschirm) und aktuelles Bild."""
+        """Position of the open window (standard frame, template or full screen) and the current image."""
         frame = self._frame()
         kind, st = self._screen(frame)
         if kind == "template":
@@ -505,20 +506,20 @@ class Navigator:
         return [0.0, 0.0, 1.0, 1.0], frame
 
     def _press(self, window: dict, *labels: tuple[str, ...]) -> str:
-        """Knopf im offenen Fenster über seine Beschriftung finden und drücken (z. B. („auto", „roll“), („join",)).
-        Mehrteilige Beschriftungen: Wörter nebeneinander in einer Zeile. Rückgabe: gedrückte Beschriftung."""
+        """Find a button in the open window by its label and press it (e.g. (“auto", “roll”), (“join",)).
+                Multi-part labels: words side by side in one row. Returns the label pressed."""
         roi, frame = self._window_area(window)
         words = vision.words_in(frame, roi, self._ocr)
         from .knowledge import is_forbidden
-        words = [(w, b) for w, b in words if not is_forbidden(w)]       # „Leave“ & Co. nie als Treffer
+        words = [(w, b) for w, b in words if not is_forbidden(w)]       # never “Leave” & co. as a hit
         norm = [(re.sub(r"[^a-z0-9]", "", w.lower()), b) for w, b in words]
         for label in labels:
             for i, (w, box) in enumerate(norm):
                 if w != label[0] and not (len(label[0]) >= 5 and len(label) == 1 and
                                           difflib.SequenceMatcher(None, w, label[0]).ratio() >= 0.85):
-                    continue                              # kleine Lesefehler erlaubt („Persona1“ für „Personal“)
+                    continue                              # small misreads allowed (“Persona1” for “Personal”)
                 boxes = [box]
-                for part in label[1:]:                    # nächstes Wort rechts daneben, gleiche Zeile
+                for part in label[1:]:                    # next word to the right, same row
                     nxt = next((b for v, b in norm if v == part and 0 <= b[0] - boxes[-1][2] < 0.03
                                 and abs((b[1] + b[3]) / 2 - (boxes[-1][1] + boxes[-1][3]) / 2) < 0.015), None)
                     if nxt is None:
@@ -536,8 +537,8 @@ class Navigator:
                       name=window["name"]))
 
     def _autoroll(self, window: dict) -> None:
-        """Fenster öffnen, „Auto Roll“ (Gacha, Titans) bzw. „Auto!“ (Pets) drücken, gleich wieder schließen – das
-        Spiel rollt im Hintergrund weiter."""
+        """Open the window, press “Auto Roll” (gacha, titans) or “Auto!” (pets), close right away – the game keeps
+                rolling in the background."""
         self._open(window)
         auto = self.map.element(window, "Auto!")
         if auto is not None:
@@ -550,8 +551,8 @@ class Navigator:
         self._close_any()
 
     def _raid(self, window: dict, join: bool) -> None:
-        """Raid-Fenster öffnen und „Create“/„Start“ (eigener Raid, kostet einen Schlüssel) bzw. „Join“ drücken.
-        Was danach kommt (Lobby, Teleport), wird protokolliert und als Bild für die Fehlersuche gespeichert."""
+        """Open the raid window and press “Create”/“Start” (own raid, costs a key) or “Join”.
+                What comes afterwards (lobby, teleport) is logged and saved as an image for troubleshooting."""
         self._open(window)
         if join:
             self._press(window, ("join",))
@@ -569,18 +570,17 @@ class Navigator:
         except Exception:  # noqa: BLE001 – nur Hilfe für die Fehlersuche
             pass
 
-    # ------------------------------------------------------------------ Raid: Zahnrad, Auto Retry, Auto Leave
+    # ------------------------------------------------------------------ Raid: gear, Auto Retry, Auto Leave
     def _gear(self, frame: np.ndarray) -> Optional[list[float]]:
-        """Zahnrad oben rechts neben Welle/Timer – nur im Raid sichtbar."""
+        """Gear at the top right next to wave/timer – only visible in a raid."""
         if not hasattr(self, "_gear_tpl"):
             self._gear_tpl = cv2.imdecode(np.fromfile(str(RAID_GEAR), dtype=np.uint8), cv2.IMREAD_COLOR)
         score, box = vision.find_multiscale(frame, self._gear_tpl, GEAR_REGION)
         return box if score >= GEAR_HIT else None
 
     def _stable_gear(self, timeout: float = 12.0) -> Optional[list[float]]:
-        """Zahnrad erst anklicken, wenn der Raid wirklich läuft: „Starting defense …“ verdunkelt das Bild und
-        schluckt Klicks. Gewartet wird, bis die Überwachung eine Welle liest (falls verbunden) und das Zahnrad zweimal
-        an derselben Stelle steht."""
+        """Only click the gear once the raid is really running: “Starting defense …” darkens the image and swallows
+                clicks. It waits until the monitoring reads a wave (if connected) and the gear is at the same spot twice."""
         end = time.monotonic() + timeout
         last = None
         while time.monotonic() < end:
@@ -594,7 +594,7 @@ class Navigator:
         return last
 
     def _labels(self, frame: np.ndarray) -> dict:
-        """Beschriftungen im Zahnrad-Menü: {"retry": Lage, "leave": Lage, "wave": Lage des Wellen-Felds}."""
+        """Labels in the gear menu: {"retry": position, "leave": position, "wave": position of the wave field}."""
         words = vision.words_in(frame, [0.2, 0.1, 0.8, 0.9], self._ocr)
         norm = [(re.sub(r"[^a-z0-9]", "", w.lower()), b) for w, b in words]
         out = {}
@@ -607,7 +607,7 @@ class Navigator:
                 if nxt is not None:
                     out[key] = [b[0], min(b[1], nxt[1]), nxt[2], max(b[3], nxt[3])]
                     break
-        if "leave" in out:                                # Feld „Wave 85“ direkt unter „Auto Leave“
+        if "leave" in out:                                # field “Wave 85” right below “Auto Leave”
             lv = out["leave"]
             field = next((b for w, b in norm if w == "wave" and 0 < b[1] - lv[3] < 0.08
                           and abs(b[0] - lv[0]) < 0.12), None)
@@ -624,8 +624,8 @@ class Navigator:
         if gear is None:
             raise Stop(tr("No raid gear found – are you in a raid?"))
         self.log(tr("Opening the raid settings (gear)."))
-        self._click(((gear[0] + gear[2]) / 2, gear[1] + 0.45 * (gear[3] - gear[1])))   # eher oben: unten liegt
-        # der Rand der Leiste, Klicks dort gingen daneben (Eigentümer 08.10.2026)
+        self._click(((gear[0] + gear[2]) / 2, gear[1] + 0.45 * (gear[3] - gear[1])))   # rather at the top: the bottom is
+        # the edge of the bar, clicks there missed (owner 08.10.2026)
         end = time.monotonic() + 4
         while time.monotonic() < end:
             time.sleep(0.4)
@@ -635,7 +635,7 @@ class Navigator:
         raise Stop(tr("The raid settings did not open."))
 
     def _set_toggle(self, key: str, on: bool) -> None:
-        """Schalter „Auto Retry“/„Auto Leave“ setzen und nachprüfen (Meldungen verdecken oft – mehrmals lesen)."""
+        """Set the switch “Auto Retry”/“Auto Leave” and verify it (messages often cover it – read several times)."""
         name = "Auto Retry" if key == "retry" else "Auto Leave"
         for _ in range(8):
             frame = self._frame()
@@ -644,14 +644,14 @@ class Navigator:
                 time.sleep(0.4)
                 continue
             state = vision.toggle_state(frame, label)
-            if state is None:                             # verdeckt: kurz warten, erneut lesen
+            if state is None:                             # covered: wait briefly, read again
                 time.sleep(0.5)
                 continue
             if state == on:
                 self.log(tr("{name}: {state}", name=name, state=tr("on") if on else tr("off")))
                 return
             cy = (label[1] + label[3]) / 2
-            self._click((label[2] + 0.05, cy))           # Schalter rechts neben der Beschriftung
+            self._click((label[2] + 0.05, cy))           # switch to the right of the label
             time.sleep(0.7)
         raise Stop(tr("Couldn't switch “{name}” reliably.", name=name))
 
@@ -663,7 +663,7 @@ class Navigator:
         from .antiafk import _key
         self._click_roi(field)
         time.sleep(0.3)
-        for _ in range(6):                                # alte Zahl löschen
+        for _ in range(6):                                # delete the old number
             _key(0x08, True, 0x0E)
             _key(0x08, False, 0x0E)
             time.sleep(0.04)
@@ -687,15 +687,15 @@ class Navigator:
         region = [anchor[0], max(0.0, anchor[1] - 0.2), min(1.0, anchor[2] + 0.25), anchor[1]]
         score, box = vision.find_multiscale(frame, self._menu.x_tpl, region, (0.4, 0.5, 0.6, 0.7, 0.8, 1.0))
         if score >= 0.6 and box is not None:
-            self._click_roi(box)                          # rosa X oben rechts am Menü
+            self._click_roi(box)                          # pink X at the top right of the menu
         else:
             gear = self._gear(frame)
             if gear is not None:
-                self._click_roi(gear)                     # Zahnrad schließt es wieder
+                self._click_roi(gear)                     # the gear closes it again
         time.sleep(0.6)
 
     def _leave_raid(self) -> None:
-        """Raid verlassen: erst Auto Retry aus (sonst wird man wieder hineingeworfen), dann LEAVE!."""
+        """Leave the raid: first Auto Retry off (otherwise you are thrown back in), then LEAVE!."""
         self._open_raid_settings()
         self._set_toggle("retry", False)
         self._close_raid_settings()
@@ -703,18 +703,18 @@ class Navigator:
         if box is None:
             raise Stop(tr("“LEAVE!” not found."))
         self.log(tr("Clicking “{button}”.", button="LEAVE!"))
-        # Raid-„LEAVE!“ oben in der Mitte ist gewollt (Raid verlassen). Sperrzonen gelten nur, solange die Gilde bzw.
-        # ein Fenster beim Erkunden offen ist – hier ist keine aktiv (Gilden-„Leave“ unten links im Gilden-Fenster).
+        # The raid “LEAVE!” at the top middle is wanted (leave the raid). No-go zones only apply while the guild or
+        # a window is open while exploring – none is active here (guild “Leave” at the bottom left of the guild window).
         self._click_roi(box)
         time.sleep(3.0)
 
     def _raid_farm(self, window: dict, join: bool, runs: int, leave_wave: int) -> None:
-        """Raid starten/beitreten, Auto Retry an (+ Auto Leave ab Welle N), warten bis die Überwachung N Raid-Enden
-        gezählt hat, dann Auto Retry aus und verlassen."""
+        """Start/join a raid, Auto Retry on (+ Auto Leave from wave N), wait until the monitoring counted N raid ends,
+                then Auto Retry off and leave."""
         if self.monitoring is None or self.raid_count is None or not self.monitoring():
             raise Stop(tr("“Farm raid” needs monitoring to be running (it counts the raids)."))
         self._raid(window, join)
-        end = time.monotonic() + 120                      # bis man im Raid ist (Teleport, Lobby)
+        end = time.monotonic() + 120                      # until you are in the raid (teleport, lobby)
         while self._gear(self._frame()) is None:
             if time.monotonic() > end:
                 raise Stop(tr("Did not arrive in the raid."))
@@ -727,7 +727,7 @@ class Navigator:
         self._close_raid_settings()
         start = self.raid_count()
         self.log(tr("Farming {runs} raids …", runs=runs))
-        _ACTIVE.clear()                                   # beim Warten darf das Anti-AFK laufen
+        _ACTIVE.clear()                                   # Anti-AFK may run while waiting
         try:
             last = 0
             while True:
@@ -746,10 +746,10 @@ class Navigator:
         self._focus()
         self._leave_raid()
 
-    # ------------------------------------------------------------------ Automatisch abholen (eigene Schalter)
+    # ------------------------------------------------------------------ Auto collect (own switches)
     def due_extras(self) -> list[str]:
-        """Fällige Zusatzaufgaben: Fixer Gigs (nach ihren Zeiten) und Gilden-Missionen (alle GUILD_EVERY) – keine
-        Aufgaben der Warteschlange, sondern eigene Schalter; laufen zwischen den Aufgaben und während ein Raid farmt."""
+        """Due extra tasks: Fixer Gigs (by their times) and guild missions (every GUILD_EVERY) – not tasks of the
+                routine but switches of their own; they run between the tasks and while a raid is farming."""
         now = time.time()
         due = []
         if self.auto_gigs() and now >= self.gigs_next and self._gigs_window() is not None:
@@ -759,12 +759,12 @@ class Navigator:
         return due
 
     def run_extras(self) -> bool:
-        """Von der Oberfläche, wenn sonst nichts läuft."""
+        """From the UI when nothing else is running."""
         return self.start(tr("Auto collect"), self._run_extras)
 
     def hud_roi(self, button: dict) -> list[float]:
-        """Wo ist dieser Rand-Knopf gerade? Einmal je Fenstergröße über die Beschriftungen gesucht (zwei Bereiche,
-        ~0,2 s), danach gemerkt; nicht gefunden = Lage aus der Karte."""
+        """Where is this edge button right now? Searched once per window size via the labels (two areas, ~0.2 s),
+                remembered afterwards; not found = position from the map."""
         frame = self._frame()
         if self._hud_shape != frame.shape or button["name"] not in self._hud:
             words = [w for area in HUD_AREAS for w in _words_sharp(frame, area, self._ocr)]
@@ -774,7 +774,7 @@ class Navigator:
             self._hud.update(found)
             self._hud_shape = frame.shape
             if found:
-                _log.info("Rand-Knöpfe gefunden: %s", ", ".join(sorted(found)))
+                _log.info("Edge buttons found: %s", ", ".join(sorted(found)))
         return self._hud.get(button["name"], button["roi"])
 
     def _run_extras(self) -> None:
@@ -801,7 +801,7 @@ class Navigator:
                 self._close_any_quiet()
 
     def _extras_while_waiting(self) -> None:
-        """Beim Warten (Raid farmt, „Warten“): fällige Zusatzaufgaben einschieben, danach weiter warten."""
+        """While waiting (raid farming, “Pause”): slot in due extra tasks, then keep waiting."""
         if not self.due_extras():
             return
         _ACTIVE.set()
@@ -810,7 +810,7 @@ class Navigator:
         finally:
             _ACTIVE.clear()
 
-    # ------------------------------------------------------------------ Raid (eine Aufgabe statt vier)
+    # ------------------------------------------------------------------ Raid (one task instead of four)
     def _ensure_monitoring(self) -> None:
         if self.monitoring is None or self.raid_count is None:
             raise Stop(tr("Raids need monitoring to run (it counts the raids)."))
@@ -828,8 +828,9 @@ class Navigator:
             time.sleep(0.3)
 
     def _raid_task(self, task: dict, following: Optional[dict]) -> None:
-        """Raid starten/beitreten (außer man farmt schon genau diesen), Auto Retry + Auto Leave einstellen, bis zum
-        Ende farmen (N Raids, M Minuten oder ohne Ende), danach nur verlassen, wenn ein anderer Raid/Modus folgt."""
+        """Start/join a raid (unless you are already farming exactly this one), set Auto Retry + Auto Leave, farm to
+        the
+                end (N raids, M minutes or without end), then only leave if a different raid/mode follows."""
         target = task.get("target", "")
         self._ensure_monitoring()
         if self.set_raid is not None:
@@ -838,11 +839,11 @@ class Navigator:
         if self._in_raid == target and self._gear(self._frame()) is not None:
             self.log(tr("Already in raid “{name}” – farming on.", name=target))
         else:
-            if self._gear(self._frame()) is not None:     # noch in einem anderen Raid
+            if self._gear(self._frame()) is not None:     # still in another raid
                 self._leave_raid()
             self._in_raid = None
             self._raid(self._window(target), bool(task.get("join")))
-            end = time.monotonic() + 120                  # bis man im Raid ist (Teleport, Lobby)
+            end = time.monotonic() + 120                  # until you are in the raid (teleport, lobby)
             while self._gear(self._frame()) is None:
                 if time.monotonic() > end:
                     raise Stop(tr("Did not arrive in the raid."))
@@ -859,7 +860,7 @@ class Navigator:
         start, t0 = self.raid_count(), time.monotonic()
         self.log({"runs": tr("Farming {runs} raids …", runs=runs),
                   "minutes": tr("Farming {minutes} min …", minutes=int(minutes))}.get(until, tr("Farming until you stop …")))
-        _ACTIVE.clear()                                   # beim Warten darf das Anti-AFK laufen
+        _ACTIVE.clear()                                   # Anti-AFK may run while waiting
         try:
             last = 0
             while True:
@@ -886,7 +887,7 @@ class Navigator:
         else:
             self.log(tr("Staying in the raid (Auto Retry keeps farming)."))
 
-    # ------------------------------------------------------------------ Claim-Hilfen
+    # ------------------------------------------------------------------ Claim helpers
     def _words(self) -> tuple[list[tuple[str, list[float]]], list[float]]:
         roi, frame = self._window_area({"name": "?"})
         return vision.words_in(frame, roi, self._ocr), roi
@@ -896,7 +897,7 @@ class Navigator:
         return next((b for w, b in words if re.sub(r"[^a-z]", "", w.lower()) in want), None)
 
     def _claim_all(self, where: str) -> int:
-        """Alle sichtbaren „Claim“-Knöpfe drücken (nach jedem Klick neu lesen – die Liste kann sich verschieben)."""
+        """Press all visible “Claim” buttons (read again after every click – the list can shift)."""
         count = 0
         for _ in range(CLAIM_LIMIT):
             words, _roi = self._words()
@@ -917,7 +918,7 @@ class Navigator:
             pass
 
     def _snap(self, tag: str) -> None:
-        """Bild für die Fehlersuche (debug/makro_<tag>_<zeit>.jpg) – bei unbekannten Schritten."""
+        """Image for troubleshooting (debug/makro_<tag>_<time>.jpg) – for unknown steps."""
         try:
             from .app_paths import debug_dir
             frame = self._frame()
@@ -927,9 +928,9 @@ class Navigator:
         except Exception:  # noqa: BLE001 – nur Hilfe für die Fehlersuche
             pass
 
-    # ------------------------------------------------------------------ Gilde: Missionen
+    # ------------------------------------------------------------------ Guild: missions
     def _guild_claim(self) -> None:
-        """Gilde öffnen (Knopf unten links) → „Missions“ → „Personal“ und „Guild Weekly“ abholen → schließen."""
+        """Open the guild (button at the bottom left) → “Missions” → claim “Personal” and “Guild Weekly” → close."""
         button = next((e for e in self.map.hud() if e["name"] == "Guild"), None)
         if button is None:
             raise Stop(tr("The guild button is unknown yet."))
@@ -943,7 +944,7 @@ class Navigator:
             time.sleep(STEP_WAIT)
         time.sleep(0.6)
         guild = {"name": "Guild"}
-        roi, frame = self._window_area(guild)                # „Leave“ unten links sperren, bevor irgendetwas geklickt wird
+        roi, frame = self._window_area(guild)                # block “Leave” at the bottom left before anything is clicked
         from .knowledge import forbidden_zones
         self.forbidden = forbidden_zones(vision.words_in(frame, roi, self._ocr), roi, "Guild")
         try:
@@ -953,8 +954,8 @@ class Navigator:
         self._close_any()
 
     def _guild_forbidden(self) -> None:
-        """Sperrzonen für die gerade sichtbare Gilden-Seite neu berechnen. Die Zonen der Startseite (Kick, Leave …)
-        lagen sonst nach dem Wechsel zu „Missions“ über „Personal“ – der Reiter galt als gesperrt."""
+        """Recompute the no-go zones for the guild page visible right now. Otherwise the zones of the home page (Kick,
+                Leave …) lay over “Personal” after switching to “Missions” – the tab counted as blocked."""
         from .knowledge import forbidden_zones
         roi, frame = self._window_area({"name": "Guild"})
         self.forbidden = forbidden_zones(vision.words_in(frame, roi, self._ocr), roi, "Guild")
@@ -980,8 +981,8 @@ class Navigator:
 
     # ------------------------------------------------------------------ Fixer Gigs (W21)
     def _gigs(self) -> None:
-        """Fixer Gigs öffnen, fertige Gigs abholen („Claim“), neue mit „Send Pets“ losschicken (die letzten Pets im
-        Pets-Fenster), Laufzeiten merken – vor Ablauf wird die Aufgabe übersprungen."""
+        """Open Fixer Gigs, claim finished gigs (“Claim”), send new ones with “Send Pets” (the last pets in the pets
+                window), remember the durations – the task is skipped before they run out."""
         wait = self.gigs_next - time.time()
         if wait > 0:
             self.log(tr("Fixer Gigs: nothing finished yet – checking again in {time}.", time=fmt_wait(wait)))
@@ -992,7 +993,7 @@ class Navigator:
         self._open(window)
         time.sleep(0.8)
         self._claim_all("Fixer Gigs")
-        for nth in range(1, GIGS_PETS + 1):               # je freiem Platz: „Send Pets“ mit einem Pet
+        for nth in range(1, GIGS_PETS + 1):               # per free slot: “Send Pets” with one pet
             words, _roi = self._words()
             box = self._send_box(words)
             if box is None:
@@ -1031,8 +1032,9 @@ class Navigator:
         self._close_any()
 
     def _read_timer(self, frame: np.ndarray, box: Optional[list[float]], duration: int) -> Optional[int]:
-        """Restzeit genau lesen: Ausschnitt 4× vergrößert, helle Schrift, nur Ziffern und „:“ (die allgemeine
-        Lesung macht aus „1:36:38“ gern „4:36:98“). Gültig nur, wenn höchstens so lang wie der Gig."""
+        """Read the time left exactly: crop scaled up 4×, bright text, only digits and “:” (the general reading likes
+        to
+                turn “1:36:38” into “4:36:98”). Only valid if at most as long as the gig."""
         if box is None or self._ocr is None:
             return None
         fh, fw = frame.shape[:2]
@@ -1052,7 +1054,7 @@ class Navigator:
                 return seconds
         return None
 
-    # ------------------------------------------------------------------ Zeiten der Abholungen (überdauern Neustarts)
+    # ------------------------------------------------------------------ Collection times (survive restarts)
     def _load_state(self) -> None:
         if self.state_path is None:
             return
@@ -1073,26 +1075,26 @@ class Navigator:
             pass
 
     def _gigs_window(self) -> Optional[dict]:
-        """Fixer-Gigs-Fenster der Karte (Art „gigs“ vom Erkunden oder Name)."""
+        """Fixer Gigs window of the map (kind “gigs” from exploring, or the name)."""
         return next((e for e in self.map.entries if e.get("kind") == "Fenster / Bereich" and (
             (e.get("extra") or {}).get("category") == "gigs" or "fixer gigs" in e["name"].lower())), None)
 
     @staticmethod
     def _send_box(words) -> Optional[list[float]]:
-        """„SEND PETS“ (zwei Wörter nebeneinander) bzw. „SEND“ allein."""
+        """“SEND PETS” (two words side by side) or “SEND” alone."""
         norm = [(re.sub(r"[^a-z]", "", w.lower()), b) for w, b in words]
         return next((b for w, b in norm if w in ("send", "sendpets")), None)
 
     def _send_pets(self, nth: int = 1) -> None:
-        """Pets-Fenster nach „Send Pets“: ganz nach unten scrollen, EIN Pet anklicken – beim n-ten Gig das n-te von
-        hinten (also reihum eins der letzten GIGS_PETS, egal welches); der Klick schickt es los. Je Gig einzeln.
-        Unbekannte Schritte werden protokolliert und als Bild gespeichert (debug/makro_gigs_*.jpg)."""
+        """Pets window after “Send Pets”: scroll to the very bottom, click ONE pet – for the n-th gig the n-th from the
+                end (so in turn one of the last GIGS_PETS, whichever); the click sends it off. One gig at a time.
+                Unknown steps are logged and saved as an image (debug/makro_gigs_*.jpg)."""
         roi, frame = self._window_area({"name": "Pets"})
         x0, y0, x1, y1 = roi
         grid = [x0 + 0.06 * (x1 - x0), y0 + 0.30 * (y1 - y0), x0 + 0.94 * (x1 - x0), y0 + 0.86 * (y1 - y0)]
         center = ((grid[0] + grid[2]) / 2, (grid[1] + grid[3]) / 2)
-        # bis die Liste unten steht: „unten“ = der Inhalt verschiebt sich nicht mehr (Phasenkorrelation). Der reine
-        # Bildvergleich lief bei animierten Pets endlos weiter, wenn die Liste schon unten war (2. Gig, Eigentümer)
+        # until the list is at the bottom: “bottom” = the content doesn't shift anymore (phase correlation). The plain
+        # image comparison ran on forever with animated pets when the list was already at the bottom (2nd gig, owner)
         from .explorer import scrolled_box
 
         def grid_img() -> tuple[np.ndarray, np.ndarray]:
@@ -1110,7 +1112,7 @@ class Navigator:
             if scrolled_box(last, now) is None:
                 still += 1
                 if still >= 2:
-                    break                                 # zweimal nichts verschoben: unten angekommen
+                    break                                 # nothing shifted twice: arrived at the bottom
             else:
                 still = 0
             last = now
@@ -1120,8 +1122,8 @@ class Navigator:
             self._snap("gigs_pets")
             self._close_any_quiet()
             return
-        # Ein Klick auf das Pet schickt es los – kein Bestätigen (Eigentümer 08.10.2026). Zuerst das n-te von hinten;
-        # bleibt das Pets-Fenster offen (Pet schon unterwegs o. Ä.), die anderen der letzten GIGS_PETS probieren.
+        # A click on the pet sends it off – no confirmation (owner 08.10.2026). First the n-th from the end;
+        # if the pets window stays open (pet already busy or similar), try the others of the last GIGS_PETS.
         gigs = self._gigs_window() or {"name": "Fixer Gigs"}
         order = [nth] + [k for k in range(1, GIGS_PETS + 1) if k != nth]
         for k in order[:min(GIGS_PETS, len(tiles))]:
@@ -1139,13 +1141,13 @@ class Navigator:
         self._close_any_quiet()
 
     def _pet_tiles(self, frame: np.ndarray, grid: list[float]) -> list[list[float]]:
-        """Pet-Kacheln im Raster (Lese-Reihenfolge). Das Raster ergibt sich aus den Namensschildern unten in den
-        Kacheln („Maine“, „Rias“ …): Zeilen = gleiche Höhe, Spalten = gleicher Abstand. Eine Kachel zählt, wenn ein
-        Name darin steht oder ihr Inhalt scharf ist (leere Felder sind glatt)."""
+        """Pet tiles in the grid (reading order). The grid follows from the name tags at the bottom of the tiles
+                (“Maine”, “Rias” …): rows = same height, columns = same spacing. A tile counts if a name is in it or its
+                content is sharp (empty slots are smooth)."""
         return pet_tiles(frame, grid, vision.words_in(frame, grid, self._ocr))
 
     def _idle_wait(self, seconds: float) -> None:
-        """Warten ohne Eingaben: Maus/Fenster frei, Anti-AFK darf in der Zeit laufen; Esc/„Stopp“ brechen ab."""
+        """Wait without input: mouse/window free, Anti-AFK may run meanwhile; Esc/“Stop” abort."""
         _ACTIVE.clear()
         try:
             end = time.monotonic() + max(0.0, seconds)
@@ -1169,7 +1171,7 @@ class Navigator:
             if not _bring_to_front(self._hwnd):
                 raise Stop(tr("Could not bring Roblox to the front."))
             time.sleep(0.25)
-        self._cursor = None                               # Maus darf sich zwischen den Aufgaben bewegt haben
+        self._cursor = None                               # the mouse may have moved between the tasks
 
     def _run(self, label: str, job: Callable[[], None]) -> None:
         self.log("▶ " + label)
@@ -1200,7 +1202,7 @@ class Navigator:
         if winapi.is_minimized(self._hwnd):
             raise Stop(tr("Roblox is minimized"))
         if self._ocr is None:
-            self._ocr = self.ocr_factory()                # eigene Texterkennung (nicht die der Überwachung)
+            self._ocr = self.ocr_factory()                # own text recognition (not the monitoring's)
         if self._menu is None:
             lists = self.map.list_windows()
             if not lists:
@@ -1220,24 +1222,24 @@ class Navigator:
         time.sleep(0.25)
         self._cursor = None
 
-    # ------------------------------------------------------------------ Bild + Zustand
+    # ------------------------------------------------------------------ Image + state
     def _frame(self) -> np.ndarray:
         self._check()
-        for timeout in (1.5, 3.0):                       # bei viel Spiel-Last kommt ein Bild manchmal zu spät
+        for timeout in (1.5, 3.0):                       # under heavy game load an image sometimes comes too late
             res = self._source.grab([], full=True, timeout=timeout)
             if res is not None and res.full is not None:
                 return res.full
         raise Stop(tr("No image from the Roblox window."))
 
     def _screen(self, frame: np.ndarray) -> tuple[str, object]:
-        """("template", Vorlage) | ("menu", (lage, titel, x)) | ("none", None)."""
+        """("template", template) | ("menu", (position, title, x)) | ("none", None)."""
         for t in self._templates:
             if t.seen(frame):
                 return "template", t
         st = self._menu.state(frame, self._ocr)
         return ("menu", st) if st is not None else ("none", None)
 
-    # ------------------------------------------------------------------ Wege
+    # ------------------------------------------------------------------ Paths
     def _window(self, name: str) -> dict:
         w = self.map.container(name)
         if w is None:
@@ -1245,8 +1247,8 @@ class Navigator:
         return w
 
     def _open(self, window: dict) -> None:
-        """Fenster öffnen: über seinen Knopf – liegt der in einer Welt-Zeile, vorher Teleporter + zur Welt scrollen;
-        liegt er in einem anderen Fenster, erst jenes öffnen."""
+        """Open a window: via its button – if it is in a world row, open the teleporter and scroll to the world first;
+                if it is in another window, open that one first."""
         if self._is_open(window, self._frame()):
             self.log(tr("“{name}” is already open.", name=window["name"]))
             return
@@ -1255,7 +1257,7 @@ class Navigator:
             raise Stop(tr("No button known for “{name}”.", name=window["name"]))
         holder = self.map.parent(button)
         if holder is not None and holder.get("name") == window.get("name"):
-            holder = None                                 # Knopf versehentlich „im“ eigenen Fenster eingetragen
+            holder = None                                 # button accidentally registered “inside” its own window
         if holder is not None and holder.get("kind") == ROW:
             row_list = self.map.parent(holder)
             self._open_list(row_list)
@@ -1275,7 +1277,7 @@ class Navigator:
     def _open_list(self, row_list: dict) -> None:
         kind, st = self._screen(self._frame())
         if kind == "menu" and self._menu.is_base(st[1]):
-            return                                        # Teleporter ist schon offen
+            return                                        # the teleporter is already open
         if kind != "none":
             self._close_any()
         opener = self.map.opener_of(row_list)
@@ -1305,8 +1307,8 @@ class Navigator:
         return out
 
     def _scroll_to(self, row_list: dict, target: dict) -> list[float]:
-        """Zur Welt-Zeile scrollen und ihre aktuelle Lage liefern. Erst Mausrad über der Liste (vorher Maus bewegen,
-        sonst ignoriert Roblox das Rad); bewegt sich die Liste damit nicht, den Scrollbalken ziehen."""
+        """Scroll to the world row and return its current position. First the mouse wheel over the list (move the mouse
+                before, otherwise Roblox ignores the wheel); if the list doesn't move with it, drag the scroll bar."""
         want = world_number(target["name"])
         x0, y0, x1, y1 = row_list["roi"]
         over = ((x0 + x1) / 2, (y0 + y1) / 2)
@@ -1321,10 +1323,10 @@ class Navigator:
                     return roi
             numbers = [n for n in (world_number(r["name"]) for r, _ in visible) if n is not None]
             if want is None or not numbers:
-                direction = -1                            # nichts lesbar: nach unten suchen
+                direction = -1                            # nothing readable: search downwards
             else:
                 direction = -1 if want > max(numbers) else 1
-            # Lage der sichtbaren Zeilen vergleichen (nicht nur Namen: kleine Schritte zeigen dieselben Welten)
+            # compare the position of the visible rows (not only names: small steps show the same worlds)
             layout = tuple((r["name"], round(roi[1], 3)) for r, roi in visible)
             moved = last is None or layout != last
             last = layout
@@ -1333,7 +1335,7 @@ class Navigator:
                       moved)
             if not moved:
                 stuck += 1
-                if not use_bar and stuck >= 2:            # Mausrad wirkt nicht: Scrollbalken versuchen
+                if not use_bar and stuck >= 2:            # the mouse wheel has no effect: try the scroll bar
                     use_bar = self._scrollbar(row_list) is not None
                     if use_bar:
                         self.log(tr("The mouse wheel does not move the list – dragging the scrollbar."))
@@ -1347,14 +1349,14 @@ class Navigator:
                 self._drag_scrollbar(row_list, frame, direction)
             else:
                 self._wheel(over, direction * SCROLL_NOTCHES)
-            time.sleep(0.45)                              # Liste gleitet nach
+            time.sleep(0.45)                              # the list glides on
         raise Stop(tr("World “{world}” not found.", world=target["name"]))
 
     def _scrollbar(self, row_list: dict) -> Optional[dict]:
         return next((e for e in self.map.children(row_list) if e.get("kind") == "Scrollbalken" and e.get("roi")), None)
 
     def _drag_scrollbar(self, row_list: dict, frame: np.ndarray, direction: int) -> None:
-        """Griff des Scrollbalkens suchen (hellster Abschnitt der Schiene) und ein Stück nach oben/unten ziehen."""
+        """Find the handle of the scroll bar (brightest part of the track) and drag it up/down a bit."""
         bar = self._scrollbar(row_list)
         if bar is None:
             raise Stop(tr("No scrollbar in the map."))
@@ -1363,13 +1365,13 @@ class Navigator:
         strip = frame[int(y0 * fh):int(y1 * fh), max(0, int(x0 * fw) - 2):int(x1 * fw) + 2]
         if strip.size == 0:
             raise Stop(tr("No scrollbar in the map."))
-        rows = strip.mean(axis=(1, 2))                    # Helligkeit je Bildzeile
+        rows = strip.mean(axis=(1, 2))                    # brightness per image row
         bright = rows > (np.median(rows) + 25)
         ys = np.flatnonzero(bright)
         if ys.size:
-            grip = (ys[0] + ys[-1]) / 2 / len(rows)       # Mitte des Griffs (Anteil der Schiene)
+            grip = (ys[0] + ys[-1]) / 2 / len(rows)       # center of the handle (share of the track)
         else:
-            grip = 0.0 if direction < 0 else 1.0          # Griff nicht erkennbar: am Ende anfassen
+            grip = 0.0 if direction < 0 else 1.0          # handle not recognizable: grab it at the end
         start = (x0 + x1) / 2, y0 + grip * (y1 - y0)
         delta = (y1 - y0) * BAR_STEP * (1 if direction < 0 else -1)
         end = start[0], min(y1, max(y0, start[1] + delta))
@@ -1387,14 +1389,14 @@ class Navigator:
             time.sleep(0.025)
         u32.SetCursorPos(sx, sy)
         time.sleep(0.06)
-        _mouse(0x0002)                                    # drücken
+        _mouse(0x0002)                                    # press
         steps = 12
-        for k in range(1, steps + 1):                     # gleichmäßig ziehen (Roblox braucht Zwischenschritte)
+        for k in range(1, steps + 1):                     # drag evenly (Roblox needs intermediate steps)
             u32.SetCursorPos(sx, int(sy + (ey - sy) * k / steps))
             _mouse(0x0001, 0, 0)
             time.sleep(0.02)
         time.sleep(0.05)
-        _mouse(0x0004)                                    # loslassen
+        _mouse(0x0004)                                    # release
         self._cursor = (ex, ey)
 
     def _is_open(self, window: dict, frame: np.ndarray) -> bool:
@@ -1422,14 +1424,14 @@ class Navigator:
             kind, st = self._screen(frame)
             if kind == "menu" and st[1] and not self._menu.is_base(st[1]):
                 seen = st[1]
-        if seen:                                          # ein Menü ist offen, Titel passt aber nicht genau
+        if seen:                                          # a menu is open, but the title doesn't match exactly
             self.log(tr("“{title}” is open – I was looking for “{name}”.", title=seen, name=window["name"]))
             return
         raise Stop(tr("“{name}” did not open.", name=window["name"]))
 
     def _unlock_camera(self) -> None:
-        """Ich-Perspektive verlassen: Hält Roblox den Zeiger in der Mitte fest (Kamera ganz herangezoomt), lassen
-        sich Fenster nicht mehr anklicken. Mausrad zurück = Kamera herauszoomen."""
+        """Leave first person: if Roblox holds the cursor in the middle (camera fully zoomed in), windows can't be
+                clicked anymore. Mouse wheel back = zoom the camera out."""
         self.log(tr("The camera is stuck in first person – zooming out."))
         for _ in range(4):
             self._wheel((0.5, 0.5), -5)
@@ -1440,7 +1442,7 @@ class Navigator:
     def _close_any(self) -> None:
         for attempt in range(4):
             if attempt == 2 and time.monotonic() - getattr(self, "_warped", 0.0) < 10:
-                self._unlock_camera()                     # zweimal nicht zu und Zeiger wird festgehalten
+                self._unlock_camera()                     # not closed twice and the cursor is held
             kind, st = self._screen(self._frame())
             if kind == "none":
                 return
@@ -1472,16 +1474,16 @@ class Navigator:
             self._close_after_auto(window)
 
     def _close_after_auto(self, window: dict) -> None:
-        """Nach „Auto!“ sofort schließen: das Spiel rollt im Hintergrund weiter (bis die Yen alle sind). Warten wäre
-        unnötig lang (Wunsch des Eigentümers 07.10.2026)."""
+        """Close right after “Auto!”: the game keeps rolling in the background (until the yen run out). Waiting would
+                take unnecessarily long (owner's wish 07.10.2026)."""
         close = self.map.close_element(window)
         if close is None:
-            return                                        # Karte unvollständig: offen lassen
-        time.sleep(AUTO_SETTLE)                           # Spiel den Klick auf „Auto!“ verarbeiten lassen
+            return                                        # map incomplete: leave it open
+        time.sleep(AUTO_SETTLE)                           # let the game process the click on “Auto!”
         self.log(tr("Auto-roll keeps running in the background – closing the menu."))
         self._click_roi(close["roi"])
 
-    # ------------------------------------------------------------------ Eingaben (nur mit Roblox vorne)
+    # ------------------------------------------------------------------ Input (only with Roblox in front)
     def _check(self) -> None:
         if self._halt.is_set():
             raise UserStop(tr("Stopped."))
@@ -1492,8 +1494,8 @@ class Navigator:
             pt = wintypes.POINT()
             u32.GetCursorPos(ctypes.byref(pt))
             moved = user_moved(self._cursor, (pt.x, pt.y), winapi.client_rect(self._hwnd) if self._hwnd else None)
-            if moved is None:                             # Roblox hat den Zeiger selbst zur Mitte gesetzt
-                _log.info("Makro: Mauszeiger vom Spiel zur Fenstermitte gesetzt – kein Abbruch.")
+            if moved is None:                             # Roblox put the cursor in the middle by itself
+                _log.info("Macro: the game moved the cursor to the middle of the window – no abort.")
                 self._cursor = (pt.x, pt.y)
                 self._warped = time.monotonic()
             elif moved:
@@ -1517,8 +1519,8 @@ class Navigator:
         self._click((x0 + (rel[0] + rel[2]) / 2 * (x1 - x0), y0 + (rel[1] + rel[3]) / 2 * (y1 - y0)))
 
     def _guard(self, pos: tuple[float, float]) -> None:
-        """Harte Sperre: Ziele in gesperrten Bereichen (Gilde „Leave“, Kick, Delete …) werden nie angesteuert –
-        die Maus springt direkt zum Ziel, fährt also nie über andere Knöpfe."""
+        """Hard block: targets in blocked areas (guild “Leave”, Kick, Delete …) are never approached –
+                the mouse jumps straight to the target, so it never passes over other buttons."""
         from .knowledge import inside
         if inside(pos, self.forbidden):
             raise Stop(tr("Blocked area (e.g. “Leave”) – not clicked."))
@@ -1530,15 +1532,15 @@ class Navigator:
         u32 = ctypes.windll.user32
         u32.SetCursorPos(x - 3, y - 3)
         time.sleep(0.04)
-        for _ in range(3):                                # echte Bewegung, sonst kein „Hover“ in Roblox
+        for _ in range(3):                                # real movement, otherwise no “hover” in Roblox
             _mouse(0x0001, 1, 1)
             time.sleep(0.025)
         u32.SetCursorPos(x, y)
         self._cursor = (x, y)
         time.sleep(0.07)
-        _mouse(0x0002)                                    # links drücken
+        _mouse(0x0002)                                    # press left
         time.sleep(0.06)
-        _mouse(0x0004)                                    # loslassen
+        _mouse(0x0004)                                    # release
         time.sleep(0.12)
 
     def _wheel(self, pos: tuple[float, float], notches: int) -> None:
@@ -1547,15 +1549,15 @@ class Navigator:
         x, y = self._point(*pos)
         u32 = ctypes.windll.user32
         u32.SetCursorPos(x - 3, y - 3)
-        for _ in range(3):                                # echte Bewegung: sonst gilt die Liste nicht als „unter der
-            _mouse(0x0001, 1, 1)                          # Maus“ und Roblox ignoriert das Rad
+        for _ in range(3):                                # real movement: otherwise the list doesn't count as “under the
+            _mouse(0x0001, 1, 1)                          # mouse” and Roblox ignores the wheel
             time.sleep(0.025)
         u32.SetCursorPos(x, y)
         self._cursor = (x, y)
         time.sleep(0.08)
         step = 1 if notches > 0 else -1
         for _ in range(abs(notches)):
-            _mouse(0x0800, data=120 * step)               # MOUSEEVENTF_WHEEL (+ = hoch, - = runter)
+            _mouse(0x0800, data=120 * step)               # MOUSEEVENTF_WHEEL (+ = up, - = down)
             time.sleep(0.05)
 
 
