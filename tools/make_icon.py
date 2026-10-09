@@ -1,11 +1,10 @@
-"""Programmsymbol erzeugen: assets/app.ico (16–256 px) und assets/app.png.
+"""Create the program icon: assets/app.ico (16–256 px) and assets/app.png.
 
-Logo „Monogramm A“ (seit 0.6.6): Verlaufs-„A“ (Türkis → Violett, Design „Astral“) mit Umlaufbahn und Stern auf dunkler
-Kachel. Jede Größe wird einzeln gezeichnet – kleine Größen ohne Schein und Stern, mit dickeren Linien, damit das „A“
-in Taskleiste und Tray scharf bleibt.
+Logo “monogram A” (since 0.6.6): gradient “A” (teal → violet, design “Astral”) with orbit and star on a dark
+tile. Every size is drawn on its own – small sizes without glow and star, with thicker lines, so the “A”
+stays sharp in the taskbar and tray.
 
-    python tools/make_icon.py
-"""
+    python tools/make_icon.py"""
 from __future__ import annotations
 
 import math
@@ -35,14 +34,14 @@ def _star(cx: float, cy: float, r_out: float, r_in: float) -> QPainterPath:
 
 
 def render(size: int) -> QImage:
-    """Logo in genau dieser Größe (gezeichnet im 256er-Raster, skaliert)."""
+    """Logo in exactly this size (drawn on a 256 grid, scaled)."""
     small = size <= 32
     img = QImage(size, size, QImage.Format.Format_ARGB32)
     img.fill(Qt.GlobalColor.transparent)
     p = QPainter(img)
     p.setRenderHint(QPainter.RenderHint.Antialiasing)
     p.scale(size / 256, size / 256)
-    # Kachel
+    # tile
     bg = QLinearGradient(0, 0, 256, 256)
     bg.setColorAt(0, QColor("#161D2C"))
     bg.setColorAt(1, QColor("#0A0D13"))
@@ -50,7 +49,7 @@ def render(size: int) -> QImage:
     p.setBrush(bg)
     inset = 2 if small else 6
     p.drawRoundedRect(QRectF(inset, inset, 256 - 2 * inset, 256 - 2 * inset), 58, 58)
-    if not small:                                           # weicher Schein hinter dem A
+    if not small:                                           # soft glow behind the A
         glow = QRadialGradient(128, 144, 104)
         c0, c1 = QColor(VIOLET), QColor(VIOLET)
         c0.setAlpha(80)
@@ -72,14 +71,14 @@ def render(size: int) -> QImage:
     a.lineTo(QPointF(128, 50 if not small else 56))
     a.lineTo(QPointF(192, 208))
     p.drawPath(a)
-    # Umlaufbahn (bildet den Querstrich)
+    # orbit (forms the crossbar)
     p.setPen(QPen(QColor("#FFFFFF"), 16 if small else 10, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap))
     p.save()
     p.translate(128, 156)
     p.rotate(-12)
     p.drawArc(QRectF(-104, -26, 208, 52), 200 * 16, 300 * 16)
     p.restore()
-    if not small:                                           # Stern an der Spitze
+    if not small:                                           # star at the tip
         p.setPen(Qt.PenStyle.NoPen)
         p.setBrush(QColor("#FFFFFF"))
         p.drawPath(_star(128, 50, 20, 5))
@@ -103,7 +102,7 @@ def main() -> int:
     images[256].save(assets / "app.png")
     images[256].save(assets / "app.ico", sizes=[(s, s) for s in SIZES],
                      append_images=[images[s] for s in SIZES if s != 256])
-    print("assets/app.ico und assets/app.png geschrieben:", ", ".join(f"{s}px" for s in SIZES))
+    print("wrote assets/app.ico and assets/app.png:", ", ".join(f"{s}px" for s in SIZES))
     return 0
 
 

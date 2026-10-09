@@ -1,4 +1,4 @@
-"""Seite „Meldungen": Webhook, Ereignisse, Ping."""
+"""Page “Alerts”: webhook, events, ping."""
 from __future__ import annotations
 
 from PySide6.QtCore import Qt
@@ -13,7 +13,7 @@ from .widgets import Card, InfoButton, SpinBox, form_grid, label, page_header
 
 
 class ColorButton(QToolButton):
-    """Farbfeld für die Embed-Farbe eines Ereignisses; leer = Standardfarbe des Programms."""
+    """Color field for the embed color of an event; empty = the program's default color."""
 
     def __init__(self) -> None:
         super().__init__()
@@ -35,7 +35,7 @@ class ColorButton(QToolButton):
     def set_value(self, value: str) -> None:
         self.value = value if is_hex_color(value) else ""
         h = theme.px(22)
-        flat = (f"min-height: {h}px; max-height: {h}px; padding: 0; border-radius: {h // 2}px;")   # flach wie ein Chip
+        flat = (f"min-height: {h}px; max-height: {h}px; padding: 0; border-radius: {h // 2}px;")   # flat like a chip
         if self.value:
             self.setText("")
             self.setStyleSheet(f"QToolButton {{ background: {self.value}; {flat} }}"
@@ -49,7 +49,7 @@ class ColorButton(QToolButton):
 
 
 class AlertsPage(QWidget):
-    SAVES = True                                   # Speichern-Leiste unten (main_window)
+    SAVES = True                                   # save bar at the bottom (main_window)
 
     def __init__(self, main) -> None:
         super().__init__()
@@ -62,7 +62,7 @@ class AlertsPage(QWidget):
         head = page_header(tr("Alerts"), tr("What is sent to Discord, and when is there a ping?"))
         head.addStretch(1)
         root.addLayout(head)
-        cols = QHBoxLayout()                               # links Discord + Live-Status, rechts Ereignisse
+        cols = QHBoxLayout()                               # left Discord + live status, right events
         theme.track_spacing(cols, 14)
         left = QVBoxLayout()
         theme.track_spacing(left, 14)
@@ -116,7 +116,7 @@ class AlertsPage(QWidget):
             "Detailed: figures as separate fields.\n\nCompact: one calm line with the key values – the live status "
             "gets slimmer too.")))
         style_row.addStretch(1)
-        test = QPushButton(tr("Send test message"))     # in derselben Zeile (Seite passt ohne Scrollen)
+        test = QPushButton(tr("Send test message"))     # in the same row (page fits without scrolling)
         test.clicked.connect(self._send_test)
         style_row.addWidget(test)
         grid.addWidget(label(tr("Message style")), 4, 0)
@@ -172,7 +172,7 @@ class AlertsPage(QWidget):
         for i, (key, text, _s, _p) in enumerate(EVENT_DEFS, start=1):
             table.addWidget(label(tr(text)), i, 0)
             send, ping = QCheckBox(), QCheckBox()
-            send.toggled.connect(ping.setEnabled)             # Ping nur bei gesendeten Ereignissen
+            send.toggled.connect(ping.setEnabled)             # ping only for events that are sent
             self.send_boxes[key], self.ping_boxes[key] = send, ping
             table.addWidget(send, i, 1, center)
             table.addWidget(ping, i, 2, center)

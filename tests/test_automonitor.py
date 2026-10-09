@@ -1,4 +1,4 @@
-"""Auto-Start: Überwachung folgt dem Spielzustand, eigene Eingriffe haben Vorrang."""
+"""Auto-start: monitoring follows the game state, your own actions take precedence."""
 import unittest
 
 import _env  # noqa: F401
@@ -7,7 +7,7 @@ from astral_monitor.automonitor import (GAME_PLACE, GONE, IN_GAME, START_DELAY, 
 
 
 class Sim:
-    """Spielt die Überwachung nach: führt die Aktionen aus wie das Hauptfenster."""
+    """Simulates the monitoring: carries out the actions like the main window."""
 
     def __init__(self, rejoin_on=True):
         self.am, self.now = AutoMonitor(), 0.0
@@ -40,15 +40,15 @@ class AutoMonitorTests(unittest.TestCase):
 
     def test_full_session(self):
         sim = Sim().run(GONE, 3).run(IN_GAME, START_DELAY - 1)
-        self.assertFalse(sim.running)                                   # kurz warten, bis das Fenster da ist
+        self.assertFalse(sim.running)                                   # wait briefly until the window is there
         sim.run(IN_GAME, 2)
         self.assertTrue(sim.running)
         sim.run(TROUBLE, 30)
-        self.assertTrue(sim.paused)                                     # Disconnect: Pause statt Stopp
+        self.assertTrue(sim.paused)                                     # disconnect: pause instead of stop
         sim.run(IN_GAME, 2)
-        self.assertEqual((sim.running, sim.paused), (True, False))      # nach Rejoin weiter in derselben Session
+        self.assertEqual((sim.running, sim.paused), (True, False))      # after rejoin continue in the same session
         sim.run(GONE, STOP_GRACE - 2)
-        self.assertTrue(sim.running)                                    # Serverwechsel/Teleport: noch nicht stoppen
+        self.assertTrue(sim.running)                                    # server change/teleport: don't stop yet
         sim.run(IN_GAME, 3).run(GONE, STOP_GRACE + 2)
         self.assertFalse(sim.running)
         self.assertEqual(sim.log, ["start", "pause", "resume", "stop"])
@@ -58,9 +58,9 @@ class AutoMonitorTests(unittest.TestCase):
         sim.am.user_stopped()
         sim.running = False
         sim.run(IN_GAME, 60)
-        self.assertFalse(sim.running)                                   # bleibt aus, solange im selben Spiel
+        self.assertFalse(sim.running)                                   # stays off while in the same game
         sim.run(GONE, 5).run(IN_GAME, START_DELAY + 1)
-        self.assertTrue(sim.running)                                    # neu betreten: wieder automatisch
+        self.assertTrue(sim.running)                                    # entered again: automatic again
 
     def test_manual_start_outside_game_is_kept(self):
         sim = Sim().run(GONE, 2)

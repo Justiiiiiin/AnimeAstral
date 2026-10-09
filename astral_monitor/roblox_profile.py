@@ -1,5 +1,5 @@
-"""Eigenes Roblox-Profil (Name + Avatar) über die öffentliche Roblox-Schnittstelle – ohne Anmeldung, ohne Cookie.
-Der Avatar liegt als Bild im Datenordner und erscheint in der Seitenleiste und auf den Statistik-Karten."""
+"""Own Roblox profile (name + avatar) via the public Roblox API – no login, no cookie.
+The avatar is stored as an image in the data folder and appears in the sidebar and on the statistics cards."""
 from __future__ import annotations
 
 import json
@@ -19,8 +19,8 @@ log = logging.getLogger("profile")
 USERS_API = "https://users.roblox.com/v1/usernames/users"
 AVATAR_API = ("https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds={id}&size=150x150&format=Png"
               "&isCircular=true")
-REFRESH_EVERY = 24 * 3600                       # Avatar höchstens einmal am Tag neu laden
-_NAME_RE = re.compile(r"^[A-Za-z0-9_]{3,20}$")  # Roblox-Benutzernamen
+REFRESH_EVERY = 24 * 3600                       # reload the avatar at most once a day
+_NAME_RE = re.compile(r"^[A-Za-z0-9_]{3,20}$")  # Roblox user names
 
 
 @dataclass
@@ -47,7 +47,7 @@ def _info_file():
 
 
 def lookup(name: str, poster: Callable = requests.post, timeout: float = 10.0) -> Profile:
-    """Benutzername -> Profil. Fehler -> ProfileError (Text für die Anzeige)."""
+    """User name -> profile. Errors -> ProfileError (text for display)."""
     name = name.strip()
     if not valid_name(name):
         raise ProfileError(tr("Not a valid Roblox name (3–20 characters: letters, digits, _)."))
@@ -63,20 +63,20 @@ def lookup(name: str, poster: Callable = requests.post, timeout: float = 10.0) -
 
 
 def download_avatar(user_id: int, getter: Callable = requests.get, timeout: float = 10.0) -> bool:
-    """Avatar (Kopf, rund) laden und speichern. Rückgabe: geklappt?"""
+    """Load and save the avatar (head, round). Returns: did it work?"""
     try:
         resp = getter(AVATAR_API.format(id=int(user_id)), timeout=timeout)
         items = resp.json().get("data") or [] if resp.status_code == 200 else []
         url = items[0].get("imageUrl") if items else None
         if not url or not url.startswith("https://") or not re.match(r"https://[\w.-]*rbxcdn\.com/", url):
-            return False                                    # nur Bilder vom Roblox-CDN
+            return False                                    # only images from the Roblox CDN
         img = getter(url, timeout=timeout)
         if img.status_code != 200 or not img.content.startswith(b"\x89PNG"):
             return False
         avatar_file().write_bytes(img.content)
         return True
     except (requests.RequestException, ValueError, AttributeError, OSError):
-        log.info("Avatar konnte nicht geladen werden", exc_info=True)
+        log.info("Could not load the avatar", exc_info=True)
         return False
 
 
@@ -93,7 +93,7 @@ def load_info() -> Optional[dict]:
 
 
 def needs_refresh(name: str, info: Optional[dict], now: Optional[float] = None) -> bool:
-    """Neu laden, wenn ein anderer Name eingetragen ist, das Bild fehlt oder es älter als einen Tag ist."""
+    """Reload if a different name is entered, the image is missing or older than a day."""
     if not name:
         return False
     if not info or str(info.get("name", "")).lower() != name.strip().lower() or not avatar_file().is_file():
@@ -107,7 +107,7 @@ def clear() -> None:
 
 
 def refresh(name: str) -> Profile:
-    """Profil nachschlagen, Avatar laden, merken (im Hintergrund-Thread aufrufen)."""
+    """Look up the profile, load the avatar, remember it (call in a background thread)."""
     profile = lookup(name)
     download_avatar(profile.user_id)
     save_info(profile)

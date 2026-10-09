@@ -1,6 +1,6 @@
-"""Kürbisnacht-Überraschung: ab und zu lugt ein gruseliges Gesicht kurz vom unteren Fensterrand hervor.
-Sanft statt Vollbild-Schreck: kein Blitz, kein Ton, höchstens einmal pro Stunde, nur bei offenem Fenster, Klick
-beendet es. Abschaltbar; entfällt bei „Animationen reduzieren“."""
+"""Pumpkin night surprise: now and then a creepy face peeks up briefly from the bottom edge of the window.
+Gentle instead of a full-screen scare: no flash, no sound, at most once an hour, only with the window open, a click
+ends it. Can be switched off; skipped with “Reduce animations”."""
 from __future__ import annotations
 
 import math
@@ -13,8 +13,8 @@ from PySide6.QtWidgets import QWidget
 
 from . import theme
 
-FIRST_MIN, NEXT_MIN, NEXT_MAX = 10 * 60, 60 * 60, 120 * 60     # frühestens nach 10 Min., danach alle 1–2 Std.
-SHOW_MS = 2600                                                  # hoch, kurz bleiben, wieder runter
+FIRST_MIN, NEXT_MIN, NEXT_MAX = 10 * 60, 60 * 60, 120 * 60     # after 10 min at the earliest, then every 1–2 h
+SHOW_MS = 2600                                                  # up, stay briefly, down again
 
 
 def next_delay(first: bool, rnd: random.Random = random.Random()) -> float:
@@ -22,7 +22,7 @@ def next_delay(first: bool, rnd: random.Random = random.Random()) -> float:
 
 
 def paint_face(p: QPainter, cx: float, top: float, w: float, blink: float = 0.0) -> None:
-    """Bleiches, schiefes Gesicht mit leeren Augen und zu breitem Grinsen."""
+    """Pale, crooked face with empty eyes and a too wide grin."""
     h = w * 1.25
     p.setRenderHint(QPainter.RenderHint.Antialiasing)
     p.setPen(Qt.PenStyle.NoPen)
@@ -35,7 +35,7 @@ def paint_face(p: QPainter, cx: float, top: float, w: float, blink: float = 0.0)
     head.addEllipse(QRectF(cx - w / 2, top, w, h))
     p.drawPath(head)
     eye_w, eye_h = w * 0.2, w * 0.26 * (1 - blink)
-    for sx, tilt in ((-1, 0.04), (1, -0.02)):                   # leicht schief = unheimlicher
+    for sx, tilt in ((-1, 0.04), (1, -0.02)):                   # slightly crooked = creepier
         ex = cx + sx * w * 0.2
         ey = top + h * (0.36 + tilt)
         hole = QRadialGradient(ex, ey, eye_w)
@@ -56,7 +56,7 @@ def paint_face(p: QPainter, cx: float, top: float, w: float, blink: float = 0.0)
     p.setBrush(QColor("#140404"))
     p.drawPath(mouth)
     p.setBrush(QColor("#D8D0B8"))
-    for i in range(7):                                            # spitze Zähne
+    for i in range(7):                                            # sharp teeth
         x = cx - w * 0.27 + i * w * 0.09
         y = top + h * (0.665 + 0.012 * math.sin(i))
         tooth = QPainterPath(QPointF(x - w * 0.025, y))
@@ -67,7 +67,7 @@ def paint_face(p: QPainter, cx: float, top: float, w: float, blink: float = 0.0)
 
 
 class Peek(QWidget):
-    """Nur so groß wie das Gesicht am unteren Rand (der Rest des Fensters bleibt bedienbar); löscht sich selbst."""
+    """Only as big as the face at the bottom edge (the rest of the window stays usable); deletes itself."""
 
     def __init__(self, parent: QWidget) -> None:
         super().__init__(parent)
@@ -93,7 +93,7 @@ class Peek(QWidget):
         self.update()
 
     def _rise(self) -> float:
-        """0 = versteckt, 1 = ganz oben: schnell hoch, kurz bleiben (mit Blinzeln), langsam wieder runter."""
+        """0 = hidden, 1 = fully up: quickly up, stay briefly (with a blink), slowly down again."""
         t = self._t
         if t < 0.18:
             return QEasingCurve(QEasingCurve.Type.OutBack).valueForProgress(t / 0.18)
@@ -118,11 +118,11 @@ class Peek(QWidget):
 
 
 class SpookyScheduler:
-    """Plant die Überraschung: nur Kürbisnacht, Fenster sichtbar und aktiv, Einstellung an, Animationen an."""
+    """Schedules the surprise: only pumpkin night, window visible and active, setting on, animations on."""
 
     def __init__(self, window, enabled) -> None:
         self.window = window
-        self._enabled = enabled                      # Callable[[], bool] (Einstellung)
+        self._enabled = enabled                      # Callable[[], bool] (setting)
         self._due = time.monotonic() + next_delay(first=True)
         self._timer = QTimer(window)
         self._timer.setInterval(30_000)

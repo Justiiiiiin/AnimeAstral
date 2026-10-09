@@ -1,4 +1,4 @@
-"""Einstellungssuche: Umlaute, Bindestriche, Tippfehler."""
+"""Settings search: umlauts, hyphens, typos."""
 import unittest
 
 import _env  # noqa: F401
@@ -17,8 +17,8 @@ class SearchTest(unittest.TestCase):
         self.assertTrue(matches("antiafk", afk))
         self.assertTrue(matches("anti afk", afk))
         self.assertTrue(matches("hotkey", keys))
-        self.assertTrue(matches("discrod", rpc))           # Tippfehler
-        self.assertTrue(matches("speicher roblox", guard))  # alle Wörter, Reihenfolge egal
+        self.assertTrue(matches("discrod", rpc))           # typo
+        self.assertTrue(matches("speicher roblox", guard))  # all words, any order
         self.assertFalse(matches("hotkey", guard))
         self.assertFalse(matches("speicher discord", guard))
         self.assertFalse(matches("", guard))

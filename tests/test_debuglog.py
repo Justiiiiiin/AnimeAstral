@@ -1,4 +1,4 @@
-"""Debug-Ansicht: sammelt nur, solange eingeschaltet; lädt das Ende von monitor.log vor."""
+"""Debug view: collects only while switched on; preloads the end of monitor.log."""
 import logging
 import tempfile
 import unittest

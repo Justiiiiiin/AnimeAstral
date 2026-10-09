@@ -1,7 +1,7 @@
-"""„Funde prüfen“ nach dem Erkunden – mit Markier-Werkzeug (Wunsch des Eigentümers 08.10.2026): Fensterbild groß,
-mit der Maus Rahmen ziehen und jedem eine Art (Knopf, nie drücken, Schalter, Wert, Fortschritt, Liste, Reiter, Info)
-und einen Text geben; dazu Art und Beschreibung des ganzen Fensters. Das Programm nutzt die Markierungen selbst
-(review.py: „nie drücken“ = Sperrzone, „Liste“ = dort scrollen, Knöpfe/Schalter in der Karte)."""
+"""“Check findings” after exploring – with a marking tool (owner's wish 08.10.2026): large window image, drag
+frames with the mouse and give each a kind (button, never press, toggle, value, progress, list, tab, info) and a
+text; plus kind and description of the whole window. The program uses the marks itself (review.py: “never press”
+= no-go zone, “list” = scroll there, buttons/toggles in the map)."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -23,7 +23,7 @@ KIND_COLORS = {"button": "#36d399", "never": "#ff4d6d", "toggle": "#5ab0ff", "va
 
 
 class AnnotCanvas(QWidget):
-    """Fensterbild mit Rahmen; Ziehen = neuer Rahmen, Klick in einen Rahmen = auswählen."""
+    """Window image with frames; dragging = new frame, clicking inside a frame = select it."""
     created = Signal(list)
     selected = Signal(int)
 
@@ -87,7 +87,7 @@ class AnnotCanvas(QWidget):
         if event.button() != Qt.MouseButton.LeftButton:
             return
         pos = event.position()
-        for i in reversed(range(len(self.annots))):        # Klick in einen Rahmen: auswählen
+        for i in reversed(range(len(self.annots))):        # click inside a frame: select
             if self._abs(self.annots[i]["box"]).contains(pos):
                 self.current = i
                 self.selected.emit(i)
@@ -192,7 +192,7 @@ class ReviewDialog(QDialog):
         self._row = -1
         self._fill()
 
-    # ------------------------------------------------------------------ Liste der Funde
+    # ------------------------------------------------------------------ List of findings
     def _fill(self, keep: str = "") -> None:
         data = review.load(self.data_dir)
         order = {review.PENDING: 0, review.RECHECK: 1, review.OK: 2}
@@ -235,7 +235,7 @@ class ReviewDialog(QDialog):
         data[name]["category"] = self.category.currentData()
         review.save(self.data_dir, data)
 
-    # ------------------------------------------------------------------ Markierungen
+    # ------------------------------------------------------------------ Marks
     def _refresh_annots(self, select: int = -1) -> None:
         kinds = dict(review.ANNOTATION_KINDS)
         self.annot_list.blockSignals(True)
@@ -276,7 +276,7 @@ class ReviewDialog(QDialog):
             self.canvas.annots = self.annots
             self._refresh_annots(min(i, len(self.annots) - 1))
 
-    # ------------------------------------------------------------------ Entscheidungen
+    # ------------------------------------------------------------------ Decisions
     def _decide(self, status: str) -> None:
         if not 0 <= self._row < len(self.items):
             return
@@ -290,6 +290,6 @@ class ReviewDialog(QDialog):
         self._save_current()
         self.accept()
 
-    def reject(self) -> None:                             # Esc / Fenster schließen: trotzdem speichern
+    def reject(self) -> None:                             # Esc / closing the window: save anyway
         self._save_current()
         super().reject()

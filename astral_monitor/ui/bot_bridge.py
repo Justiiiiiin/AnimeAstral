@@ -1,6 +1,6 @@
-"""Verbindung Discord-Bot ↔ Programm: startet/stoppt den eigenen Bot des Nutzers (discord_bot.py) nach den
-Einstellungen und führt seine Befehle aus. Die Befehle kommen aus dem Bot-Thread; alles, was die Oberfläche anfasst,
-läuft über MainWindow.post im GUI-Thread (gui())."""
+"""Link Discord bot ↔ program: starts/stops the user's own bot (discord_bot.py) according to the settings and
+runs its commands. The commands come from the bot thread; everything that touches the UI runs via MainWindow.post
+in the GUI thread (gui())."""
 from __future__ import annotations
 
 import logging
@@ -22,9 +22,9 @@ class BotBridge:
         self.state = tr("off")
         self.app_id = ""
         self._key: tuple = ()
-        self.listeners: list[Callable[[str, str], None]] = []    # Einstellungs-Reiter zeigt den Zustand an
+        self.listeners: list[Callable[[str, str], None]] = []    # the settings tab shows the state
 
-    # ------------------------------------------------------------------ Start/Stopp nach den Einstellungen
+    # ------------------------------------------------------------------ Start/stop according to the settings
     def apply_settings(self) -> None:
         s = self.main.engine.settings
         key = (bool(s.bot_enabled), s.bot_token.strip(), s.bot_users, s.ping_user_id)
@@ -40,7 +40,7 @@ class BotBridge:
     def stop(self) -> None:
         if self.bot is not None:
             bot, self.bot = self.bot, None
-            threading.Thread(target=bot.stop, daemon=True).start()      # nicht im GUI-Thread warten
+            threading.Thread(target=bot.stop, daemon=True).start()      # don't wait in the GUI thread
         self._state(tr("off"), self.app_id)
 
     def _state(self, text: str, app_id: str) -> None:
@@ -48,9 +48,9 @@ class BotBridge:
         for fn in list(self.listeners):
             self.main.post(lambda fn=fn: fn(self.state, self.app_id))
 
-    # ------------------------------------------------------------------ Hilfen
+    # ------------------------------------------------------------------ Helpers
     def gui(self, fn: Callable, timeout: float = 20.0):
-        """fn im GUI-Thread ausführen und auf das Ergebnis warten (aus dem Bot-Thread)."""
+        """Run fn in the GUI thread and wait for the result (from the bot thread)."""
         box: dict = {}
         done = threading.Event()
 
@@ -76,7 +76,7 @@ class BotBridge:
             return [f["name"] for f in s.server_favorites]
         return []
 
-    # ------------------------------------------------------------------ Befehle
+    # ------------------------------------------------------------------ Commands
     def handle(self, name: str, args: dict) -> Reply:
         main, engine = self.main, self.main.engine
         if name == "status":

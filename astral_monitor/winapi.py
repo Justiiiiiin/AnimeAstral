@@ -1,4 +1,4 @@
-"""Kleine Windows-Helfer (Fenster suchen, Größe, minimiert?) – ohne Zusatzpakete."""
+"""Small Windows helpers (find window, size, minimized?) – without extra packages."""
 from __future__ import annotations
 
 import sys
@@ -22,7 +22,7 @@ if IS_WIN:
 
 
 def find_window(title: str) -> Optional[int]:
-    """Handle des sichtbaren Fensters mit exakt diesem Titel (z. B. „Roblox“)."""
+    """Handle of the visible window with exactly this title (e.g. “Roblox”)."""
     if not IS_WIN:
         return None
     found: list[int] = []
@@ -44,8 +44,8 @@ def find_window(title: str) -> Optional[int]:
 
 
 def trim_memory() -> bool:
-    """Gibt nicht benötigte Speicherseiten an Windows zurück (Start-Reste, Treiber- und Schriftseiten).
-    Gemessen: 178 MB -> dauerhaft ~50 MB, die tatsächlich genutzten Seiten kommen sofort aus dem Cache zurück."""
+    """Returns unneeded memory pages to Windows (start-up leftovers, driver and font pages).
+        Measured: 178 MB -> permanently ~50 MB, the pages actually in use come back from the cache right away."""
     if not IS_WIN:
         return False
     k32 = ctypes.windll.kernel32
@@ -55,8 +55,8 @@ def trim_memory() -> bool:
 
 
 def refresh_shell_icons() -> None:
-    """Windows-Symbolspeicher auffrischen, damit Verknüpfungen (Start, Desktop, Taskleiste) nach einem Update das neue
-    Logo zeigen – ein Update per Paket tauscht die EXE aus, Windows merkt sich das alte Bild sonst lange."""
+    """Refresh the Windows icon cache so shortcuts (start, desktop, taskbar) show the new logo after an update –
+        a package update swaps the EXE, otherwise Windows keeps the old image for a long time."""
     if not IS_WIN:
         return
     try:
@@ -72,7 +72,7 @@ def is_minimized(hwnd: int) -> bool:
 
 
 def client_rect(hwnd: int) -> Optional[tuple[int, int, int, int]]:
-    """Client-Bereich in Bildschirmkoordinaten (links, oben, rechts, unten)."""
+    """Client area in screen coordinates (left, top, right, bottom)."""
     if not IS_WIN:
         return None
     rect = wintypes.RECT()
@@ -85,7 +85,7 @@ def client_rect(hwnd: int) -> Optional[tuple[int, int, int, int]]:
 
 
 def set_titlebar(hwnd: int, dark: bool, caption_hex: str = "") -> None:
-    """Windows-Titelleiste passend zum Design: dunkel/hell und (Windows 11) in der Farbe der Kopfzeile."""
+    """Windows title bar matching the design: dark/light and (Windows 11) in the color of the header."""
     if sys.platform != "win32" or not hwnd:
         return
     try:
@@ -93,7 +93,7 @@ def set_titlebar(hwnd: int, dark: bool, caption_hex: str = "") -> None:
         from ctypes import wintypes
         dwm = ctypes.windll.dwmapi
         value = ctypes.c_int(1 if dark else 0)
-        for attr in (20, 19):                      # DWMWA_USE_IMMERSIVE_DARK_MODE (neu / ältere Windows-10-Builds)
+        for attr in (20, 19):                      # DWMWA_USE_IMMERSIVE_DARK_MODE (new / older Windows 10 builds)
             if dwm.DwmSetWindowAttribute(wintypes.HWND(hwnd), attr, ctypes.byref(value), ctypes.sizeof(value)) == 0:
                 break
         if caption_hex.startswith("#") and len(caption_hex) == 7:

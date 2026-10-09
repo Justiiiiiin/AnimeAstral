@@ -1,4 +1,4 @@
-"""Download-Test mit echtem HTTP (lokaler Server): Fortschritt, Prüfsumme, Abbruch, Installer-Start."""
+"""Download test with real HTTP (local server): progress, checksum, cancel, installer start."""
 import hashlib
 import http.server
 import os
@@ -75,7 +75,7 @@ class HttpTests(unittest.TestCase):
             updater.download(self.info(), cancelled=cancel, dest_dir=folder)
         self.assertEqual(list(folder.glob("*.exe*")), [])
 
-    @unittest.skipIf(sys.platform == "win32", "Skript-Installer nur unter Linux/macOS")
+    @unittest.skipIf(sys.platform == "win32", "script installer only on Linux/macOS")
     def test_installer_is_started_with_silent_flags(self):
         out = Path(_env.DATA) / "args.txt"
         script = Path(_env.DATA) / "fake-setup.sh"

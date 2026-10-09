@@ -1,4 +1,4 @@
-"""Statistik-Karte als Bild (PNG, 1200×630) zum Teilen – gezeichnet mit Pillow, ohne Qt."""
+"""Statistics card as an image (PNG, 1200×630) for sharing – drawn with Pillow, without Qt."""
 from __future__ import annotations
 
 import io
@@ -13,7 +13,7 @@ from . import app_paths, messages
 from .i18n import N_, dec, tr
 from .stats import StatsStore
 
-W, H, S = 1200, 630, 2           # Zielgröße und Supersampling (Kanten glätten)
+W, H, S = 1200, 630, 2           # target size and supersampling (smooth edges)
 BG_TOP, BG_BOTTOM = (13, 18, 24), (18, 26, 35)
 CARD, CARD_LINE = (22, 30, 40), (36, 46, 58)
 TEXT, MUTED, DIM = (236, 241, 247), (139, 151, 168), (84, 96, 112)
@@ -39,7 +39,7 @@ class _Canvas:
         base = Image.new("RGB", (W * S, H * S), BG_TOP)
         top = Image.new("RGB", (1, 2), BG_TOP)
         top.putpixel((0, 1), BG_BOTTOM)
-        base = top.resize((W * S, H * S), Image.BILINEAR).convert("RGBA")     # Verlauf
+        base = top.resize((W * S, H * S), Image.BILINEAR).convert("RGBA")     # gradient
         glow = Image.new("RGBA", (W * S, H * S), (0, 0, 0, 0))
         ImageDraw.Draw(glow).ellipse((W * S * 0.70, -H * S * 0.30, W * S * 1.05, H * S * 0.28),
                                      fill=(61, 214, 181, 70))
@@ -51,7 +51,7 @@ class _Canvas:
         font = _font(bold, size)
         x, y = xy[0] * S, xy[1] * S
         if spacing:
-            for ch in text:                                           # Buchstabenabstand
+            for ch in text:                                           # letter spacing
                 self.d.text((x, y), ch, font=font, fill=fill, anchor=anchor)
                 x += self.d.textlength(ch, font=font) + spacing * S
             return
@@ -73,7 +73,7 @@ class _Canvas:
 
 
 def _profile(c: _Canvas) -> int:
-    """Eigenes Roblox-Profil oben rechts (Avatar + Name). Rückgabe: rechter Rand für weitere Kopftexte."""
+    """Own Roblox profile at the top right (avatar + name). Returns the right edge for further header texts."""
     from . import roblox_profile
     info = roblox_profile.load_info()
     path = roblox_profile.avatar_file()
@@ -91,7 +91,7 @@ def _profile(c: _Canvas) -> int:
     c.img.paste(avatar, (x * S, y * S), mask)
     c.text((x - 14, 40), info.get("display") or info.get("name", ""), 17, TEXT, bold=True, anchor="ra")
     c.text((x - 14, 64), "@" + info.get("name", ""), 13, DIM, anchor="ra")
-    return x - 14 - 230                              # Platz für den Namen lassen
+    return x - 14 - 230                              # leave room for the name
 
 
 def render_card(stats: StatsStore, since: Optional[float], raid: Optional[str], title: str) -> bytes:
@@ -99,7 +99,7 @@ def render_card(stats: StatsStore, since: Optional[float], raid: Optional[str], 
     recs = stats.last_runs(100000, since, raid)
     c = _Canvas()
 
-    # ---- Kopf
+    # ---- header
     logo_path = app_paths.resource_path("assets/app.png")
     if logo_path.is_file():
         logo = Image.open(logo_path).convert("RGBA").resize((56 * S, 56 * S), Image.LANCZOS)
@@ -119,7 +119,7 @@ def render_card(stats: StatsStore, since: Optional[float], raid: Optional[str], 
         c.text((W // 2, 345), tr("No attempts in the selected period yet"), 26, MUTED, anchor="mm")
         return c.png()
 
-    # ---- Kennzahlen-Kacheln (3 × 2)
+    # ---- metric tiles (3 × 2)
     tiles = [
         (tr("Attempts"), messages.fmt_k(summary.attempts), TEAL),
         (tr("Waves total"), messages.fmt_int(summary.waves_total), TEAL),
@@ -162,7 +162,7 @@ def render_card(stats: StatsStore, since: Optional[float], raid: Optional[str], 
         if value and n <= 16:
             c.text((bx + bw / 2, cy1 - bh - 18), str(value), 12, TEXT if i == peak else MUTED, anchor="ma")
 
-    # ---- Profile unten
+    # ---- profiles at the bottom
     per = stats.per_raid(since) if raid is None else [p for p in stats.per_raid(since) if p["raid"] == raid]
     rows = max(1, min(3, len(per)))
     c.box((48, 366, W - 48, 366 + 64 + rows * 52 + 4))
@@ -194,7 +194,7 @@ def month_title(year: int, month: int) -> str:
 
 
 def render_month_card(stats: StatsStore, year: int, month: int) -> bytes:
-    """Monatsrückblick („Wrapped“): Summen, Vergleich zum Vormonat, Raids je Tag und die Höhepunkte des Monats."""
+    """Monthly recap (“Wrapped”): totals, comparison with the previous month, raids per day and the month's highlights."""
     m = stats.month(year, month)
     c = _Canvas()
     logo_path = app_paths.resource_path("assets/app.png")
@@ -228,7 +228,7 @@ def render_month_card(stats: StatsStore, year: int, month: int) -> bytes:
         c.text((x + 18, y + 16), label, 14, MUTED)
         c.text((x + 18, y + 40), value, 38, color, bold=True)
 
-    px0, py0, px1, py1 = 640, 120, W - 48, 350               # Raids je Tag
+    px0, py0, px1, py1 = 640, 120, W - 48, 350               # raids per day
     c.box((px0, py0, px1, py1))
     c.text((px0 + 20, py0 + 16), tr("Raids per day"), 17, TEXT, bold=True)
     days = m["per_day"]
@@ -243,7 +243,7 @@ def render_month_card(stats: StatsStore, year: int, month: int) -> bytes:
         if i % 5 == 0 or i == len(days) - 1:
             c.text((bx + bw / 2, cy1 + 8), str(i + 1), 12, MUTED, anchor="ma")
 
-    c.box((48, 366, W - 48, 506))                             # Höhepunkte
+    c.box((48, 366, W - 48, 506))                             # highlights
     c.text((70, 382), tr("Highlights"), 17, TEXT, bold=True)
     highlights = [(tr("Best day"), tr("{month} {day} · {count} raids", day=m["best_day"],
                                          month=tr(MONTHS[month - 1]), count=m["best_day_attempts"]), TEAL)]

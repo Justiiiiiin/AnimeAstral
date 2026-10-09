@@ -104,7 +104,7 @@ class UpdaterTests(unittest.TestCase):
         folder = Path(_env.DATA) / "bad"
         with self.assertRaises(UpdateError):
             updater.download(self._info(), getter=bad, dest_dir=folder)
-        self.assertEqual(list(folder.glob("*.exe*")), [])               # nichts bleibt liegen
+        self.assertEqual(list(folder.glob("*.exe*")), [])               # nothing is left behind
 
         with self.assertRaises(UpdateError):
             updater.download(self._info(), cancelled=lambda: True, getter=bad, dest_dir=folder)
@@ -126,7 +126,7 @@ class ReleaseListTests(unittest.TestCase):
         listing = [rel("v0.5.2"), rel("v0.6.10"), rel("v0.6.9"), rel("v0.7.0-beta", prerelease=True),
                    rel("v0.8.0", draft=True), no_installer]
         out = updater.list_releases(REPO, getter=lambda *a, **k: Resp(200, listing))
-        self.assertEqual([r.version for r in out], ["0.6.10", "0.6.9", "0.5.2"])     # numerisch, nicht als Text
+        self.assertEqual([r.version for r in out], ["0.6.10", "0.6.9", "0.5.2"])     # numeric, not as text
         self.assertEqual(out[0].published, "2026-10-06T12:00:00Z")
         self.assertEqual(updater.list_releases(REPO, getter=lambda *a, **k: Resp(404)), [])
 
@@ -145,7 +145,7 @@ class ReleaseListTests(unittest.TestCase):
     def test_beta_version_order(self):
         order = ["0.7.1", "0.7.2-beta.1", "0.7.2-beta.2", "0.7.2-beta.10", "0.7.2", "0.7.3-beta.1", "0.8"]
         self.assertEqual(sorted(reversed(order), key=updater.version_key), order)
-        self.assertTrue(updater.is_newer("0.7.2", "0.7.2-beta.3"))           # Beta -> stabile Version
+        self.assertTrue(updater.is_newer("0.7.2", "0.7.2-beta.3"))           # beta -> stable version
         self.assertFalse(updater.is_newer("0.7.2-beta.1", "0.7.2"))
         self.assertEqual(updater.version_key("0.7"), updater.version_key("0.7.0"))
 
@@ -171,7 +171,7 @@ class ChangelogTests(unittest.TestCase):
         from astral_monitor.version import __version__
         body = notes.section(__version__)
         self.assertIsNotNone(body, f"CHANGELOG.md braucht einen Abschnitt „## {__version__}“")
-        for line in body.splitlines():                     # Stichpunkte statt Erklärungen
+        for line in body.splitlines():                     # bullet points instead of explanations
             if line.startswith("- "):
                 self.assertLessEqual(len(line), 70, line)
         self.assertIsNone(notes.section("9.9.9", "## 1.0\n- x\n"))
@@ -186,8 +186,8 @@ class WhatsNewTests(unittest.TestCase):
         text = "## 1.0.0\n\n### ✨ Neu\n- A\n- B\n\n### 🐞 Behoben\n- C\n\n## 0.9.0\n- alt\n"
         self.assertEqual(changelog.highlights("1.0.0", 2, text), ["A", "B"])
         self.assertEqual(changelog.highlights("1.0.0", 9, text), ["A", "B", "C"])
-        self.assertTrue(changelog.highlights(__version__))              # mitgelieferte CHANGELOG.md hat die Version
+        self.assertTrue(changelog.highlights(__version__))              # the bundled CHANGELOG.md has the version
         from astral_monitor.ui.whats_new import should_show
         self.assertTrue(should_show("0.7.5", True))                      # Update
-        self.assertFalse(should_show(__version__, True))                 # schon gesehen
-        self.assertFalse(should_show("", False))                         # Neuinstallation
+        self.assertFalse(should_show(__version__, True))                 # already seen
+        self.assertFalse(should_show("", False))                         # new install

@@ -18,7 +18,7 @@ class Resp:
 
 
 class ForumTests(unittest.TestCase):
-    """Raid-Meldungen mit Forum-Webhook: erste Meldung des Tages eröffnet einen Beitrag, weitere landen darin."""
+    """Raid messages with a forum webhook: the first message of the day opens a post, the others go into it."""
 
     def setUp(self):
         Path(_env.DATA, "forum_thread.json").unlink(missing_ok=True)
@@ -53,10 +53,10 @@ class ForumTests(unittest.TestCase):
         self.assertIn("wait=true", url)
         self.assertTrue(payload["thread_name"].startswith("Raids · "))
         self.assertTrue(self.sender.send_daily({"embeds": []})[0])
-        self.assertTrue(self.calls[-1][0].endswith("?thread_id=500"))          # zweite Meldung: gleicher Beitrag
-        self.assertNotIn("FORUM", Path(_env.DATA, "forum_thread.json").read_text(encoding="utf-8"))  # keine URL
+        self.assertTrue(self.calls[-1][0].endswith("?thread_id=500"))          # second message: same post
+        self.assertNotIn("FORUM", Path(_env.DATA, "forum_thread.json").read_text(encoding="utf-8"))  # no URL
 
-        self.threads["alive"].clear()                                          # Beitrag gelöscht
+        self.threads["alive"].clear()                                          # post deleted
         self.assertTrue(self.sender.send_daily({"embeds": []})[0])
         self.assertIn("wait=true", self.calls[-1][0])
         self.assertTrue(self.sender.send_daily({"embeds": []})[0])
@@ -66,7 +66,7 @@ class ForumTests(unittest.TestCase):
         self.sender.send_daily({"embeds": []})
         self.s.forum_webhook_url = "https://discord.com/api/webhooks/3/FORUM2"
         self.sender.send_daily({"embeds": []})
-        self.assertIn("wait=true", self.calls[-1][0])                          # neuer Webhook: neuer Beitrag
+        self.assertIn("wait=true", self.calls[-1][0])                          # new webhook: new post
 
     def test_main_channel_unchanged(self):
         self.assertTrue(self.sender.send_now({"embeds": []})[0])

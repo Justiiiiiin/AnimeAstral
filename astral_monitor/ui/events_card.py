@@ -1,6 +1,6 @@
-"""Karte „Debug“ (Einstellungen → Debug): zeigt live jede Protokollzeile – dasselbe wie monitor.log im
-Diagnose-Paket (Überwachung, Makro, Erkunden, Anti-AFK, Rejoin, Fehler). Nur bei Bedarf einschalten: aus = es wird
-nichts gesammelt (debuglog.BUFFER hängt dann nicht am Logger), die Karte zeichnet nichts."""
+"""Card “Debug” (Settings → Debug): shows every log line live – the same as monitor.log in the diagnostics
+package (monitoring, macro, explore, Anti-AFK, rejoin, errors). Only switch it on when needed: off = nothing is
+collected (debuglog.BUFFER is then not attached to the logger), the card draws nothing."""
 from __future__ import annotations
 
 import html
@@ -19,7 +19,7 @@ LEVEL_TOKENS = {"ERROR": "danger", "CRITICAL": "danger", "WARNING": "warn", "DEB
 
 
 def set_debug(enabled: bool) -> None:
-    """Sammeln an/aus (beim Start und vom Schalter)."""
+    """Collecting on/off (at start-up and from the switch)."""
     BUFFER.enable(enabled, app_paths.log_file())
 
 
@@ -72,12 +72,12 @@ class EventsCard(Card):
         self.timer.timeout.connect(self._poll)
         self._show_state()
 
-    # ------------------------------------------------------------------ An/Aus
+    # ------------------------------------------------------------------ On/off
     def _toggle(self, on: bool) -> None:
         s = self.main.engine.settings
         s.debug_view = on
         try:
-            s.save()                                     # sofort, ohne Speichern-Leiste
+            s.save()                                     # right away, without the save bar
         except OSError as exc:
             QMessageBox.critical(self, tr("Save"), tr("Could not save: {error}", error=exc))
         set_debug(on)
@@ -97,7 +97,7 @@ class EventsCard(Card):
         else:
             self.timer.stop()
 
-    # ------------------------------------------------------------------ Anzeige
+    # ------------------------------------------------------------------ Display
     def _line_html(self, level: str, text: str) -> str:
         color = theme.color(LEVEL_TOKENS.get(level, "text"))
         return f"<span style='color:{color}'>{html.escape(text)}</span>"
@@ -117,7 +117,7 @@ class EventsCard(Card):
 
     def _poll(self) -> None:
         if not self.isVisible():
-            return                                       # Reiter nicht offen: nichts zeichnen
+            return                                       # tab not open: draw nothing
         lines = BUFFER.since(self._seq)
         if not lines:
             return
@@ -128,7 +128,7 @@ class EventsCard(Card):
             if self._match(text):
                 self.view.appendHtml(self._line_html(level, text))
         if at_end:
-            bar.setValue(bar.maximum())                  # nur mitlaufen, wenn man nicht gerade hochgescrollt hat
+            bar.setValue(bar.maximum())                  # only follow along if you haven't scrolled up
 
     def _copy(self) -> None:
         QGuiApplication.clipboard().setText(self.view.toPlainText())
@@ -143,4 +143,4 @@ class EventsCard(Card):
             self._rebuild()
 
     def add(self, _data: dict) -> None:
-        """Früher: einzelne Ereignisse. Sie stehen jetzt ohnehin im Protokoll."""
+        """Formerly: single events. They are in the log anyway now."""

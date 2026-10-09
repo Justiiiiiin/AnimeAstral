@@ -1,4 +1,4 @@
-"""Discord-Bot: Berechtigungen, Einladungslink, /pc-Befehle, Aufbau der Slash-Befehle (ohne Netz)."""
+"""Discord bot: permissions, invite link, /pc commands, structure of the slash commands (without network)."""
 import asyncio
 import unittest
 
@@ -20,8 +20,8 @@ def tearDownModule():
 class BotTest(unittest.TestCase):
     def test_allowed_ids(self):
         self.assertEqual(allowed_ids("123, 456;789", "999"), {123, 456, 789})
-        self.assertEqual(allowed_ids("", "999"), {999})            # Standard: Ping-ID aus „Meldungen“
-        self.assertEqual(allowed_ids("abc", ""), set())             # niemand -> alle Befehle abgelehnt
+        self.assertEqual(allowed_ids("", "999"), {999})            # default: ping ID from “Alerts”
+        self.assertEqual(allowed_ids("abc", ""), set())             # nobody -> all commands refused
 
     def test_invite_and_power(self):
         self.assertIn("client_id=42", invite_url("42"))
@@ -45,9 +45,9 @@ class BotTest(unittest.TestCase):
             bot = ControlBot("x", {1}, lambda n, a: Reply("ok"), lambda k: [], lambda s, a: None)
             bot._register(tree, app_commands, discord)
             cmds = {c.name: c for c in tree.get_commands()}
-            for c in cmds.values():                               # Discord-Grenzen: Beschreibung 1–100 Zeichen
+            for c in cmds.values():                               # Discord limits: description 1–100 characters
                 self.assertTrue(1 <= len(c.description) <= 100, c.name)
-                c.to_dict(tree)                                   # wirft bei ungültigen Optionen/Auswahlen
+                c.to_dict(tree)                                   # raises on invalid options/choices
             await client.close()
             return set(cmds)
 
@@ -56,7 +56,7 @@ class BotTest(unittest.TestCase):
 
 
     def test_bridge_commands_without_gui(self):
-        """Befehle, die ohne Oberfläche beantwortet werden: Status, /pc gesperrt, unbekannter Raid, Hilfe."""
+        """Commands answered without the UI: status, /pc locked, unknown raid, help."""
         from types import SimpleNamespace
 
         from astral_monitor.settings import Settings
@@ -69,7 +69,7 @@ class BotTest(unittest.TestCase):
         text = bridge.handle("status", {}).text
         self.assertIn("37/100", text)
         self.assertIn("Alvarez War", text)
-        self.assertIn("aus", bridge.handle("pc", {"action": "shutdown"}).text)   # Standard: /pc gesperrt
+        self.assertIn("aus", bridge.handle("pc", {"action": "shutdown"}).text)   # default: /pc locked
         self.assertIn("gibt es nicht", bridge.handle("raid", {"name": "Holy Grail War"}).text)
         self.assertIn("/status", bridge.handle("hilfe", {}).text)
 

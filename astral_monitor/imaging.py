@@ -1,4 +1,4 @@
-"""Bildverarbeitung: Ausschnitte, Masken, OCR-Vorbereitung, JPEG-Export."""
+"""Image processing: crops, masks, OCR preparation, JPEG export."""
 from __future__ import annotations
 
 import cv2
@@ -6,9 +6,9 @@ import numpy as np
 
 from .settings import Roi
 
-cv2.setNumThreads(1)        # kleine Ausschnitte: Mehrkern-Verteilung kostet mehr als sie bringt
+cv2.setNumThreads(1)        # small crops: multi-core distribution costs more than it brings
 
-PAD = 12  # Rand um OCR-Bilder (Pixel, nach Skalierung)
+PAD = 12  # border around OCR images (pixels, after scaling)
 
 
 def crop_roi(img: np.ndarray, roi: Roi) -> np.ndarray:
@@ -22,12 +22,12 @@ def to_gray(bgr: np.ndarray) -> np.ndarray:
 
 
 def text_mask(gray: np.ndarray, thr: int = 200) -> np.ndarray:
-    """Helle Pixel (weißer Text) als 255, Rest 0."""
+    """Bright pixels (white text) as 255, the rest 0."""
     return cv2.threshold(gray, thr, 255, cv2.THRESH_BINARY)[1]
 
 
 def near_white_mask(bgr: np.ndarray, lo: int = 215, spread: int = 40) -> np.ndarray:
-    """Nahezu weiße Pixel (alle Kanäle hoch, kaum Farbe) – blendet bunte Kulisse aus."""
+    """Almost white pixels (all channels high, hardly any color) – hides the colorful background."""
     mx = bgr.max(axis=2)
     mn = bgr.min(axis=2)
     return (((mn >= lo) & ((mx - mn) <= spread)) * 255).astype(np.uint8)
@@ -39,7 +39,7 @@ def _pad_invert(binary: np.ndarray) -> np.ndarray:
 
 
 def ocr_input_threshold(gray: np.ndarray, thr, scale: int = 3) -> np.ndarray:
-    """Graubild -> hochskaliert, binarisiert (thr=None: Otsu), schwarzer Text auf Weiß."""
+    """Gray image -> scaled up, binarized (thr=None: Otsu), black text on white."""
     big = cv2.resize(gray, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
     if thr is None:
         _, binary = cv2.threshold(big, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
@@ -56,7 +56,7 @@ def ocr_input_mask(mask: np.ndarray, scale: int = 3) -> np.ndarray:
 
 
 def encode_jpeg(bgr: np.ndarray, max_width: int = 1600, quality: int = 85) -> bytes:
-    """Verkleinert und als JPEG kodiert (klein genug für Discord, schnell)."""
+    """Scaled down and encoded as JPEG (small enough for Discord, fast)."""
     h, w = bgr.shape[:2]
     if w > max_width:
         bgr = cv2.resize(bgr, (max_width, int(h * max_width / w)), interpolation=cv2.INTER_AREA)

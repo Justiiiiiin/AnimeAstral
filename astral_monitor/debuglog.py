@@ -1,6 +1,6 @@
-"""Debug-Ansicht (ohne Qt): sammelt – nur solange eingeschaltet – jede Protokollzeile des Programms, also genau das,
-was auch in monitor.log bzw. im Diagnose-Paket steht (Überwachung, Makro, Erkunden, Anti-AFK, Rejoin, Fehler …).
-Aus = kein Handler am Logger, nichts wird gesammelt (spart Ressourcen)."""
+"""Debug view (without Qt): collects – only while switched on – every log line of the program, i.e. exactly what is
+in monitor.log or the diagnostics package (monitoring, macro, explore, Anti-AFK, rejoin, errors …).
+Off = no handler on the logger, nothing is collected (saves resources)."""
 from __future__ import annotations
 
 import collections
@@ -9,12 +9,12 @@ import threading
 from pathlib import Path
 from typing import Optional
 
-KEEP = 1500                       # so viele Zeilen hält die Ansicht höchstens
+KEEP = 1500                       # at most this many lines are kept by the view
 FORMAT = logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s", "%H:%M:%S")
 
 
 class DebugBuffer(logging.Handler):
-    """Ringpuffer für Protokollzeilen; thread-sicher (Engine, Makro und Oberfläche loggen aus eigenen Threads)."""
+    """Ring buffer for log lines; thread-safe (engine, macro and UI log from their own threads)."""
 
     def __init__(self) -> None:
         super().__init__(logging.DEBUG)
@@ -37,7 +37,7 @@ class DebugBuffer(logging.Handler):
             self._lines.append((self._seq, level, text))
 
     def since(self, seq: int) -> list[tuple[int, str, str]]:
-        """Zeilen nach seq (für die Anzeige: nur Neues abholen)."""
+        """Lines after seq (for the view: only fetch what is new)."""
         with self._lock:
             return [line for line in self._lines if line[0] > seq]
 
@@ -50,7 +50,7 @@ class DebugBuffer(logging.Handler):
             return "\n".join(line for _s, _l, line in self._lines)
 
     def enable(self, on: bool, log_file: Optional[Path] = None, tail: int = 300) -> None:
-        """An: an den Logger hängen und die letzten Zeilen aus monitor.log vorladen. Aus: abhängen, leeren."""
+        """On: attach to the logger and preload the last lines of monitor.log. Off: detach, clear."""
         root = logging.getLogger()
         if on and not self.enabled:
             self.clear()
@@ -72,7 +72,7 @@ def level_of(line: str) -> str:
 
 
 def tail_lines(path: Path, count: int) -> list[str]:
-    """Letzte count Zeilen einer Textdatei (liest nur das Ende)."""
+    """Last count lines of a text file (only reads the end)."""
     try:
         with open(path, "rb") as fh:
             fh.seek(0, 2)
@@ -83,7 +83,7 @@ def tail_lines(path: Path, count: int) -> list[str]:
         return []
     lines = [ln for ln in data.splitlines() if ln.strip()]
     if size > 256 * 1024:
-        lines = lines[1:]                                 # erste Zeile ist evtl. angeschnitten
+        lines = lines[1:]                                 # the first line may be cut off
     return lines[-count:]
 
 

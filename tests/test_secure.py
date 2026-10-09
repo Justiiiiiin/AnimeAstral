@@ -1,4 +1,4 @@
-"""Geheimnisse: lokal per DPAPI, Export/Import mit Passwort."""
+"""Secrets: locally via DPAPI, export/import with a password."""
 import json
 import sys
 import tempfile
@@ -14,7 +14,7 @@ LINK = "https://www.roblox.com/share?code=0123456789abcdef0123456789abcdef&type=
 
 
 class SecureTests(unittest.TestCase):
-    @unittest.skipUnless(sys.platform == "win32", "DPAPI nur unter Windows")
+    @unittest.skipUnless(sys.platform == "win32", "DPAPI only on Windows")
     def test_settings_json_has_no_plain_secrets(self):
         s = Settings(webhook_url=HOOK, private_server_link=LINK, ping_user_id="42",
                      server_favorites=[{"name": "Mein Server", "link": LINK}])
@@ -28,8 +28,8 @@ class SecureTests(unittest.TestCase):
         self.assertEqual(back.server_favorites, [{"name": "Mein Server", "link": LINK}])
 
     def test_plain_old_files_still_load_and_foreign_values_are_dropped(self):
-        self.assertEqual(Settings.from_dict({"webhook_url": HOOK}).webhook_url, HOOK)          # Klartext (alt)
-        self.assertEqual(Settings.from_dict({"webhook_url": secure.PREFIX + "AAAA"}).webhook_url, "")   # fremder PC
+        self.assertEqual(Settings.from_dict({"webhook_url": HOOK}).webhook_url, HOOK)          # plain text (old)
+        self.assertEqual(Settings.from_dict({"webhook_url": secure.PREFIX + "AAAA"}).webhook_url, "")   # other PC
 
     def test_export_import_roundtrip(self):
         s = Settings(webhook_url=HOOK, server_favorites=[{"name": "A", "link": LINK}], ui_zoom=75)
@@ -45,7 +45,7 @@ class SecureTests(unittest.TestCase):
             with self.assertRaises(secure.SecureError):
                 secure.import_settings(path, "falsch12345")
             payload = json.loads(content)
-            payload["n"] = 2 ** 16                                       # manipulierter Kopf fällt auf
+            payload["n"] = 2 ** 16                                       # tampered header is detected
             path.write_text(json.dumps(payload), encoding="utf-8")
             with self.assertRaises(secure.SecureError):
                 secure.import_settings(path, "geheim123")

@@ -1,7 +1,6 @@
-"""Kommandozeilen-Test der Erkennung an einem Screenshot.
+"""Command line test of the recognition on a screenshot.
 
-    python -m astral_monitor.selftest bild.png
-"""
+    python -m astral_monitor.selftest image.png"""
 from __future__ import annotations
 
 import sys
@@ -22,7 +21,7 @@ def main(argv: list[str]) -> int:
         return 2
     image = cv2.imread(argv[1], cv2.IMREAD_COLOR)
     if image is None:
-        print("Bild konnte nicht gelesen werden.")
+        print("Could not read the image.")
         return 2
     settings = Settings.load()
     try:
@@ -36,7 +35,7 @@ def main(argv: list[str]) -> int:
     t0 = time.perf_counter()
     reading = reader.read(crop_roi(image, settings.wave_roi))
     ms = (time.perf_counter() - t0) * 1000
-    print(f"Wellenzähler: {reading.value}/{reading.total}" if reading else "Wellenzähler: nicht erkannt",
+    print(f"Wellenzähler: {reading.value}/{reading.total}" if reading else "Wave counter: not recognized",
           f"({ms:.0f} ms)")
 
     t0 = time.perf_counter()

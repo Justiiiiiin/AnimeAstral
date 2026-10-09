@@ -1,6 +1,6 @@
-"""Suche in den Einstellungen (ohne Qt): unempfindlich gegen Groß-/Kleinschreibung, Umlaute, Bindestriche und kleine
-Tippfehler – „wachter“ findet „Wächter“, „antiafk“ findet „Anti-AFK“, „hotkey“ findet „Hotkeys“, „discrod“ findet
-„Discord“. Jedes Suchwort muss vorkommen (UND)."""
+"""Search in the settings (without Qt): ignores case, umlauts, hyphens and small typos – “wachter” finds
+“Wächter”, “antiafk” finds “Anti-AFK”, “hotkey” finds “Hotkeys”, “discrod” finds “Discord”. Every search word must
+occur (AND)."""
 from __future__ import annotations
 
 import difflib
@@ -10,14 +10,14 @@ _UMLAUTS = str.maketrans({"ä": "a", "ö": "o", "ü": "u", "ß": "ss", "é": "e"
 
 
 def normalize(text: str) -> str:
-    """Kleinbuchstaben, Umlaute ohne Punkte, nur Buchstaben/Ziffern und Leerzeichen."""
+    """Lower case, umlauts without dots, only letters/digits and spaces."""
     text = text.casefold().translate(_UMLAUTS)
-    text = text.replace("ae", "a").replace("oe", "o").replace("ue", "u")      # „Waechter“ = „Wächter“
+    text = text.replace("ae", "a").replace("oe", "o").replace("ue", "u")      # “Waechter” = “Wächter”
     return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9 ]+", " ", text)).strip()
 
 
 class Haystack:
-    """Vorbereiteter Suchtext einer Karte: ganzer Text (ohne Leerzeichen für „antiafk“) und einzelne Wörter."""
+    """Prepared search text of a card: the whole text (without spaces for “antiafk”) and single words."""
 
     def __init__(self, text: str) -> None:
         self.text = normalize(text)
@@ -30,7 +30,7 @@ def word_matches(word: str, hay: Haystack) -> bool:
         return True
     if len(word) < 4:
         return False
-    cutoff = 0.8 if len(word) < 7 else 0.75               # ein vertauschter/fehlender Buchstabe
+    cutoff = 0.8 if len(word) < 7 else 0.75               # one swapped/missing letter
     return any(difflib.SequenceMatcher(None, word, w[:len(word) + 2]).ratio() >= cutoff
                for w in hay.words if abs(len(w) - len(word)) <= 3 or w.startswith(word[:3]))
 

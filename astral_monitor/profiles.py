@@ -1,8 +1,8 @@
-"""Raids als einfache Namensliste (je Raid ein Ordner mit profile.json: Notiz, eigener Auslöser).
+"""Raids as a simple list of names (one folder per raid with profile.json: note, own trigger).
 
-Bis 0.6.3 gab es hier eine Raid-Erkennung per Referenzbild (ORB-Merkmalsvergleich). Entfernt auf Wunsch des
-Eigentümers (06.10.2026): Die Kamera im Spiel ist frei einstellbar und zeigt zum Ressourcensparen manchmal nichts –
-der Raid wird jetzt auf der Startseite ausgewählt. Alte Referenzbilder räumt `remove_reference_images` einmalig weg."""
+Up to 0.6.3 there was raid detection via a reference image (ORB feature matching). Removed at the owner's request
+(06.10.2026): the in-game camera can be moved freely and sometimes shows nothing to save resources – the raid is
+now chosen on the start page. `remove_reference_images` removes old reference images once."""
 from __future__ import annotations
 
 import json
@@ -41,7 +41,7 @@ class ProfileStore:
         return clean
 
     def rename(self, old: str, new: str) -> str:
-        """Raid umbenennen (Ordner samt Einstellungen). Rückgabe: neuer, bereinigter Name."""
+        """Rename a raid (folder including settings). Returns the new, cleaned-up name."""
         src, clean = self.root / sanitize_name(old), sanitize_name(new)
         if not src.is_dir():
             raise ValueError(tr("There is no profile “{name}”.", name=old))
@@ -49,7 +49,7 @@ class ProfileStore:
             return clean
         if clean.lower() != src.name.lower() and any(n.lower() == clean.lower() for n in self.names()):
             raise ValueError(tr("A raid “{name}” already exists.", name=clean))
-        if clean.lower() == src.name.lower():        # nur Groß-/Kleinschreibung: Windows braucht einen Zwischenschritt
+        if clean.lower() == src.name.lower():        # case only: Windows needs an intermediate step
             tmp = self.root / (clean + ".tmp_rename")
             src.rename(tmp)
             src = tmp
@@ -61,7 +61,7 @@ class ProfileStore:
         if folder.is_dir():
             shutil.rmtree(folder)
 
-    # ------------------------------------------------------- Einstellungen je Raid
+    # ------------------------------------------------------- Settings per raid
     def settings(self, name: str) -> dict:
         try:
             data = json.loads((self.root / sanitize_name(name) / "profile.json").read_text(encoding="utf-8"))
@@ -74,9 +74,9 @@ class ProfileStore:
         folder.mkdir(exist_ok=True)
         (folder / "profile.json").write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
 
-    # ------------------------------------------------------- Aufräumen (einmalig)
+    # ------------------------------------------------------- Clean-up (one-off)
     def remove_reference_images(self) -> int:
-        """Referenzbilder der früheren Raid-Erkennung löschen. Rückgabe: Anzahl gelöschter Bilder."""
+        """Delete reference images of the former raid detection. Returns the number of deleted images."""
         count = 0
         for folder in self.root.iterdir():
             if not folder.is_dir():
@@ -88,5 +88,5 @@ class ProfileStore:
                 except OSError:
                     pass
         if count:
-            log.info("%d alte Referenzbilder gelöscht (Raid-Erkennung entfernt).", count)
+            log.info("Deleted %d old reference images (raid detection removed).", count)
         return count

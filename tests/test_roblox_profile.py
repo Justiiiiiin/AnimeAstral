@@ -1,4 +1,4 @@
-"""Roblox-Profil über die öffentliche Schnittstelle (ohne Netz, mit gespielten Antworten)."""
+"""Roblox profile via the public API (without network, with canned responses)."""
 import time
 import unittest
 
@@ -30,18 +30,18 @@ class ProfileTests(unittest.TestCase):
         self.assertEqual(rp.avatar_file().read_bytes(), PNG)
 
         evil = lambda url, timeout=0: Resp(200, {"data": [{"imageUrl": "https://evil.example/x.png"}]})  # noqa: E731
-        self.assertFalse(rp.download_avatar(42, getter=evil))                 # nur Bilder vom Roblox-CDN
+        self.assertFalse(rp.download_avatar(42, getter=evil))                 # only images from the Roblox CDN
 
     def test_errors_and_refresh_rule(self):
         with self.assertRaises(rp.ProfileError):
-            rp.lookup("x!")                                                   # ungültig, ohne Netz
+            rp.lookup("x!")                                                   # invalid, without network
         with self.assertRaises(rp.ProfileError):
             rp.lookup("Nobody", poster=lambda *a, **k: Resp(200, {"data": []}))
         rp.avatar_file().write_bytes(PNG)
         info = {"name": "Max_1", "at": time.time()}
         self.assertFalse(rp.needs_refresh("max_1", info))
-        self.assertTrue(rp.needs_refresh("Other", info))                      # anderer Name
-        self.assertTrue(rp.needs_refresh("Max_1", dict(info, at=time.time() - 2 * 86400)))   # älter als ein Tag
+        self.assertTrue(rp.needs_refresh("Other", info))                      # different name
+        self.assertTrue(rp.needs_refresh("Max_1", dict(info, at=time.time() - 2 * 86400)))   # older than a day
         self.assertFalse(rp.needs_refresh("", info))
 
 

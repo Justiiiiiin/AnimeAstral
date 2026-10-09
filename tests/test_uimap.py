@@ -1,4 +1,4 @@
-"""Mitgelieferte Oberflächen-Karte (uimap) und Bilderkennung der Automatik – ohne Qt, Tesseract und Roblox."""
+"""Bundled UI map (uimap) and image recognition of the automation – without Qt, Tesseract and Roblox."""
 import unittest
 
 import _env  # noqa: F401
@@ -15,7 +15,7 @@ class UiMapTest(unittest.TestCase):
 
     def test_map_is_bundled(self):
         self.assertTrue(self.map.entries, "astral_monitor/uimap/index.json fehlt")
-        self.assertTrue(self.map.list_windows(), "kein Fenster mit Welt-Zeilen")
+        self.assertTrue(self.map.list_windows(), "no window with world rows")
 
     def test_every_target_has_opener(self):
         for window in self.map.targets():
@@ -44,7 +44,7 @@ class UiMapTest(unittest.TestCase):
         self.assertIsNotNone(self.map.close_element(roll))
 
     def test_no_personal_ids(self):
-        """Keine Webhooks oder langen Kennungen (Discord-IDs haben 17–20 Ziffern) in der öffentlichen Karte."""
+        """No webhooks or long IDs (Discord IDs have 17–20 digits) in the public map."""
         import re
         text = (self.map.base / "index.json").read_text(encoding="utf-8")
         self.assertNotIn("webhook", text.lower())
@@ -65,7 +65,7 @@ class UiMapTest(unittest.TestCase):
 
 
 class VisionTest(unittest.TestCase):
-    """Teleporter-Bild aus der Karte in ein Roblox-Fenster setzen: Zeilen und X müssen gefunden werden."""
+    """Put the teleporter image from the map into a Roblox window: rows and X must be found."""
 
     @classmethod
     def setUpClass(cls):
@@ -92,7 +92,7 @@ class VisionTest(unittest.TestCase):
         self.assertIsNotNone(state)
         roi, _title, x = state
         self.assertAlmostEqual(roi[0], self.window["roi"][0], places=2)
-        self.assertGreater(x[0], roi[0] + 0.8 * (roi[2] - roi[0]))     # X sitzt rechts oben
+        self.assertGreater(x[0], roi[0] + 0.8 * (roi[2] - roi[0]))     # X sits at the top right
 
     def test_no_menu_on_empty_screen(self):
         empty = np.full_like(self.frame, 40)

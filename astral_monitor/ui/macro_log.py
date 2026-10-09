@@ -1,5 +1,5 @@
-"""Makro-Protokoll: kompakte Log-Ansicht (Uhrzeit + Meldung, enge Zeilen, Farbe nach Art). Steht unter
-Einstellungen → Makro; auf der Startseite nur, wenn dort „Protokoll auf der Startseite“ an ist."""
+"""Macro log: compact log view (time + message, tight lines, color by kind). Lives under Settings → Macro; on
+the start page only if “Macro log on the start page” is switched on there."""
 from __future__ import annotations
 
 import html
@@ -14,7 +14,7 @@ from .widgets import Card
 
 
 def _token(text: str) -> str:
-    """Farbe einer Zeile: Start/Fertig, Warnung, Abbruch/Fehler, sonst normal."""
+    """Color of a line: start/done, warning, stop/error, otherwise normal."""
     if text.startswith(("✖", "■")):
         return "danger"
     if text.startswith("⚠"):
@@ -27,7 +27,7 @@ def _token(text: str) -> str:
 
 
 class MacroLogView(QPlainTextEdit):
-    """Liest aus dem MacroController; mehrere Ansichten (Einstellungen, Startseite) zeigen dasselbe."""
+    """Reads from the MacroController; several views (settings, start page) show the same."""
 
     def __init__(self, controller) -> None:
         super().__init__()
@@ -54,7 +54,7 @@ class MacroLogView(QPlainTextEdit):
             except ValueError:
                 pass
 
-    def sizeHint(self) -> QSize:                          # füllt den Platz, fordert aber keinen (ohne Scrollen)
+    def sizeHint(self) -> QSize:                          # fills the space but doesn't demand any (no scrolling)
         return QSize(super().sizeHint().width(), theme.px(80))
 
     def _append(self, stamp: str, text: str) -> None:
@@ -65,7 +65,7 @@ class MacroLogView(QPlainTextEdit):
         bar.setValue(bar.maximum())
 
     def reload(self) -> None:
-        """Nach Designwechsel neu einfärben."""
+        """Recolor after a design change."""
         self.clear()
         for stamp, text in self.controller.lines:
             self._append(stamp, text)

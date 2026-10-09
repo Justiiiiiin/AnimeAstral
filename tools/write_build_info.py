@@ -1,7 +1,6 @@
-"""Schreibt Version und Repository-Angaben in das Paket (wird vom GitHub-Build aufgerufen).
+"""Writes version and repository details into the package (called by the GitHub build).
 
-    python tools/write_build_info.py <version> [<benutzer/repo>] [<discord-anwendungs-id>]
-"""
+    python tools/write_build_info.py <version> [<user/repo>] [<discord application id>]"""
 import re
 import sys
 from pathlib import Path

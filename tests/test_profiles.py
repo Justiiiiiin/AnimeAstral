@@ -1,4 +1,4 @@
-"""Raids als Namensliste: anlegen, umbenennen (inkl. Verlauf), löschen, alte Bilder aufräumen."""
+"""Raids as a list of names: create, rename (incl. history), delete, clean up old images."""
 import tempfile
 import time
 import unittest
@@ -22,11 +22,11 @@ class ProfileStoreTests(unittest.TestCase):
         self.assertEqual(self.store.create("  Alvarez   War "), "Alvarez War")
         self.store.create("new leaf")
         with self.assertRaises(ValueError):
-            self.store.create("alvarez war")                   # doppelt (ohne Groß/Klein)
+            self.store.create("alvarez war")                   # duplicate (ignoring case)
         self.store.save_settings("Alvarez War", {"note": "Boss 27", "trigger_offset": 2})
         self.assertEqual(self.store.rename("Alvarez War", "Alvarez Krieg"), "Alvarez Krieg")
-        self.assertEqual(self.store.settings("Alvarez Krieg")["note"], "Boss 27")   # Einstellungen ziehen mit
-        self.assertEqual(self.store.rename("new leaf", "New Leaf"), "New Leaf")      # nur Groß/Klein
+        self.assertEqual(self.store.settings("Alvarez Krieg")["note"], "Boss 27")   # settings move along
+        self.assertEqual(self.store.rename("new leaf", "New Leaf"), "New Leaf")      # case only
         self.assertEqual(self.store.names(), ["Alvarez Krieg", "New Leaf"])
         with self.assertRaises(ValueError):
             self.store.rename("New Leaf", "alvarez krieg")
@@ -49,7 +49,7 @@ class ProfileStoreTests(unittest.TestCase):
         for raid in ("Owl", "Owl", "Other"):
             stats.add(RunRecord(now, 60.0, 60.0, 100, 100, "ok", "", raid))
         self.assertEqual(stats.rename_raid("Owl", "Owl Suppression"), 2)
-        again = StatsStore(self.base / "history.csv")                    # auch in der Datei geändert
+        again = StatsStore(self.base / "history.csv")                    # also changed in the file
         self.assertEqual(sorted(r.raid for r in again.records), ["Other", "Owl Suppression", "Owl Suppression"])
 
 

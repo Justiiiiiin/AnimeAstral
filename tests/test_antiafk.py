@@ -1,4 +1,4 @@
-"""Anti-AFK: Zeitplan, kein Warten auf den Nutzer, Makro-Pause, Fehlerfall – künstliche Uhr, keine Eingaben."""
+"""Anti-AFK: schedule, no waiting for the user, macro pause, error case – fake clock, no input."""
 import unittest
 
 import _env  # noqa: F401
@@ -23,9 +23,9 @@ class AntiAfkTests(unittest.TestCase):
     def test_off_by_default_and_interval(self):
         h = Harness()
         h.afk.tick(0)
-        self.assertEqual(h.jumps, [])                       # Standard: aus
+        self.assertEqual(h.jumps, [])                       # default: off
         h.s.anti_afk_enabled, h.s.anti_afk_minutes = True, 10
-        h.afk.tick(0)                                       # eingeschaltet: erster Sprung nach 10 Minuten
+        h.afk.tick(0)                                       # switched on: first jump after 10 minutes
         h.afk.tick(599)
         self.assertEqual(h.jumps, [])
         h.afk.tick(600)
@@ -40,8 +40,8 @@ class AntiAfkTests(unittest.TestCase):
         self.assertIsNone(h.afk.next_at)
 
     def test_runs_right_away_even_while_user_is_active(self):
-        """Kein Warten, wenn der Nutzer gerade tippt/spielt (Wunsch des Eigentümers: sonst bleibt Roblox unnötig
-        lange vorne) – sofort zum fälligen Zeitpunkt."""
+        """No waiting while the user is typing/playing (owner's wish: otherwise Roblox stays in front for too
+                long) – right at the due time."""
         h = Harness(idle=0.1)
         h.s.anti_afk_enabled = True
         h.afk.tick(0)
@@ -56,7 +56,7 @@ class AntiAfkTests(unittest.TestCase):
         h.s.anti_afk_enabled = True
         h.afk.tick(0)
         h.afk.tick(600)
-        self.assertEqual(h.jumps, [])                       # Makro klickt: warten
+        self.assertEqual(h.jumps, [])                       # macro is clicking: wait
         busy[0] = False
         h.afk.tick(601)
         self.assertEqual(len(h.jumps), 1)

@@ -1,4 +1,4 @@
-"""Speicher-Übersicht: wie viel Platz das Programm belegt, und Entbehrliches aufräumen."""
+"""Storage overview: how much space the program uses, and cleaning up what isn't needed."""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -11,9 +11,9 @@ from .i18n import N_
 
 @dataclass
 class Usage:
-    label: str                 # Anzeigename (N_, mit tr() übersetzen)
-    size: int                  # Bytes
-    removable: bool            # „Aufräumen“ löscht es
+    label: str                 # display name (N_, translate with tr())
+    size: int                  # bytes
+    removable: bool            # “Clean up” deletes it
 
 
 def _size(path: Path) -> int:
@@ -47,8 +47,8 @@ def usage(base: Optional[Path] = None) -> list[Usage]:
 
 
 def clean(base: Optional[Path] = None) -> int:
-    """Löscht ältere Protokolle, Debug-Bilder und Update-Reste. Gibt die freigegebenen Bytes zurück.
-    Dateien in Benutzung (z. B. ein laufendes Update) bleiben liegen."""
+    """Deletes older logs, debug images and update leftovers. Returns the freed bytes.
+        Files in use (e.g. a running update) are left alone."""
     base = base or app_paths.data_dir()
     freed = 0
     for _name, paths, removable in _groups(base):
@@ -57,7 +57,7 @@ def clean(base: Optional[Path] = None) -> int:
         for path in paths:
             files = [path] if path.is_file() else [p for p in path.rglob("*") if p.is_file()] if path.is_dir() else []
             for f in files:
-                if f.name == "apply.log":                 # Protokoll des letzten Updates (Fehlersuche)
+                if f.name == "apply.log":                 # log of the last update (troubleshooting)
                     continue
                 try:
                     size = f.stat().st_size
@@ -69,7 +69,7 @@ def clean(base: Optional[Path] = None) -> int:
 
 
 def fmt_size(size: int) -> str:
-    """1 234 567 -> „1,2 MB“ (Dezimaltrennzeichen je Sprache via i18n.dec)."""
+    """1 234 567 -> “1.2 MB” (decimal separator per language via i18n.dec)."""
     from .i18n import dec
     if size < 1024:
         return f"{size} B"

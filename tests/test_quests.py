@@ -1,4 +1,4 @@
-"""Quest-Titel und -Fortschritt säubern, Reihenfolge wie im Spiel (ohne Tesseract)."""
+"""Clean up quest titles and progress, order as in the game (without Tesseract)."""
 import unittest
 
 import _env  # noqa: F401
@@ -11,10 +11,10 @@ NAMES = ("Militech Convoy", "MaxTac Call", "Alvarez War")
 class QuestTextTests(unittest.TestCase):
     def test_titles(self):
         cases = {"Complete Alvarez War 80 time": "Complete Alvarez War 80",
-                 "Complete Militech Conv oy 90 time": "Complete Militech Convoy 90",   # zerteilter Name
+                 "Complete Militech Conv oy 90 time": "Complete Militech Convoy 90",   # split name
                  "Complete MaxTac Call 90 time(s": "Complete MaxTac Call 90",
-                 "Clear 8000 waves in MaxTac Ca": "Clear 8000 waves in MaxTac Ca",     # Wörter nach der Zahl bleiben
-                 "Complete Alvarez War 80 tirr": "Complete Alvarez War 80"}            # Wortstück am Rand
+                 "Clear 8000 waves in MaxTac Ca": "Clear 8000 waves in MaxTac Ca",     # words after the number stay
+                 "Complete Alvarez War 80 tirr": "Complete Alvarez War 80"}            # word fragment at the edge
         for raw, expected in cases.items():
             self.assertEqual(clean_title(raw, NAMES), expected)
 
@@ -37,7 +37,7 @@ class QuestTextTests(unittest.TestCase):
         tracker = QuestTracker()
         a, b = QuestLine("Complete Alvarez War 80", 24, 80), QuestLine("Clear 8000 waves", 255, 8000)
         tracker.update([b])
-        tracker.update([a, b])                                   # A erscheint später, steht im Spiel aber oben
+        tracker.update([a, b])                                   # A appears later but is at the top in the game
         self.assertEqual([q["title"] for q in tracker.snapshot()], [a.title, b.title])
 
 

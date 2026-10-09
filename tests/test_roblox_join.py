@@ -1,4 +1,4 @@
-"""Private-Server-Link lesen (ohne Roblox zu starten)."""
+"""Read private server links (without starting Roblox)."""
 import unittest
 
 import _env  # noqa: F401
@@ -60,7 +60,7 @@ class FavoriteTests(unittest.TestCase):
         code = share_code("Server von Max ✨", link)
         self.assertTrue(code.startswith("astral-server:"))
         self.assertEqual(parse_share_code(f"  {code}\n"), ("Server von Max ✨", link))
-        self.assertIsNone(parse_share_code(link))                                  # normaler Link: kein Code
+        self.assertIsNone(parse_share_code(link))                                  # normal link: no code
         self.assertIsNone(parse_share_code("astral-server:kaputt!!"))
         self.assertIsNone(parse_share_code(share_code("X", "https://evil.example/share?code=1&type=Server")))
 
@@ -68,7 +68,7 @@ class FavoriteTests(unittest.TestCase):
         from astral_monitor.settings import Settings, clean_favorites
         link = "https://www.roblox.com/share?code=0123456789abcdef0123456789abcdef&type=Server"
         s = Settings.from_dict({"private_server_link": link, "settings_version": 6})
-        self.assertEqual(s.server_favorites, [{"name": "Server 1", "link": link}])     # Link aus 0.6.3 übernommen
+        self.assertEqual(s.server_favorites, [{"name": "Server 1", "link": link}])     # link taken over from 0.6.3
         self.assertEqual(clean_favorites([{"name": " A  b ", "link": " x "}, {"name": "a B", "link": "y"},
                                           {"name": "", "link": "z"}, "kaputt", {"name": "C"}]),
                          [{"name": "A b", "link": "x"}])

@@ -1,4 +1,4 @@
-"""Quest-Liste (oben rechts) per OCR lesen: Titel + Fortschritt „7330/75000“."""
+"""Read the quest list (top right) via OCR: title + progress “7330/75000”."""
 from __future__ import annotations
 
 import re
@@ -13,7 +13,7 @@ from .ocr import OcrEngine
 
 SCALE = 3
 _PROG_RE = re.compile(r"(\d[\d .,]*)\s*[/|]\s*(\d[\d .,]*)")
-_ZERO_F_RE = re.compile(r"^[0OQo]\s*[fF]\s*(\d[\d .,]*)$")   # Tesseract liest "0/90" manchmal als "Of 90"
+_ZERO_F_RE = re.compile(r"^[0OQo]\s*[fF]\s*(\d[\d .,]*)$")   # Tesseract sometimes reads "0/90" as "Of 90"
 
 
 @dataclass
@@ -28,8 +28,8 @@ def _num(text: str) -> Optional[int]:
     return int(digits) if digits else None
 
 
-_ONE_RE = re.compile(r"(?<!\d)[lI!|](?=\s*/\s*\d)")        # „1/90“ wird gern als „l/90“ oder „I/90“ gelesen
-_TIMES_RE = re.compile(r"\s+t(?:i(?:m(?:e(?:s|\(s?\)?)?)?)?)?$", re.IGNORECASE)   # „time(s)“, auch abgeschnitten
+_ONE_RE = re.compile(r"(?<!\d)[lI!|](?=\s*/\s*\d)")        # “1/90” is often read as “l/90” or “I/90”
+_TIMES_RE = re.compile(r"\s+t(?:i(?:m(?:e(?:s|\(s?\)?)?)?)?)?$", re.IGNORECASE)   # “time(s)”, also cut off
 
 
 def parse_progress(text: str) -> Optional[tuple[int, int]]:
@@ -48,14 +48,14 @@ def parse_progress(text: str) -> Optional[tuple[int, int]]:
 
 
 def clean_title(text: str, names: tuple = ()) -> str:
-    """Titel säubern: Reste am Fensterrand und „time(s)“ weg, Wörter nach der Zahl bleiben („Clear 8000 waves in
-    MaxTac Ca“). Bekannte Raid-Namen werden repariert, wenn die Erkennung sie zerteilt („Conv oy“ -> „Convoy“)."""
+    """Clean up a title: remove leftovers at the window edge and “time(s)”, words after the number stay (“Clear 8000
+        waves in MaxTac Ca”). Known raid names are repaired when recognition splits them (“Conv oy” -> “Convoy”)."""
     text = re.sub(r"\s+", " ", text).strip()
     text = re.sub(r"[^\w)]+$", "", text)
     text = _TIMES_RE.sub("", text)
     last = max((i for i, ch in enumerate(text) if ch.isdigit()), default=-1)
     tail = text[last + 1:].split()
-    if last >= 0 and len(tail) == 1 and len(tail[0]) <= 4:      # ein kurzes Wortstück nach der Zahl: abgeschnitten
+    if last >= 0 and len(tail) == 1 and len(tail[0]) <= 4:      # a short word fragment after the number: cut off
         text = text[: last + 1]
     for name in names:
         letters = name.replace(" ", "")
@@ -73,7 +73,7 @@ def _total_from_title(title: str) -> Optional[int]:
 class QuestReader:
     def __init__(self, ocr: OcrEngine) -> None:
         self._ocr = ocr
-        self.names: tuple = ()                     # bekannte Raid-Namen (zum Reparieren zerteilter Wörter)
+        self.names: tuple = ()                     # known raid names (to repair split words)
 
     def read(self, crop: np.ndarray) -> list[QuestLine]:
         height = crop.shape[0]
@@ -95,7 +95,7 @@ class QuestReader:
                 pending = {"title": title, "y": y, "prog": None, "py": None}
                 entries.append(pending)
 
-        # Fortschrittszeile fehlt (z. B. ausgeblendet/getönt): gezielt unter dem Titel nachlesen
+        # progress line missing (e.g. hidden/tinted): read again right below the title
         offsets = [e["py"] - e["y"] for e in entries if e["prog"] is not None]
         pitch = statistics.median(offsets) if offsets else 0.071 * height
         for entry in entries:
@@ -111,8 +111,8 @@ class QuestReader:
 
     def _read_strip(self, crop: np.ndarray, y_center: float,
                     expected_total: Optional[int]) -> Optional[tuple[int, int]]:
-        """Liest eine einzelne Fortschrittszeile mit mehreren Schwellwerten.
-        Der Gesamtwert aus dem Titel dient als Plausibilitätsprüfung (z. B. „0/90“, nicht „0/390“)."""
+        """Reads a single progress line with several thresholds.
+                The total from the title serves as a plausibility check (e.g. “0/90”, not “0/390”)."""
         height = crop.shape[0]
         half = 0.04 * height
         y0, y1 = max(0, int(y_center - half)), min(height, int(y_center + half))

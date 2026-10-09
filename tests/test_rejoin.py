@@ -1,4 +1,4 @@
-"""Auto-Rejoin: Protokollzeilen einordnen, neue Zeilen lesen, Ablauf bei Abbruch/Absturz/Verlassen."""
+"""Auto-rejoin: classify log lines, read new lines, flow on disconnect/crash/leaving."""
 import tempfile
 import unittest
 from pathlib import Path
@@ -81,7 +81,7 @@ class TailTests(unittest.TestCase):
             f.write_bytes((JOIN + "\n").encode())
             (Path(d) / "0.1_20261006T1_Player_BBBB_CrashHandler_last.log").write_bytes(b"x Joining game\n")
             tail = LogTail(Path(d))
-            self.assertEqual([classify(x) for x in tail.poll()], [("join", 102072869879193)])   # Stand beim Start
+            self.assertEqual([classify(x) for x in tail.poll()], [("join", 102072869879193)])   # state at start
             self.assertEqual(tail.poll(), [])
             with open(f, "ab") as fh:
                 fh.write((LOST + "\n" + "halbe Zei").encode())
@@ -89,7 +89,7 @@ class TailTests(unittest.TestCase):
             with open(f, "ab") as fh:
                 fh.write(b"le\n")
             self.assertEqual(tail.poll(), ["halbe Zeile"])
-            g = Path(d) / "0.1_20261006T2_Player_CCCC_last.log"                       # neuer Client: von vorn
+            g = Path(d) / "0.1_20261006T2_Player_CCCC_last.log"                       # new client: from the start
             g.write_bytes((JOIN + "\n").encode())
             self.assertEqual(len(tail.poll()), 1)
 
@@ -101,7 +101,7 @@ class FlowTests(unittest.TestCase):
         self.assertEqual(rig.r.status, "in_game")
         rig.step(5, LOST)
         self.assertEqual(rig.r.status, "lost")
-        self.assertEqual(rig.started, [])                          # Wartezeit (Teleport/Serverwechsel)
+        self.assertEqual(rig.started, [])                          # waiting time (teleport/server change)
         rig.step(rejoin.GRACE + 4)
         self.assertEqual(rig.started, ["roblox://navigation/share_links?code=0123456789abcdef0123456789abcdef&type=Server"])
         self.assertEqual(rig.kills, 1)
@@ -113,7 +113,7 @@ class FlowTests(unittest.TestCase):
     def test_leaving_yourself_does_not_rejoin(self):
         rig = Rig()
         rig.step(1, JOIN)
-        rig.step(2, PEER, OTHER)                                   # auf anderem Gerät beigetreten
+        rig.step(2, PEER, OTHER)                                   # joined on another device
         rig.alive = False
         rig.step(60)
         self.assertEqual(rig.started, [])
@@ -147,7 +147,7 @@ class FlowTests(unittest.TestCase):
         self.assertEqual(len(rig.started), rejoin.MAX_ATTEMPTS)
         self.assertEqual(rig.r.status, "gave_up")
         self.assertIn("aufgegeben", rig.r.info())
-        rig.step(1, JOIN)                                          # nächster Beitritt setzt zurück
+        rig.step(1, JOIN)                                          # next join resets
         self.assertEqual((rig.r.status, rig.r.attempt), ("in_game", 0))
 
     def test_switch_off(self):
@@ -164,14 +164,14 @@ class FlowTests(unittest.TestCase):
         rig.s.auto_rejoin_enabled = False
         rig.step(1, JOIN)
         rig.step(3, LOST)
-        rig.step(3, JOIN)                                          # Teleport: kein Alarm
+        rig.step(3, JOIN)                                          # teleport: no alarm
         self.assertEqual(rig.notes, [])
         rig.step(1, LOST)
         rig.step(rejoin.GRACE + 2)
         self.assertEqual(rig.notes, [("roblox_down", "Disconnect erkannt")])
         self.assertEqual((rig.r.status, rig.started), ("down", []))
         rig.step(30)
-        self.assertEqual(len(rig.notes), 1)                        # nur einmal je Abbruch
+        self.assertEqual(len(rig.notes), 1)                        # only once per disconnect
         rig.step(4, JOIN)
         self.assertEqual(rig.r.status, "in_game")
 

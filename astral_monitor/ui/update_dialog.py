@@ -1,4 +1,4 @@
-"""Dialog „Update verfügbar“: Hinweise anzeigen, laden, Prüfsumme prüfen, Installer starten."""
+"""Dialog “Update available”: show notes, download, verify checksum, start the installer."""
 from __future__ import annotations
 
 import threading
@@ -16,7 +16,7 @@ from .widgets import label
 
 class UpdateDialog(QDialog):
     def __init__(self, main, info: updater.ReleaseInfo, full_install: bool = False) -> None:
-        """full_install: kompletten Installer nutzen (Downgrade/Neuinstallation – Update-Pakete gehen nur vorwärts)."""
+        """full_install: use the full installer (downgrade/new install – update packages only go forward)."""
         super().__init__(main)
         self.main, self.info = main, info
         newer = updater.is_newer(info.version)
@@ -32,7 +32,7 @@ class UpdateDialog(QDialog):
         lay.addWidget(label(tr("Version {version} is available", version=info.version) if newer
                             else tr("Install version {version}", version=info.version), "h1"))
         lay.addWidget(label(tr("You have version {version}.", version=__version__), "muted"))
-        notes = QTextBrowser()                  # GitHub-Versionshinweise sind Markdown
+        notes = QTextBrowser()                  # GitHub release notes are Markdown
         notes.setOpenExternalLinks(True)
         notes.setMarkdown(info.notes or tr("No release notes provided."))
         lay.addWidget(notes, 1)
@@ -69,7 +69,7 @@ class UpdateDialog(QDialog):
         self.timer.setInterval(150)
         self.timer.timeout.connect(self._poll)
 
-        # Passt das kleine Update-Paket (nur geänderte Dateien)? Prüfung im Hintergrund, dauert meist < 1 s.
+        # Does the small update package fit (changed files only)? Checked in the background, usually takes < 1 s.
         self._plan = None
         self._plan_state = {"done": False, "plan": None}
         self.btn_go.setEnabled(False)
@@ -124,7 +124,7 @@ class UpdateDialog(QDialog):
                 self._state["path"] = updater.download(
                     self.info, lambda d, t: self._state.update(done=d, total=t), lambda: self._cancel,
                     patch=self._plan is not None)
-            except Exception as exc:                    # UpdateError und alles Unerwartete
+            except Exception as exc:                    # UpdateError and anything unexpected
                 self._state["error"] = str(exc) or exc.__class__.__name__
             self._state["finished"] = True
 

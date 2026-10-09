@@ -34,7 +34,7 @@ class TrackerTests(unittest.TestCase):
         self.assertEqual(tr.run.first_wave, 10)
 
     def test_small_drop_corrects_misread_instead_of_restart(self):
-        # echter Fall 06.10.: eingefrorenes Bild beim Umschalten (F11), „25“ als „29“ gelesen, danach wieder 25
+        # real case 06.10.: frozen frame while switching (F11), “25” read as “29”, then 25 again
         tr = WaveTracker(3, 0)
         events, t = feed(tr, [20, 21, 22, 23, 24, 29, 29, 29, 29] + [None] * 6 + [25, 25, 26])
         self.assertEqual(events, [])
@@ -42,7 +42,7 @@ class TrackerTests(unittest.TestCase):
         self.assertEqual(tr.run.max_wave, 26)
 
     def test_cut_leading_digit_is_not_a_restart(self):
-        # echter Fall 07.10.: bei Welle 54 zweimal „4“ gelesen (vordere Ziffer verdeckt), danach wieder 55, 57
+        # real case 07.10.: at wave 54 “4” was read twice (front digit hidden), then 55, 57 again
         tr = WaveTracker(3, 0)
         events, t = feed(tr, list(range(40, 54)))
         events, _ = feed(tr, [4, 4, 55, 56], t, step=0.5)
@@ -52,14 +52,14 @@ class TrackerTests(unittest.TestCase):
     def test_restart_that_looks_cut_still_counts_when_it_stays(self):
         tr = WaveTracker(3, 0)
         events, t = feed(tr, list(range(40, 54)))
-        events, _ = feed(tr, [3, 3, 3, 4, 4], t)           # echter Neustart, der zufällig wie „53“ ohne 5 aussieht
+        events, _ = feed(tr, [3, 3, 3, 4, 4], t)           # real restart that happens to look like “53” without the 5
         self.assertEqual([e[0] for e in events], ["run_end"])
         self.assertEqual(events[0][1]["max_wave"], 53)
 
     def test_hold_while_macro_clicks(self):
         tr = WaveTracker(3, 0)
         _, t = feed(tr, [20, 21, 22])
-        for _ in range(30):                                # Makro öffnet Menüs: Lesungen werden nicht gewertet
+        for _ in range(30):                                # macro opens menus: readings are not counted
             t += 0.5
             tr.hold()
         events, _ = feed(tr, [None, 30, 31], t)
@@ -69,7 +69,7 @@ class TrackerTests(unittest.TestCase):
     def test_restart_from_low_wave_still_counts(self):
         tr = WaveTracker(3, 0)
         events, t = feed(tr, [1, 2, 3, 4, 5, 6, 7, 8, 9])
-        events, _ = feed(tr, [2, 2, 3], t)                  # neuer Lauf, Beginn knapp verpasst
+        events, _ = feed(tr, [2, 2, 3], t)                  # new run, start just missed
         self.assertEqual([e[0] for e in events], ["run_end"])
         self.assertEqual(events[0][1]["max_wave"], 9)
 
